@@ -13,7 +13,7 @@ A hybrid SDD workflow that combines:
 ## Design Principles
 
 ### 1. Pure Prompt Play
-No system installation required. All workflow logic lives in `.fab/` as markdown templates and skill definitions that any AI agent can execute.
+No system installation required. All workflow logic lives in `fab/` as markdown templates and skill definitions that any AI agent can execute.
 
 ### 2. Specs Are King
 Code serves specifications, not the other way around. The centralized spec (`specs/`) is the source of truth for what the system does.
@@ -22,7 +22,7 @@ Code serves specifications, not the other way around. The centralized spec (`spe
 All work happens in change folders. Changes track ADDED/MODIFIED/REMOVED requirements that get hydrated into the centralized spec on completion.
 
 ### 4. Stage Visibility
-Always know where you are. Each change folder has a `.status.yaml` manifest that tracks current stage and progress. A `current` symlink (`.fab/current → .fab/changes/{active-change}`) provides instant access to whichever change is in flight — no scanning or guessing required.
+Always know where you are. Each change folder has a `.status.yaml` manifest that tracks current stage and progress. A `current` symlink (`fab/current → fab/changes/{active-change}`) provides instant access to whichever change is in flight — no scanning or guessing required.
 
 ### 5. Skill-Based Interface
 Use skills (not rigid commands) for better agent interoperability. Skills are more naturally invocable by AI agents.
@@ -78,13 +78,38 @@ Fab does not manage git. Branch creation, commits, and pushes are separate conce
 | 6 | **Verify** | Validate against specs | validation report | Checklist completion check |
 | 7 | **Archive** | Complete & hydrate | archive entry | Delta merge into centralized specs |
 
+### User Flow (5 skills)
+
+The 7 stages are internal. From the user's perspective, the workflow is 5 skill invocations — planning stages (1–4) are collapsed into a single step via `/fab:ff` or stepped through with `/fab:continue`:
+
+```mermaid
+flowchart LR
+    NEW["/fab:new"]
+    PLAN["/fab:continue or ff"]
+    APPLY["/fab:apply"]
+    VERIFY["/fab:verify"]
+    ARCHIVE["/fab:archive"]
+
+    NEW -->|proposal| PLAN
+    PLAN -->|specs + plan\n+ tasks| APPLY
+    APPLY -->|code changes| VERIFY
+    VERIFY -->|passed| ARCHIVE
+    VERIFY -->|"failed"| APPLY
+
+    style NEW fill:#e8f4f8,stroke:#2196F3
+    style PLAN fill:#e8f4f8,stroke:#2196F3
+    style APPLY fill:#fff3e0,stroke:#FF9800
+    style VERIFY fill:#fff3e0,stroke:#FF9800
+    style ARCHIVE fill:#e8f5e9,stroke:#4CAF50
+```
+
 ---
 
 ## Directory Structure
 
 ```
 project/
-├── .fab/
+├── fab/
 │   ├── config.yaml              # Project configuration
 │   ├── current → changes/add-oauth  # Symlink to active change
 │   ├── memory/
@@ -96,6 +121,7 @@ project/
 │   │   ├── tasks.md
 │   │   └── checklist.md
 │   ├── skills/                   # Skill definitions (markdown prompts)
+│   │   ├── fab-init.md
 │   │   ├── fab-new.md
 │   │   ├── fab-continue.md
 │   │   ├── fab-ff.md
@@ -142,9 +168,9 @@ naming:
 
 ---
 
-## Active Change Tracking (`.fab/current`)
+## Active Change Tracking (`fab/current`)
 
-`.fab/current` is a symlink that always points to the change folder you're actively working on. Inspired by SpecKit's `.specify/current`, it removes the need to scan `changes/` or remember folder names.
+`fab/current` is a symlink that always points to the change folder you're actively working on. Inspired by SpecKit's `.specify/current`, it removes the need to scan `changes/` or remember folder names.
 
 **Lifecycle**:
 - **Created** by `/fab:new` — points to the newly created change folder
@@ -155,13 +181,13 @@ naming:
 **Switching between changes**: If multiple change folders exist and you want to switch context:
 ```
 /fab:switch add-oauth
-→ ".fab/current now points to add-oauth"
+→ "fab/current now points to add-oauth"
 ```
 
 **Why a symlink?**
-- Works with all tools (`cat .fab/current/.status.yaml` just works)
+- Works with all tools (`cat fab/current/.status.yaml` just works)
 - No parsing required — the filesystem _is_ the pointer
-- Git-friendly — add `.fab/current` to `.gitignore` since it's local working state
+- Git-friendly — add `fab/current` to `.gitignore` since it's local working state. Everything else in `fab/` is committed and shared.
 
 ---
 
@@ -193,6 +219,36 @@ last_updated: 2024-01-11T09:15:00Z
 
 ## Skills Reference
 
+### `/fab:init`
+
+**Purpose**: Bootstrap `fab/` in an existing project.
+
+**Creates**:
+- `fab/config.yaml` — project configuration (prompts for name, tech stack, conventions)
+- `fab/memory/constitution.md` — project principles and constraints (generated from conversation or existing docs)
+- `fab/templates/` — default templates for each artifact type
+- `fab/skills/` — skill prompt files
+- `fab/specs/` — empty, ready for centralized specs
+- `fab/changes/` — empty, ready for change folders
+
+**Example**:
+```
+/fab:init
+→ "What's the project name?"
+→ "Describe the tech stack and conventions..."
+→ "fab/ initialized with config, templates, and empty specs."
+```
+
+**Behavior**:
+1. Check if `fab/` already exists (abort if so, suggest manual edits)
+2. Prompt for project name, description, tech stack
+3. Generate `config.yaml` from responses
+4. Generate `constitution.md` from project context (README, existing docs, conversation)
+5. Copy default templates into `fab/templates/`
+6. Optionally scaffold initial specs from existing code or documentation
+
+---
+
 ### `/fab:new <description>`
 
 **Purpose**: Start a new change from a natural language description.
@@ -209,7 +265,7 @@ last_updated: 2024-01-11T09:15:00Z
 
 **Behavior**:
 1. Sanitize description → folder name
-2. Create `.fab/changes/{name}/`
+2. Create `fab/changes/{name}/`
 3. Initialize `.status.yaml` with stage: proposal
 4. Generate `proposal.md` using template
 5. Ask clarifying questions if intent is ambiguous
@@ -277,8 +333,11 @@ last_updated: 2024-01-11T09:15:00Z
 1. Parse `tasks.md` for unchecked items `- [ ]`
 2. Execute tasks in dependency order
 3. Respect parallel markers `[P]`
-4. Mark completed tasks with `[x]`
-5. Update `.status.yaml` progress
+4. After completing each task, run relevant tests (e.g., the test file for the module just modified). Fix failures before moving on.
+5. Mark each task `[x]` immediately upon completion (not batched at the end)
+6. Update `.status.yaml` progress after each task
+
+**Resumability**: `/fab:apply` is inherently resumable. If the agent is interrupted mid-run, re-invoking `/fab:apply` picks up from the first unchecked item. The markdown checklist *is* the progress state — no separate tracking needed.
 
 ---
 
@@ -297,6 +356,7 @@ last_updated: 2024-01-11T09:15:00Z
 **Checks**:
 - All tasks in `tasks.md` completed
 - All checklist items in `checklists/` passed
+- Run tests affected by the change (not necessarily the full suite — scoped to modules touched by this change)
 - Features match spec requirements
 - No spec drift detected
 
@@ -309,16 +369,18 @@ last_updated: 2024-01-11T09:15:00Z
 **Example**:
 ```
 /fab:archive
-→ "Archived to .fab/changes/archive/2024-01-15-add-oauth/"
-→ "Hydrated specs: .fab/specs/auth/authentication.md"
+→ "Archived to fab/changes/archive/2024-01-15-add-oauth/"
+→ "Hydrated specs: fab/specs/auth/authentication.md"
 ```
 
 **Behavior**:
 1. Final validation (verify must pass)
-2. Merge delta specs into `.fab/specs/`:
-   - **ADDED** → append to domain spec
-   - **MODIFIED** → replace existing requirement
-   - **REMOVED** → delete from domain spec
+2. Hydrate delta specs into `fab/specs/`:
+   The agent reads the delta specs and the current centralized spec, then rewrites the centralized spec to incorporate the changes. The ADDED/MODIFIED/REMOVED markers are **semantic hints to the agent about intent**, not instructions for a text processor:
+   - **ADDED** → agent integrates new requirements into the appropriate section
+   - **MODIFIED** → agent updates the existing requirement in context, preserving surrounding content
+   - **REMOVED** → agent removes the requirement, adjusting related content for coherence
+   The agent should minimize edits to unchanged sections to prevent drift over successive archives.
 3. Move change folder to `archive/` with date prefix
 4. Update status to `archived`
 
@@ -331,12 +393,12 @@ last_updated: 2024-01-11T09:15:00Z
 **Example**:
 ```
 /fab:switch fix-checkout-bug
-→ ".fab/current now points to fix-checkout-bug"
+→ "fab/current now points to fix-checkout-bug"
 ```
 
 **Behavior**:
-1. Verify `change-name` exists in `.fab/changes/`
-2. Update `.fab/current` symlink to point to it
+1. Verify `change-name` exists in `fab/changes/`
+2. Update `fab/current` symlink to point to it
 3. Display the switched change's status summary
 
 ---
@@ -456,7 +518,7 @@ The system SHALL support sessions from multiple auth sources.
 ## Configuration (config.yaml)
 
 ```yaml
-# .fab/config.yaml
+# fab/config.yaml
 
 project:
   name: "My App"
@@ -588,6 +650,7 @@ Add adapters for Windsurf, Cline, Copilot, etc.
 
 | Skill | Purpose | Creates |
 |-------|---------|---------|
+| `/fab:init` | Bootstrap fab/ in a project | `config.yaml`, templates, skills, empty specs |
 | `/fab:new` | Start change | `proposal.md`, `.status.yaml` |
 | `/fab:continue` | Next artifact | Next stage artifact |
 | `/fab:ff` | Fast forward planning | All planning artifacts + checklist |
@@ -601,7 +664,7 @@ Add adapters for Windsurf, Cline, Copilot, etc.
 
 ## Next Steps
 
-1. Create `.fab/` directory structure
+1. Create `fab/` directory structure
 2. Write skill prompt files for each `/fab:*` skill
 3. Create templates for each artifact type
 4. Define checklist generation logic
