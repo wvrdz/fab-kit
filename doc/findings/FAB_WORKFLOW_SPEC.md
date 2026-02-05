@@ -13,7 +13,7 @@ A hybrid SDD workflow that combines:
 ## Design Principles
 
 ### 1. Pure Prompt Play
-No system installation required. All workflow logic lives in `fab/` as markdown templates and skill definitions that any AI agent can execute.
+No system installation required. All workflow logic lives in `fab/.kit/` as markdown templates and skill definitions that any AI agent can execute.
 
 ### 2. Specs Are King
 Code serves specifications, not the other way around. The centralized spec (`specs/`) is the source of truth for what the system does.
@@ -110,35 +110,36 @@ flowchart LR
 ```
 project/
 ├── fab/
-│   ├── config.yaml              # Project configuration
-│   ├── current → changes/add-oauth  # Symlink to active change
-│   ├── memory/
-│   │   └── constitution.md      # Project principles & constraints
-│   ├── templates/
-│   │   ├── proposal.md
-│   │   ├── spec.md
-│   │   ├── plan.md
-│   │   ├── tasks.md
-│   │   └── checklist.md
-│   ├── skills/                   # Skill definitions (markdown prompts)
-│   │   ├── fab-init.md
-│   │   ├── fab-new.md
-│   │   ├── fab-continue.md
-│   │   ├── fab-ff.md
-│   │   ├── fab-apply.md
-│   │   ├── fab-verify.md
-│   │   ├── fab-archive.md
-│   │   ├── fab-switch.md
-│   │   └── fab-status.md
-│   ├── specs/                    # Centralized source of truth
+│   ├── .kit/                       # Engine — hidden, rarely touched
+│   │   ├── config.yaml             # Project configuration
+│   │   ├── memory/
+│   │   │   └── constitution.md     # Project principles & constraints
+│   │   ├── templates/
+│   │   │   ├── proposal.md
+│   │   │   ├── spec.md
+│   │   │   ├── plan.md
+│   │   │   ├── tasks.md
+│   │   │   └── checklist.md
+│   │   └── skills/                 # Skill definitions (markdown prompts)
+│   │       ├── fab-init.md
+│   │       ├── fab-new.md
+│   │       ├── fab-continue.md
+│   │       ├── fab-ff.md
+│   │       ├── fab-apply.md
+│   │       ├── fab-verify.md
+│   │       ├── fab-archive.md
+│   │       ├── fab-switch.md
+│   │       └── fab-status.md
+│   ├── current → changes/add-oauth # Symlink to active change
+│   ├── specs/                      # Centralized source of truth
 │   │   ├── auth/
 │   │   │   └── authentication.md
 │   │   ├── payments/
 │   │   │   └── checkout.md
 │   │   └── ...
 │   └── changes/
-│       ├── add-oauth/            # Active change
-│       │   ├── .status.yaml      # Stage tracking
+│       ├── add-oauth/              # Active change
+│       │   ├── .status.yaml        # Stage tracking
 │       │   ├── proposal.md
 │       │   ├── specs/
 │       │   │   └── auth/
@@ -146,10 +147,10 @@ project/
 │       │   ├── plan.md
 │       │   ├── tasks.md
 │       │   └── checklists/
-│       │       └── quality.md    # Auto-generated
-│       └── archive/              # Completed changes
+│       │       └── quality.md      # Auto-generated
+│       └── archive/                # Completed changes
 │           └── 2024-01-15-add-2fa/
-└── .claude/                      # Agent-specific skill exports
+└── .claude/                        # Agent-specific skill exports
     └── skills/
 ```
 
@@ -224,10 +225,10 @@ last_updated: 2024-01-11T09:15:00Z
 **Purpose**: Bootstrap `fab/` in an existing project.
 
 **Creates**:
-- `fab/config.yaml` — project configuration (prompts for name, tech stack, conventions)
-- `fab/memory/constitution.md` — project principles and constraints (generated from conversation or existing docs)
-- `fab/templates/` — default templates for each artifact type
-- `fab/skills/` — skill prompt files
+- `fab/.kit/config.yaml` — project configuration (prompts for name, tech stack, conventions)
+- `fab/.kit/memory/constitution.md` — project principles and constraints (generated from conversation or existing docs)
+- `fab/.kit/templates/` — default templates for each artifact type
+- `fab/.kit/skills/` — skill prompt files
 - `fab/specs/` — empty, ready for centralized specs
 - `fab/changes/` — empty, ready for change folders
 
@@ -244,7 +245,7 @@ last_updated: 2024-01-11T09:15:00Z
 2. Prompt for project name, description, tech stack
 3. Generate `config.yaml` from responses
 4. Generate `constitution.md` from project context (README, existing docs, conversation)
-5. Copy default templates into `fab/templates/`
+5. Copy default templates into `fab/.kit/templates/`
 6. Optionally scaffold initial specs from existing code or documentation
 
 ---
@@ -518,7 +519,7 @@ The system SHALL support sessions from multiple auth sources.
 ## Configuration (config.yaml)
 
 ```yaml
-# fab/config.yaml
+# fab/.kit/config.yaml
 
 project:
   name: "My App"
@@ -650,7 +651,7 @@ Add adapters for Windsurf, Cline, Copilot, etc.
 
 | Skill | Purpose | Creates |
 |-------|---------|---------|
-| `/fab:init` | Bootstrap fab/ in a project | `config.yaml`, templates, skills, empty specs |
+| `/fab:init` | Bootstrap fab/ in a project | `.kit/` (config, templates, skills), empty specs |
 | `/fab:new` | Start change | `proposal.md`, `.status.yaml` |
 | `/fab:continue` | Next artifact | Next stage artifact |
 | `/fab:ff` | Fast forward planning | All planning artifacts + checklist |
