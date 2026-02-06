@@ -86,3 +86,27 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Negative case: templates must NOT contain example data from TEMPLATES.md (e.g., OAuth examples go in spec docs, not template files)
   - Previous iterations left uncommitted changes; this iteration used git add -A to stage everything cleanly
 ---
+
+## [2026-02-06 22:38] - US-004: Create shared context preamble (_context.md)
+Thread:
+Run: 20260206-222820-4396 (iteration 4)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-4.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b01d50b feat(fab): create shared context preamble _context.md (US-004)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+- Files changed:
+  - fab/.kit/skills/_context.md (new)
+- Implemented: Created fab/.kit/skills/_context.md with shared context loading convention from SKILLS.md. Includes 4 context layers (always-load, change context, centralized doc lookup, source code loading) and the Next Steps convention with a lookup table mapping all 11 skill outcomes to their follow-up commands.
+- **Learnings for future iterations:**
+  - The _context.md content maps directly to SKILLS.md "Context Loading Convention" and "Next Steps Convention" sections
+  - _context.md must NOT contain skill-specific behavior — only shared conventions (context loading + next steps)
+  - `ralph log` is available at `/opt/homebrew/bin/ralph` — use it for activity logging
+  - All quality gates pass with just the _context.md file; skills directory will be populated by US-005 through US-013
+---
