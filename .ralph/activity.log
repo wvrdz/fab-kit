@@ -1,0 +1,11 @@
+# Activity Log
+
+## Run Summary
+
+## Events
+
+[2026-02-06 22:28:20] ITERATION 1 start (mode=build story=US-001)
+[2026-02-06 22:29:00] US-001: Created fab/.kit/ directory structure (templates/, skills/, scripts/)
+[2026-02-06 22:29:01] US-001: Created fab/.kit/VERSION with '0.1.0'
+[2026-02-06 22:29:02] US-001: All verification checks passed
+[2026-02-06 22:29:03] US-001: Committing changes
