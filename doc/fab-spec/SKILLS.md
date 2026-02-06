@@ -4,6 +4,44 @@
 
 ---
 
+## Terminology: "specs" vs "deltas"
+
+To avoid confusion, Fab uses two distinct terms:
+
+| Term | Location | Meaning |
+|------|----------|---------|
+| **Centralized specs** | `fab/specs/` | Source-of-truth specifications for the system. Updated only by `/fab:archive` hydration. |
+| **Deltas** | `fab/changes/{name}/deltas/` | Change-specific specification diffs. Describe what's ADDED, MODIFIED, or REMOVED relative to the centralized specs. |
+
+The stage named "specs" refers to the *activity* of writing specifications — its output is delta files in `deltas/`.
+
+---
+
+## Context Loading Convention
+
+Every skill that generates or validates artifacts MUST load relevant context before proceeding. This ensures agents produce accurate, grounded output rather than hallucinating requirements or ignoring existing patterns.
+
+**Always loaded** (by every skill except `/fab:init`, `/fab:switch`, `/fab:status`):
+- `fab/config.yaml` — project configuration, tech stack, conventions
+- `fab/memory/constitution.md` — project principles and constraints
+
+**Change context** (loaded by skills operating on an active change):
+- `.status.yaml` — current stage, progress
+- All completed artifacts in the active change folder (e.g., `proposal.md`, `deltas/`, `plan.md`)
+
+**Centralized spec lookup** (loaded when writing or validating deltas):
+- Read `fab/specs/index.md` to understand the spec landscape
+- Read the specific centralized spec(s) referenced by the proposal's "Affected Specs" section
+- This ensures deltas are written against the *actual* current state, not assumptions
+
+**Source code** (loaded during implementation and review):
+- Read relevant source files referenced in the plan's "File Changes" section or the task descriptions
+- Scope to files actually touched by the change — don't load the entire codebase
+
+Each skill section below lists its specific context requirements under a **Context** field.
+
+---
+
 ## `/fab:init`
 
 **Purpose**: Bootstrap `fab/` in an existing project.
@@ -35,29 +73,46 @@
 
 ---
 
-## `/fab:new <description>`
+## `/fab:new <description> [--branch <name>]`
 
 **Purpose**: Start a new change from a natural language description.
+
+**Context**: config, constitution, `fab/specs/index.md` (to understand existing spec landscape)
 
 **Creates**:
 - Change folder named `{YYMMDD}-{XXXX}-{slug}`
 - `.status.yaml` manifest
 - `proposal.md` from template (with clarifying questions if ambiguous)
 
-**Example**:
+**Arguments**:
+- `<description>` — natural language description of the change (required)
+- `--branch <name>` — explicit branch name to use (optional). Skips the branch prompt and uses this name directly. Useful for Linear-linked branches, team conventions, or pre-existing branches.
+
+**Examples**:
 ```
 /fab:new Add OAuth2 support for Google and GitHub sign-in
 → Created fab/changes/260115-a7k2-add-oauth/
+→ Branch: 260115-a7k2-add-oauth (created)
+
+/fab:new --branch feature/dev-907-oauth Add OAuth2 support
+→ Created fab/changes/260115-a7k2-add-oauth/
+→ Branch: feature/dev-907-oauth (adopted)
 ```
 
 **Behavior**:
 1. Generate folder name: today's date (`YYMMDD`) + 4 random alphanumeric chars + 2-4 word slug from description
 2. Create `fab/changes/{name}/`
 3. Write change name to `fab/current` (sets this as the active change)
-4. Initialize `.status.yaml` with stage: proposal
-5. Generate `proposal.md` using template (loading `fab/memory/constitution.md` and `fab/config.yaml` as context)
-6. Ask clarifying questions if intent is ambiguous
-7. Mark proposal complete when satisfied
+4. **Branch integration** (if `git.enabled` in config and inside a git repo):
+   - If `--branch <name>` was provided → use that name directly (create if it doesn't exist, adopt if it does)
+   - Else if on `main`/`master` → offer to create a new branch named `{prefix}{change-name}`
+   - Else if on a feature branch → offer to adopt it (record current branch name as-is)
+   - If user declines → skip, no `branch:` field in `.status.yaml`
+   - Record chosen branch name in `.status.yaml` as `branch:`
+5. Initialize `.status.yaml` with stage: proposal (and `branch:` if set)
+6. Generate `proposal.md` using template (loading `fab/memory/constitution.md` and `fab/config.yaml` as context)
+7. Ask clarifying questions if intent is ambiguous
+8. Mark proposal complete when satisfied
 
 ---
 
@@ -65,10 +120,15 @@
 
 **Purpose**: Create the next artifact in sequence.
 
+**Context** (varies by target stage):
+- **Specs stage**: config, constitution, `proposal.md`, target centralized spec(s) from `fab/specs/`
+- **Plan stage**: above + completed `deltas/`
+- **Tasks stage**: above + `plan.md` (if not skipped)
+
 **Example**:
 ```
 /fab:continue
-→ "Stage: proposal (complete). Next: Create delta specs."
+→ "Stage: proposal (done). Next: Create delta specs."
 ```
 
 **Behavior**:
@@ -86,6 +146,8 @@
 
 **Purpose**: Fast-forward through remaining planning stages in one pass. Requires an active change with a completed proposal (run `/fab:new` first).
 
+**Context**: config, constitution, `proposal.md`, target centralized spec(s) from `fab/specs/` (all loaded upfront since ff traverses all planning stages)
+
 **Flow**: specs → plan (if warranted) → tasks (+ checklist)
 
 **When to use**:
@@ -101,19 +163,63 @@
 
 **Behavior**:
 1. Read `fab/current` to resolve the active change; verify proposal is complete
-2. Generate delta specs (resolve ambiguities inline, no blocking questions)
-3. Evaluate whether a plan is warranted (see "Plan decision" below). If yes, draft plan with inline research. If no, skip directly to tasks
-4. Produce task breakdown (referencing plan if it exists, otherwise referencing specs and proposal directly)
-5. Auto-generate quality checklist
-6. Update status to `tasks: complete`
+2. **Frontload questions** — scan the proposal for ambiguities across *all* planning stages (specs, plan, tasks). Collect everything that needs user input into a single batch of questions. Ask once, then proceed without further interruption. The goal: one Q&A round, then heads-down generation.
+3. Generate delta specs (incorporating answers from step 2)
+4. Evaluate whether a plan is warranted (see "Plan decision" below). If yes, draft plan with inline research. If no, skip directly to tasks
+5. Produce task breakdown (referencing plan if it exists, otherwise referencing deltas and proposal directly)
+6. Auto-generate quality checklist
+7. Update status to `tasks: done`
 
 **Plan decision**: The agent skips `plan.md` when the change is small and the implementation approach is obvious — e.g., single-file changes, straightforward CRUD, or well-known patterns. When skipped, `.status.yaml` records `plan: skipped`. Unlike `/fab:continue`, `/fab:ff` does **not** confirm with the user before skipping — it decides autonomously to maintain the fast-forward flow.
+
+---
+
+## `/fab:clarify`
+
+**Purpose**: Deepen and refine the current stage artifact without advancing to the next stage.
+
+**Context** (varies by current stage):
+- **Proposal**: config, constitution, `proposal.md`
+- **Specs**: above + `proposal.md`, target centralized spec(s) from `fab/specs/`
+- **Plan**: above + `deltas/`, `plan.md`
+- **Tasks**: above + `plan.md` (if not skipped), `tasks.md`
+
+**Example**:
+```
+/fab:clarify
+→ "Stage: specs (active). Reviewing deltas for gaps..."
+→ "Found 2 [NEEDS CLARIFICATION] markers. Resolving..."
+→ "Added 3 missing scenarios to deltas/auth/authentication.md"
+```
+
+**When to use**:
+- Current artifact has unresolved ambiguities or [NEEDS CLARIFICATION] markers
+- You want deeper technical research before committing to a plan
+- Task breakdown feels incomplete or wrong-grained
+- Proposal scope needs sharpening before moving to specs
+
+**Behavior**:
+1. Read `.status.yaml` to determine current stage
+2. **Guard**: stage must be `proposal`, `specs`, `plan`, or `tasks`. If stage is `apply` or later, suggest `/fab:review` instead
+3. Load the current stage's artifact + relevant context
+4. Analyze the artifact for gaps, ambiguities, and opportunities to deepen:
+   - **Proposal**: Unresolved [BLOCKING] questions, vague scope, missing impact analysis
+   - **Specs**: [NEEDS CLARIFICATION] markers, missing scenarios, underspecified requirements
+   - **Plan**: Untested assumptions, missing research, weak decision rationale
+   - **Tasks**: Missing tasks, wrong granularity, unclear dependencies, missing file paths
+5. Refine the artifact **in place** — edit the existing file, don't regenerate from scratch
+6. Report what was clarified/refined
+7. Do **not** advance the stage or update `.status.yaml` stage field
+
+**Key property**: Idempotent and non-advancing. Calling `/fab:clarify` multiple times is safe — it refines further each time. It never transitions to the next stage. Use `/fab:continue` when satisfied.
 
 ---
 
 ## `/fab:apply`
 
 **Purpose**: Execute tasks from `tasks.md`.
+
+**Context**: config, constitution, `tasks.md`, `deltas/`, `plan.md` (if exists), relevant source code (files referenced in tasks)
 
 **Example**:
 ```
@@ -133,13 +239,15 @@
 
 ---
 
-## `/fab:verify`
+## `/fab:review`
 
 **Purpose**: Validate implementation against specs and checklists.
 
+**Context**: config, constitution, `tasks.md`, `checklists/quality.md`, `deltas/`, target centralized spec(s) from `fab/specs/`, relevant source code (files touched by the change)
+
 **Example**:
 ```
-/fab:verify
+/fab:review
 → "✓ 12/12 tasks complete"
 → "✓ 10/12 checklist items passed"
 → "✗ 2 items need attention: [CHK-007, CHK-011]"
@@ -149,7 +257,7 @@
 1. All tasks in `tasks.md` marked `[x]`
 2. All checklist items in `checklists/quality.md` verified and checked off — the agent re-reads each `CHK-*` item, inspects the relevant code/tests, and marks `[x]` or reports failure
 3. Run tests affected by the change (scoped to modules touched, not the full suite)
-4. Features match delta spec requirements (spot-check key scenarios from `specs/`)
+4. Features match delta spec requirements (spot-check key scenarios from `deltas/`)
 5. No spec drift detected (implementation doesn't contradict centralized specs)
 
 **On failure**, the agent presents the options and the user chooses where to loop back:
@@ -174,6 +282,8 @@ The `.status.yaml` stage is reset to the chosen re-entry point. The general rule
 
 **Purpose**: Complete the change and hydrate into centralized specs.
 
+**Context**: `deltas/`, target centralized spec(s) from `fab/specs/`, `fab/specs/index.md` and relevant domain indexes
+
 **Example**:
 ```
 /fab:archive
@@ -182,8 +292,8 @@ The `.status.yaml` stage is reset to the chosen re-entry point. The general rule
 ```
 
 **Behavior**:
-1. **Final validation** — verify must pass (all tasks `[x]`, all checklist items `[x]` or `[N/A]`)
-2. **Concurrent change check** — scan `fab/changes/` for other active changes whose delta specs reference the same centralized spec files. If found, warn the user: *"Change {name} also modifies {spec}. After this archive, that change's delta was written against a now-stale base. Re-verify with `/fab:verify` after switching to it."*
+1. **Final validation** — review must pass (all tasks `[x]`, all checklist items `[x]` including N/A items)
+2. **Concurrent change check** — scan `fab/changes/` for other active changes whose delta specs reference the same centralized spec files. If found, warn the user: *"Change {name} also modifies {spec}. After this archive, that change's delta was written against a now-stale base. Re-review with `/fab:review` after switching to it."*
 3. **Hydrate delta specs** into `fab/specs/`:
    The agent reads the delta specs and the current centralized spec, then rewrites the centralized spec to incorporate the changes. The ADDED/MODIFIED/REMOVED markers are **semantic hints to the agent about intent**, not instructions for a text processor:
    - **ADDED** → agent integrates new requirements into the appropriate section
@@ -210,8 +320,10 @@ The `.status.yaml` stage is reset to the chosen re-entry point. The general rule
 
 **Behavior**:
 1. Match `change-name` against `fab/changes/` (supports partial/slug match)
-2. Write the full change name to `fab/current`
-3. Display the switched change's status summary
+2. **Ambiguous match** — if multiple changes match the input (e.g., `/fab:switch add` matches both `260115-a7k2-add-oauth` and `260202-m3x1-add-dark-mode`), list the matches and ask the user to pick one. Never guess.
+3. **No match** — if nothing matches, list available changes and ask
+4. Write the full change name to `fab/current`
+5. Display the switched change's status summary
 
 ---
 
@@ -222,15 +334,16 @@ The `.status.yaml` stage is reset to the chosen re-entry point. The general rule
 **Example output**:
 ```
 Change: 260115-a7k2-add-oauth
+Branch: 260115-a7k2-add-oauth
 Stage:  plan (3/7)
 
 Progress:
-  ✓ proposal    complete
-  ✓ specs       complete
-  ◉ plan        in_progress
+  ✓ proposal    done
+  ✓ specs       done
+  ◉ plan        active
   ○ tasks       pending
   ○ apply       pending
-  ○ verify      pending
+  ○ review      pending
   ○ archive     pending
 
 Checklist: not yet generated (created at tasks stage)

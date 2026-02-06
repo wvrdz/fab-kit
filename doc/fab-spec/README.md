@@ -27,8 +27,8 @@ Always know where you are. Each change folder has a `.status.yaml` manifest that
 ### 5. Skill-Based Interface
 Use skills (not rigid commands) for better agent interoperability. Skills are more naturally invocable by AI agents.
 
-### 6. Git-Agnostic
-Fab does not manage git. Branch creation, commits, and pushes are separate concerns handled by your existing git workflow.
+### 6. Git-Optional
+Fab tracks changes in directories, not branches. But when git is available, `/fab:new` offers to create or adopt a branch and records it in `.status.yaml` for traceability. Commits, pushes, and PRs remain your responsibility — Fab just keeps the link.
 
 ---
 
@@ -43,7 +43,7 @@ flowchart TD
     end
     subgraph execution ["Execution"]
         direction LR
-        A["5 APPLY"] --> V["6 VERIFY"]
+        A["5 APPLY"] --> V["6 REVIEW"]
     end
     subgraph completion ["Completion"]
         direction LR
@@ -63,36 +63,38 @@ flowchart TD
 | # | Stage | Purpose | Artifact | Includes |
 |---|-------|---------|----------|----------|
 | 1 | **Proposal** | Intent, scope, approach | `proposal.md` | Initial clarification questions |
-| 2 | **Specs** | What's changing (deltas) | `specs/*.md` | Clarification of ambiguities, [NEEDS CLARIFICATION] markers |
+| 2 | **Specs** | What's changing (deltas) | `deltas/*.md` | Clarification of ambiguities, [NEEDS CLARIFICATION] markers |
 | 3 | **Plan** *(optional)* | How to implement | `plan.md` | Technical research, architecture decisions, dependency analysis |
 | 4 | **Tasks** | Implementation checklist | `tasks.md` | Auto-generated quality checklist (`checklists/quality.md`) |
 | 5 | **Apply** | Execute tasks | code changes | Run tests per task, progress tracking |
-| 6 | **Verify** | Validate against specs | validation report | Checklist completion, spec drift detection |
+| 6 | **Review** | Validate against specs | validation report | Checklist completion, spec drift detection |
 | 7 | **Archive** | Complete & hydrate | archive entry | Delta merge into centralized specs |
 
-### User Flow (5 skills)
+### User Flow
 
-The 7 stages are internal. From the user's perspective, the workflow is 5 skill invocations — planning stages (2–4) after proposal are collapsed into a single step via `/fab:ff` or stepped through with `/fab:continue`:
+The 7 stages are internal. From the user's perspective, the main workflow is 5 skill invocations — planning stages (2–4) after proposal are collapsed into a single step via `/fab:ff` or stepped through with `/fab:continue`. `/fab:clarify` is available at any planning stage to deepen the current artifact before moving on:
 
 ```mermaid
 flowchart TD
     NEW["/fab:new"]
     PLAN["/fab:continue or ff"]
     APPLY["/fab:apply"]
-    VERIFY["/fab:verify"]
+    REVIEW["/fab:review"]
     ARCHIVE["/fab:archive"]
 
     NEW -->|proposal| PLAN
-    PLAN -->|specs + plan? + tasks| APPLY
-    APPLY -->|code changes| VERIFY
-    VERIFY -->|passed| ARCHIVE
-    VERIFY -->|fix code| APPLY
-    VERIFY -.->|revise planning| PLAN
+    PLAN -->|deltas + plan? + tasks| APPLY
+    APPLY -->|code changes| REVIEW
+    REVIEW -->|passed| ARCHIVE
+    REVIEW -->|fix code| APPLY
+    REVIEW -.->|revise planning| PLAN
+    NEW -.->|"/fab:clarify"| NEW
+    PLAN -.->|"/fab:clarify"| PLAN
 
     style NEW fill:#e8f4f8,stroke:#2196F3
     style PLAN fill:#e8f4f8,stroke:#2196F3
     style APPLY fill:#fff3e0,stroke:#FF9800
-    style VERIFY fill:#fff3e0,stroke:#FF9800
+    style REVIEW fill:#fff3e0,stroke:#FF9800
     style ARCHIVE fill:#e8f5e9,stroke:#4CAF50
 ```
 
@@ -103,11 +105,12 @@ flowchart TD
 | Skill | Purpose | Creates |
 |-------|---------|---------|
 | `/fab:init` | Bootstrap fab/ in a project | `.kit/`, `config.yaml`, `memory/`, skill symlinks |
-| `/fab:new` | Start change | `proposal.md`, `.status.yaml` |
+| `/fab:new` | Start change (optionally with `--branch`) | `proposal.md`, `.status.yaml`, branch (optional) |
 | `/fab:continue` | Next artifact | Next stage artifact |
-| `/fab:ff` | Fast forward remaining planning | Specs + plan (if needed) + tasks + checklist |
+| `/fab:ff` | Fast forward remaining planning | Deltas + plan (if needed) + tasks + checklist |
+| `/fab:clarify` | Deepen current artifact | Refined artifact (in place) |
 | `/fab:apply` | Implement | Code changes |
-| `/fab:verify` | Validate | Validation report |
+| `/fab:review` | Validate | Validation report |
 | `/fab:archive` | Complete & hydrate | Archive entry, updated specs |
 | `/fab:switch` | Change active change | Updated pointer file |
 | `/fab:status` | Check progress | Status display |
@@ -126,7 +129,7 @@ flowchart TD
 
 # 3. Continue to specs
 /fab:continue
-# → Creates specs/ui/theming.md with ADDED requirements
+# → Creates deltas/ui/theming.md with ADDED requirements
 # → Asks clarifying questions about ambiguities
 
 # 4. Continue to plan
@@ -143,8 +146,8 @@ flowchart TD
 /fab:apply
 # → Executes tasks, marks completed
 
-# 7. Verify
-/fab:verify
+# 7. Review
+/fab:review
 # → Validates implementation, checks checklist
 
 # 8. Archive
@@ -157,7 +160,7 @@ flowchart TD
 /fab:new Add loading spinner to submit button
 /fab:ff
 /fab:apply
-/fab:verify
+/fab:review
 /fab:archive
 ```
 
