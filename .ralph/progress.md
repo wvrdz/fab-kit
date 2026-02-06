@@ -363,3 +363,42 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Previous 11 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
   - The skill file is pure markdown (~240 lines) — no executable code, no security concerns
 ---
+
+## [2026-02-06 23:19] - US-013: Create fab-switch.md and fab-status.md skills
+Thread:
+Run: 20260206-222820-4396 (iteration 13)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-13.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-13.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3eecd6c feat(fab): create fab-switch.md and fab-status.md skill prompts (US-013)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/skills/fab-switch.md` -> PASS
+  - Command: `test -f fab/.kit/skills/fab-status.md` -> PASS
+  - Command: `grep -q '_context.md' fab/.kit/skills/fab-switch.md` -> PASS (references _context.md preamble)
+  - Command: `grep -q '_context.md' fab/.kit/skills/fab-status.md` -> PASS (references _context.md preamble)
+  - Command: `test -L .claude/skills/fab-switch.md && test -e .claude/skills/fab-switch.md` -> PASS (symlink valid)
+  - Command: `test -L .claude/skills/fab-status.md && test -e .claude/skills/fab-status.md` -> PASS (symlink valid)
+  - Command: `ls fab/.kit/skills/{fab-init,fab-new,fab-continue,fab-ff,fab-clarify,fab-apply,fab-review,fab-archive,fab-switch,fab-status}.md` -> PASS (all 10 skills exist)
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Note: symlinks gate shows BROKEN for fab-init and fab-new — pre-existing issue, those symlinks will be created in US-015
+  - Note: bootstrap gate expected to fail — US-014 handles config.yaml, constitution.md, docs/, changes/
+- Files changed:
+  - fab/.kit/skills/fab-switch.md (new)
+  - fab/.kit/skills/fab-status.md (new)
+  - .claude/skills/fab-switch.md (new symlink -> ../../fab/.kit/skills/fab-switch.md)
+  - .claude/skills/fab-status.md (new symlink -> ../../fab/.kit/skills/fab-status.md)
+- Implemented: Created both fab-switch.md and fab-status.md as comprehensive agent-agnostic markdown skills to complete the full set of 10 fab skill prompts. fab-switch.md (~180 lines) covers: _context.md preamble reference, minimal context loading (exempt from Always Load per _context.md), no-argument flow (list all active changes, ask user to pick), argument flow with match rules (exact match, single partial match, ambiguous match with numbered list, no match with available list), case-insensitive substring matching, Switch Flow (write fab/current, display stage N/7 with branch, suggest next command based on stage), stage number mapping table, output examples for all cases, error handling table. fab-status.md (~200 lines) covers: _context.md preamble reference, minimal context loading (exempt from Always Load per _context.md), kit version display from fab/.kit/VERSION, no-active-change handling, status parsing from .status.yaml, progress table with symbols (✓=done, ●=active, ○=pending, —=skipped, ✗=failed), stage N/7 display, branch display, checklist status, next command suggestion based on stage+progress, output examples (full status, no branch, skipped plan, review failed, no active change, corrupted change), error handling table.
+- **Learnings for future iterations:**
+  - _context.md explicitly exempts /fab:switch and /fab:status from the "Always Load" layer (no need for config.yaml/constitution.md)
+  - Both skills are read-only — they never modify .status.yaml or source code (switch only modifies fab/current)
+  - The stage-to-number mapping (proposal=1 through archive=7) is consistent across switch, status, and the shell status.sh script
+  - All 10 skill files now exist: fab-init, fab-new, fab-continue, fab-ff, fab-clarify, fab-apply, fab-review, fab-archive, fab-switch, fab-status
+  - Pre-existing broken symlinks for fab-init and fab-new are not in scope for this story — US-015 handles all symlink creation
+  - Previous 12 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
+  - Both skill files are pure markdown — no executable code, no security concerns
+---
