@@ -42,34 +42,95 @@ Each skill section below lists its specific context requirements under a **Conte
 
 ---
 
-## `/fab:init`
+## Next Steps Convention
 
-**Purpose**: Bootstrap `fab/` in an existing project.
+Every skill MUST end its output with a `Next:` line suggesting the available follow-up commands. This keeps the user oriented in the workflow without needing to memorize the stage graph.
 
-**Creates**:
-- `fab/.kit/` — engine directory (templates, skills, scripts)
+**Format**: `Next: /fab:command` or `Next: /fab:commandA or /fab:commandB (description)`
+
+**Lookup table**:
+
+| After | Stage reached | Next line |
+|-------|---------------|-----------|
+| `/fab:init` | initialized | `Next: /fab:new <description>` |
+| `/fab:new` | proposal done | `Next: /fab:continue or /fab:ff (fast-forward all planning)` |
+| `/fab:continue` → specs | specs done | `Next: /fab:continue (plan) or /fab:ff (fast-forward) or /fab:clarify (refine spec)` |
+| `/fab:continue` → plan | plan done | `Next: /fab:continue (tasks) or /fab:clarify (refine plan)` |
+| `/fab:continue` → tasks | tasks done | `Next: /fab:apply` |
+| `/fab:ff` | tasks done | `Next: /fab:apply` |
+| `/fab:clarify` | same stage | `Next: /fab:clarify (refine further) or /fab:continue or /fab:ff` |
+| `/fab:apply` | apply done | `Next: /fab:review` |
+| `/fab:review` (pass) | review done | `Next: /fab:archive` |
+| `/fab:review` (fail) | review failed | *(contextual — see [/fab:review](#fabreview) for fix options)* |
+| `/fab:archive` | archived | `Next: /fab:new <description> (start next change)` |
+
+---
+
+## `/fab:init [sources...]`
+
+**Purpose**: Bootstrap `fab/` in an existing project and/or hydrate docs from external sources. Safe to run repeatedly — structural artifacts are created once, symlinks are repaired if broken, and sources are ingested into `fab/docs/`.
+
+**Prerequisite**: `fab/.kit/` must exist. If missing, abort with: *"fab/.kit/ not found. Copy the kit directory into fab/.kit/ first — see the Getting Started guide."*
+
+**Arguments**:
+- `[sources...]` *(optional)* — one or more URLs or local paths containing documentation to ingest into `fab/docs/`. Supported source types:
+  - **Notion URLs** — pages or databases (fetched via Notion MCP or API)
+  - **Linear URLs** — issues or projects (fetched via Linear MCP or API)
+  - **Local files/directories** — markdown, text, or directories of docs (read from filesystem)
+
+**Creates** (first run only — skipped if already present):
 - `fab/config.yaml` — project configuration (prompts for name, tech stack, conventions)
 - `fab/constitution.md` — project principles and constraints (generated from conversation or existing docs)
-- `fab/docs/index.md` — initial docs index (populated by `/fab:archive` hydration)
+- `fab/docs/index.md` — initial docs index
 - `fab/changes/` — empty, ready for change folders
 - `.claude/skills/` — symlinks pointing into `fab/.kit/skills/`
 
-**Example**:
+**Examples**:
 ```
+# First run — full bootstrap
 /fab:init
+→ "Found fab/.kit/ (v0.1.0). Initializing project..."
 → "What's the project name?"
 → "Describe the tech stack and conventions..."
-→ "fab/ initialized with config, templates, and empty docs."
+→ "fab/ initialized with config, constitution, and empty docs."
+
+# Re-run without sources — structural health check
+/fab:init
+→ "fab/ already initialized. Verified structure, repaired 1 missing symlink."
+
+# Hydrate docs from a Notion page
+/fab:init https://notion.so/myteam/API-Spec-abc123
+→ "Fetched: API Spec (Notion)"
+→ "Created: fab/docs/api/endpoints.md, fab/docs/api/authentication.md"
+→ "Updated: fab/docs/index.md"
+
+# Hydrate from multiple sources at once
+/fab:init https://notion.so/myteam/Auth-Design-xyz ./legacy-docs/payments/
+→ "Fetched: Auth Design (Notion), 3 files from ./legacy-docs/payments/"
+→ "Created: fab/docs/auth/oauth.md, fab/docs/payments/checkout.md, fab/docs/payments/refunds.md"
+→ "Updated: fab/docs/index.md"
 ```
 
 **Behavior**:
-1. Check if `fab/` already exists (abort if so, suggest manual edits)
-2. Prompt for project name, description, tech stack
-3. Create `fab/.kit/` with default templates, skills, and scripts
-4. Generate `fab/config.yaml` from responses
-5. Generate `fab/constitution.md` from project context (README, existing docs, conversation)
-6. Create symlinks in `.claude/skills/` pointing to `fab/.kit/skills/`
-7. Optionally scaffold initial docs from existing code or documentation
+
+1. **Pre-flight check**: Verify `fab/.kit/` exists (abort with guidance if not)
+2. **Structural bootstrap** (idempotent — each step skips if artifact already exists):
+   a. `fab/config.yaml` — if missing, prompt for project name, description, tech stack and generate
+   b. `fab/constitution.md` — if missing, generate from project context (README, existing docs, conversation)
+   c. `fab/docs/index.md` — if missing, create empty index
+   d. `fab/changes/` — if missing, create empty directory
+   e. `.claude/skills/` symlinks — create missing ones, repair broken ones
+   f. `.gitignore` — append `fab/current` if not already present
+3. **Source hydration** (only when `[sources...]` are provided):
+   a. Fetch/read each source:
+      - Notion URLs → fetch page content via Notion MCP or API
+      - Linear URLs → fetch issue/project content via Linear MCP or API
+      - Local paths → read files; if directory, read all markdown files recursively
+   b. Analyze fetched content to identify domains and topics
+   c. For each identified topic, either create a new doc in `fab/docs/{domain}/` or merge into an existing doc — following the [Centralized Doc Format](TEMPLATES.md#centralized-doc-format-fabdocs) and [Hydration Rules](TEMPLATES.md#hydration-rules)
+   d. Create domain folders and domain index files as needed
+   e. Update `fab/docs/index.md` with new domains/docs
+   f. Report what was created and updated
 
 ---
 

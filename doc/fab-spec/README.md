@@ -32,6 +32,64 @@ Fab tracks changes in directories, not branches. But when git is available, `/fa
 
 ---
 
+## Getting Started
+
+### Prerequisites
+
+- An existing project directory (git repo recommended but not required)
+- An AI agent that supports skill definitions (e.g., Claude Code, Cursor, Windsurf)
+
+### Bootstrap
+
+Fab's workflow logic lives in `fab/.kit/` — but `.kit/` doesn't exist until you put it there. This is a deliberate two-phase setup:
+
+**Phase 1: Obtain `.kit/`**
+
+Copy the `.kit/` directory into your project:
+
+```bash
+mkdir -p fab
+cp -r /path/to/fab-kit fab/.kit
+```
+
+> `.kit/` is distributed as a standalone directory. See [Distribution](ARCHITECTURE.md#distribution--bootstrapping) for sourcing options. When `.kit/` gets its own repository, this becomes a single clone or download.
+
+**Phase 2: Run `/fab:init`**
+
+```bash
+/fab:init
+```
+
+This generates everything else: `config.yaml`, `constitution.md`, `docs/`, `changes/`, and skill symlinks. See [Skills Reference](SKILLS.md#fabinit) for full behavior.
+
+### Verify
+
+```bash
+fab/.kit/scripts/status.sh
+→ "No active change"
+```
+
+You're ready. Start your first change with `/fab:new <description>`.
+
+### Hydrating Docs from Existing Sources
+
+`/fab:init` is safe to run repeatedly. After the initial bootstrap, use it to ingest existing documentation into `fab/docs/`:
+
+```bash
+# Pull in API docs from Notion
+/fab:init https://notion.so/myteam/API-Spec-abc123
+
+# Ingest local legacy docs
+/fab:init ./docs/legacy/
+
+# Multiple sources at once
+/fab:init https://notion.so/myteam/Auth-xyz https://linear.app/myteam/project/payments-abc ./specs/
+```
+
+Supported sources: **Notion URLs**, **Linear URLs**, **local files/directories**. Each run analyzes the content, maps it to domains, and creates or merges into `fab/docs/`. See [Skills Reference](SKILLS.md#fabinit-sources) for details.
+
+---
+
 ## The 7 Stages
 
 ```mermaid
@@ -105,7 +163,7 @@ flowchart TD
 
 | Skill | Purpose | Creates |
 |-------|---------|---------|
-| `/fab:init` | Bootstrap fab/ in a project | `.kit/`, `config.yaml`, `constitution.md`, `docs/index.md`, skill symlinks |
+| `/fab:init [sources...]` | Bootstrap fab/ and/or hydrate docs from sources | `config.yaml`, `constitution.md`, `docs/`, skill symlinks (idempotent) |
 | `/fab:new` | Start change (optionally with `--branch`) | `proposal.md`, `.status.yaml`, branch (optional) |
 | `/fab:continue [<stage>]` | Next artifact (or reset to stage) | Next stage artifact |
 | `/fab:ff` | Fast forward remaining planning | spec.md + plan (if needed) + tasks + checklist |
