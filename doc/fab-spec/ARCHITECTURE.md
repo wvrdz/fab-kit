@@ -211,12 +211,13 @@ stages:
     requires: [verify]
 
 checklist:
-  categories:
-    - functional
-    - security
-    - testing
+  # Default categories map to delta operations + cross-cutting concerns:
+  #   functional_completeness (ADDED), behavioral_correctness (MODIFIED),
+  #   removal_verification (REMOVED), scenario_coverage, edge_cases, security
+  # Add project-specific categories below:
+  extra_categories:
+    - performance
     - ux
-    - performance                # Add project-specific categories
 
 rules:
   plan:
@@ -226,6 +227,51 @@ rules:
     - Use GIVEN/WHEN/THEN for scenarios
     - Mark ambiguities with [NEEDS CLARIFICATION]
 ```
+
+---
+
+## Project Constitution (`fab/memory/constitution.md`)
+
+The constitution is the **architectural DNA** of a Fab project. It defines immutable principles that govern how specifications become code. Inspired by SpecKit's constitutional system, adapted for Fab's lighter-weight delta workflow.
+
+**Purpose**:
+1. **Enforce discipline** — prevent over-engineering and architectural drift
+2. **Ensure consistency** — all code follows the same patterns
+3. **Guide AI agents** — principles constrain agent behavior during planning and implementation
+
+**Structure**:
+
+```markdown
+# {Project Name} Constitution
+
+## Core Principles
+
+### I. {Principle Name}
+{Description using MUST/SHALL/SHOULD keywords. Include rationale.}
+
+### II. {Principle Name}
+{Description}
+
+## Additional Constraints
+<!-- Project-specific: security, performance, testing, etc. -->
+
+## Governance
+
+**Version**: {MAJOR.MINOR.PATCH} | **Ratified**: {DATE} | **Last Amended**: {DATE}
+```
+
+**How skills use it**:
+- `/fab:init` generates it from project context (README, existing docs, conversation with user)
+- `/fab:continue` and `/fab:ff` load it as context when generating **plan**, **tasks**, and **checklist** artifacts
+- `/fab:verify` checks implementation against constitutional principles (not just delta specs)
+- Constitution violations found during verify are flagged as high-severity issues
+
+**Relationship to `config.yaml`**:
+- `config.yaml` holds **factual project context** (tech stack, naming conventions, stage configuration)
+- `constitution.md` holds **principles and constraints** (what MUST/SHOULD/MUST NOT happen)
+- Think: config says *what you use*, constitution says *how you use it*
+
+**Versioning**: Semantic versioning — MAJOR for principle removals, MINOR for additions, PATCH for clarifications. Changes to the constitution should be intentional and documented, not done as a side effect of a change.
 
 ---
 

@@ -38,7 +38,8 @@ Fab does not manage git. Branch creation, commits, and pushes are separate conce
 flowchart TD
     subgraph planning ["Planning"]
         direction LR
-        P["1 PROPOSAL"] --> S["2 SPECS"] --> PL["3 PLAN"] --> T["4 TASKS"]
+        P["1 PROPOSAL"] --> S["2 SPECS"] --> PL["3 PLAN (optional)"] --> T["4 TASKS"]
+        S --> T
     end
     subgraph execution ["Execution"]
         direction LR
@@ -63,7 +64,7 @@ flowchart TD
 |---|-------|---------|----------|----------|
 | 1 | **Proposal** | Intent, scope, approach | `proposal.md` | Initial clarification questions |
 | 2 | **Specs** | What's changing (deltas) | `specs/*.md` | Clarification of ambiguities, [NEEDS CLARIFICATION] markers |
-| 3 | **Plan** | How to implement | `plan.md` | Technical research, architecture decisions, dependency analysis |
+| 3 | **Plan** *(optional)* | How to implement | `plan.md` | Technical research, architecture decisions, dependency analysis |
 | 4 | **Tasks** | Implementation checklist | `tasks.md` | Auto-generated quality checklist (`checklists/quality.md`) |
 | 5 | **Apply** | Execute tasks | code changes | Run tests per task, progress tracking |
 | 6 | **Verify** | Validate against specs | validation report | Checklist completion, spec drift detection |
@@ -71,7 +72,7 @@ flowchart TD
 
 ### User Flow (5 skills)
 
-The 7 stages are internal. From the user's perspective, the workflow is 5 skill invocations — planning stages (1–4) are collapsed into a single step via `/fab:ff` or stepped through with `/fab:continue`:
+The 7 stages are internal. From the user's perspective, the workflow is 5 skill invocations — planning stages (2–4) after proposal are collapsed into a single step via `/fab:ff` or stepped through with `/fab:continue`:
 
 ```mermaid
 flowchart TD
@@ -82,7 +83,7 @@ flowchart TD
     ARCHIVE["/fab:archive"]
 
     NEW -->|proposal| PLAN
-    PLAN -->|specs + plan + tasks| APPLY
+    PLAN -->|specs + plan? + tasks| APPLY
     APPLY -->|code changes| VERIFY
     VERIFY -->|passed| ARCHIVE
     VERIFY -->|fix code| APPLY
@@ -104,7 +105,7 @@ flowchart TD
 | `/fab:init` | Bootstrap fab/ in a project | `.kit/`, `config.yaml`, `memory/`, skill symlinks |
 | `/fab:new` | Start change | `proposal.md`, `.status.yaml` |
 | `/fab:continue` | Next artifact | Next stage artifact |
-| `/fab:ff` | Fast forward planning | All planning artifacts + checklist |
+| `/fab:ff` | Fast forward remaining planning | Specs + plan (if needed) + tasks + checklist |
 | `/fab:apply` | Implement | Code changes |
 | `/fab:verify` | Validate | Validation report |
 | `/fab:archive` | Complete & hydrate | Archive entry, updated specs |
@@ -153,7 +154,8 @@ flowchart TD
 
 ### Fast Track (small changes)
 ```bash
-/fab:ff Add loading spinner to submit button
+/fab:new Add loading spinner to submit button
+/fab:ff
 /fab:apply
 /fab:verify
 /fab:archive
@@ -167,13 +169,3 @@ flowchart TD
 - [Skills Reference](SKILLS.md) — detailed behavior for each `/fab:*` skill
 - [Templates](TEMPLATES.md) — artifact formats and checklist generation
 
----
-
-## Next Steps
-
-1. Create `fab/` directory structure
-2. Write skill prompt files for each `/fab:*` skill
-3. Create templates for each artifact type
-4. Define checklist generation logic
-5. Set up agent export adapters
-6. Test workflow on a real feature

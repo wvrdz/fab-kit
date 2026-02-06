@@ -53,10 +53,11 @@
 **Behavior**:
 1. Generate folder name: today's date (`YYMMDD`) + 4 random alphanumeric chars + 2-4 word slug from description
 2. Create `fab/changes/{name}/`
-3. Initialize `.status.yaml` with stage: proposal
-4. Generate `proposal.md` using template
-5. Ask clarifying questions if intent is ambiguous
-6. Mark proposal complete when satisfied
+3. Write change name to `fab/current` (sets this as the active change)
+4. Initialize `.status.yaml` with stage: proposal
+5. Generate `proposal.md` using template (loading `fab/memory/constitution.md` and `fab/config.yaml` as context)
+6. Ask clarifying questions if intent is ambiguous
+7. Mark proposal complete when satisfied
 
 ---
 
@@ -73,18 +74,19 @@
 **Behavior**:
 1. Read `.status.yaml` to determine current stage
 2. Identify next artifact to create
-3. Load relevant template + context
+3. Load relevant template + context (including `fab/memory/constitution.md` for project principles)
 4. Generate artifact (with clarification/research as needed)
-5. Auto-generate checklist when creating tasks
-6. Update `.status.yaml`
+5. **Plan decision** (when transitioning from specs to plan): evaluate whether a plan is warranted. If the change is small and the approach is obvious, propose skipping to the user: *"This change is straightforward — skip plan and go directly to tasks?"* If the user agrees, record `plan: skipped` in `.status.yaml` and proceed to tasks. If the user wants a plan, generate it normally.
+6. Auto-generate checklist when creating tasks
+7. Update `.status.yaml`
 
 ---
 
 ## `/fab:ff` (Fast Forward)
 
-**Purpose**: Generate all planning artifacts in one pass.
+**Purpose**: Fast-forward through remaining planning stages in one pass. Requires an active change with a completed proposal (run `/fab:new` first).
 
-**Flow**: proposal → specs → plan → tasks (+ checklist)
+**Flow**: specs → plan (if warranted) → tasks (+ checklist)
 
 **When to use**:
 - Small, well-understood changes
@@ -93,16 +95,19 @@
 
 **Example**:
 ```
-/fab:ff Add a logout button to the navbar that clears session
+/fab:new Add a logout button to the navbar that clears session
+/fab:ff
 ```
 
 **Behavior**:
-1. Create proposal from description
-2. Generate delta specs (ask clarifying questions inline)
-3. Draft plan (do research inline)
-4. Produce task breakdown
+1. Read `fab/current` to resolve the active change; verify proposal is complete
+2. Generate delta specs (resolve ambiguities inline, no blocking questions)
+3. Evaluate whether a plan is warranted (see "Plan decision" below). If yes, draft plan with inline research. If no, skip directly to tasks
+4. Produce task breakdown (referencing plan if it exists, otherwise referencing specs and proposal directly)
 5. Auto-generate quality checklist
 6. Update status to `tasks: complete`
+
+**Plan decision**: The agent skips `plan.md` when the change is small and the implementation approach is obvious — e.g., single-file changes, straightforward CRUD, or well-known patterns. When skipped, `.status.yaml` records `plan: skipped`. Unlike `/fab:continue`, `/fab:ff` does **not** confirm with the user before skipping — it decides autonomously to maintain the fast-forward flow.
 
 ---
 
@@ -147,13 +152,21 @@
 4. Features match delta spec requirements (spot-check key scenarios from `specs/`)
 5. No spec drift detected (implementation doesn't contradict centralized specs)
 
-**On failure**, the user chooses where to loop back:
-- **Fix code** → `/fab:apply` (implementation bug — re-run uncompleted/fixed tasks)
-- **Revise tasks** → edit `tasks.md`, then `/fab:apply` (missing or wrong tasks)
-- **Revise plan** → `/fab:continue` from plan stage (architecture was wrong)
-- **Revise specs** → `/fab:continue` from specs stage (requirements were wrong or incomplete)
+**On failure**, the agent presents the options and the user chooses where to loop back:
 
-The `.status.yaml` stage is reset to the chosen re-entry point. Existing artifacts at that stage are updated in place, not recreated from scratch.
+- **Fix code** → `/fab:apply`
+  Implementation bug. The agent identifies which tasks need rework, unchecks them in `tasks.md` (marks `- [ ]` again with a `<!-- rework: reason -->` comment), and re-runs `/fab:apply` which picks up the unchecked items.
+
+- **Revise tasks** → edit `tasks.md`, then `/fab:apply`
+  Missing or wrong tasks. The agent adds/modifies tasks in `tasks.md` (new tasks get the next sequential ID). Completed tasks that are unaffected stay `[x]`. Only new or revised tasks are executed.
+
+- **Revise plan** → `/fab:continue` from plan stage
+  Architecture was wrong. The agent updates `plan.md` in place (not recreated from scratch). After the plan is revised, `tasks.md` is regenerated — all tasks are reset to `- [ ]` since the implementation approach changed. The checklist is also regenerated.
+
+- **Revise specs** → `/fab:continue` from specs stage
+  Requirements were wrong or incomplete. Delta specs are updated in place. Plan (if it exists) and tasks are subsequently regenerated. All downstream artifacts are reset.
+
+The `.status.yaml` stage is reset to the chosen re-entry point. The general rule: **artifacts at and after the re-entry point are regenerated or updated; artifacts before it are preserved.**
 
 ---
 
@@ -169,15 +182,19 @@ The `.status.yaml` stage is reset to the chosen re-entry point. Existing artifac
 ```
 
 **Behavior**:
-1. Final validation (verify must pass)
-2. Hydrate delta specs into `fab/specs/`:
+1. **Final validation** — verify must pass (all tasks `[x]`, all checklist items `[x]` or `[N/A]`)
+2. **Concurrent change check** — scan `fab/changes/` for other active changes whose delta specs reference the same centralized spec files. If found, warn the user: *"Change {name} also modifies {spec}. After this archive, that change's delta was written against a now-stale base. Re-verify with `/fab:verify` after switching to it."*
+3. **Hydrate delta specs** into `fab/specs/`:
    The agent reads the delta specs and the current centralized spec, then rewrites the centralized spec to incorporate the changes. The ADDED/MODIFIED/REMOVED markers are **semantic hints to the agent about intent**, not instructions for a text processor:
    - **ADDED** → agent integrates new requirements into the appropriate section
    - **MODIFIED** → agent updates the existing requirement in context, preserving surrounding content
    - **REMOVED** → agent removes the requirement, adjusting related content for coherence
    The agent should minimize edits to unchanged sections to prevent drift over successive archives.
-3. Move change folder to `archive/` (no rename — date is already in the folder name)
-4. Update status to `archived`
+4. **Update status** to `archived` in `.status.yaml`
+5. **Move change folder** to `archive/` (no rename — date is already in the folder name)
+6. **Clear pointer** — delete `fab/current` (no active change)
+
+**Order of operations**: Steps 3–6 are ordered to fail safely. Status is updated *before* the folder move, so if the move is interrupted, the change is marked archived but still in `changes/` — the agent can detect and complete the move on next invocation. The pointer is cleared last so that mid-archive, `/fab:status` still reports the active change rather than "no active change" with a half-hydrated spec.
 
 ---
 
