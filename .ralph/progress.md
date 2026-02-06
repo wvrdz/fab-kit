@@ -329,3 +329,37 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Previous 10 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
   - The skill file is pure markdown (~290 lines) — no executable code, no security concerns
 ---
+
+## [2026-02-06 23:14] - US-012: Create fab-archive.md skill
+Thread:
+Run: 20260206-222820-4396 (iteration 12)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-12.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-12.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 97cf09b feat(fab): create fab-archive.md skill prompt (US-012)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/skills/fab-archive.md` -> PASS
+  - Command: `grep -q '_context.md' fab/.kit/skills/fab-archive.md` -> PASS (references _context.md preamble)
+  - Command: `test -L .claude/skills/fab-archive.md && test -e .claude/skills/fab-archive.md` -> PASS (symlink valid)
+  - Command: All 13 acceptance criteria verified individually -> PASS
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Note: "all skills exist" gate expected to fail — only fab-init through fab-archive created so far; fab-switch and fab-status are US-013
+  - Note: symlinks and bootstrap gates expected to fail — those are US-014 and US-015
+- Files changed:
+  - fab/.kit/skills/fab-archive.md (new)
+  - .claude/skills/fab-archive.md (new symlink -> ../../fab/.kit/skills/fab-archive.md)
+- Implemented: Created fab/.kit/skills/fab-archive.md as comprehensive agent-agnostic markdown skill (~240 lines). Covers: _context.md preamble reference, pre-flight check (abort if fab/current missing, review not done, tasks/checklist incomplete, config missing), full context loading (config+constitution+spec.md+plan.md+proposal+fab/docs/index.md+target centralized docs), 6-step behavior: Step 1 final validation (all tasks [x], all CHK items [x] including N/A), Step 2 concurrent change check (scan fab/changes/ for other active changes referencing same docs, warn but don't block), Step 3 hydration into fab/docs/ with sub-steps for new doc (create from template + add to domain index + add to top-level index), existing doc (semantic Requirements update, minimize edits to unchanged sections), design decisions extraction from plan.md (durable decisions only, skip tactical details, add with change name for traceability), changelog row (most recent first), removed docs handling (deprecation notice, not deletion). Step 4 update .status.yaml (archive: done). Step 5 move change folder to fab/changes/archive/ (no rename). Step 6 delete fab/current. Fail-safe order: status update → folder move → pointer clear. Recovery from interruption documented. Output examples (success, success with concurrent warnings, review not passed). Error handling table covers all negative cases. Key properties table. Created symlink .claude/skills/fab-archive.md -> ../../fab/.kit/skills/fab-archive.md.
+- **Learnings for future iterations:**
+  - SKILLS.md fab-archive section (lines 356-384) is the authoritative spec for behavior
+  - TEMPLATES.md lines 580-588 document the Hydration Rules that archive must follow
+  - Key property: archive is the only skill that modifies fab/docs/ (centralized documentation)
+  - The fail-safe order (status → move → pointer) ensures recoverable state if interrupted mid-archive
+  - Hydration is NOT idempotent — the pre-flight guard (requiring fab/current) prevents re-running on already-archived changes
+  - Previous 11 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
+  - The skill file is pure markdown (~240 lines) — no executable code, no security concerns
+---
