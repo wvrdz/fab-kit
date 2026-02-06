@@ -110,3 +110,31 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - `ralph log` is available at `/opt/homebrew/bin/ralph` — use it for activity logging
   - All quality gates pass with just the _context.md file; skills directory will be populated by US-005 through US-013
 ---
+
+## [2026-02-06 22:43] - US-005: Create fab-init.md skill
+Thread:
+Run: 20260206-222820-4396 (iteration 5)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-5.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 96ef6fa feat(fab): create fab-init.md skill prompt (US-005)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/skills/fab-init.md` -> PASS
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Note: "all skills exist" gate expected to fail — only fab-init.md created so far; other 9 skills are US-006 through US-013
+  - Note: symlinks and bootstrap gates expected to fail — those are US-014 and US-015
+- Files changed:
+  - fab/.kit/skills/fab-init.md (new)
+- Implemented: Created fab/.kit/skills/fab-init.md as comprehensive agent-agnostic markdown skill. Includes: _context.md preamble reference with init-specific exception, pre-flight check (abort if fab/.kit/ missing), Phase 1 structural bootstrap (config.yaml, constitution.md, docs/index.md, changes/, 10 symlinks, .gitignore — all idempotent), Phase 2 source hydration (Notion URLs, Linear URLs, local files — domain mapping, merge logic, index update), output examples (first run, re-run, with sources), idempotency guarantees, error handling table, and Next: /fab:new <description>.
+- **Learnings for future iterations:**
+  - SKILLS.md fab-init section (lines 69-134) is the authoritative spec for behavior
+  - _context.md has an exception for /fab:init — it skips "Always Load" layer since config/constitution don't exist on first run
+  - ARCHITECTURE.md symlink listing (lines 371-383) shows only 9 skills (missing fab-init), but PRD US-015 lists all 10 including fab-init
+  - Previous iterations (1-4) all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
+  - The skill file is pure markdown (329 lines) — no executable code, no security concerns
+---
