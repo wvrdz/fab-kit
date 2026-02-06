@@ -116,6 +116,44 @@
 
 **Design rationale**: OpenSpec's delta format (ADDED/MODIFIED/REMOVED) is the core. SpecKit's GIVEN/WHEN/THEN scenarios and RFC 2119 keywords add precision. MODIFIED requires full replacement text (not a diff) because the agent performs semantic merge during hydration. The "Previous behavior" note is for human reviewers, not the merge.
 
+### Example: Filled Delta Spec
+
+```markdown
+# Authentication Specification Changes
+
+## ADDED Requirements
+
+### Requirement: OAuth2 Provider Support
+The system SHALL support authentication via external OAuth2 providers.
+
+#### Supported Providers
+- Google (OpenID Connect)
+- GitHub (OAuth2)
+
+#### Scenario: OAuth Login Flow
+- GIVEN a user on the login page
+- WHEN they click "Sign in with Google"
+- THEN they are redirected to Google's OAuth consent screen
+- AND upon approval, they are authenticated and redirected back
+
+---
+
+## MODIFIED Requirements
+
+### Requirement: Session Management
+The system SHALL support sessions from multiple auth sources.
+
+**Previous**: Sessions tied to email/password only
+**New**: Sessions may originate from OAuth providers or email/password
+
+---
+
+## REMOVED Requirements
+
+### Requirement: Email-Only Registration
+<!-- Deprecated: Users can now register via OAuth without email -->
+```
+
 ---
 
 ## plan.md
@@ -317,6 +355,51 @@ For larger changes that span multiple user stories, the agent should adapt by sp
 ```
 
 **Design rationale**: Unlike SpecKit's checklist (which tests requirement *quality* — "are the specs well-written?"), Fab's checklist tests *implementation fidelity* — "does the code match the specs?" This is because Fab has explicit spec review during the specs stage, making a separate requirement-quality checklist redundant. The categories map directly to delta operations (ADDED -> completeness, MODIFIED -> correctness, REMOVED -> cleanup) plus cross-cutting concerns.
+
+### Checklist Generation
+
+When `/fab:continue` or `/fab:ff` creates `tasks.md`, it also generates `checklists/quality.md`. Generation is contextual — items are derived from:
+- The delta specs (what's being added/modified/removed)
+- The plan (technical decisions)
+- Project constitution (quality standards)
+
+### Example: Filled Quality Checklist
+
+```markdown
+# Quality Checklist: 260115-a7k2-add-oauth
+
+**Generated**: 2026-01-16
+**Change**: 260115-a7k2-add-oauth
+**Spec**: specs/auth/authentication.md
+
+---
+
+## Functional Completeness
+- [ ] CHK-001 All ADDED requirements have corresponding tasks
+- [ ] CHK-002 All MODIFIED requirements update existing behavior correctly
+- [ ] CHK-003 All REMOVED requirements are actually removed
+
+## Security
+- [ ] CHK-004 OAuth tokens stored securely (not in localStorage)
+- [ ] CHK-005 CSRF protection on OAuth callback
+- [ ] CHK-006 Token refresh logic handles expiry
+
+## Testing
+- [ ] CHK-007 Happy path covered
+- [ ] CHK-008 Error states handled (provider unavailable, user denies)
+- [ ] CHK-009 Edge cases addressed
+
+## UX
+- [ ] CHK-010 Loading states during OAuth redirect
+- [ ] CHK-011 Clear error messages on failure
+- [ ] CHK-012 Logout properly clears OAuth session
+
+---
+
+## Notes
+- Check items as you verify: `[x]`
+- All items must pass before `/fab:archive`
+```
 
 ---
 
