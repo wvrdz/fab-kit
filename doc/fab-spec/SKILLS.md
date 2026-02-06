@@ -4,16 +4,16 @@
 
 ---
 
-## Terminology: "specs" vs "deltas"
+## Terminology: "spec" vs "docs"
 
-To avoid confusion, Fab uses two distinct terms:
+Fab uses two distinct terms to avoid confusion:
 
 | Term | Location | Meaning |
 |------|----------|---------|
-| **Centralized specs** | `fab/specs/` | Source-of-truth specifications for the system. Updated only by `/fab:archive` hydration. |
-| **Deltas** | `fab/changes/{name}/deltas/` | Change-specific specification diffs. Describe what's ADDED, MODIFIED, or REMOVED relative to the centralized specs. |
+| **Centralized docs** | `fab/docs/` | Source-of-truth documentation for the system. Contains both requirements (what) and durable design decisions (why). Updated only by `/fab:archive` hydration. |
+| **spec.md** | `fab/changes/{name}/spec.md` | Change-level specification. Describes the requirements relevant to this change. |
 
-The stage named "specs" refers to the *activity* of writing specifications — its output is delta files in `deltas/`.
+The stage named "specs" refers to the *activity* of writing the specification — its output is `spec.md` in the change folder.
 
 ---
 
@@ -27,12 +27,12 @@ Every skill that generates or validates artifacts MUST load relevant context bef
 
 **Change context** (loaded by skills operating on an active change):
 - `.status.yaml` — current stage, progress
-- All completed artifacts in the active change folder (e.g., `proposal.md`, `deltas/`, `plan.md`)
+- All completed artifacts in the active change folder (e.g., `proposal.md`, `spec.md`, `plan.md`)
 
-**Centralized spec lookup** (loaded when writing or validating deltas):
-- Read `fab/specs/index.md` to understand the spec landscape
-- Read the specific centralized spec(s) referenced by the proposal's "Affected Specs" section
-- This ensures deltas are written against the *actual* current state, not assumptions
+**Centralized doc lookup** (loaded when writing or validating specs):
+- Read `fab/docs/index.md` to understand the doc landscape
+- Read the specific centralized doc(s) referenced by the proposal's "Affected Docs" section
+- This ensures specs are written against the *actual* current state, not assumptions
 
 **Source code** (loaded during implementation and review):
 - Read relevant source files referenced in the plan's "File Changes" section or the task descriptions
@@ -50,7 +50,7 @@ Each skill section below lists its specific context requirements under a **Conte
 - `fab/.kit/` — engine directory (templates, skills, scripts)
 - `fab/config.yaml` — project configuration (prompts for name, tech stack, conventions)
 - `fab/memory/constitution.md` — project principles and constraints (generated from conversation or existing docs)
-- `fab/specs/` — empty, ready for centralized specs
+- `fab/docs/` — empty, ready for centralized docs
 - `fab/changes/` — empty, ready for change folders
 - `.claude/skills/` — symlinks pointing into `fab/.kit/skills/`
 
@@ -59,7 +59,7 @@ Each skill section below lists its specific context requirements under a **Conte
 /fab:init
 → "What's the project name?"
 → "Describe the tech stack and conventions..."
-→ "fab/ initialized with config, templates, and empty specs."
+→ "fab/ initialized with config, templates, and empty docs."
 ```
 
 **Behavior**:
@@ -69,7 +69,7 @@ Each skill section below lists its specific context requirements under a **Conte
 4. Generate `fab/config.yaml` from responses
 5. Generate `fab/memory/constitution.md` from project context (README, existing docs, conversation)
 6. Create symlinks in `.claude/skills/` pointing to `fab/.kit/skills/`
-7. Optionally scaffold initial specs from existing code or documentation
+7. Optionally scaffold initial docs from existing code or documentation
 
 ---
 
@@ -77,7 +77,7 @@ Each skill section below lists its specific context requirements under a **Conte
 
 **Purpose**: Start a new change from a natural language description.
 
-**Context**: config, constitution, `fab/specs/index.md` (to understand existing spec landscape)
+**Context**: config, constitution, `fab/docs/index.md` (to understand existing doc landscape)
 
 **Creates**:
 - Change folder named `{YYMMDD}-{XXXX}-{slug}`
@@ -121,14 +121,14 @@ Each skill section below lists its specific context requirements under a **Conte
 **Purpose**: Create the next artifact in sequence.
 
 **Context** (varies by target stage):
-- **Specs stage**: config, constitution, `proposal.md`, target centralized spec(s) from `fab/specs/`
-- **Plan stage**: above + completed `deltas/`
+- **Specs stage**: config, constitution, `proposal.md`, target centralized doc(s) from `fab/docs/`
+- **Plan stage**: above + completed `spec.md`
 - **Tasks stage**: above + `plan.md` (if not skipped)
 
 **Example**:
 ```
 /fab:continue
-→ "Stage: proposal (done). Next: Create delta specs."
+→ "Stage: proposal (done). Next: Create spec.md."
 ```
 
 **Behavior**:
@@ -146,7 +146,7 @@ Each skill section below lists its specific context requirements under a **Conte
 
 **Purpose**: Fast-forward through remaining planning stages in one pass. Requires an active change with a completed proposal (run `/fab:new` first).
 
-**Context**: config, constitution, `proposal.md`, target centralized spec(s) from `fab/specs/` (all loaded upfront since ff traverses all planning stages)
+**Context**: config, constitution, `proposal.md`, target centralized doc(s) from `fab/docs/` (all loaded upfront since ff traverses all planning stages)
 
 **Flow**: specs → plan (if warranted) → tasks (+ checklist)
 
@@ -164,9 +164,9 @@ Each skill section below lists its specific context requirements under a **Conte
 **Behavior**:
 1. Read `fab/current` to resolve the active change; verify proposal is complete
 2. **Frontload questions** — scan the proposal for ambiguities across *all* planning stages (specs, plan, tasks). Collect everything that needs user input into a single batch of questions. Ask once, then proceed without further interruption. The goal: one Q&A round, then heads-down generation.
-3. Generate delta specs (incorporating answers from step 2)
+3. Generate `spec.md` (incorporating answers from step 2)
 4. Evaluate whether a plan is warranted (see "Plan decision" below). If yes, draft plan with inline research. If no, skip directly to tasks
-5. Produce task breakdown (referencing plan if it exists, otherwise referencing deltas and proposal directly)
+5. Produce task breakdown (referencing plan if it exists, otherwise referencing spec and proposal directly)
 6. Auto-generate quality checklist
 7. Update status to `tasks: done`
 
@@ -180,16 +180,16 @@ Each skill section below lists its specific context requirements under a **Conte
 
 **Context** (varies by current stage):
 - **Proposal**: config, constitution, `proposal.md`
-- **Specs**: above + `proposal.md`, target centralized spec(s) from `fab/specs/`
-- **Plan**: above + `deltas/`, `plan.md`
+- **Specs**: above + `proposal.md`, target centralized doc(s) from `fab/docs/`
+- **Plan**: above + `spec.md`, `plan.md`
 - **Tasks**: above + `plan.md` (if not skipped), `tasks.md`
 
 **Example**:
 ```
 /fab:clarify
-→ "Stage: specs (active). Reviewing deltas for gaps..."
+→ "Stage: specs (active). Reviewing spec.md for gaps..."
 → "Found 2 [NEEDS CLARIFICATION] markers. Resolving..."
-→ "Added 3 missing scenarios to deltas/auth/authentication.md"
+→ "Added 3 missing scenarios to spec.md"
 ```
 
 **When to use**:
@@ -219,7 +219,7 @@ Each skill section below lists its specific context requirements under a **Conte
 
 **Purpose**: Execute tasks from `tasks.md`.
 
-**Context**: config, constitution, `tasks.md`, `deltas/`, `plan.md` (if exists), relevant source code (files referenced in tasks)
+**Context**: config, constitution, `tasks.md`, `spec.md`, `plan.md` (if exists), relevant source code (files referenced in tasks)
 
 **Example**:
 ```
@@ -243,7 +243,7 @@ Each skill section below lists its specific context requirements under a **Conte
 
 **Purpose**: Validate implementation against specs and checklists.
 
-**Context**: config, constitution, `tasks.md`, `checklists/quality.md`, `deltas/`, target centralized spec(s) from `fab/specs/`, relevant source code (files touched by the change)
+**Context**: config, constitution, `tasks.md`, `checklists/quality.md`, `spec.md`, target centralized doc(s) from `fab/docs/`, relevant source code (files touched by the change)
 
 **Example**:
 ```
@@ -257,8 +257,8 @@ Each skill section below lists its specific context requirements under a **Conte
 1. All tasks in `tasks.md` marked `[x]`
 2. All checklist items in `checklists/quality.md` verified and checked off — the agent re-reads each `CHK-*` item, inspects the relevant code/tests, and marks `[x]` or reports failure
 3. Run tests affected by the change (scoped to modules touched, not the full suite)
-4. Features match delta spec requirements (spot-check key scenarios from `deltas/`)
-5. No spec drift detected (implementation doesn't contradict centralized specs)
+4. Features match spec requirements (spot-check key scenarios from `spec.md`)
+5. No doc drift detected (implementation doesn't contradict centralized docs)
 
 **On failure**, the agent presents the options and the user chooses where to loop back:
 
@@ -272,7 +272,7 @@ Each skill section below lists its specific context requirements under a **Conte
   Architecture was wrong. The agent updates `plan.md` in place (not recreated from scratch). After the plan is revised, `tasks.md` is regenerated — all tasks are reset to `- [ ]` since the implementation approach changed. The checklist is also regenerated.
 
 - **Revise specs** → `/fab:continue` from specs stage
-  Requirements were wrong or incomplete. Delta specs are updated in place. Plan (if it exists) and tasks are subsequently regenerated. All downstream artifacts are reset.
+  Requirements were wrong or incomplete. `spec.md` is updated in place. Plan (if it exists) and tasks are subsequently regenerated. All downstream artifacts are reset.
 
 The `.status.yaml` stage is reset to the chosen re-entry point. The general rule: **artifacts at and after the re-entry point are regenerated or updated; artifacts before it are preserved.**
 
@@ -280,26 +280,25 @@ The `.status.yaml` stage is reset to the chosen re-entry point. The general rule
 
 ## `/fab:archive`
 
-**Purpose**: Complete the change and hydrate into centralized specs.
+**Purpose**: Complete the change and hydrate into centralized docs.
 
-**Context**: `deltas/`, target centralized spec(s) from `fab/specs/`, `fab/specs/index.md` and relevant domain indexes
+**Context**: `spec.md`, `plan.md` (if exists), target centralized doc(s) from `fab/docs/`, `fab/docs/index.md` and relevant domain indexes
 
 **Example**:
 ```
 /fab:archive
 → "Archived to fab/changes/archive/260115-a7k2-add-oauth/"
-→ "Hydrated specs: fab/specs/auth/authentication.md"
+→ "Hydrated docs: fab/docs/auth/authentication.md"
 ```
 
 **Behavior**:
 1. **Final validation** — review must pass (all tasks `[x]`, all checklist items `[x]` including N/A items)
-2. **Concurrent change check** — scan `fab/changes/` for other active changes whose delta specs reference the same centralized spec files. If found, warn the user: *"Change {name} also modifies {spec}. After this archive, that change's delta was written against a now-stale base. Re-review with `/fab:review` after switching to it."*
-3. **Hydrate delta specs** into `fab/specs/`:
-   The agent reads the delta specs and the current centralized spec, then rewrites the centralized spec to incorporate the changes. The ADDED/MODIFIED/REMOVED markers are **semantic hints to the agent about intent**, not instructions for a text processor:
-   - **ADDED** → agent integrates new requirements into the appropriate section
-   - **MODIFIED** → agent updates the existing requirement in context, preserving surrounding content
-   - **REMOVED** → agent removes the requirement, adjusting related content for coherence
-   The agent should minimize edits to unchanged sections to prevent drift over successive archives.
+2. **Concurrent change check** — scan `fab/changes/` for other active changes whose specs reference the same centralized doc files. If found, warn the user: *"Change {name} also modifies {doc}. After this archive, that change's spec was written against a now-stale base. Re-review with `/fab:review` after switching to it."*
+3. **Hydrate into `fab/docs/`**:
+   The agent reads `spec.md`, `plan.md` (if it exists), and the current centralized doc, then rewrites the centralized doc to incorporate the changes:
+   - **From spec.md** → integrate new/changed requirements and scenarios into the Requirements section. Remove requirements that the spec explicitly deprecates.
+   - **From plan.md** → extract durable design decisions (from the Decisions section) into the Design Decisions section of the centralized doc. Skip tactical details (file paths, setup steps, library install commands).
+   The agent compares against the existing doc to determine what's new vs changed vs removed — no explicit delta markers needed. Minimize edits to unchanged sections to prevent drift over successive archives.
 4. **Update status** to `archived` in `.status.yaml`
 5. **Move change folder** to `archive/` (no rename — date is already in the folder name)
 6. **Clear pointer** — delete `fab/current` (no active change)

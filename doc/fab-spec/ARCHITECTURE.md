@@ -12,7 +12,7 @@ project/
 │   ├── .kit/                       # Engine — replaceable upstream, rarely touched
 │   │   ├── templates/
 │   │   │   ├── proposal.md
-│   │   │   ├── delta.md
+│   │   │   ├── spec.md
 │   │   │   ├── plan.md
 │   │   │   ├── tasks.md
 │   │   │   └── checklist.md
@@ -33,8 +33,8 @@ project/
 │   ├── memory/
 │   │   └── constitution.md         # Project principles & constraints
 │   ├── current                     # Pointer file (contains active change name)
-│   ├── specs/                      # Centralized source of truth
-│   │   ├── index.md               # Top-level spec index
+│   ├── docs/                       # Centralized source of truth
+│   │   ├── index.md               # Top-level doc index
 │   │   ├── auth/
 │   │   │   ├── index.md           # Domain index
 │   │   │   └── authentication.md
@@ -46,9 +46,7 @@ project/
 │       ├── 260115-a7k2-add-oauth/  # Active change
 │       │   ├── .status.yaml        # Stage tracking
 │       │   ├── proposal.md
-│       │   ├── deltas/
-│       │   │   └── auth/
-│       │   │       └── authentication.md  # Delta spec
+│       │   ├── spec.md              # What's changing (requirements)
 │       │   ├── plan.md
 │       │   ├── tasks.md
 │       │   └── checklists/
@@ -151,6 +149,18 @@ fi
 
 ---
 
+## Abandoning a Change
+
+To discard a change that won't be completed:
+
+1. Delete the change folder: `rm -rf fab/changes/{name}/`
+2. Clear the pointer (if it's the active change): `rm fab/current`
+3. Optionally delete the associated git branch: `git branch -d {branch}`
+
+There is no `/fab:abandon` skill — this is a manual operation. If you want to preserve context about *why* the change was dropped, move the folder to `archive/` instead of deleting it and set `stage: abandoned` in `.status.yaml`.
+
+---
+
 ## Status Tracking (.status.yaml)
 
 Every change folder contains a `.status.yaml` manifest:
@@ -204,7 +214,7 @@ stages:
     generates: proposal.md
     required: true
   - id: specs
-    generates: deltas/*.md
+    generates: spec.md
     requires: [proposal]
     required: true
   - id: plan
@@ -224,9 +234,9 @@ stages:
     requires: [review]
 
 checklist:
-  # Default categories map to delta operations + cross-cutting concerns:
-  #   functional_completeness (ADDED), behavioral_correctness (MODIFIED),
-  #   removal_verification (REMOVED), scenario_coverage, edge_cases, security
+  # Default categories map to spec requirements + cross-cutting concerns:
+  #   functional_completeness, behavioral_correctness, scenario_coverage,
+  #   edge_cases, security
   # Add project-specific categories below:
   extra_categories:
     - performance
@@ -245,7 +255,7 @@ rules:
 
 ## Project Constitution (`fab/memory/constitution.md`)
 
-The constitution is the **architectural DNA** of a Fab project. It defines immutable principles that govern how specifications become code. Inspired by SpecKit's constitutional system, adapted for Fab's lighter-weight delta workflow.
+The constitution is the **architectural DNA** of a Fab project. It defines immutable principles that govern how specifications become code. Inspired by SpecKit's constitutional system, adapted for Fab's lightweight workflow.
 
 **Purpose**:
 1. **Enforce discipline** — prevent over-engineering and architectural drift
@@ -276,7 +286,7 @@ The constitution is the **architectural DNA** of a Fab project. It defines immut
 **How skills use it**:
 - `/fab:init` generates it from project context (README, existing docs, conversation with user)
 - `/fab:continue` and `/fab:ff` load it as context when generating **plan**, **tasks**, and **checklist** artifacts
-- `/fab:review` checks implementation against constitutional principles (not just delta specs)
+- `/fab:review` checks implementation against constitutional principles (not just the spec)
 - Constitution violations found during review are flagged as high-severity issues
 
 **Relationship to `config.yaml`**:
@@ -319,7 +329,7 @@ fab/current          # Local working state — each developer has their own acti
 ```
 
 **What to commit** (shared with team):
-- `fab/config.yaml`, `fab/memory/`, `fab/specs/`, `fab/.kit/` — project configuration and specs
+- `fab/config.yaml`, `fab/memory/`, `fab/docs/`, `fab/.kit/` — project configuration and docs
 - `fab/changes/` — change artifacts (proposals, specs, plans, tasks)
 
 **What to ignore** (local state):
@@ -362,7 +372,7 @@ Same pattern — symlinks from the agent's convention directory into `fab/.kit/s
 **What's preserved** (lives outside `.kit/`, never touched by updates):
 - `fab/config.yaml` — project configuration
 - `fab/memory/` — project principles and constraints
-- `fab/specs/` — centralized specifications
+- `fab/docs/` — centralized documentation
 - `fab/changes/` — active and archived changes
 - `fab/current` — active change pointer
 

@@ -74,20 +74,19 @@ last_updated: {ISO_8601_DATETIME}
 
 <!-- Be specific about new capabilities, modifications, or removals. Use bullets. -->
 
-## Affected Specs
+## Affected Docs
 
-### New Specs
-<!-- Specs being introduced. Each creates a delta file in this change's deltas/ folder.
-     Use kebab-case identifiers matching the centralized spec path. -->
-- `{domain}/{spec-name}`: {brief description}
+### New Docs
+<!-- Docs being introduced. Use kebab-case identifiers matching the centralized doc path. -->
+- `{domain}/{doc-name}`: {brief description}
 
-### Modified Specs
-<!-- Existing specs whose requirements are changing. Reference by path in fab/specs/.
-     Only list if spec-level behavior changes — implementation-only changes don't need deltas. -->
-- `{domain}/{spec-name}`: {what requirement is changing}
+### Modified Docs
+<!-- Existing docs whose requirements are changing. Reference by path in fab/docs/.
+     Only list if spec-level behavior changes — implementation-only changes don't need spec updates. -->
+- `{domain}/{doc-name}`: {what requirement is changing}
 
-### Removed Specs
-<!-- Specs being fully deprecated/removed. Rare — usually individual requirements are removed via delta. -->
+### Removed Docs
+<!-- Docs being fully deprecated/removed. Rare — usually individual requirements are removed via spec. -->
 
 ## Impact
 
@@ -103,29 +102,32 @@ last_updated: {ISO_8601_DATETIME}
 - [DEFERRED] {question}
 ```
 
-**Design rationale**: OpenSpec's concise Why/What/Impact structure, plus explicit spec mapping (which delta files will be created). SpecKit's capped clarification markers prevent question-paralysis — max 3 blocking questions forces the agent to make informed guesses.
+**Design rationale**: OpenSpec's concise Why/What/Impact structure, plus explicit doc mapping (which centralized docs will be affected). SpecKit's capped clarification markers prevent question-paralysis — max 3 blocking questions forces the agent to make informed guesses.
 
 ---
 
-## delta.md (Delta Spec)
+## spec.md (Change Specification)
 
 ```markdown
-# {Domain} Specification Changes
+# Spec: {CHANGE_NAME}
 
 **Change**: {YYMMDD-XXXX-slug}
-**Base spec**: `fab/specs/{domain}/{spec-name}.md`
+**Created**: {DATE}
+**Affected docs**: `fab/docs/{domain}/{doc-name}.md`
 
 <!--
-  DELTA SPEC FORMAT
-  This file describes CHANGES relative to the centralized spec.
-  Only include sections that apply (omit empty ADDED/MODIFIED/REMOVED sections).
+  CHANGE SPECIFICATION
+  Describes the requirements relevant to this change. No delta markers needed —
+  the agent compares against existing centralized docs during hydration to
+  determine what's new, changed, or removed.
 
   Requirements use RFC 2119 keywords: MUST/SHALL (mandatory), SHOULD (recommended), MAY (optional).
   Every requirement MUST have at least one scenario.
   Scenarios use GIVEN/WHEN/THEN format.
+  Organize by domain section when the change touches multiple domains.
 -->
 
-## ADDED Requirements
+## {Domain}: {Topic}
 
 ### Requirement: {Requirement Name}
 {Requirement text using SHALL/MUST/SHOULD/MAY}
@@ -141,40 +143,35 @@ last_updated: {ISO_8601_DATETIME}
 - **WHEN** {action}
 - **THEN** {outcome}
 
----
+### Requirement: {Another Requirement}
+{Requirement text}
 
-## MODIFIED Requirements
-
-### Requirement: {Existing Requirement Name}
-<!-- Must include the FULL updated requirement text, not just the diff.
-     The agent uses this complete block to replace the existing requirement during hydration. -->
-
-{Updated requirement text}
-
-**Previous behavior**: {Brief summary of what changed, for reviewer context}
-
-#### Scenario: {Updated or New Scenario}
+#### Scenario: {Scenario Name}
 - **GIVEN** {precondition}
 - **WHEN** {action}
-- **THEN** {new expected outcome}
+- **THEN** {outcome}
 
----
+## Deprecated Requirements
 
-## REMOVED Requirements
+<!-- Only include if this change removes existing requirements. -->
 
-### Requirement: {Requirement Name}
+### {Requirement Name}
 **Reason**: {Why this requirement is being removed}
 **Migration**: {What replaces it, or "N/A" if simply deprecated}
 ```
 
-**Design rationale**: OpenSpec's delta format (ADDED/MODIFIED/REMOVED) is the core. SpecKit's GIVEN/WHEN/THEN scenarios and RFC 2119 keywords add precision. MODIFIED requires full replacement text (not a diff) because the agent performs semantic merge during hydration. The "Previous behavior" note is for human reviewers, not the merge.
+**Design rationale**: A single `spec.md` replaces the previous multi-file delta format. Without ADDED/MODIFIED/REMOVED markers, the spec reads as a straightforward requirements document — the agent infers what's new vs changed by comparing against the existing centralized docs during hydration. SpecKit's GIVEN/WHEN/THEN scenarios and RFC 2119 keywords provide precision. Domain sections within the file keep multi-domain changes organized without requiring a directory structure.
 
-### Example: Filled Delta Spec
+### Example: Filled Spec
 
 ```markdown
-# Authentication Specification Changes
+# Spec: 260115-a7k2-add-oauth
 
-## ADDED Requirements
+**Change**: 260115-a7k2-add-oauth
+**Created**: 2026-01-15
+**Affected docs**: `fab/docs/auth/authentication.md`
+
+## Auth: OAuth2 Support
 
 ### Requirement: OAuth2 Provider Support
 The system SHALL support authentication via external OAuth2 providers.
@@ -184,27 +181,24 @@ The system SHALL support authentication via external OAuth2 providers.
 - GitHub (OAuth2)
 
 #### Scenario: OAuth Login Flow
-- GIVEN a user on the login page
-- WHEN they click "Sign in with Google"
-- THEN they are redirected to Google's OAuth consent screen
-- AND upon approval, they are authenticated and redirected back
-
----
-
-## MODIFIED Requirements
+- **GIVEN** a user on the login page
+- **WHEN** they click "Sign in with Google"
+- **THEN** they are redirected to Google's OAuth consent screen
+- **AND** upon approval, they are authenticated and redirected back
 
 ### Requirement: Session Management
-The system SHALL support sessions from multiple auth sources.
+The system SHALL support sessions from multiple auth sources. Sessions MAY originate from OAuth providers or email/password.
 
-**Previous**: Sessions tied to email/password only
-**New**: Sessions may originate from OAuth providers or email/password
+#### Scenario: Mixed Auth Sessions
+- **GIVEN** a user authenticated via Google OAuth
+- **WHEN** they view their active sessions
+- **THEN** the session shows the auth source as "Google"
 
----
+## Deprecated Requirements
 
-## REMOVED Requirements
-
-### Requirement: Email-Only Registration
-<!-- Deprecated: Users can now register via OAuth without email -->
+### Email-Only Registration
+**Reason**: Users can now register via OAuth without providing an email
+**Migration**: Registration accepts both OAuth and email/password
 ```
 
 ---
@@ -217,7 +211,7 @@ The system SHALL support sessions from multiple auth sources.
 **Change**: {YYMMDD-XXXX-slug}
 **Created**: {DATE}
 **Proposal**: `proposal.md`
-**Delta specs**: `deltas/`
+**Spec**: `spec.md`
 
 ## Summary
 
@@ -226,7 +220,7 @@ The system SHALL support sessions from multiple auth sources.
 ## Goals / Non-Goals
 
 **Goals:**
-<!-- What this implementation aims to achieve. Derived from the delta specs. -->
+<!-- What this implementation aims to achieve. Derived from spec.md. -->
 
 **Non-Goals:**
 <!-- What is explicitly out of scope. Prevents scope creep during apply. -->
@@ -283,7 +277,7 @@ The system SHALL support sessions from multiple auth sources.
 
 **Change**: {YYMMDD-XXXX-slug}
 **Plan**: `plan.md` <!-- Omit this line if plan was skipped -->
-**Delta specs**: `deltas/`
+**Spec**: `spec.md`
 **Proposal**: `proposal.md` <!-- Include when plan was skipped, for traceability -->
 
 <!--
@@ -339,7 +333,7 @@ The system SHALL support sessions from multiple auth sources.
 - T006 is independent, can run alongside T004-T005
 ```
 
-**Design rationale**: Simpler than SpecKit's user-story-per-phase structure — Fab changes tend to be smaller and more focused than greenfield features. OpenSpec's flat numbered groups (1.1, 1.2) were too minimal for dependency tracking, so we keep SpecKit's `[P]` parallel markers and sequential task IDs. The execution order section replaces SpecKit's elaborate dependency tree with a concise "only non-obvious deps" summary. Phases are by implementation concern (setup/core/integration/polish), not by user story, since delta changes usually touch one capability.
+**Design rationale**: Simpler than SpecKit's user-story-per-phase structure — Fab changes tend to be smaller and more focused than greenfield features. OpenSpec's flat numbered groups (1.1, 1.2) were too minimal for dependency tracking, so we keep SpecKit's `[P]` parallel markers and sequential task IDs. The execution order section replaces SpecKit's elaborate dependency tree with a concise "only non-obvious deps" summary. Phases are by implementation concern (setup/core/integration/polish), not by user story, since changes usually touch one capability.
 
 For larger changes that span multiple user stories, the agent should adapt by splitting Phase 2 into per-story sub-phases, following SpecKit's pattern:
 
@@ -360,14 +354,14 @@ For larger changes that span multiple user stories, the agent should adapt by sp
 
 **Change**: {YYMMDD-XXXX-slug}
 **Generated**: {DATE}
-**Delta specs**: `deltas/`
+**Spec**: `spec.md`
 
 <!--
   AUTO-GENERATED by /fab:continue or /fab:ff at the tasks stage.
 
-  This checklist validates that the IMPLEMENTATION matches the SPECS.
+  This checklist validates that the IMPLEMENTATION matches the SPEC.
   Items are derived from:
-    1. Delta specs — every ADDED/MODIFIED requirement should have coverage
+    1. spec.md — every requirement should have coverage
     2. Plan decisions — technical choices should be reflected in code
     3. Project constitution — project-wide quality standards
 
@@ -376,20 +370,20 @@ For larger changes that span multiple user stories, the agent should adapt by sp
 -->
 
 ## Functional Completeness
-<!-- Every ADDED requirement has working implementation -->
+<!-- Every requirement in spec.md has working implementation -->
 - [ ] CHK-001 {requirement name}: {specific verifiable criterion}
 - [ ] CHK-002 {requirement name}: {criterion}
 
 ## Behavioral Correctness
-<!-- Every MODIFIED requirement behaves as specified, not as before -->
+<!-- Changed requirements behave as specified, not as before -->
 - [ ] CHK-003 {requirement name}: {what changed and how to verify}
 
 ## Removal Verification
-<!-- Every REMOVED requirement is actually gone -->
+<!-- Every deprecated requirement is actually gone -->
 - [ ] CHK-004 {requirement name}: {confirm removed, no dead code}
 
 ## Scenario Coverage
-<!-- Key scenarios from delta specs have been exercised -->
+<!-- Key scenarios from spec.md have been exercised -->
 - [ ] CHK-005 {scenario name}: {how to verify — test exists, manual check, etc.}
 - [ ] CHK-006 {scenario name}: {verification method}
 
@@ -408,12 +402,12 @@ For larger changes that span multiple user stories, the agent should adapt by sp
 - If an item is not applicable, mark checked and prefix with **N/A**: `- [x] CHK-008 **N/A**: {reason}`
 ```
 
-**Design rationale**: Unlike SpecKit's checklist (which tests requirement *quality* — "are the specs well-written?"), Fab's checklist tests *implementation fidelity* — "does the code match the specs?" This is because Fab has explicit spec review during the specs stage, making a separate requirement-quality checklist redundant. The categories map directly to delta operations (ADDED -> completeness, MODIFIED -> correctness, REMOVED -> cleanup) plus cross-cutting concerns.
+**Design rationale**: Unlike SpecKit's checklist (which tests requirement *quality* — "are the specs well-written?"), Fab's checklist tests *implementation fidelity* — "does the code match the spec?" This is because Fab has explicit spec review during the specs stage, making a separate requirement-quality checklist redundant. The categories cover completeness, correctness, cleanup, and cross-cutting concerns.
 
 ### Checklist Generation
 
 When `/fab:continue` or `/fab:ff` creates `tasks.md`, it also generates `checklists/quality.md`. Generation is contextual — items are derived from:
-- The delta specs (what's being added/modified/removed)
+- `spec.md` (requirements for this change)
 - The plan (technical decisions)
 - Project constitution (quality standards)
 
@@ -424,7 +418,7 @@ When `/fab:continue` or `/fab:ff` creates `tasks.md`, it also generates `checkli
 
 **Generated**: 2026-01-16
 **Change**: 260115-a7k2-add-oauth
-**Delta specs**: deltas/auth/authentication.md
+**Spec**: spec.md
 
 ---
 
@@ -462,18 +456,18 @@ When `/fab:continue` or `/fab:ff` creates `tasks.md`, it also generates `checkli
 
 ---
 
-## Centralized Spec Format (`fab/specs/`)
+## Centralized Doc Format (`fab/docs/`)
 
-Centralized specs are the **source of truth** for what the system does. They are organized hierarchically with index files for navigation.
+Centralized docs are the **source of truth** for what the system does and why it works the way it does. They combine requirements (from `spec.md`) and durable design decisions (from `plan.md`), organized hierarchically with index files for navigation.
 
 ### Directory Structure
 
 ```
-fab/specs/
+fab/docs/
 ├── index.md                    # Top-level index: lists all domains
 ├── auth/
-│   ├── index.md                # Domain index: lists all specs in auth/
-│   ├── authentication.md       # Individual spec
+│   ├── index.md                # Domain index: lists all docs in auth/
+│   ├── authentication.md       # Individual doc
 │   └── authorization.md
 ├── payments/
 │   ├── index.md
@@ -484,42 +478,42 @@ fab/specs/
     └── registration.md
 ```
 
-### Top-Level Index (`fab/specs/index.md`)
+### Top-Level Index (`fab/docs/index.md`)
 
 ```markdown
-# Specifications Index
+# Documentation Index
 
-> Source of truth for system behavior. Updated by `/fab:archive` hydration.
+> Source of truth for system behavior and design. Updated by `/fab:archive` hydration.
 
-| Domain | Description | Specs |
-|--------|-------------|-------|
+| Domain | Description | Docs |
+|--------|-------------|------|
 | [auth](auth/index.md) | Authentication and authorization | authentication, authorization |
 | [payments](payments/index.md) | Payment processing and billing | checkout, refunds |
 | [users](users/index.md) | User management | registration |
 ```
 
-### Domain Index (`fab/specs/{domain}/index.md`)
+### Domain Index (`fab/docs/{domain}/index.md`)
 
 ```markdown
-# {Domain} Specifications
+# {Domain} Documentation
 
-| Spec | Description | Last Updated |
-|------|-------------|-------------|
+| Doc | Description | Last Updated |
+|-----|-------------|-------------|
 | [authentication](authentication.md) | User login, session management, OAuth | {DATE} |
 | [authorization](authorization.md) | Roles, permissions, access control | {DATE} |
 ```
 
-### Individual Spec (`fab/specs/{domain}/{name}.md`)
+### Individual Doc (`fab/docs/{domain}/{name}.md`)
 
 ```markdown
-# {Spec Name} Specification
+# {Doc Name}
 
 **Domain**: {domain}
 **Last hydrated**: {DATE} (from {change-name})
 
 ## Overview
 
-<!-- 1-2 sentences describing what this spec covers. -->
+<!-- 1-2 sentences describing what this doc covers. -->
 
 ## Requirements
 
@@ -539,6 +533,17 @@ fab/specs/
 - **WHEN** {action}
 - **THEN** {expected outcome}
 
+## Design Decisions
+
+<!-- Durable architectural decisions extracted from plan.md during hydration.
+     Only decisions with lasting relevance — skip tactical implementation details. -->
+
+### {Decision Title}
+**Decision**: {chosen approach}
+**Why**: {rationale}
+**Rejected**: {alternative and why it was worse}
+*Introduced by*: {change-name}
+
 ## History
 
 <!-- Auto-maintained by /fab:archive. Most recent first. -->
@@ -548,13 +553,14 @@ fab/specs/
 | {change-name} | {DATE} | {one-line summary of what changed} |
 ```
 
-**Design rationale**: The index-based hierarchy solves discoverability — agents and humans can navigate from top-level down to any requirement without scanning folders. The History table in each spec provides traceability back to the change that introduced each modification, which is critical for understanding *why* a requirement exists. Domain indexes include "Last Updated" so stale specs are visible at a glance.
+**Design rationale**: The index-based hierarchy solves discoverability — agents and humans can navigate from top-level down to any requirement without scanning folders. The Design Decisions section captures durable "why" context from plans, so developers don't need to dig through archived changes to understand architectural choices. The History table provides traceability back to the change that introduced each modification. Domain indexes include "Last Updated" so stale docs are visible at a glance.
 
 ### Hydration Rules
 
-When `/fab:archive` hydrates delta specs into centralized specs:
+When `/fab:archive` hydrates `spec.md` and `plan.md` into centralized docs:
 
-1. **New spec file**: If the delta references a spec that doesn't exist yet, create it from the individual spec template and add it to the domain index. If the domain doesn't exist, create the domain folder and add it to the top-level index.
-2. **Existing spec file**: Read the delta's ADDED/MODIFIED/REMOVED sections and update the centralized spec semantically (not mechanically). Minimize edits to unchanged sections.
-3. **Index updates**: Update domain index "Last Updated" column. Add new entries if new specs were created.
-4. **History row**: Append a row to the spec's History table with the change name, date, and one-line summary.
+1. **New doc file**: If the spec references a doc that doesn't exist yet, create it from the individual doc template and add it to the domain index. If the domain doesn't exist, create the domain folder and add it to the top-level index.
+2. **Existing doc file**: Compare `spec.md` requirements against the current doc to determine what's new, changed, or removed. Update the Requirements section semantically. Minimize edits to unchanged sections.
+3. **Design decisions**: Extract durable decisions from `plan.md`'s Decisions section. Skip tactical details (file paths, library install steps, setup commands). Add to the Design Decisions section with the change name for traceability.
+4. **Index updates**: Update domain index "Last Updated" column. Add new entries if new docs were created.
+5. **History row**: Append a row to the doc's History table with the change name, date, and one-line summary.

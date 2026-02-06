@@ -6,7 +6,7 @@
 
 A hybrid SDD workflow that combines:
 - **SpecKit's** intuitive structure, folder customization, and pure-prompt approach
-- **OpenSpec's** fast-forward, delta-based specs, and centralized spec hydration
+- **OpenSpec's** fast-forward workflow and centralized doc hydration
 
 ---
 
@@ -15,11 +15,11 @@ A hybrid SDD workflow that combines:
 ### 1. Pure Prompt Play
 No system installation required. All workflow logic lives in `fab/.kit/` as markdown templates and skill definitions that any AI agent can execute.
 
-### 2. Specs Are King
-Code serves specifications, not the other way around. The centralized spec (`specs/`) is the source of truth for what the system does.
+### 2. Docs Are the Source of Truth
+Code serves documentation, not the other way around. The centralized docs (`fab/docs/`) are the source of truth for what the system does and why it works the way it does.
 
-### 3. Delta-First Changes
-All work happens in change folders. Changes track ADDED/MODIFIED/REMOVED requirements that get hydrated into the centralized spec on completion.
+### 3. Change-Folder First
+All work happens in change folders. Each change captures its requirements (`spec.md`) and technical decisions (`plan.md`), which get hydrated into the centralized docs on completion.
 
 ### 4. Stage Visibility
 Always know where you are. Each change folder has a `.status.yaml` manifest that tracks current stage and progress. A `current` pointer file (`fab/current` contains the active change name) provides instant access to whichever change is in flight — no scanning or guessing required. Run `fab/.kit/scripts/status.sh` for a quick terminal check.
@@ -47,7 +47,7 @@ flowchart TD
     end
     subgraph completion ["Completion"]
         direction LR
-        AR["7 ARCHIVE"] --> H[/"Hydrate into specs"/]
+        AR["7 ARCHIVE"] --> H[/"Hydrate into docs"/]
     end
 
     T --> A
@@ -63,12 +63,12 @@ flowchart TD
 | # | Stage | Purpose | Artifact | Includes |
 |---|-------|---------|----------|----------|
 | 1 | **Proposal** | Intent, scope, approach | `proposal.md` | Initial clarification questions |
-| 2 | **Specs** | What's changing (deltas) | `deltas/*.md` | Clarification of ambiguities, [NEEDS CLARIFICATION] markers |
+| 2 | **Specs** | What's changing | `spec.md` | Clarification of ambiguities, [NEEDS CLARIFICATION] markers |
 | 3 | **Plan** *(optional)* | How to implement | `plan.md` | Technical research, architecture decisions, dependency analysis |
 | 4 | **Tasks** | Implementation checklist | `tasks.md` | Auto-generated quality checklist (`checklists/quality.md`) |
 | 5 | **Apply** | Execute tasks | code changes | Run tests per task, progress tracking |
-| 6 | **Review** | Validate against specs | validation report | Checklist completion, spec drift detection |
-| 7 | **Archive** | Complete & hydrate | archive entry | Delta merge into centralized specs |
+| 6 | **Review** | Validate against spec | validation report | Checklist completion, spec drift detection |
+| 7 | **Archive** | Complete & hydrate | archive entry | Hydrate spec + plan into centralized docs |
 
 ### User Flow
 
@@ -84,11 +84,11 @@ flowchart TD
     PLAN ~~~ CLARIFY["/fab:clarify"]
 
     NEW -->|proposal| PLAN
-    PLAN -->|deltas + plan? + tasks| APPLY
+    PLAN -->|spec + plan? + tasks| APPLY
     APPLY -->|code changes| REVIEW
     REVIEW -->|passed| ARCHIVE
     REVIEW -->|fix code| APPLY
-    REVIEW -.->|revise planning| PLAN
+    REVIEW -.->|revise spec/plan/tasks| PLAN
     PLAN <-.-> CLARIFY
 
     style NEW fill:#e8f4f8,stroke:#2196F3
@@ -108,11 +108,11 @@ flowchart TD
 | `/fab:init` | Bootstrap fab/ in a project | `.kit/`, `config.yaml`, `memory/`, skill symlinks |
 | `/fab:new` | Start change (optionally with `--branch`) | `proposal.md`, `.status.yaml`, branch (optional) |
 | `/fab:continue` | Next artifact | Next stage artifact |
-| `/fab:ff` | Fast forward remaining planning | Deltas + plan (if needed) + tasks + checklist |
+| `/fab:ff` | Fast forward remaining planning | spec.md + plan (if needed) + tasks + checklist |
 | `/fab:clarify` | Deepen current artifact | Refined artifact (in place) |
 | `/fab:apply` | Implement | Code changes |
 | `/fab:review` | Validate | Validation report |
-| `/fab:archive` | Complete & hydrate | Archive entry, updated specs |
+| `/fab:archive` | Complete & hydrate | Archive entry, updated docs |
 | `/fab:switch` | Change active change | Updated pointer file |
 | `/fab:status` | Check progress | Status display |
 
@@ -130,7 +130,7 @@ flowchart TD
 
 # 3. Continue to specs
 /fab:continue
-# → Creates deltas/ui/theming.md with ADDED requirements
+# → Creates spec.md with requirements for this change
 # → Asks clarifying questions about ambiguities
 
 # 4. Continue to plan
@@ -153,7 +153,7 @@ flowchart TD
 
 # 8. Archive
 /fab:archive
-# → Hydrates specs/, moves to archive/
+# → Hydrates docs/, moves to archive/
 ```
 
 ### Fast Track (small changes)
