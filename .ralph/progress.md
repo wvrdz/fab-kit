@@ -200,3 +200,35 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Previous 6 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
   - The skill file is pure markdown (416 lines) — no executable code, no security concerns
 ---
+
+## [2026-02-06 22:57] - US-008: Create fab-ff.md skill
+Thread:
+Run: 20260206-222820-4396 (iteration 8)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-8.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4375c72 feat(fab): create fab-ff.md skill prompt (US-008)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/skills/fab-ff.md` -> PASS
+  - Command: `grep -q '_context.md' fab/.kit/skills/fab-ff.md` -> PASS (references _context.md preamble)
+  - Command: `test -L .claude/skills/fab-ff.md && test -e .claude/skills/fab-ff.md` -> PASS (symlink valid)
+  - Command: All 13 acceptance criteria verified individually -> PASS
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Note: "all skills exist" gate expected to fail — only fab-init, fab-new, fab-continue, fab-ff created so far; other 6 skills are US-009 through US-013
+  - Note: symlinks and bootstrap gates expected to fail — those are US-014 and US-015
+- Files changed:
+  - fab/.kit/skills/fab-ff.md (new)
+  - .claude/skills/fab-ff.md (new symlink -> ../../fab/.kit/skills/fab-ff.md)
+- Implemented: Created fab/.kit/skills/fab-ff.md as comprehensive agent-agnostic markdown skill (282 lines). Covers: _context.md preamble reference, pre-flight check (abort if fab/current missing, proposal not complete, config missing), full upfront context loading (config+constitution+proposal+docs — all loaded since ff traverses all stages), Step 1 frontloaded questions (scan proposal for ambiguities across all planning stages, collect into single batch, ask once then proceed), Step 2 spec.md generation from template (incorporating answers, no NEEDS CLARIFICATION markers), Step 3 autonomous plan decision (unlike /fab:continue which confirms with user — ff decides alone to maintain fast-forward flow; if skipped records plan: skipped), Step 4 tasks.md generation with phased breakdown, Step 5 auto-checklist generation (checklists/quality.md with CHK-* items), Step 6 .status.yaml update to tasks: done. Includes comparison table vs /fab:continue, output examples (clear/ambiguous), error handling table, Next: /fab:apply. Created symlink .claude/skills/fab-ff.md -> ../../fab/.kit/skills/fab-ff.md.
+- **Learnings for future iterations:**
+  - SKILLS.md fab-ff section (lines 220-250) is the authoritative spec for behavior
+  - Key difference from /fab:continue: fab-ff decides plan skip autonomously, fab-continue confirms with user
+  - Key difference from /fab:continue: fab-ff frontloads ALL questions upfront (one Q&A round max), fab-continue handles questions per-stage
+  - Previous 7 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
+  - The skill file is pure markdown (282 lines) — no executable code, no security concerns
+---
