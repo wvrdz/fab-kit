@@ -138,3 +138,33 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Previous iterations (1-4) all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
   - The skill file is pure markdown (329 lines) — no executable code, no security concerns
 ---
+
+## [2026-02-06 22:48] - US-006: Create fab-new.md skill
+Thread:
+Run: 20260206-222820-4396 (iteration 6)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-6.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-6.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: dfa7adc feat(fab): create fab-new.md skill prompt (US-006)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/skills/fab-new.md` -> PASS
+  - Command: `grep -q '_context.md' fab/.kit/skills/fab-new.md` -> PASS (references _context.md preamble)
+  - Command: All 14 acceptance criteria verified individually -> PASS
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Note: "all skills exist" gate expected to fail — only fab-init.md and fab-new.md created so far; other 8 skills are US-007 through US-013
+  - Note: symlinks and bootstrap gates expected to fail — those are US-014 and US-015
+- Files changed:
+  - fab/.kit/skills/fab-new.md (new)
+- Implemented: Created fab/.kit/skills/fab-new.md as comprehensive agent-agnostic markdown skill (207 lines). Covers: _context.md preamble reference, pre-flight check (abort if config.yaml missing), argument parsing (<description> required, --branch optional), folder name generation ({YYMMDD}-{XXXX}-{slug} with slug rules), change directory creation, active change tracking (fab/current), git integration (create branch / adopt current / skip, with --branch override), .status.yaml initialization (stage: proposal, proposal: active, all others pending), proposal.md generation from template with full context loading, clarifying questions (max 3 BLOCKING), proposal completion marking, output examples (clear/ambiguous/--branch/no-git), error handling table.
+- **Learnings for future iterations:**
+  - SKILLS.md fab-new section (lines 137-177) is the authoritative spec for behavior
+  - fab-new has no _context.md exceptions (unlike fab-init) — it loads config and constitution normally
+  - The .status.yaml template in ARCHITECTURE.md (lines 170-188) shows the full structure with checklist tracking
+  - All 5 previous iterations left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
+  - The skill file is pure markdown (207 lines) — no executable code, no security concerns
+---
