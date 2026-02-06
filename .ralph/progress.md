@@ -58,3 +58,31 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Script content matches ARCHITECTURE.md lines 122-148 exactly — always verify against the spec
   - Iteration 1 left uncommitted changes per errors.log; this iteration committed cleanly
 ---
+
+## [2026-02-06 22:35] - US-003: Create all 5 artifact templates
+Thread:
+Run: 20260206-222820-4396 (iteration 3)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-3.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9248239 feat(fab): create all 5 artifact templates (US-003)
+- Post-commit status: `clean`
+- Verification:
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md` -> PASS (all 5 templates exist)
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Command: `grep -r '260115\|add-oauth\|Google\|GitHub' fab/.kit/templates/` -> PASS (no example data found)
+- Files changed:
+  - fab/.kit/templates/proposal.md (new)
+  - fab/.kit/templates/spec.md (new)
+  - fab/.kit/templates/plan.md (new)
+  - fab/.kit/templates/tasks.md (new)
+  - fab/.kit/templates/checklist.md (new)
+- Implemented: Created all 5 artifact templates matching TEMPLATES.md spec exactly. Each template is a scaffold with {CURLY_BRACE} placeholders and HTML comment instructions for agent guidance. No filled-in example data — templates are pure scaffolds.
+- **Learnings for future iterations:**
+  - TEMPLATES.md is located at doc/fab-spec/TEMPLATES.md
+  - Templates must preserve HTML comments (<!-- -->) as they serve as agent guidance
+  - Negative case: templates must NOT contain example data from TEMPLATES.md (e.g., OAuth examples go in spec docs, not template files)
+  - Previous iterations left uncommitted changes; this iteration used git add -A to stage everything cleanly
+---
