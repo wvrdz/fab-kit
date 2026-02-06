@@ -469,3 +469,41 @@ Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/ru
   - Previous 14 iterations all left uncommitted changes per errors.log; this iteration committed cleanly with git add -A
   - All changes are filesystem metadata (symlinks) and text (.gitignore) — no executable code, no security concerns
 ---
+
+## [2026-02-06 23:29] - US-016: Validate complete structure
+Thread:
+Run: 20260206-222820-4396 (iteration 16)
+Run log: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-16.log
+Run summary: /Users/sahil/code/sahil87/sdd/sddr-worktrees/eager-beaver/.ralph/runs/run-20260206-222820-4396-iter-16.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1f29dc9 docs(ralph): update progress log for US-016 completion
+- Post-commit status: `clean`
+- Verification:
+  - Command: `test -f fab/.kit/VERSION && test -f fab/.kit/scripts/status.sh && echo 'core files exist'` -> PASS
+  - Command: `ls fab/.kit/templates/{proposal,spec,plan,tasks,checklist}.md >/dev/null 2>&1 && echo 'all templates exist'` -> PASS
+  - Command: `ls fab/.kit/skills/{fab-init,fab-new,fab-continue,fab-ff,fab-clarify,fab-apply,fab-review,fab-archive,fab-switch,fab-status}.md >/dev/null 2>&1 && echo 'all skills exist'` -> PASS
+  - Command: `test -f fab/.kit/skills/_context.md && echo 'shared preamble exists'` -> PASS
+  - Command: `for f in fab-init fab-new fab-continue fab-ff fab-clarify fab-apply fab-review fab-archive fab-switch fab-status; do test -L .claude/skills/$f.md && test -e .claude/skills/$f.md || echo "BROKEN: $f"; done && echo 'symlinks valid'` -> PASS
+  - Command: `bash fab/.kit/scripts/status.sh | grep -q 'No active change' && echo 'status.sh works'` -> PASS
+  - Command: `test -f fab/config.yaml && test -f fab/constitution.md && test -f fab/docs/index.md && test -d fab/changes && echo 'bootstrap complete'` -> PASS
+  - Command: `cat fab/.kit/VERSION` -> PASS (exactly '0.1.0')
+  - Command: `test -x fab/.kit/scripts/status.sh` -> PASS (executable)
+  - Command: `ruby -e "require 'yaml'; YAML.safe_load(File.read('fab/config.yaml'))"` -> PASS (valid YAML)
+  - Command: `grep -q 'princip' fab/constitution.md` -> PASS (contains principles)
+  - Command: `grep -q '|' fab/docs/index.md` -> PASS (contains table markup)
+  - Command: `test -d fab/changes` -> PASS
+  - Command: `test ! -e fab/current` -> PASS (does not exist)
+  - Command: `grep -q 'fab/current' .gitignore` -> PASS
+  - Command: `test -e .claude/skills/commit && test -e .claude/skills/dev-browser && test -e .claude/skills/prd` -> PASS (existing skills untouched)
+  - All 10 symlinks verified individually: each is -L (symlink), -e (resolves), and points to ../../fab/.kit/skills/fab-{name}.md -> PASS
+- Files changed:
+  - .ralph/activity.log (updated)
+  - .ralph/progress.md (updated)
+- Implemented: Validation-only story — no code changes. Ran all 7 global quality gates and all 15 acceptance criteria checks. Every check passed. The complete fab setup matches the spec: VERSION=0.1.0, 5 templates, 10 skills + _context.md, executable status.sh, 10 resolving symlinks, valid YAML config, constitution with principles, docs/index.md with empty table, changes/ directory, no fab/current, .gitignore contains fab/current, existing .claude/skills/ untouched.
+- **Learnings for future iterations:**
+  - Python yaml module is not available on this system; use Ruby's `YAML.safe_load` for YAML validation
+  - All 15 previous iterations left uncommitted changes per errors.log; the ralph loop handles cleanup
+  - This validation story confirms all US-001 through US-015 were implemented correctly
+  - The full fab kit is ready for use: 26 files total (1 VERSION, 1 script, 5 templates, 11 skill prompts, 3 bootstrap files, 1 .gitkeep, 10 symlinks, .gitignore entry)
+---
