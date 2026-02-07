@@ -22,7 +22,7 @@ Code serves documentation, not the other way around. The centralized docs (`fab/
 All work happens in change folders. Each change captures its requirements (`spec.md`) and technical decisions (`plan.md`), which get hydrated into the centralized docs on completion.
 
 ### 4. Stage Visibility
-Always know where you are. Each change folder has a `.status.yaml` manifest that tracks current stage and progress. A `current` pointer file (`fab/current` contains the active change name) provides instant access to whichever change is in flight — no scanning or guessing required. Run `fab/.kit/scripts/status.sh` for a quick terminal check.
+Always know where you are. Each change folder has a `.status.yaml` manifest that tracks current stage and progress. A `current` pointer file (`fab/current` contains the active change name) provides instant access to whichever change is in flight — no scanning or guessing required. Run `fab/.kit/scripts/fab-status.sh` for a quick terminal check.
 
 ### 5. Skill-Based Interface
 Use skills (not rigid commands) for better agent interoperability. Skills are more naturally invocable by AI agents.
@@ -65,7 +65,7 @@ This generates everything else: `config.yaml`, `constitution.md`, `docs/`, `chan
 ### Verify
 
 ```bash
-fab/.kit/scripts/status.sh
+fab/.kit/scripts/fab-status.sh
 → "No active change"
 ```
 

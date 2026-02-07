@@ -15,57 +15,19 @@ Orient the user in the fab workflow. Show how the stages fit together and list e
 
 ## Behavior
 
-When invoked, output the following **exactly** (substitute the kit version from `fab/.kit/VERSION`, or "unknown" if the file is missing):
+When invoked, execute the help script and display its output:
 
----
-
-## Output
-
+```bash
+bash fab/.kit/scripts/fab-help.sh
 ```
-Fab Kit v{version} — Specification-Driven Development
 
-WORKFLOW
-
-  /fab:new ─→ /fab:continue (or /fab:ff) ─→ /fab:apply ─→ /fab:review ─→ /fab:archive
-               ↕ /fab:clarify
-
-  Planning stages: proposal → specs → plan (optional) → tasks
-  Execution stages: apply → review → archive
-
-COMMANDS
-
-  Start & Navigate
-    /fab:new <desc>         Start a new change from a description
-    /fab:switch [name]      Switch active change (lists all if no name)
-    /fab:status             Show current change state at a glance
-
-  Planning
-    /fab:continue [stage]   Advance to the next planning stage (or reset to stage)
-    /fab:ff                 Fast-forward through all remaining planning stages
-    /fab:clarify            Refine the current stage artifact without advancing
-
-  Execution
-    /fab:apply              Implement tasks from tasks.md in dependency order
-    /fab:review             Validate implementation against specs and checklists
-
-  Completion
-    /fab:archive            Complete change — hydrate docs, move to archive
-
-  Setup
-    /fab:init [sources...]  Bootstrap fab/ directory (safe to re-run)
-    /fab:help               Show this help
-
-TYPICAL FLOW
-
-  Quick change:  /fab:new → /fab:ff → /fab:apply → /fab:review → /fab:archive
-  Careful change: /fab:new → /fab:continue (repeat) → /fab:apply → /fab:review → /fab:archive
-```
+The script reads the kit version from `fab/.kit/VERSION` (falling back to "unknown" if missing) and prints the complete help text. The script is the single source of truth for help content.
 
 ---
 
 ## Context Loading
 
-This skill uses **no context** — it does not load `fab/config.yaml`, `fab/constitution.md`, or any change artifacts. The only file it reads is `fab/.kit/VERSION` for the version string.
+This skill uses **no context** — it does not load `fab/config.yaml`, `fab/constitution.md`, or any change artifacts. The only file read is `fab/.kit/VERSION` (by the script).
 
 ---
 
