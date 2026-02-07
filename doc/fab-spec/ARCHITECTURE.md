@@ -29,7 +29,10 @@ project/
 │   │   │   ├── fab-switch.md
 │   │   │   └── fab-status.md
 │   │   └── scripts/                # Lightweight shell utilities
-│   │       └── status.sh           # Quick-check active change from terminal
+│   │       ├── fab-help.sh         # Print Fab Kit help overview
+│   │       ├── fab-setup.sh        # Structural bootstrap for fab
+│   │       ├── fab-status.sh       # Quick-check active change from terminal
+│   │       └── fab-update-claude-settings.sh  # Copy settings.local.json to worktree-init
 │   ├── config.yaml                 # Project-specific configuration
 │   ├── constitution.md             # Project principles & constraints
 │   ├── current                     # Pointer file (contains active change name)
@@ -109,7 +112,7 @@ active=$(cat fab/current)
 
 **Quick check from terminal**: For instant identification when switching between VS Code windows:
 ```bash
-fab/.kit/scripts/status.sh
+fab/.kit/scripts/fab-status.sh
 → "Active: 260115-a7k2-add-oauth (stage: plan)"
 ```
 
@@ -119,7 +122,7 @@ fab/.kit/scripts/status.sh
 - **Simpler operations** — any language/tool can read and write a plain text file. No `ln -sf` semantics.
 - **Git-friendly** — add `fab/current` to `.gitignore` since it's local working state.
 
-**`fab/.kit/scripts/status.sh`**:
+**`fab/.kit/scripts/fab-status.sh`**:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -369,7 +372,7 @@ Agent-specific skill files are **symlinks** pointing into `fab/.kit/skills/`. Th
 
 ### Claude Code (`.claude/skills/`)
 
-`/fab:init` (or `fab/.kit/scripts/setup.sh`) creates skill subdirectories with symlinks:
+`/fab:init` (or `fab/.kit/scripts/fab-setup.sh`) creates skill subdirectories with symlinks:
 ```
 .claude/skills/
 ├── fab-init/
@@ -407,14 +410,14 @@ Same pattern — symlinks from the agent's convention directory into `fab/.kit/s
 
 ```
 1. User obtains .kit/  →  cp -r /path/to/fab-kit fab/.kit
-2. User runs fab/.kit/scripts/setup.sh  →  creates directories, symlinks, docs/index.md, .gitignore entry
+2. User runs fab/.kit/scripts/fab-setup.sh  →  creates directories, symlinks, docs/index.md, .gitignore entry
 3. User runs /fab:init →  generates config.yaml, constitution.md (+ optional source hydration)
 4. User runs /fab:new  →  first change is created
 ```
 
 Step 1 is manual. Step 2 is a shell script. Steps 3–4 are skill-driven.
 
-`fab/.kit/scripts/setup.sh` handles all structural setup (directories, symlinks, `.gitignore`) and is the single source of truth for that structure. `/fab:init` delegates to it (step 1e) and adds the interactive parts (config, constitution, source hydration).
+`fab/.kit/scripts/fab-setup.sh` handles all structural setup (directories, symlinks, `.gitignore`) and is the single source of truth for that structure. `/fab:init` delegates to it (step 1e) and adds the interactive parts (config, constitution, source hydration).
 
 **Re-running `/fab:init`**: Init is idempotent — safe to call at any time. On subsequent runs it verifies structure, repairs broken symlinks, and optionally hydrates `fab/docs/` from external sources (Notion URLs, Linear URLs, local files). See [Skills Reference](SKILLS.md#fabinit-sources) for source hydration behavior.
 

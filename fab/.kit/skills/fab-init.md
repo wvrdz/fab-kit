@@ -173,7 +173,7 @@ If `fab/changes/` **already exists**: report "changes/ already exists — skippi
 
 #### 1e. `.claude/skills/` Symlinks
 
-Run `fab/.kit/scripts/setup.sh` to create or repair all skill symlinks and directories. This script is the **single source of truth** for the structural bootstrap — it handles directories, symlinks, docs index, and `.gitignore`.
+Run `fab/.kit/scripts/fab-setup.sh` to create or repair all skill symlinks and directories. This script is the **single source of truth** for the structural bootstrap — it handles directories, symlinks, docs index, and `.gitignore`.
 
 The script discovers skills dynamically by globbing `fab/.kit/skills/fab-*.md` — no hardcoded list to maintain. Each discovered skill gets a subdirectory symlink:
 
