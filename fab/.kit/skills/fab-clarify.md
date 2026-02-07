@@ -11,7 +11,23 @@ description: "Refine the current stage artifact — resolve gaps, ambiguities, o
 
 ## Purpose
 
-Deepen and refine the current stage artifact without advancing to the next stage. Use this skill when the current artifact has gaps, ambiguities, or `[NEEDS CLARIFICATION]` markers that should be resolved before moving forward. Safe to call multiple times — each invocation refines further.
+Deepen and refine the current stage artifact without advancing to the next stage. Operates in two modes:
+
+- **Suggest mode** (user invocation) — interactive, structured question flow with recommendations
+- **Auto mode** (internal `fab-ff` call) — autonomous resolution, returns machine-readable result
+
+Safe to call multiple times — each invocation refines further.
+
+---
+
+## Mode Selection
+
+Mode is determined by **call context**, not flags. There are no `--suggest` or `--auto` flags.
+
+| Context | Mode |
+|---------|------|
+| User invokes `/fab:clarify` directly | **Suggest** — interactive, one question at a time |
+| `fab-ff` calls clarify internally between stages | **Auto** — autonomous, returns structured result |
 
 ---
 
@@ -29,7 +45,7 @@ Use the `stage` field from preflight output for the Stage Guard below (do not re
 
 ## Stage Guard
 
-Read the `stage` field from `.status.yaml`. The current stage must be one of:
+The current stage must be one of:
 
 - `proposal`
 - `specs`
@@ -74,11 +90,13 @@ Context varies by the current stage. Load only what is relevant:
 
 ---
 
-## Behavior
+## Suggest Mode (User Invocation)
+
+When the user invokes `/fab:clarify` directly, follow this flow.
 
 ### Step 1: Identify the Current Artifact
 
-Based on the current stage from `.status.yaml`, determine which artifact file to refine:
+Based on the current stage, determine which artifact file to refine:
 
 | Stage | Artifact file |
 |-------|--------------|
@@ -91,126 +109,261 @@ Read the artifact file. If it does not exist, STOP with:
 
 > `No {artifact} found for this stage. Run /fab:continue to generate it first.`
 
-### Step 2: Analyze for Gaps
+### Step 2: Stage-Scoped Taxonomy Scan
 
-Examine the artifact for gaps, ambiguities, and opportunities to deepen. The analysis focus varies by stage:
+Perform a systematic scan of the artifact for gaps, ambiguities, and `[NEEDS CLARIFICATION]` markers. The scan categories vary by stage — there is no fixed universal list.
 
-#### Proposal
+#### Proposal categories
 
-- **Unresolved `[BLOCKING]` questions** — these prevent moving to specs. Attempt to resolve each one by researching context (config, constitution, existing docs) or asking the user for clarification.
-- **Vague scope** — look for overly broad or undefined boundaries. Sharpen the "What Changes" section with concrete boundaries.
-- **Missing impact analysis** — verify the "Impact" section covers all affected areas. Cross-reference against `fab/docs/index.md` to ensure no domains are overlooked.
-- **Incomplete affected docs** — verify the "Affected Docs" section lists all docs that will be created, modified, or removed.
+- Scope boundaries — are boundaries concrete or vague?
+- Affected areas — are all impacted components identified?
+- Blocking questions — any unresolved `[BLOCKING]` items?
+- Impact completeness — does the Impact section cover all areas?
+- Affected docs coverage — are all relevant docs listed under Affected Docs?
 
-#### Specs
+#### Specs categories
 
-- **`[NEEDS CLARIFICATION]` markers** — resolve each one by researching centralized docs, asking the user, or making a well-reasoned decision (document the reasoning inline).
-- **Missing scenarios** — for each requirement, verify there is at least one GIVEN/WHEN/THEN scenario. Add scenarios for edge cases, error states, and boundary conditions.
-- **Underspecified requirements** — look for requirements that use vague language (e.g., "should handle errors appropriately") and make them concrete with specific expected behaviors.
-- **Missing deprecated requirements** — if the change removes or replaces existing behavior, verify the Deprecated Requirements section captures what is being removed.
+- Requirement precision — do requirements use RFC 2119 keywords with specific expected behaviors?
+- Scenario coverage — does every requirement have at least one GIVEN/WHEN/THEN scenario?
+- Edge cases — are error states, boundary conditions, and exceptional paths covered?
+- Deprecated requirements — if behavior is removed, is it captured?
+- Cross-references — do references to centralized docs match reality?
 
-#### Plan
+#### Plan categories
 
-- **Untested assumptions** — identify assumptions about the codebase, libraries, or APIs that haven't been verified. Add research notes or flag for investigation.
-- **Missing research** — if the plan references libraries, APIs, or patterns, verify they exist and are suitable. Add findings to the Research section.
-- **Weak decision rationale** — for each decision in the Decisions section, ensure the "Why" is compelling and at least one "Rejected alternative" is listed.
-- **Incomplete file changes** — cross-reference the File Changes section against the spec requirements to ensure all necessary files are listed.
-- **Missing risks** — identify risks not captured in the Risks / Trade-offs section.
+- Assumption verification — are codebase/library/API assumptions validated?
+- Research completeness — are referenced technologies confirmed suitable?
+- Decision rationale — does each decision have a compelling "Why" and rejected alternative?
+- Risk identification — are risks and mitigations captured?
+- File change coverage — do listed file changes cover all spec requirements?
 
-#### Tasks
+#### Tasks categories
 
-- **Missing tasks** — cross-reference tasks against the plan's File Changes (or spec requirements if plan was skipped) to ensure every file and feature is covered.
-- **Wrong granularity** — tasks should be completable in one focused session. Split tasks that are too large; merge tasks that are trivially small.
-- **Unclear dependencies** — verify the Execution Order section captures non-obvious dependencies between tasks.
-- **Missing file paths** — each task should reference exact file paths. Add paths where missing.
-- **Missing parallel markers** — identify tasks that can run in parallel and add `[P]` markers.
+- Task completeness — does every file and feature from the plan/spec have a task?
+- Granularity — is each task completable in one focused session?
+- Dependency ordering — are non-obvious dependencies in the Execution Order section?
+- File path accuracy — does each task reference exact file paths?
+- Parallel markers — are independent tasks marked `[P]`?
 
-### Step 3: Refine In Place
+Also scan for `<!-- auto-guess: {description} -->` markers (left by `/fab:ff --auto`) — these are gaps to resolve interactively.
 
-Edit the existing artifact file directly. Do NOT regenerate from scratch or create a new file.
+After scanning, build a **prioritized question queue** (highest-impact gaps first). Cap at **5 questions maximum** per invocation.
 
-**Rules for in-place refinement:**
-- Preserve the overall structure and sections of the artifact
-- Add new content (scenarios, requirements, tasks) inline where they belong
-- Resolve markers (`[BLOCKING]`, `[NEEDS CLARIFICATION]`) by replacing them with concrete content
-- If asking the user a question to resolve an ambiguity, present the question, wait for the answer, then edit the artifact with the resolution
-- Add a brief `<!-- clarified: {description} -->` HTML comment next to each significant change so subsequent `/fab:clarify` calls can see what was already refined
-
-### Step 4: Report Changes
-
-After refining, output a summary of what was changed:
-
-```
-Stage: {stage} (active). Reviewing {artifact} for gaps...
-
-Changes made:
-- {description of change 1}
-- {description of change 2}
-- {description of change 3}
-
-{N} issues resolved. {M} items remain for further refinement.
-```
-
-If no gaps were found:
+**If the scan finds zero gaps**, output:
 
 ```
 Stage: {stage} (active). Reviewing {artifact} for gaps...
 
 No gaps found — artifact looks solid. Ready to proceed.
+
+Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
 ```
 
-### Step 5: Do NOT Advance Stage
+And stop (skip Steps 3-6).
 
-**Critical**: Do NOT update the `stage` field in `.status.yaml`. Do NOT set any progress field to `done` that wasn't already `done`. The clarify skill is strictly non-advancing — it only deepens the current artifact.
+### Step 3: Present Questions One at a Time
+
+Present only the **first question** from the queue. Do not reveal queued questions.
+
+Each question MUST include:
+
+**For multiple-choice questions** (ambiguity with discrete resolution options):
+
+```
+**Question {N} of {total}**: {question text}
+
+Recommendation: {recommended option} — {reasoning}
+
+| # | Option | Description |
+|---|--------|-------------|
+| 1 | {option 1} | {description} |
+| 2 | {option 2} | {description} |
+| 3 | {option 3} | {description} |
+
+Reply with a number, "yes"/"recommended" to accept, or your own answer.
+```
+
+**For short-answer questions** (free-form input needed):
+
+```
+**Question {N} of {total}**: {question text}
+
+Suggested answer: {suggested answer} — {reasoning}
+
+Reply with "yes"/"recommended" to accept, or provide your own answer.
+```
+
+### Step 4: Process Answer and Update Artifact
+
+After the user responds:
+
+1. Interpret the answer:
+   - `"yes"`, `"recommended"`, `"y"` (case-insensitive) → accept the recommendation
+   - A number → select that option from the table
+   - Free text → use as the custom answer
+   - `"done"`, `"good"`, `"no more"` (case-insensitive) → **early termination** (skip to Step 6)
+2. **Immediately update the artifact in place** to reflect the resolution:
+   - Replace `[NEEDS CLARIFICATION]` markers with concrete content
+   - Replace `<!-- auto-guess: ... -->` markers with the confirmed resolution
+   - Add `<!-- clarified: {description} -->` HTML comment next to significant changes
+3. Present the next question (return to Step 3)
+4. After the 5th answer (or when the queue is exhausted), proceed to Step 5
+
+### Step 5: Append Audit Trail
+
+After all questions are answered (or on early termination), append an audit trail to the artifact:
+
+```markdown
+## Clarifications
+
+### Session {YYYY-MM-DD}
+
+- **Q**: {question text}
+  **A**: {answer or "accepted recommendation: {description}"}
+- **Q**: {question text}
+  **A**: {answer}
+```
+
+**Rules:**
+- If a `## Clarifications` section already exists, append a new `### Session {date}` subsection (do not replace previous sessions)
+- If no `## Clarifications` section exists, create it at the end of the artifact
+- Only include questions that were actually answered (not deferred/skipped)
+- If 0 questions were answered (early termination on first question), skip the audit trail entirely — there is nothing to record
+
+### Step 6: Display Coverage Summary
+
+Display a summary table:
+
+```
+Clarification complete.
+
+| Category | Count |
+|----------|-------|
+| Resolved | {N} — gaps addressed in this session |
+| Clear | {N} — categories scanned with no gaps found |
+| Deferred | {N} — gaps the user chose not to address (early termination) |
+| Outstanding | {N} — gaps beyond the 5-question cap, awaiting next invocation |
+
+{N} issues resolved. {M} items remain for further refinement.
+
+Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
+```
+
+### Step 7: Do NOT Advance Stage
+
+**Critical**: Do NOT update the `stage` field in `.status.yaml`. Do NOT set any progress field to `done` that wasn't already `done`. The clarify skill is strictly non-advancing.
 
 The only `.status.yaml` update allowed is `last_updated` (to the current ISO 8601 timestamp).
 
 ---
 
-## Output
+## Auto Mode (Internal fab-ff Call)
 
-### Gaps Found and Resolved
+When called internally by `fab-ff` between stage generations, the skill operates autonomously. No user interaction.
+
+### Step 1: Identify and Read Artifact
+
+Same as Suggest Mode Step 1 — determine the artifact file from the current stage and read it.
+
+### Step 2: Autonomous Gap Analysis
+
+Perform the same stage-scoped taxonomy scan as Suggest Mode Step 2. For each gap found, attempt autonomous resolution:
+
+1. **Resolvable** — the gap can be resolved using available context (config, constitution, centralized docs, completed artifacts). Resolve it in place with a `<!-- clarified: {description} -->` marker.
+2. **Blocking** — the gap cannot be resolved from available context. It requires user input or external information that the agent does not have. Leave the gap in place with a `<!-- blocking: {description} -->` marker.
+3. **Non-blocking** — a minor gap that does not materially affect downstream artifacts. Leave as-is with no marker.
+
+### Step 3: Return Machine-Readable Result
+
+Auto mode returns a structured result (not displayed to user — consumed by `fab-ff`):
+
+```
+{resolved: N, blocking: N, non_blocking: N}
+```
+
+Where:
+- `resolved` — gaps the agent resolved autonomously
+- `blocking` — gaps requiring user input (cannot proceed safely)
+- `non_blocking` — minor gaps left as-is
+
+If `blocking > 0`, include a description of each blocking issue:
+
+```
+{resolved: 2, blocking: 1, non_blocking: 0, blocking_issues: ["description of blocking issue"]}
+```
+
+### Step 4: Do NOT Advance Stage
+
+Same as Suggest Mode — auto mode is non-advancing. Only update `last_updated` in `.status.yaml`.
+
+---
+
+## Output Examples
+
+### Suggest Mode — Gaps Found
 
 ```
 Stage: specs (active). Reviewing spec.md for gaps...
 
-Changes made:
-- Resolved [NEEDS CLARIFICATION] on authentication timeout (set to 30 minutes based on constitution security policy)
-- Added 3 missing GIVEN/WHEN/THEN scenarios for error states
-- Sharpened requirement R-AUTH-003 from "handle errors" to "return 401 with JSON error body"
+Found 3 gaps across 5 categories scanned.
 
-3 issues resolved. 0 items remain for further refinement.
+**Question 1 of 3**: The spec mentions "handle authentication errors" but doesn't specify the response format. What should error responses look like?
 
-Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
+Recommendation: JSON error body with `{error, message, code}` fields — consistent with existing API patterns in the codebase.
+
+| # | Option | Description |
+|---|--------|-------------|
+| 1 | JSON error body | `{error: "auth_failed", message: "...", code: 401}` |
+| 2 | Plain text | HTTP status code with text body |
+| 3 | RFC 7807 Problem Details | Standard problem+json format |
+
+Reply with a number, "yes"/"recommended" to accept, or your own answer.
 ```
 
-### Gaps Found, User Input Needed
-
-```
-Stage: proposal (active). Reviewing proposal.md for gaps...
-
-Found 1 [BLOCKING] question that needs your input:
-
-1. The proposal mentions "support for external providers" — which providers specifically? (Google, GitHub, SAML, all of the above?)
-
-{user answers}
-
-Changes made:
-- Resolved [BLOCKING]: scoped to Google and GitHub OAuth2 only
-- Sharpened scope in "What Changes" to list specific endpoints
-- Added "Affected Docs: auth/authentication.md (Modified)"
-
-1 issue resolved. 0 items remain for further refinement.
-
-Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
-```
-
-### No Gaps Found
+### Suggest Mode — No Gaps
 
 ```
 Stage: plan (active). Reviewing plan.md for gaps...
 
 No gaps found — artifact looks solid. Ready to proceed.
+
+Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
+```
+
+### Suggest Mode — Early Termination
+
+```
+**Question 2 of 4**: ...
+
+> done
+
+Clarification complete.
+
+| Category | Count |
+|----------|-------|
+| Resolved | 1 — gaps addressed in this session |
+| Clear | 3 — categories scanned with no gaps found |
+| Deferred | 3 — gaps the user chose not to address (early termination) |
+| Outstanding | 0 — gaps beyond the 5-question cap, awaiting next invocation |
+
+1 issue resolved. 3 items remain for further refinement.
+
+Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
+```
+
+### Suggest Mode — Coverage Summary After Full Session
+
+```
+Clarification complete.
+
+| Category | Count |
+|----------|-------|
+| Resolved | 4 — gaps addressed in this session |
+| Clear | 2 — categories scanned with no gaps found |
+| Deferred | 0 — gaps the user chose not to address (early termination) |
+| Outstanding | 0 — gaps beyond the 5-question cap, awaiting next invocation |
+
+4 issues resolved. 0 items remain for further refinement.
 
 Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
 ```
@@ -224,6 +377,9 @@ Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
 | Preflight script exits non-zero | Abort with the stderr message from `fab-preflight.sh` |
 | Stage is `apply`, `review`, or `archive` | Abort with: "Stage is {stage} — use /fab:review instead." |
 | Artifact file missing for current stage | Abort with: "No {artifact} found. Run /fab:continue to generate it first." |
+| Taxonomy scan finds zero gaps (suggest mode) | Output "No gaps found" message and stop |
+| Early termination after 0 answered questions | Display coverage summary with 0 resolved, all deferred |
+| Multiple `/fab:clarify` sessions | Audit trail entries accumulate — new session appended, previous sessions preserved |
 
 ---
 
@@ -236,6 +392,7 @@ Next: /fab:clarify (refine further) or /fab:continue or /fab:ff
 | Modifies artifact? | **Yes** — edits existing file in place |
 | Creates new files? | **No** — only modifies the current stage artifact |
 | Updates `.status.yaml`? | **Only** `last_updated` timestamp |
+| Modes | **Suggest** (user invocation) and **Auto** (internal fab-ff call) |
 
 ---
 

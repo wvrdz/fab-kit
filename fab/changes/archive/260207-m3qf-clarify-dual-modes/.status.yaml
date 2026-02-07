@@ -1,0 +1,17 @@
+name: 260207-m3qf-clarify-dual-modes
+created: 2026-02-07T18:00:00+05:30
+stage: archive
+progress:
+  proposal: done
+  specs: done
+  plan: skipped
+  tasks: done
+  apply: done
+  review: done
+  archive: done
+checklist:
+  generated: true
+  path: checklists/quality.md
+  completed: 38
+  total: 38
+last_updated: 2026-02-07T20:30:00+05:30
