@@ -26,3 +26,4 @@
 - [x] [ny4x] 2026-02-07: In the next command suggestion we are giving, all fab commands are listed as fab:xxx instead of fab-xxxx. This needs to be updated.
 - [ ] [hwnz] 2026-02-07: Separate out docs and specs. Specs: Maching generated, how everything works. Docs: much shorted, for humans. Need to undergo review before mergin
 - [ ] [90g5] 2026-02-07: Add a constitution command the creates the constitution - base on SpecKit's constitution
+- [ ] [e1fp] 2026-02-07: architecture review AND checking all commands for simplification, and then autonomy - be more biased towards asking qns
