@@ -13,3 +13,8 @@
 
 | Spec | Description |
 |------|-------------|
+| [overview](overview.md) | Fab workflow specification — design principles, 7 stages, quick reference |
+| [architecture](architecture.md) | Directory structure, config, naming conventions, git integration, agent integration |
+| [skills](skills.md) | Detailed behavior for each `/fab-*` skill |
+| [templates](templates.md) | Artifact templates — status, proposal, spec, plan, tasks, checklist, centralized docs |
+| [proposal](proposal.md) | Original inspiration — SpecKit vs OPSX comparison and design rationale |
