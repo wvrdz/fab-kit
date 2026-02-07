@@ -263,7 +263,7 @@ Created: fab/config.yaml
 Created: fab/constitution.md
 Created: fab/docs/index.md
 Created: fab/changes/
-Created: 10 symlinks in .claude/skills/
+Created: 11 symlinks in .claude/skills/
 Updated: .gitignore (added fab/current)
 fab/ initialized successfully.
 ```
@@ -276,7 +276,7 @@ config.yaml — OK
 constitution.md — OK
 docs/index.md — OK
 changes/ — OK
-Symlinks: 10/10 valid (repaired 1)
+Symlinks: 11/11 valid (repaired 1)
 .gitignore: fab/current present
 fab/ structure verified.
 ```
