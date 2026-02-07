@@ -28,3 +28,4 @@
 - [ ] [90g5] 2026-02-07: Add a constitution command the creates the constitution - base on SpecKit's constitution
 - [ ] [e1fp] 2026-02-07: architecture review AND checking all commands for simplification, and then autonomy - be more biased towards asking qns
 - [ ] [sflf] 2026-02-07: create a fab-fff command that takes you all the way from plan to archive
+- [ ] [jgt6] 2026-02-07: hydrate should distinguish between specs and docs. Ingestion = specs. Generation = docs
