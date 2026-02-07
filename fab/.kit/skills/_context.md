@@ -71,6 +71,7 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 | `/fab:continue` → plan | plan done | `Next: /fab:continue (tasks) or /fab:clarify (refine plan)` |
 | `/fab:continue` → tasks | tasks done | `Next: /fab:apply` |
 | `/fab:ff` | tasks done | `Next: /fab:apply` |
+| `/fab:ff --auto` | tasks done | `Next: /fab:apply` |
 | `/fab:clarify` | same stage | `Next: /fab:clarify (refine further) or /fab:continue or /fab:ff` |
 | `/fab:apply` | apply done | `Next: /fab:review` |
 | `/fab:review` (pass) | review done | `Next: /fab:archive` |

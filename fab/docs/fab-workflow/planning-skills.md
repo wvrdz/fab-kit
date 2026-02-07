@@ -76,27 +76,38 @@ Reset is primarily used after `/fab:review` identifies issues upstream.
 
 ### `/fab:ff` (Fast Forward)
 
-`/fab:ff` fast-forwards through all remaining planning stages in one pass to reach implementation quickly. It requires an active change with a completed proposal.
+`/fab:ff` fast-forwards through all remaining planning stages in one pass to reach implementation quickly. It requires an active change with a completed proposal. Supports two modes: default (with clarify checkpoints) and full-auto (`--auto`).
 
 #### Frontloaded Questions
 
 The skill SHALL scan the proposal for ambiguities across *all* planning stages (specs, plan, tasks), collect everything that needs user input into a single batch, and ask once. The goal: one Q&A round, then heads-down generation.
 
+#### Interleaved Auto-Clarify
+
+The default `/fab:ff` pipeline interleaves auto-clarify between stage generations: `spec → auto-clarify → plan-decision → auto-clarify → tasks → auto-clarify`. This catches gaps before they compound downstream.
+
+- If auto-clarify finds **blocking issues** (cannot resolve autonomously), the pipeline **bails** — stops, reports the issues, and suggests `Run /fab:clarify to resolve these, then /fab:ff to resume.`
+- The pipeline is **resumable** — re-running `/fab:ff` after a bail skips stages already marked `done` and continues from the first incomplete stage.
+
+#### Full-Auto Mode (`--auto`)
+
+`/fab:ff --auto` runs the same interleaved pipeline but never stops for blockers. Instead, it makes best-guess decisions, marks them with `<!-- auto-guess: {description} -->` markers in the artifact, and warns the user in output listing all guesses made. These markers are detectable by `/fab:review` and resolvable by `/fab:clarify` suggest mode.
+
 #### Generation Flow
 
 1. Read `fab/current` to resolve the active change; verify proposal is complete
 2. Frontload questions (single batch)
-3. Generate `spec.md` (incorporating answers)
-4. Evaluate whether a plan is warranted. Unlike `/fab:continue`, `/fab:ff` does **not** confirm with the user before skipping — it decides autonomously to maintain fast-forward flow
-5. Produce task breakdown (referencing plan if it exists, otherwise referencing spec and proposal directly)
+3. Generate `spec.md` (incorporating answers) → run auto-clarify on spec
+4. Evaluate whether a plan is warranted. Unlike `/fab:continue`, `/fab:ff` does **not** confirm with the user before skipping — it decides autonomously to maintain fast-forward flow → run auto-clarify on plan (if generated)
+5. Produce task breakdown (referencing plan if it exists, otherwise referencing spec and proposal directly) → run auto-clarify on tasks
 6. Auto-generate quality checklist
 7. Update status to `tasks: done`
 
 #### When to Use
 
-- Small, well-understood changes
-- Clear requirements upfront
-- Want to reach implementation quickly
+- **Default `/fab:ff`**: Changes needing quality gates — auto-clarify catches issues between stages
+- **`/fab:ff --auto`**: Quick changes with high agent trust — never bails, marks guesses for later review
+- Both: Clear requirements upfront, want to reach implementation quickly
 
 #### Context
 
@@ -104,21 +115,31 @@ Loads all planning context upfront: config, constitution, `proposal.md`, target 
 
 ### `/fab:clarify`
 
-`/fab:clarify` deepens and refines the current stage artifact without advancing to the next stage. It is idempotent and non-advancing.
+`/fab:clarify` deepens and refines the current stage artifact without advancing to the next stage. It operates in two modes depending on call context: **suggest mode** (user invocation) and **auto mode** (internal `fab-ff` call). It is idempotent and non-advancing. See [clarify.md](clarify.md) for the detailed dual-mode specification.
 
-#### Behavior
+#### Suggest Mode (User Invocation)
+
+When the user invokes `/fab:clarify` directly:
 
 1. Read `.status.yaml` to determine current stage
 2. Stage MUST be `proposal`, `specs`, `plan`, or `tasks`. If `apply` or later, suggest `/fab:review` instead
 3. Load current artifact + relevant context
-4. Analyze for gaps, ambiguities, and opportunities to deepen:
-   - **Proposal**: Unresolved [BLOCKING] questions, vague scope, missing impact analysis
-   - **Specs**: [NEEDS CLARIFICATION] markers, missing scenarios, underspecified requirements
-   - **Plan**: Untested assumptions, missing research, weak decision rationale
-   - **Tasks**: Missing tasks, wrong granularity, unclear dependencies, missing file paths
-5. Refine artifact **in place** — edit existing file, do not regenerate from scratch
-6. Report what was clarified/refined
-7. Do NOT advance the stage or update `.status.yaml` stage field
+4. Perform a **stage-scoped taxonomy scan** for gaps, ambiguities, and `[NEEDS CLARIFICATION]` markers (categories vary by stage)
+5. Present structured questions **one at a time** (max 5 per invocation), each with a recommendation and options table or suggested answer
+6. **Immediately update the artifact** after each user answer (incremental, not batched)
+7. User may terminate early with "done"/"good"/"no more"
+8. Append audit trail under `## Clarifications > ### Session {date}` with `Q:` / `A:` entries
+9. Display coverage summary (Resolved / Clear / Deferred / Outstanding)
+10. Do NOT advance the stage
+
+#### Auto Mode (Internal fab-ff Call)
+
+When called internally by `fab-ff` between stage generations:
+
+1. Perform the same taxonomy scan autonomously — no user interaction
+2. Resolve gaps using available context; classify remaining gaps as blocking or non-blocking
+3. Return machine-readable result: `{resolved: N, blocking: N, non_blocking: N}`
+4. `fab-ff` uses the result to decide whether to continue or bail
 
 #### Key Property
 
@@ -157,6 +178,18 @@ Calling `/fab:clarify` multiple times is safe — it refines further each time. 
 **Rejected**: Auto-advancing after clarification — unclear when the user considers the artifact ready.
 *Source*: doc/fab-spec/SKILLS.md
 
+### Clarify Mode Selection by Call Context
+**Decision**: `/fab:clarify` mode is determined by how it is invoked (user = suggest mode, `fab-ff` internal = auto mode), not by `--suggest`/`--auto` flags.
+**Why**: Avoids a confusing flag pair with no clear use case for user-invoked auto mode. The call context naturally maps to the right behavior.
+**Rejected**: Flag-based mode selection — adds complexity, no user scenario requires it.
+*Introduced by*: 260207-m3qf-clarify-dual-modes
+
+### Fast-Forward Interleaves Auto-Clarify
+**Decision**: `/fab:ff` interleaves auto-clarify between stage generations (`spec → auto-clarify → plan → auto-clarify → tasks → auto-clarify`). Default mode bails on blocking issues; `--auto` mode guesses and marks them.
+**Why**: Gaps in one stage compound downstream. Catching them between stages prevents tasks built on unverified assumptions. The bail/guess split gives users control vs speed.
+**Rejected**: No clarify in ff (gaps compound). Full user-interactive clarify in ff (defeats fast-forward flow).
+*Introduced by*: 260207-m3qf-clarify-dual-modes
+
 ### Reset via `/fab:continue <stage>`
 **Decision**: Reset to an earlier planning stage by passing the stage name as an argument to `/fab:continue`. Downstream artifacts are invalidated and regenerated.
 **Why**: Provides a clean re-entry point after `/fab:review` identifies upstream issues. Reuses the existing skill rather than adding a separate `/fab:reset` command.
@@ -167,4 +200,5 @@ Calling `/fab:clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260207-m3qf-clarify-dual-modes | 2026-02-07 | Updated `/fab:clarify` to dual-mode (suggest + auto), `/fab:ff` with interleaved auto-clarify and `--auto` flag |
 | — | 2026-02-07 | Generated from doc/fab-spec/ (README.md, SKILLS.md, TEMPLATES.md) |
