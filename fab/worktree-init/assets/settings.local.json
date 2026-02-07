@@ -69,7 +69,7 @@
       "Bash(file:*)",
       "Bash(tee:*)",
       "Bash(yes:*)",
-      "Bash(fab/.kit/setup.sh:*)",
+      "Bash(fab/.kit/scripts/setup.sh:*)",
       "Bash(bash:*)"
     ]
   }

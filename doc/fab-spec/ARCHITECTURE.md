@@ -369,7 +369,7 @@ Agent-specific skill files are **symlinks** pointing into `fab/.kit/skills/`. Th
 
 ### Claude Code (`.claude/skills/`)
 
-`/fab:init` (or `fab/.kit/setup.sh`) creates skill subdirectories with symlinks:
+`/fab:init` (or `fab/.kit/scripts/setup.sh`) creates skill subdirectories with symlinks:
 ```
 .claude/skills/
 ├── fab-init/
@@ -407,14 +407,14 @@ Same pattern — symlinks from the agent's convention directory into `fab/.kit/s
 
 ```
 1. User obtains .kit/  →  cp -r /path/to/fab-kit fab/.kit
-2. User runs fab/.kit/setup.sh  →  creates directories, symlinks, docs/index.md, .gitignore entry
+2. User runs fab/.kit/scripts/setup.sh  →  creates directories, symlinks, docs/index.md, .gitignore entry
 3. User runs /fab:init →  generates config.yaml, constitution.md (+ optional source hydration)
 4. User runs /fab:new  →  first change is created
 ```
 
 Step 1 is manual. Step 2 is a shell script. Steps 3–4 are skill-driven.
 
-`fab/.kit/setup.sh` handles all structural setup (directories, symlinks, `.gitignore`) and is the single source of truth for that structure. `/fab:init` delegates to it (step 1e) and adds the interactive parts (config, constitution, source hydration).
+`fab/.kit/scripts/setup.sh` handles all structural setup (directories, symlinks, `.gitignore`) and is the single source of truth for that structure. `/fab:init` delegates to it (step 1e) and adds the interactive parts (config, constitution, source hydration).
 
 **Re-running `/fab:init`**: Init is idempotent — safe to call at any time. On subsequent runs it verifies structure, repairs broken symlinks, and optionally hydrates `fab/docs/` from external sources (Notion URLs, Linear URLs, local files). See [Skills Reference](SKILLS.md#fabinit-sources) for source hydration behavior.
 
