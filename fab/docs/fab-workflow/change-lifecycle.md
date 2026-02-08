@@ -48,6 +48,7 @@ Every change folder SHALL contain a `.status.yaml` manifest with these fields:
 - `stage` — current stage (single source of truth for where the change is)
 - `progress` — map of all stages to their state
 - `checklist` — generation status, path, completion counts
+- `confidence` — SRAD confidence scoring: `certain`, `confident`, `tentative`, `unresolved` counts and derived `score` (0.0-5.0). Computed by `/fab-new`, recomputed by `/fab-continue` and `/fab-clarify`. Used as a gate by `/fab-fff` (requires score >= 3.0)
 - `last_updated` — refreshed on every status change
 
 **State vocabulary** (all status fields draw from this fixed set):
@@ -76,6 +77,8 @@ The stages split into three phases:
 - **Completion** (7): archive (hydrates into centralized docs)
 
 The `plan` stage MAY be skipped for straightforward changes. When skipped, its status is recorded as `skipped` and the flow proceeds directly from `specs` to `tasks`.
+
+**Full pipeline path**: `/fab-fff` chains the entire flow (planning → apply → review → archive) in a single invocation, gated on confidence score >= 3.0. This is the fastest path from proposal to archived change.
 
 ### Git Integration (Optional)
 
@@ -146,5 +149,6 @@ All mechanical work (file reading, YAML parsing, progress symbol mapping, next c
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260208-k3m7-add-fab-fff | 2026-02-08 | Added `confidence` field to `.status.yaml` schema, added full pipeline path via `/fab-fff` |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab:xxx` colon format to `/fab-xxx` hyphen format |
 | — | 2026-02-07 | Generated from doc/fab-spec/ (ARCHITECTURE.md, SKILLS.md, TEMPLATES.md) |

@@ -178,12 +178,25 @@ Apply the SRAD framework (defined in `_context.md`) to all decision points encou
 
 If SRAD evaluation finds no Unresolved decisions, skip questions entirely — generate the proposal without asking.
 
-### Step 8: Mark Proposal Complete
+### Step 8: Compute Confidence Score
+
+After generating the proposal, compute the initial confidence score:
+
+1. Count SRAD grades across the proposal:
+   - **Certain**: decisions deterministically answered by config/constitution/template rules
+   - **Confident**: decisions with strong signal and one obvious interpretation
+   - **Tentative**: decisions marked with `<!-- assumed: ... -->` in the artifact
+   - **Unresolved**: decisions asked as questions (count only those that were asked and answered — resolved Unresolved decisions become Certain or Confident)
+2. Apply the confidence formula (see `_context.md` Confidence Scoring section)
+3. Write the `confidence` block to `.status.yaml`
+
+### Step 9: Mark Proposal Complete
 
 Once the user is satisfied with the proposal (questions answered, scope agreed):
 
 1. Update `.status.yaml`:
    - Change `progress.proposal` from `active` to `done`
+   - Write the computed `confidence` block (from Step 8)
    - Update `last_updated` to current timestamp
 2. The proposal status field in the proposal.md itself can remain as-is (the `.status.yaml` is the source of truth)
 

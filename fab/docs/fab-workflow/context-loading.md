@@ -45,7 +45,7 @@ The shared context preamble (`_context.md`) includes the SRAD autonomy framework
 - **SRAD scoring table** — four dimensions for evaluating decision points
 - **Confidence grades** — Certain, Confident, Tentative, Unresolved with corresponding artifact markers
 - **Worked examples** — demonstrating how dimensions interact to produce grades
-- **Artifact markers** — `<!-- assumed: ... -->` for Tentative, `<!-- auto-guess: ... -->` for Unresolved
+- **Artifact markers** — `<!-- assumed: ... -->` for Tentative, `<!-- clarified: ... -->` for resolved assumptions
 - **Assumptions Summary Block** — standard format for output and artifact persistence
 
 This protocol is loaded as part of the "Always Load" layer via `_context.md` and does not require separate file loading.
@@ -82,6 +82,7 @@ The following skills skip the standard context loading layers:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260208-k3m7-add-fab-fff | 2026-02-08 | Fixed stale `auto-guess` marker reference in SRAD Protocol section — replaced with `clarified` marker per updated `_context.md` |
 | 260207-09sj-autonomy-framework | 2026-02-08 | Added SRAD protocol section — framework is loaded via `_context.md` as part of Always Load layer |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab:xxx` colon format to `/fab-xxx` hyphen format |
 | 260207-5mjv-preflight-grep-scripts | 2026-02-07 | Added preflight script integration — Change Context layer now uses `fab-preflight.sh` for validation and state resolution |

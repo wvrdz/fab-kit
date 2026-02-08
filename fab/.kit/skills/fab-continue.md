@@ -192,6 +192,16 @@ When generating tasks (regardless of whether plan was skipped), also generate th
    - Set `checklist.total` to the number of checklist items generated
    - Set `checklist.completed` to `0`
 
+### Step 3b: Recompute Confidence Score
+
+After generating the artifact, recompute the confidence score:
+
+1. Re-count SRAD grades across **all** artifacts in the change (proposal, spec, plan, tasks — whichever exist)
+2. Apply the confidence formula (see `_context.md` Confidence Scoring section)
+3. Write the updated `confidence` block to `.status.yaml`
+
+This ensures the score reflects any new assumptions introduced by the generated artifact.
+
 ### Step 4: Update `.status.yaml`
 
 After successfully generating the artifact:
@@ -199,7 +209,8 @@ After successfully generating the artifact:
 1. Set `stage` to the stage just completed (e.g., `specs`, `plan`, or `tasks`)
 2. Set `progress.{completed_stage}` to `done`
 3. If advancing past the completed stage, set `progress.{next_stage}` to `active` (only if there is a next planning stage)
-4. Update `last_updated` to the current ISO 8601 timestamp
+4. Write the recomputed `confidence` block (from Step 3b)
+5. Update `last_updated` to the current ISO 8601 timestamp
 
 **Examples of stage transitions:**
 

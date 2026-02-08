@@ -146,7 +146,6 @@ Perform a systematic scan of the artifact for gaps, ambiguities, and `[NEEDS CLA
 - Parallel markers — are independent tasks marked `[P]`?
 
 Also scan for:
-- `<!-- auto-guess: {description} -->` markers (left by `/fab-ff --auto`) — these are Unresolved decisions to resolve interactively
 - `<!-- assumed: {description} -->` markers (left by any planning skill) — these are Tentative assumptions to confirm or override
 
 When presenting a question derived from an `<!-- assumed: ... -->` marker, frame the current assumption as the **recommended option** and offer alternatives. For example, if the marker says `<!-- assumed: supplement existing auth rather than replace -->`, the recommendation should be "Supplement existing auth" with alternatives like "Replace existing auth" or "Both — configurable".
@@ -208,7 +207,6 @@ After the user responds:
    - `"done"`, `"good"`, `"no more"` (case-insensitive) → **early termination** (skip to Step 6)
 2. **Immediately update the artifact in place** to reflect the resolution:
    - Replace `[NEEDS CLARIFICATION]` markers with concrete content
-   - Replace `<!-- auto-guess: ... -->` markers with the confirmed resolution
    - Replace `<!-- assumed: ... -->` markers with confirmed content (if user accepts) or updated content (if user overrides)
    - Add `<!-- clarified: {description} -->` HTML comment next to significant changes
 3. Present the next question (return to Step 3)
@@ -254,11 +252,21 @@ Clarification complete.
 Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
 ```
 
-### Step 7: Do NOT Advance Stage
+### Step 7: Recompute Confidence Score
+
+After resolving questions, recompute the confidence score:
+
+1. Re-count SRAD grades across **all** artifacts in the change (proposal, spec, plan, tasks — whichever exist)
+2. Apply the confidence formula (see `_context.md` Confidence Scoring section)
+3. Write the updated `confidence` block to `.status.yaml`
+
+This ensures the score reflects any resolved Tentative or Unresolved assumptions from this session.
+
+### Step 8: Do NOT Advance Stage
 
 **Critical**: Do NOT update the `stage` field in `.status.yaml`. Do NOT set any progress field to `done` that wasn't already `done`. The clarify skill is strictly non-advancing.
 
-The only `.status.yaml` update allowed is `last_updated` (to the current ISO 8601 timestamp).
+The only `.status.yaml` updates allowed are `confidence` (recomputed) and `last_updated` (to the current ISO 8601 timestamp).
 
 ---
 
@@ -272,7 +280,7 @@ Same as Suggest Mode Step 1 — determine the artifact file from the current sta
 
 ### Step 2: Autonomous Gap Analysis
 
-Perform the same stage-scoped taxonomy scan as Suggest Mode Step 2, including scanning for `<!-- assumed: ... -->` and `<!-- auto-guess: ... -->` markers. For each gap found, attempt autonomous resolution:
+Perform the same stage-scoped taxonomy scan as Suggest Mode Step 2, including scanning for `<!-- assumed: ... -->` markers. For each gap found, attempt autonomous resolution:
 
 1. **Resolvable** — the gap can be resolved using available context (config, constitution, centralized docs, completed artifacts). Resolve it in place with a `<!-- clarified: {description} -->` marker. For `<!-- assumed: ... -->` markers that can be confirmed from context, remove the marker (assumption confirmed).
 2. **Blocking** — the gap cannot be resolved from available context. It requires user input or external information that the agent does not have. Leave the gap in place with a `<!-- blocking: {description} -->` marker.
@@ -396,7 +404,7 @@ Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
 | Idempotent? | **Yes** — safe to call multiple times; each call refines further |
 | Modifies artifact? | **Yes** — edits existing file in place |
 | Creates new files? | **No** — only modifies the current stage artifact |
-| Updates `.status.yaml`? | **Only** `last_updated` timestamp |
+| Updates `.status.yaml`? | **Only** `confidence` (recomputed) and `last_updated` timestamp |
 | Modes | **Suggest** (user invocation) and **Auto** (internal fab-ff call) |
 
 ---
