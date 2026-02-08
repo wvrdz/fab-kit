@@ -72,11 +72,12 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 | `/fab-continue` → plan | plan done | `Next: /fab-continue (tasks) or /fab-clarify (refine plan)` |
 | `/fab-continue` → tasks | tasks done | `Next: /fab-apply` |
 | `/fab-ff` | tasks done | `Next: /fab-apply` |
-| `/fab-ff --auto` | tasks done | `Next: /fab-apply` |
 | `/fab-clarify` | same stage | `Next: /fab-clarify (refine further) or /fab-continue or /fab-ff` |
 | `/fab-apply` | apply done | `Next: /fab-review` |
 | `/fab-review` (pass) | review done | `Next: /fab-archive` |
 | `/fab-review` (fail) | review failed | *(contextual — see /fab-review for fix options)* |
+| `/fab-fff` | archived | `Next: /fab-new <description> (start next change)` |
+| `/fab-fff` (bail) | varies | *(contextual — see /fab-fff for bail messages)* |
 | `/fab-archive` | archived | `Next: /fab-new <description> (start next change)` |
 
 ---
@@ -105,7 +106,7 @@ Each decision produces an assumption graded on a 4-level scale:
 | **Certain** | Determined by config/constitution/template rules | None | None — not worth mentioning |
 | **Confident** | Strong signal, one obvious interpretation | None | Noted in Assumptions summary |
 | **Tentative** | Reasonable guess, multiple valid options | `<!-- assumed: {description} -->` | Noted in Assumptions summary, `/fab-clarify` suggested |
-| **Unresolved** | Cannot determine, incompatible interpretations | `<!-- auto-guess: {description} -->` (fab-ff --auto) | Asked as question (fab-new/continue), batched upfront (fab-ff default), auto-guessed (fab-ff --auto) |
+| **Unresolved** | Cannot determine, incompatible interpretations | None — always asked or bailed | Asked as question (fab-new/continue), batched upfront (fab-ff/fab-fff) |
 
 ### Critical Rule
 
@@ -113,12 +114,13 @@ Each decision produces an assumption graded on a 4-level scale:
 
 ### Skill-Specific Autonomy Levels
 
-| Aspect | fab-new (capture) | fab-continue (deliberate) | fab-ff default (speed) | fab-ff --auto (full trust) |
-|--------|-------------------|---------------------------|------------------------|----------------------------|
-| **Posture** | Assume confident+tentative, ask top ~3 unresolved | Surface tentative, ask top ~3 unresolved | Batch all unresolved upfront, then go | Assume everything, mark unresolved as auto-guess |
-| **Interruption budget** | 0 for branch-on-main; max 3 for unresolved questions | 1-2 per stage | 0-1 batch at start | Hard zero |
-| **Output** | Assumptions summary + "Run /fab-clarify to review" | Key Decisions block + Assumptions summary + [NEEDS CLARIFICATION] count | Cumulative Assumptions summary | Auto-guesses list + Assumptions summary |
-| **Escape valve** | `/fab-clarify` | `/fab-clarify` | `/fab-clarify` | `/fab-clarify` |
+| Aspect | fab-new (capture) | fab-continue (deliberate) | fab-ff (speed) | fab-fff (full pipeline) |
+|--------|-------------------|---------------------------|----------------|-------------------------|
+| **Posture** | Assume confident+tentative, ask top ~3 unresolved | Surface tentative, ask top ~3 unresolved | Batch all unresolved upfront, then go | Same as fab-ff; gated on confidence >= 3.0 |
+| **Interruption budget** | 0 for branch-on-main; max 3 for unresolved questions | 1-2 per stage | 0-1 batch at start | Same as fab-ff (frontloaded) |
+| **Output** | Assumptions summary + "Run /fab-clarify to review" | Key Decisions block + Assumptions summary + [NEEDS CLARIFICATION] count | Cumulative Assumptions summary | Same as fab-ff + apply/review/archive output |
+| **Escape valve** | `/fab-clarify` | `/fab-clarify` | `/fab-clarify` | `/fab-clarify` (bails on blockers or review failure) |
+| **Recomputes confidence?** | Yes | Yes | No | No |
 
 ### Worked Examples
 
@@ -168,7 +170,6 @@ Planning skills use HTML comment markers to flag assumptions for downstream scan
 | Marker | Grade | Placed by | Scanned by |
 |--------|-------|-----------|------------|
 | `<!-- assumed: {description} -->` | Tentative | All planning skills (fab-new, fab-continue, fab-ff) | `/fab-clarify` (suggest + auto modes) |
-| `<!-- auto-guess: {description} -->` | Unresolved | `/fab-ff --auto` only | `/fab-clarify` (suggest + auto modes), `/fab-apply` (soft gate) |
 | `<!-- clarified: {description} -->` | Resolved | `/fab-clarify` | Informational — not scanned |
 
 **Placement**: Insert the marker inline in the artifact, immediately after the assumed or guessed content. The `{description}` MUST be a concise summary of what was assumed/guessed and why.
@@ -202,3 +203,55 @@ Every planning skill invocation that makes Confident or Tentative assumptions SH
 - Only include Confident and Tentative grades in the summary. Certain grades are omitted (not worth mentioning). Unresolved grades are asked as questions (not assumed).
 - For `/fab-ff`, the output summary is **cumulative** across all generated stages. Each entry notes its source artifact (e.g., "in spec.md"). Per-artifact `## Assumptions` sections are persisted individually.
 - If 0 assumptions were made, omit the Assumptions summary entirely (no empty table).
+
+---
+
+## Confidence Scoring
+
+Confidence scoring provides a numeric measure of how well-resolved a change's decisions are, used as a gate for autonomous pipeline execution via `/fab-fff`.
+
+### Schema (in `.status.yaml`)
+
+```yaml
+confidence:
+  certain: 12      # count of Certain-graded SRAD decisions
+  confident: 3     # count of Confident-graded decisions
+  tentative: 2     # count of Tentative-graded decisions
+  unresolved: 0    # count of Unresolved-graded decisions
+  score: 2.7       # derived score (see formula below)
+```
+
+### Formula
+
+```
+if unresolved > 0:
+  score = 0.0
+else:
+  score = max(0.0, 5.0 - 0.1 * confident - 1.0 * tentative)
+```
+
+- **Range**: 0.0 to 5.0
+- **5.0**: All decisions are Certain — maximum confidence
+- **0.0**: Any Unresolved decision, OR 5+ Tentative decisions
+- Certain contributes 0 penalty (deterministic, no ambiguity)
+- Confident contributes 0.1 penalty (minor — strong signal, one obvious interpretation)
+- Tentative contributes 1.0 penalty (meaningful — reasonable guess but multiple valid options)
+- Unresolved is a hard zero (cannot run autonomously with unresolved decisions)
+
+### Gate Threshold
+
+`/fab-fff` requires `confidence.score >= 3.0`. This allows at most 2 Tentative decisions (with some Confident erosion).
+
+### Lifecycle
+
+| Event | Skill | Action |
+|-------|-------|--------|
+| Initial computation | `/fab-new` | Count SRAD grades across proposal, compute score, write to `.status.yaml` |
+| Recomputation | `/fab-continue` | Re-count across all artifacts after generating each one, update `.status.yaml` |
+| Recomputation | `/fab-clarify` | Re-count after each suggest-mode session, update `.status.yaml` |
+| No recomputation | `/fab-ff`, `/fab-fff` | Autonomous skills do not update the score — gate check uses score from last manual step |
+| Consumption | `/fab-fff` | Reads score as pre-flight gate check |
+
+### Template
+
+`fab/.kit/templates/status.yaml` includes the confidence block initialized to zero counts and score 5.0. `/fab-new` uses this template when creating new changes.

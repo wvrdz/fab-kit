@@ -55,6 +55,13 @@ chk_generated=$(grep '^ *generated:' "$status_file" | sed 's/^ *generated: *//')
 chk_completed=$(grep '^ *completed:' "$status_file" | sed 's/^ *completed: *//')
 chk_total=$(grep '^ *total:' "$status_file" | sed 's/^ *total: *//')
 
+# Extract confidence fields (handle missing block gracefully for backwards compat)
+conf_certain=$(grep '^ *certain:' "$status_file" | sed 's/^ *certain: *//' || true)
+conf_confident=$(grep '^ *confident:' "$status_file" | sed 's/^ *confident: *//' || true)
+conf_tentative=$(grep '^ *tentative:' "$status_file" | sed 's/^ *tentative: *//' || true)
+conf_unresolved=$(grep '^ *unresolved:' "$status_file" | sed 's/^ *unresolved: *//' || true)
+conf_score=$(grep '^ *score:' "$status_file" | sed 's/^ *score: *//' || true)
+
 cat <<EOF
 name: $name
 change_dir: changes/$name
@@ -72,4 +79,10 @@ checklist:
   generated: ${chk_generated:-false}
   completed: ${chk_completed:-0}
   total: ${chk_total:-0}
+confidence:
+  certain: ${conf_certain:-0}
+  confident: ${conf_confident:-0}
+  tentative: ${conf_tentative:-0}
+  unresolved: ${conf_unresolved:-0}
+  score: ${conf_score:-5.0}
 EOF

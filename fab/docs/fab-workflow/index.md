@@ -9,7 +9,7 @@
 | [planning-skills](planning-skills.md) | `/fab-new`, `/fab-continue`, `/fab-ff`, `/fab-clarify` — the planning pipeline from proposal through tasks | 2026-02-08 |
 | [clarify](clarify.md) | `/fab-clarify` skill — dual modes (suggest/auto), taxonomy scan, structured questions, coverage reports, audit trail | 2026-02-08 |
 | [execution-skills](execution-skills.md) | `/fab-apply`, `/fab-review`, `/fab-archive` — implementation, validation, and completion | 2026-02-08 |
-| [change-lifecycle](change-lifecycle.md) | Change naming, folder structure, `.status.yaml`, `fab/current`, git integration, `/fab-status`, `/fab-switch` | 2026-02-07 |
+| [change-lifecycle](change-lifecycle.md) | Change naming, folder structure, `.status.yaml`, `fab/current`, git integration, `/fab-status`, `/fab-switch` | 2026-02-08 |
 | [templates](templates.md) | Artifact templates (proposal, spec, plan, tasks, checklist) and centralized doc format | 2026-02-07 |
 | [kit-architecture](kit-architecture.md) | `.kit/` structure, scripts, agent integration, distribution, versioning, monorepos | 2026-02-07 |
 | [configuration](configuration.md) | `config.yaml` schema, `constitution.md` governance, stage graph definition | 2026-02-07 |

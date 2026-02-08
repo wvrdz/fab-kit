@@ -29,7 +29,6 @@ The skill SHALL perform a systematic scan of the current artifact for gaps, ambi
 - **Tasks**: task completeness, granularity, dependency ordering, file path accuracy, parallel markers
 
 The scan also detects:
-- `<!-- auto-guess: ... -->` markers left by `/fab-ff --auto` — Unresolved decisions to resolve interactively
 - `<!-- assumed: ... -->` markers left by any planning skill — Tentative assumptions to confirm or override
 
 When presenting questions from `<!-- assumed: ... -->` markers, the current assumption is framed as the recommended option with alternatives offered.
@@ -72,6 +71,10 @@ At the end of each session, the skill SHALL display a coverage summary with four
 
 In auto mode, the skill SHALL resolve gaps using available context (config, constitution, centralized docs, completed artifacts). It classifies each gap as resolvable, blocking, or non-blocking. The scan includes `<!-- assumed: ... -->` markers — those confirmable from context are resolved (marker removed), others are classified as blocking or non-blocking.
 
+#### Confidence Recomputation
+
+After each suggest-mode session, the skill SHALL recompute the confidence score by re-counting SRAD grades across all artifacts in the change and applying the formula (see `_context.md` Confidence Scoring section). The updated `confidence` block is written to `.status.yaml`. This ensures the score reflects resolved Tentative or Unresolved assumptions.
+
 #### Machine-Readable Result
 
 Auto mode SHALL return a structured result: `{resolved: N, blocking: N, non_blocking: N}`. If blocking issues exist, descriptions are included: `{..., blocking_issues: ["description"]}`. This result is consumed by `fab-ff` to decide whether to continue or bail.
@@ -110,5 +113,6 @@ The skill SHALL only operate on planning stages (`proposal`, `specs`, `plan`, `t
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260208-k3m7-add-fab-fff | 2026-02-08 | Added confidence recomputation after suggest-mode sessions, removed `<!-- auto-guess -->` scanning references |
 | 260207-09sj-autonomy-framework | 2026-02-08 | Added `<!-- assumed: ... -->` marker scanning to both suggest and auto modes; assumed markers framed as recommendations with alternatives |
 | 260207-m3qf-clarify-dual-modes | 2026-02-07 | Initial doc — dual-mode clarify skill (suggest + auto), taxonomy scan, structured questions, coverage reports, audit trail |

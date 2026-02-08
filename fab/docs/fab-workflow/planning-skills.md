@@ -50,8 +50,9 @@ Loads: config, constitution, `fab/docs/index.md` (to understand the existing doc
 2. Identify next artifact to create
 3. Load relevant template + context (including `fab/constitution.md` for principles)
 4. Generate artifact (with clarification/research as needed)
-5. Auto-generate checklist when creating tasks
-6. Update `.status.yaml`
+5. Recompute confidence score (re-count SRAD grades across all artifacts, apply formula, update `.status.yaml`)
+6. Auto-generate checklist when creating tasks
+7. Update `.status.yaml`
 
 #### Plan Decision
 
@@ -76,7 +77,7 @@ Reset is primarily used after `/fab-review` identifies issues upstream.
 
 ### `/fab-ff` (Fast Forward)
 
-`/fab-ff` fast-forwards through all remaining planning stages in one pass to reach implementation quickly. It requires an active change with a completed proposal. Supports two modes: default (with clarify checkpoints) and full-auto (`--auto`).
+`/fab-ff` fast-forwards through all remaining planning stages in one pass to reach implementation quickly. It requires an active change with a completed proposal. Frontloads questions, interleaves auto-clarify, and bails on blockers.
 
 #### Frontloaded Questions
 
@@ -84,14 +85,10 @@ The skill SHALL scan the proposal for ambiguities across *all* planning stages (
 
 #### Interleaved Auto-Clarify
 
-The default `/fab-ff` pipeline interleaves auto-clarify between stage generations: `spec → auto-clarify → plan-decision → auto-clarify → tasks → auto-clarify`. This catches gaps before they compound downstream.
+The `/fab-ff` pipeline interleaves auto-clarify between stage generations: `spec → auto-clarify → plan-decision → auto-clarify → tasks → auto-clarify`. This catches gaps before they compound downstream.
 
 - If auto-clarify finds **blocking issues** (cannot resolve autonomously), the pipeline **bails** — stops, reports the issues, and suggests `Run /fab-clarify to resolve these, then /fab-ff to resume.`
 - The pipeline is **resumable** — re-running `/fab-ff` after a bail skips stages already marked `done` and continues from the first incomplete stage.
-
-#### Full-Auto Mode (`--auto`)
-
-`/fab-ff --auto` runs the same interleaved pipeline but never stops for blockers. Instead, it makes best-guess decisions, marks them with `<!-- auto-guess: {description} -->` markers in the artifact, and warns the user in output listing all guesses made. These markers are detectable by `/fab-review` and resolvable by `/fab-clarify` suggest mode.
 
 #### Generation Flow
 
@@ -105,9 +102,33 @@ The default `/fab-ff` pipeline interleaves auto-clarify between stage generation
 
 #### When to Use
 
-- **Default `/fab-ff`**: Changes needing quality gates — auto-clarify catches issues between stages
-- **`/fab-ff --auto`**: Quick changes with high agent trust — never bails, marks guesses for later review
-- Both: Clear requirements upfront, want to reach implementation quickly
+- Clear requirements upfront, want to reach implementation quickly
+- Changes needing quality gates — auto-clarify catches issues between stages
+
+### `/fab-fff` (Full Pipeline)
+
+`/fab-fff` chains the full pipeline in a single invocation: `/fab-ff` → `/fab-apply` → `/fab-review` → `/fab-archive`. Gated on confidence score >= 3.0.
+
+#### Confidence Gate
+
+Before proceeding, `/fab-fff` reads `confidence.score` from `.status.yaml`. If the score is below 3.0, the skill aborts with a message suggesting `/fab-clarify` to raise confidence.
+
+#### Pipeline Behavior
+
+Each stage uses the same behavior as its standalone invocation. If `/fab-ff` bails on blocking issues or `/fab-review` fails, the pipeline stops immediately. Unlike standalone `/fab-review`, the review failure does NOT offer an interactive rework menu — it bails with an actionable message.
+
+#### Resumability
+
+`/fab-fff` is resumable — re-invoking skips stages already marked `done` and continues from the first incomplete stage.
+
+#### Confidence Recomputation
+
+`/fab-fff` does NOT recompute the confidence score during execution. The gate check uses the score from the last manual step (`/fab-new`, `/fab-continue`, or `/fab-clarify`).
+
+#### When to Use
+
+- High-confidence changes where you want full autonomy from planning to archive
+- After raising confidence via `/fab-clarify` to meet the >= 3.0 threshold
 
 #### Context
 
@@ -191,10 +212,10 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 *Introduced by*: 260207-m3qf-clarify-dual-modes
 
 ### Fast-Forward Interleaves Auto-Clarify
-**Decision**: `/fab-ff` interleaves auto-clarify between stage generations (`spec → auto-clarify → plan → auto-clarify → tasks → auto-clarify`). Default mode bails on blocking issues; `--auto` mode guesses and marks them.
-**Why**: Gaps in one stage compound downstream. Catching them between stages prevents tasks built on unverified assumptions. The bail/guess split gives users control vs speed.
-**Rejected**: No clarify in ff (gaps compound). Full user-interactive clarify in ff (defeats fast-forward flow).
-*Introduced by*: 260207-m3qf-clarify-dual-modes
+**Decision**: `/fab-ff` interleaves auto-clarify between stage generations (`spec → auto-clarify → plan → auto-clarify → tasks → auto-clarify`). Bails on blocking issues that cannot be resolved autonomously.
+**Why**: Gaps in one stage compound downstream. Catching them between stages prevents tasks built on unverified assumptions.
+**Rejected**: No clarify in ff (gaps compound). Full user-interactive clarify in ff (defeats fast-forward flow). Full-auto mode with `<!-- auto-guess -->` markers (defers interaction rather than eliminating it — replaced by confidence-gated `/fab-fff`).
+*Introduced by*: 260207-m3qf-clarify-dual-modes; *Updated by*: 260208-k3m7-add-fab-fff (removed `--auto` mode)
 
 ### Reset via `/fab-continue <stage>`
 **Decision**: Reset to an earlier planning stage by passing the stage name as an argument to `/fab-continue`. Downstream artifacts are invalidated and regenerated.
@@ -206,6 +227,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260208-k3m7-add-fab-fff | 2026-02-08 | Added `/fab-fff` full pipeline skill, confidence recomputation in `/fab-continue`, removed `/fab-ff --auto` mode, updated design decisions |
 | 260207-09sj-autonomy-framework | 2026-02-08 | Added SRAD autonomy framework, confidence grades, assumptions summaries, branch auto-create on main, soft gate on fab-apply |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab:xxx` colon format to `/fab-xxx` hyphen format |
 | 260207-m3qf-clarify-dual-modes | 2026-02-07 | Updated `/fab-clarify` to dual-mode (suggest + auto), `/fab-ff` with interleaved auto-clarify and `--auto` flag |
