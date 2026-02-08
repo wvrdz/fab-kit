@@ -41,3 +41,4 @@
 - [ ] [m1gc] (BUG) 2026-02-07: fab-new collision handling says "append an additional random character" (making 5 chars) instead of "regenerate the 4-character component"
 - [ ] [2jo9] 2026-02-08: add an index.md to the fab/changes/archive folder which gets updated on every fab-archive so its easy to search for changes later. The description here in this table should be longer, maybe one to two lines instead of just the name of the change folder itself. Change the folder name length requirement in fab-new from 2 to 4 words to maybe longer, something like 2 to 6 or 2 to 7 words, maybe.
 
+- [ ] [ofhw] 2026-02-08: make retrospect.md a first class fab command - rename it to fab-retrospect.md
