@@ -50,11 +50,12 @@ EOF
 fi
 
 # ── 3. Skill symlinks ──────────────────────────────────────────────
-# Pattern: .claude/skills/fab-{name}/SKILL.md → ../../../fab/.kit/skills/fab-{name}.md
-# Canonical list: every fab-*.md in .kit/skills/ (excludes _context.md)
+# Pattern: .claude/skills/{name}/SKILL.md → ../../../fab/.kit/skills/{name}.md
+# Canonical list: every *.md in .kit/skills/ except _context.md
 skills=()
-for f in "$kit_dir"/skills/fab-*.md; do
+for f in "$kit_dir"/skills/*.md; do
   [ -f "$f" ] || continue
+  [[ "$(basename "$f")" == _context.md ]] && continue
   skills+=("$(basename "$f" .md)")
 done
 

@@ -64,3 +64,4 @@
 - [ ] [p2xe] (BUG) 2026-02-07: fab-continue stage guard checks stage name not progress value — if `stage: tasks` but `progress.tasks: active` (interrupted), the guard incorrectly blocks resumption
 - [ ] [j5bh] (BUG) 2026-02-07: fab-apply, fab-review, fab-archive omit `fab/specs/index.md` from context loading, deviating from `_context.md` always-load protocol
 - [ ] [m1gc] (BUG) 2026-02-07: fab-new collision handling says "append an additional random character" (making 5 chars) instead of "regenerate the 4-character component"
+- [ ] [7fbf] 2026-02-09: FAB status should also show the confidence score
