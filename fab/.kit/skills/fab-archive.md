@@ -221,7 +221,34 @@ Update `fab/changes/{name}/.status.yaml`:
 2. Do NOT rename the folder — the date is already in the folder name
 3. **Use relative paths** in all Bash commands — never expand to absolute paths (they break permission allow-patterns and are harder to review).
 
-### Step 6: Clear Pointer
+### Step 6: Update Archive Index
+
+Maintain `fab/changes/archive/index.md` — a searchable summary of all archived changes.
+
+**If `fab/changes/archive/index.md` does not exist:**
+
+1. Create the file with a `# Archive Index` heading followed by a blank line
+2. **Backfill** all existing archived change folders (sorted most-recent-first by folder name):
+   - For each folder in `fab/changes/archive/` (excluding `index.md`):
+     - Read `fab/changes/archive/{folder}/proposal.md`
+     - Extract the first 1-2 sentences from the **Why** section as the description
+     - If `proposal.md` does not exist, use the slug portion of the folder name as a fallback description
+   - Write all entries as a bullet list, most-recent-first
+3. The newly archived change is included in the backfill (it was moved in Step 5)
+
+**If `fab/changes/archive/index.md` already exists:**
+
+1. Read the existing file
+2. Prepend a new entry for the archived change immediately after the `# Archive Index` heading (most-recent-first ordering)
+3. Do NOT modify existing entries
+
+**Entry format:**
+
+```markdown
+- **{folder-name}** — {1-2 sentence description from proposal Why section}
+```
+
+### Step 7: Clear Pointer
 
 Delete `fab/current` to indicate there is no active change.
 
@@ -229,13 +256,14 @@ Delete `fab/current` to indicate there is no active change.
 
 ## Order of Operations (Fail-Safe)
 
-Steps 4–6 are executed in this specific order for safety:
+Steps 4–7 are executed in this specific order for safety:
 
 1. **Status update first** (Step 4) — if the process is interrupted after this point, the change is marked archived but still in `changes/`. The agent can detect this state and complete the remaining steps on next invocation.
 2. **Folder move second** (Step 5) — moves the change to the archive directory.
-3. **Pointer clear last** (Step 6) — `fab/current` is deleted only after the folder is safely archived. This means that during the archive process, `/fab-status` still reports the active change rather than "no active change" with a half-hydrated state.
+3. **Index update third** (Step 6) — updates the archive index after the folder is in place.
+4. **Pointer clear last** (Step 7) — `fab/current` is deleted only after the folder is safely archived and indexed. This means that during the archive process, `/fab-status` still reports the active change rather than "no active change" with a half-hydrated state.
 
-**Recovery from interruption**: If the agent detects that `.status.yaml` has `progress.archive: done` but the folder is still in `fab/changes/` (not in `archive/`), it should complete the move and clear the pointer.
+**Recovery from interruption**: If the agent detects that `.status.yaml` has `progress.archive: done` but the folder is still in `fab/changes/` (not in `archive/`), it should complete the move, update the index, and clear the pointer.
 
 ---
 
@@ -255,6 +283,7 @@ Hydrated docs:
 
 Status:   ✓ archive: done
 Archived: ✓ fab/changes/archive/{name}/
+Index:    ✓ fab/changes/archive/index.md updated
 Pointer:  ✓ fab/current cleared
 
 Archive complete.
@@ -276,6 +305,7 @@ Hydrated docs:
 
 Status:   ✓ archive: done
 Archived: ✓ fab/changes/archive/{name}/
+Index:    ✓ fab/changes/archive/index.md updated
 Pointer:  ✓ fab/current cleared
 
 Archive complete.
@@ -304,7 +334,9 @@ Review has not passed. Run /fab-review to validate implementation first.
 | Target domain folder does not exist | Create folder + domain index (new domain flow) |
 | Plan was skipped | Skip Design Decisions extraction — hydrate only from spec.md |
 | `archive/` directory does not exist | Create it before moving |
-| Interrupted mid-archive (status=done but not moved) | Complete the move and clear pointer |
+| `archive/index.md` does not exist | Create with backfill of all existing archived changes |
+| Archived change missing `proposal.md` during backfill | Use folder slug as fallback description |
+| Interrupted mid-archive (status=done but not moved) | Complete the move, update index, and clear pointer |
 | Hydration produces garbled output | Recovery: `git checkout` on affected doc files. Recommend reviewing diff before pushing. |
 | All checks pass | Complete archive, output Next line |
 
@@ -321,6 +353,7 @@ Review has not passed. Run /fab-review to validate implementation first.
 | Modifies source code? | **No** — archive only modifies documentation files |
 | Updates `.status.yaml`? | **Yes** — sets stage to `archive`, progress to `done`, updates last_updated |
 | Moves change folder? | **Yes** — from `fab/changes/{name}/` to `fab/changes/archive/{name}/` |
+| Updates archive index? | **Yes** — creates or updates `fab/changes/archive/index.md` with entry for the archived change |
 | Clears `fab/current`? | **Yes** — deletes the pointer file |
 
 ---

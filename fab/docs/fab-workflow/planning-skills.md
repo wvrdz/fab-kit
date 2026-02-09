@@ -14,7 +14,7 @@ The planning skills (`/fab-new`, `/fab-discuss`, `/fab-continue`, `/fab-ff`, `/f
 
 #### Folder Name Generation
 
-The agent SHALL generate a folder name in the format `{YYMMDD}-{XXXX}-{slug}` where YYMMDD is today's date, XXXX is 4 random lowercase alphanumeric chars, and slug is 2-4 words extracted from the description. All components MUST be lowercase.
+The agent SHALL generate a folder name in the format `{YYMMDD}-{XXXX}-{slug}` where YYMMDD is today's date, XXXX is 4 random lowercase alphanumeric chars, and slug is 2-6 words extracted from the description. All components MUST be lowercase.
 
 #### Change Initialization
 
@@ -290,6 +290,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260209-r4w8-archive-index-longer-slugs | 2026-02-09 | Expanded slug word count from 2-4 to 2-6 words in `/fab-new` folder name generation |
 | 260208-q8v3-branch-to-switch | 2026-02-09 | Moved branch integration from `/fab-new` to `/fab-switch`, removed `--branch` flag from `/fab-new`, `/fab-new` now calls `/fab-switch` internally |
 | 260208-lgd7-fab-discuss-command | 2026-02-08 | Added `/fab-discuss` conversational proposal skill, `/fab-new` confidence scoring, context-driven mode selection design decisions |
 | 260208-k3m7-add-fab-fff | 2026-02-08 | Added `/fab-fff` full pipeline skill, confidence recomputation in `/fab-continue`, removed `/fab-ff --auto` mode, updated design decisions |

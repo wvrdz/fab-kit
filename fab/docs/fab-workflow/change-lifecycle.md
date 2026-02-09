@@ -16,7 +16,7 @@ Change folders SHALL use the format `{YYMMDD}-{XXXX}-{slug}`:
 |-----------|-------------|---------|---------|
 | `YYMMDD` | Agent (today's date) | Chronological sort, temporal context | `260115` |
 | `XXXX` | Agent (4 random lowercase alphanumeric) | Uniqueness guarantee | `a7k2` |
-| `slug` | Agent (2-4 words from description) | Human readability | `add-oauth` |
+| `slug` | Agent (2-6 words from description) | Human readability | `add-oauth` |
 
 All components MUST be lowercase — avoids collisions on case-insensitive filesystems (macOS default, Windows). The name is unique by construction (date + random token), requires no collision scanning, sorts chronologically in `ls`, and remains stable from creation through archive (no rename).
 
@@ -160,6 +160,7 @@ All mechanical work (file reading, YAML parsing, git branch query, progress symb
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260209-r4w8-archive-index-longer-slugs | 2026-02-09 | Expanded slug word count from 2-4 to 2-6 words for more descriptive folder names |
 | 260208-q8v3-branch-to-switch | 2026-02-09 | Moved branch integration from `/fab-new` to `/fab-switch`, removed `branch:` field from `.status.yaml`, `/fab-status` uses live git query, added `--branch` flag to `/fab-switch` |
 | 260208-lgd7-fab-discuss-command | 2026-02-08 | Added `/fab-discuss` to `fab/current` lifecycle (reads but does not write), added discuss → switch → fff alternative entry path |
 | 260208-k3m7-add-fab-fff | 2026-02-08 | Added `confidence` field to `.status.yaml` schema, added full pipeline path via `/fab-fff` |

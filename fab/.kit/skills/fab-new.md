@@ -48,10 +48,10 @@ Generate a unique folder name using the format `{YYMMDD}-{XXXX}-{slug}`:
 |-----------|----------------|-------------|
 | `YYMMDD` | Today's date | 6 digits, zero-padded (e.g., `260206`) |
 | `XXXX` | 4 random characters | Lowercase alphanumeric only (`a-z`, `0-9`) |
-| `slug` | 2-4 words extracted from description | All lowercase, words joined with `-`, no special characters |
+| `slug` | 2-6 words extracted from description | All lowercase, words joined with `-`, no special characters |
 
 **Slug generation rules**:
-- Extract the most descriptive 2-4 words from the description
+- Extract the most descriptive 2-6 words from the description
 - Drop articles (a, an, the), prepositions (for, to, with, in, on, of, from), and conjunctions (and, or, but)
 - Use lowercase only — avoids collisions on case-insensitive filesystems (macOS default, Windows)
 - Join words with hyphens
