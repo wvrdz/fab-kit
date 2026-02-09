@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260209-h3v7-fab-backfill** — Fab's data flow is one-directional (specs → changes → docs) with no mechanism to detect where docs have outgrown specs. `/fab-backfill` identifies structural gaps and proposes concise additions back to specs with interactive per-gap confirmation.
 - **260209-r4w8-archive-index-longer-slugs** — As archived changes accumulate, there's no way to search or browse what was done without opening each folder individually. Expanding the slug length from 2-4 words to 2-6 words improves self-documentation across the archive, git branches, and file listings.
 - **260208-lgd7-fab-discuss-command** — The workflow lacks a conversational entry point for exploring ideas and iteratively sharpening vague concepts into solid proposals, and `/fab-new` doesn't compute confidence scoring required by the `/fab-fff` gate.
 - **260208-k3m7-add-fab-fff** — The current `fab-ff --auto` mode guesses everything and defers human interaction rather than eliminating it. A better model is to raise confidence high first via `/fab-clarify`, then run the full pipeline autonomously with a confidence score gate.

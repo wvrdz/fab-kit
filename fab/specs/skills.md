@@ -461,3 +461,33 @@ Checklist: not yet generated (created at tasks stage)
 
 Next: Complete plan.md, then /fab:continue
 ```
+
+---
+
+## `/fab:backfill [domain]`
+
+**Purpose**: Identify structural gaps between `fab/docs/` and `fab/specs/` and propose concise additions back to specs with interactive confirmation.
+
+**Context**: `fab/docs/index.md`, `fab/specs/index.md`, all doc files, all spec files
+
+**Arguments**:
+- `[domain]` *(optional)* — scope to a single doc domain. Scans all domains if omitted.
+
+**Example**:
+```
+/fab:backfill
+→ "Found 5 structural gaps (showing top 3):"
+→ Gap 1: Preflight Script — Source: preflight.md, Target: architecture.md
+→ Shows exact markdown preview, asks: "Add this? (yes / no / done)"
+```
+
+**Behavior**:
+1. Read all doc files to build a topic inventory (headings + summaries)
+2. Read all spec files to build a coverage inventory (headings + inline mentions)
+3. Cross-reference at section level — a gap is a doc topic with no spec coverage at all
+4. Rank by impact (core behaviors > supporting concepts > implementation detail)
+5. Present top 3 with exact markdown previews
+6. Per-gap interactive confirm: yes (write), no (skip), done (stop)
+7. Only confirmed additions are written to spec files
+
+**Key properties**: No active change required. No git operations. Idempotent. Specs modified only with user confirmation.

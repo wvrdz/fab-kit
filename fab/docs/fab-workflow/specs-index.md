@@ -22,7 +22,7 @@ The specs index does not prescribe a domain-based directory hierarchy. Specs may
 
 ### Human-Curated Ownership
 
-Specs are written and maintained by humans. No automated tooling creates or enforces structure in `fab/specs/`. No automated hydration from docs into specs exists (reverse-hydration is a future consideration).
+Specs are written and maintained by humans. No automated tooling creates or enforces structure in `fab/specs/`. `/fab-backfill` provides assisted reverse-hydration — it identifies structural gaps between docs and specs and proposes concise additions, but every insertion requires explicit user confirmation. Specs remain human-curated.
 
 ### Bootstrap Integration
 
@@ -36,4 +36,5 @@ Specs are written and maintained by humans. No automated tooling creates or enfo
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260209-h3v7-fab-backfill | 2026-02-09 | Updated Human-Curated Ownership section to reference `/fab-backfill` as assisted reverse-hydration |
 | 260207-bb1q-add-specs-index | 2026-02-07 | Initial creation — added `fab/specs/` directory, specs index with boilerplate, bootstrap and context loading integration |
