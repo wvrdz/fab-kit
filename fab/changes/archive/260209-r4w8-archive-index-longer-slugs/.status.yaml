@@ -1,0 +1,23 @@
+name: 260209-r4w8-archive-index-longer-slugs
+created: 2026-02-09T12:00:00+00:00
+stage: archive
+progress:
+  proposal: done
+  specs: done
+  plan: skipped
+  tasks: done
+  apply: done
+  review: done
+  archive: done
+checklist:
+  generated: true
+  path: checklists/quality.md
+  completed: 14
+  total: 14
+confidence:
+  certain: 8
+  confident: 0
+  tentative: 0
+  unresolved: 0
+  score: 5.0
+last_updated: 2026-02-09T12:04:00+00:00

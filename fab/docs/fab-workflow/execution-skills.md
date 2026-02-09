@@ -76,11 +76,12 @@ Loads: config, constitution, `tasks.md`, `checklists/quality.md`, `spec.md`, tar
    - Minimize edits to unchanged sections to prevent drift
 4. **Update status** to `archive: done` in `.status.yaml`
 5. **Move change folder** to `archive/` (no rename — date already in folder name)
-6. **Clear pointer** — delete `fab/current` (no active change)
+6. **Update archive index** — append an entry to `fab/changes/archive/index.md` (create with backfill of all existing entries if it doesn't exist). Entry format: `- **{folder-name}** — {1-2 sentence description from proposal Why section}`. Most-recent-first ordering.
+7. **Clear pointer** — delete `fab/current` (no active change)
 
 #### Fail-Safe Order of Operations
 
-Steps 3–6 are ordered to fail safely. Status is updated *before* the folder move, so if the move is interrupted, the change is marked archived but still in `changes/` — the agent can detect and complete the move on next invocation. The pointer is cleared last so mid-archive, `/fab-status` still reports the active change.
+Steps 3–7 are ordered to fail safely. Status is updated *before* the folder move, so if the move is interrupted, the change is marked archived but still in `changes/` — the agent can detect and complete the move on next invocation. The index is updated after the folder is in place but before the pointer is cleared, so mid-archive, `/fab-status` still reports the active change.
 
 #### Recovery
 
@@ -120,6 +121,7 @@ Loads: `spec.md`, `plan.md` (if exists), target centralized doc(s) from `fab/doc
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260209-r4w8-archive-index-longer-slugs | 2026-02-09 | Added archive index maintenance step to `/fab-archive` — creates/updates `fab/changes/archive/index.md` with searchable change summaries |
 | 260208-k3m7-add-fab-fff | 2026-02-08 | Removed auto-guess soft gate from `/fab-apply` — replaced by confidence gating on `/fab-fff` |
 | 260207-09sj-autonomy-framework | 2026-02-08 | Added auto-guess soft gate to `/fab-apply` (subsequently removed by 260208-k3m7-add-fab-fff) |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab:xxx` colon format to `/fab-xxx` hyphen format |
