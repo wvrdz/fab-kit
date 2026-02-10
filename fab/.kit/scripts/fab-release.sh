@@ -38,14 +38,7 @@ if ! command -v gh &>/dev/null; then
   exit 1
 fi
 
-# Check git remote
-if ! repo_url=$(git -C "$repo_root" remote get-url origin 2>/dev/null); then
-  echo "ERROR: No origin remote found. Set a git remote to use fab-release.sh."
-  exit 1
-fi
-
-# Parse owner/repo from URL
-repo=$(echo "$repo_url" | sed -E 's|.*github\.com[:/]||; s|\.git$||')
+repo="wvrdz/fab-kit"
 
 # Check clean working tree
 if [ -n "$(git -C "$repo_root" status --porcelain)" ]; then
