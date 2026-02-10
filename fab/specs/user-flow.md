@@ -81,6 +81,8 @@ flowchart TD
 
     subgraph planning ["Planning"]
         NEW["/fab-new &lt;desc&gt;"]
+        DISCUSS["/fab-discuss
+        (explore idea conversationally)"]
 
         subgraph continue ["fab-continue (one stage at a time)"]
             direction TB
@@ -110,6 +112,8 @@ flowchart TD
         STATUS["/fab-status"]
         SWITCH["/fab-switch"]
         HELP["/fab-help"]
+        BACKFILL["/fab-backfill
+        (docs → specs gap detection)"]
     end
 
     %% Setup
@@ -121,6 +125,11 @@ flowchart TD
     NEW --> CONT_S
     NEW --> FF
     NEW --> FFF
+
+    %% Discuss creates a proposal, then needs /fab-switch
+    DISCUSS -->|"/fab-switch"| CONT_S
+    DISCUSS -->|"/fab-switch"| FF
+    DISCUSS -->|"/fab-switch"| FFF
 
     %% Clarify connects to the continue block
     CLARIFY -.->|"refine, then resume"| continue
@@ -147,5 +156,7 @@ flowchart TD
     style execution fill:#fff3e0,stroke:#FF9800
     style completion fill:#e8f5e9,stroke:#4CAF50
     style utility fill:#fce4ec,stroke:#e91e63
+    style DISCUSS fill:#fff,stroke:#999,stroke-dasharray: 5 5
+    style BACKFILL fill:#fff,stroke:#999,stroke-dasharray: 5 5
     style CLARIFY fill:#fff,stroke:#999,stroke-dasharray: 5 5
 ```
