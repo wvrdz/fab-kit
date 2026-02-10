@@ -6,6 +6,18 @@
 
 The planning skills (`/fab-new`, `/fab-discuss`, `/fab-continue`, `/fab-ff`, `/fab-clarify`) handle the first four stages of the Fab workflow: proposal, specs, plan, and tasks. They produce the artifacts that define *what* changes and *how*, before any code is written.
 
+## Shared Generation Partial
+
+The artifact generation logic (spec, plan, tasks, checklist) is defined in a single shared partial: `fab/.kit/skills/_generation.md`. Both `/fab-continue` and `/fab-ff` reference this partial for the mechanics of producing each artifact, rather than inlining the generation steps.
+
+The partial contains four procedures:
+- **Spec Generation Procedure** — template loading, metadata, RFC 2119 requirements, GIVEN/WHEN/THEN scenarios, Assumptions section
+- **Plan Generation Procedure** — template loading, metadata, summary, goals/non-goals, technical context, decisions, file changes
+- **Tasks Generation Procedure** — template loading, metadata, phased task breakdown, task format, execution order
+- **Checklist Generation Procedure** — template loading, category population, sequential CHK IDs, `.status.yaml` updates
+
+Each skill retains its own orchestration logic (stage guards, question handling, plan decisions, auto-clarify, resumability). Only the generation mechanics are shared.
+
 ## Requirements
 
 ### `/fab-new <description>`
@@ -100,9 +112,9 @@ Loads: config, constitution, `fab/docs/index.md`, `fab/specs/index.md`. In refin
 1. Read `.status.yaml` to determine current stage
 2. Identify next artifact to create
 3. Load relevant template + context (including `fab/constitution.md` for principles)
-4. Generate artifact (with clarification/research as needed)
+4. Generate artifact using the shared generation procedures from `_generation.md` (with clarification/research as needed)
 5. Recompute confidence score (re-count SRAD grades across all artifacts, apply formula, update `.status.yaml`)
-6. Auto-generate checklist when creating tasks
+6. Auto-generate checklist when creating tasks (using `_generation.md` Checklist Generation Procedure)
 7. Update `.status.yaml`
 
 #### Plan Decision
@@ -280,6 +292,12 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 **Rejected**: Argument-based detection (matching against `fab/changes/` folder names) — brittle, confusing syntax.
 *Introduced by*: 260208-lgd7-fab-discuss-command
 
+### Shared Generation Partial
+**Decision**: Extract duplicated artifact generation logic from `/fab-continue` and `/fab-ff` into a shared `_generation.md` partial. Both skills reference the partial for spec, plan, tasks, and checklist generation mechanics; each retains its own orchestration logic.
+**Why**: Generation steps were nearly identical in both skills, requiring every fix or behavior change to be applied in two places. Centralizing eliminates drift and makes generation behavior authoritative in one location.
+**Rejected**: Keeping inline duplication — inevitable drift between the two copies.
+*Introduced by*: 260210-wpay-extract-shared-generation-logic
+
 ### Reset via `/fab-continue <stage>`
 **Decision**: Reset to an earlier planning stage by passing the stage name as an argument to `/fab-continue`. Downstream artifacts are invalidated and regenerated.
 **Why**: Provides a clean re-entry point after `/fab-review` identifies upstream issues. Reuses the existing skill rather than adding a separate `/fab-reset` command.
@@ -290,6 +308,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260210-wpay-extract-shared-generation-logic | 2026-02-10 | Extracted shared generation logic (spec, plan, tasks, checklist) into `_generation.md` partial; both `/fab-continue` and `/fab-ff` now reference it |
 | 260210-zr1f-discuss-auto-activate-when-no-current | 2026-02-10 | `/fab-discuss` conditionally offers activation when `fab/current` is empty; updated proposal output, key differences table |
 | 260209-r4w8-archive-index-longer-slugs | 2026-02-09 | Expanded slug word count from 2-4 to 2-6 words in `/fab-new` folder name generation |
 | 260208-q8v3-branch-to-switch | 2026-02-09 | Moved branch integration from `/fab-new` to `/fab-switch`, removed `--branch` flag from `/fab-new`, `/fab-new` now calls `/fab-switch` internally |
