@@ -64,13 +64,25 @@ Copies `settings.local.json` to the worktree-init assets directory for worktree 
 
 Agent-specific skill files SHALL be symlinks pointing into `fab/.kit/skills/`. This means updating `.kit/` automatically updates all agent integrations — no re-export step needed.
 
-For Claude Code:
+`fab-setup.sh` creates symlinks for all three supported agents unconditionally. The skill prompt files are agent-agnostic markdown; only the symlink locations and formats differ per agent.
+
+**Claude Code** — directory-based skills:
 ```
 .claude/skills/fab-new/
 └── SKILL.md → ../../../fab/.kit/skills/fab-new.md
 ```
 
-`/fab-init` (or `fab-setup.sh`) creates skill subdirectories with symlinks. The skill prompt files are agent-agnostic markdown; only the symlink locations differ per agent (e.g., `.claude/skills/`, `.codex/skills/`).
+**OpenCode** — flat file commands:
+```
+.opencode/commands/
+└── fab-new.md → ../../fab/.kit/skills/fab-new.md
+```
+
+**Codex** — directory-based skills:
+```
+.agents/skills/fab-new/
+└── SKILL.md → ../../../fab/.kit/skills/fab-new.md
+```
 
 ### Distribution & Bootstrapping
 
@@ -99,7 +111,7 @@ Step 1 is manual. Step 2 is a shell script. Steps 3-5 are skill-driven.
 
 ### Updating `.kit/`
 
-To update the workflow framework, replace `fab/.kit/` contents with the latest version. Symlinks in `.claude/skills/` automatically resolve to the new files.
+To update the workflow framework, replace `fab/.kit/` contents with the latest version. Symlinks in `.claude/skills/`, `.opencode/commands/`, and `.agents/skills/` automatically resolve to the new files.
 
 **Preserved** (lives outside `.kit/`): `config.yaml`, `constitution.md`, `docs/`, `changes/`, `current`
 **Replaced** (lives inside `.kit/`): `templates/`, `skills/`, `scripts/`
@@ -144,5 +156,6 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260210-m3k7-multi-agent-support | 2026-02-10 | Added OpenCode commands and Codex skills symlink creation to `fab-setup.sh`; documented all three agent integration paths |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab:xxx` colon format to `/fab-xxx` hyphen format |
 | — | 2026-02-07 | Generated from doc/fab-spec/ (ARCHITECTURE.md, README.md) |

@@ -50,7 +50,6 @@ EOF
 fi
 
 # ── 3. Skill symlinks ──────────────────────────────────────────────
-# Pattern: .claude/skills/{name}/SKILL.md → ../../../fab/.kit/skills/{name}.md
 # Canonical list: every *.md in .kit/skills/ except _context.md
 skills=()
 for f in "$kit_dir"/skills/*.md; do
@@ -59,46 +58,64 @@ for f in "$kit_dir"/skills/*.md; do
   skills+=("$(basename "$f" .md)")
 done
 
-skills_dir="$repo_root/.claude/skills"
-mkdir -p "$skills_dir"
+# create_agent_symlinks <agent_label> <base_dir> <format> <rel_prefix>
+#   format: "directory" → <base>/<name>/SKILL.md, "flat" → <base>/<name>.md
+#   rel_prefix: relative path from symlink location back to repo root
+create_agent_symlinks() {
+  local agent_label="$1"
+  local base_dir="$2"
+  local format="$3"
+  local rel_prefix="$4"
 
-created=0
-repaired=0
-ok=0
+  mkdir -p "$base_dir"
 
-for skill in "${skills[@]}"; do
-  target="../../../fab/.kit/skills/${skill}.md"
-  skill_dir="$skills_dir/$skill"
-  link="$skill_dir/SKILL.md"
+  local created=0 repaired=0 ok=0
 
-  # Verify the target actually exists in .kit/skills/
-  if [ ! -f "$kit_dir/skills/${skill}.md" ]; then
-    echo "WARN: fab/.kit/skills/${skill}.md missing — skipping"
-    continue
-  fi
+  for skill in "${skills[@]}"; do
+    if [ ! -f "$kit_dir/skills/${skill}.md" ]; then
+      echo "WARN: fab/.kit/skills/${skill}.md missing — skipping"
+      continue
+    fi
 
-  mkdir -p "$skill_dir"
+    local target="${rel_prefix}fab/.kit/skills/${skill}.md"
+    local link
 
-  if [ -L "$link" ] && [ -e "$link" ]; then
-    ok=$((ok + 1))
-  elif [ -L "$link" ]; then
-    # Dangling symlink — repair
-    rm "$link"
-    ln -s "$target" "$link"
-    repaired=$((repaired + 1))
-  elif [ -e "$link" ]; then
-    # Regular file where symlink expected — replace
-    rm "$link"
-    ln -s "$target" "$link"
-    repaired=$((repaired + 1))
-  else
-    ln -s "$target" "$link"
-    created=$((created + 1))
-  fi
-done
+    if [ "$format" = "directory" ]; then
+      mkdir -p "$base_dir/$skill"
+      link="$base_dir/$skill/SKILL.md"
+    else
+      link="$base_dir/${skill}.md"
+    fi
 
-total=$((created + repaired + ok))
-echo "Symlinks: ${total}/${#skills[@]} (created ${created}, repaired ${repaired}, already valid ${ok})"
+    if [ -L "$link" ] && [ -e "$link" ]; then
+      ok=$((ok + 1))
+    elif [ -L "$link" ]; then
+      rm "$link"
+      ln -s "$target" "$link"
+      repaired=$((repaired + 1))
+    elif [ -e "$link" ]; then
+      rm "$link"
+      ln -s "$target" "$link"
+      repaired=$((repaired + 1))
+    else
+      ln -s "$target" "$link"
+      created=$((created + 1))
+    fi
+  done
+
+  local total=$((created + repaired + ok))
+  printf "%-12s %d/%d (created %d, repaired %d, already valid %d)\n" \
+    "${agent_label}:" "$total" "${#skills[@]}" "$created" "$repaired" "$ok"
+}
+
+# Claude Code: .claude/skills/<name>/SKILL.md (directory-based)
+create_agent_symlinks "Claude Code" "$repo_root/.claude/skills" "directory" "../../../"
+
+# OpenCode: .opencode/commands/<name>.md (flat file)
+create_agent_symlinks "OpenCode" "$repo_root/.opencode/commands" "flat" "../../"
+
+# Codex: .agents/skills/<name>/SKILL.md (directory-based)
+create_agent_symlinks "Codex" "$repo_root/.agents/skills" "directory" "../../../"
 
 # ── 4. .gitignore ──────────────────────────────────────────────────
 gitignore="$repo_root/.gitignore"

@@ -11,7 +11,7 @@
 | [execution-skills](execution-skills.md) | `/fab-apply`, `/fab-review`, `/fab-archive` — implementation, validation, and completion | 2026-02-09 |
 | [change-lifecycle](change-lifecycle.md) | Change naming, folder structure, `.status.yaml`, `fab/current`, git integration, `/fab-status`, `/fab-switch` | 2026-02-09 |
 | [templates](templates.md) | Artifact templates (proposal, spec, plan, tasks, checklist) and centralized doc format | 2026-02-07 |
-| [kit-architecture](kit-architecture.md) | `.kit/` structure, scripts, agent integration, distribution, versioning, monorepos | 2026-02-07 |
+| [kit-architecture](kit-architecture.md) | `.kit/` structure, scripts, agent integration, distribution, versioning, monorepos | 2026-02-10 |
 | [configuration](configuration.md) | `config.yaml` schema, `constitution.md` governance, stage graph definition | 2026-02-07 |
 | [preflight](preflight.md) | `fab-preflight.sh` script — validation, structured YAML output, skill integration | 2026-02-07 |
 | [backfill](backfill.md) | `/fab-backfill` skill — structural gap detection between docs and specs, interactive propose-then-apply | 2026-02-09 |
