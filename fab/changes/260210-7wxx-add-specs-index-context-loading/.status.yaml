@@ -1,0 +1,23 @@
+name: 260210-7wxx-add-specs-index-context-loading
+created: 2026-02-10T12:03:00+00:00
+stage: proposal
+progress:
+  proposal: done
+  specs: pending
+  plan: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  archive: pending
+checklist:
+  generated: false
+  path: checklists/quality.md
+  completed: 0
+  total: 0
+confidence:
+  certain: 6
+  confident: 0
+  tentative: 0
+  unresolved: 0
+  score: 5.0
+last_updated: 2026-02-10T12:03:00+00:00
