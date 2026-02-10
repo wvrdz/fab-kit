@@ -1,0 +1,23 @@
+name: 260210-m3k7-multi-agent-support
+created: 2026-02-10T00:00:00Z
+stage: archive
+progress:
+  proposal: done
+  specs: done
+  plan: skipped
+  tasks: done
+  apply: done
+  review: done
+  archive: done
+checklist:
+  generated: true
+  path: checklists/quality.md
+  completed: 16
+  total: 16
+confidence:
+  certain: 4
+  confident: 6
+  tentative: 0
+  unresolved: 0
+  score: 4.4
+last_updated: 2026-02-10T13:30:00Z
