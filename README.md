@@ -1,8 +1,6 @@
-# fab
+## What is Fab Kit?
 
-## What is Fab?
-
-Fab (fabricate) is a Specification-Driven Development (SDD) workflow kit that runs entirely as AI agent prompts — no CLI installation, no system dependencies. It gives structure to the work developers already do (define, design, build, review, document) by providing named stages, markdown templates, and skill definitions that any AI agent (Claude Code, Cursor, Windsurf, etc.) can execute.
+Fab Kit (Fabrication Kit) is a Specification-Driven Development (SDD) workflow kit that runs entirely as AI agent prompts — no CLI installation, no system dependencies. It gives structure to the work developers already do (define, design, build, review, document) by providing named stages, markdown templates, and skill definitions that any AI agent (Claude Code, Cursor, Windsurf, etc.) can execute.
 
 The core ideas:
 
