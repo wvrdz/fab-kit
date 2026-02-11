@@ -15,7 +15,7 @@ The 4-stage planning pipeline (proposal → specs → plan → tasks) has redund
 - Drop `plan` stage entirely — spec absorbs architectural decisions via an optional `## Design Decisions` section (agent includes when warranted)
 - Rename root folder `fab/specs/` to `fab/design/` to resolve "spec" overload (per-change spec vs. project-level specs)
 - `/fab-new` lands on `brief` (lightweight one-shot capture); `/fab-discuss` lands on `spec` (produces both `brief.md` + `spec.md`, marks both stages done)
-- Pipeline becomes 5 stages: `brief → spec → tasks → apply → review → archive`
+- Pipeline becomes 6 stages: `brief → spec → tasks → apply → review → archive`
 
 ## Affected Docs
 
