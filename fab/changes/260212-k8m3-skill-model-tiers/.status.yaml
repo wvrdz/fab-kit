@@ -1,10 +1,8 @@
 name: 260212-k8m3-skill-model-tiers
 created: 2026-02-12T00:00:00Z
 created_by: Sahil Ahuja
-stage: brief
 progress:
-  brief: done
-  spec: pending
+  spec: active
   tasks: pending
   apply: pending
   review: pending
