@@ -1,0 +1,22 @@
+name: 260212-a4bd-unify-fab-continue
+created: 2026-02-12T18:00:00+05:30
+created_by: sahil-weaver
+progress:
+  brief: done
+  spec: active
+  tasks: pending
+  apply: pending
+  review: pending
+  archive: pending
+checklist:
+  generated: false
+  path: checklist.md
+  completed: 0
+  total: 0
+confidence:
+  certain: 3
+  confident: 2
+  tentative: 1
+  unresolved: 0
+  score: 3.4
+last_updated: 2026-02-12T18:00:00+05:30
