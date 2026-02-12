@@ -71,9 +71,13 @@ At the end of each session, the skill SHALL display a coverage summary with four
 
 In auto mode, the skill SHALL resolve gaps using available context (config, constitution, centralized docs, completed artifacts). It classifies each gap as resolvable, blocking, or non-blocking. The scan includes `<!-- assumed: ... -->` markers — those confirmable from context are resolved (marker removed), others are classified as blocking or non-blocking.
 
+#### Grade Reclassification
+
+When a Tentative or Confident assumption is resolved or confirmed during a suggest-mode session, the skill SHALL update the corresponding entry's Grade column in the artifact's `## Assumptions` table to `Certain`. The user's confirmation eliminates ambiguity, making the decision deterministic. This reclassification occurs immediately after each answer, before the next question is presented.
+
 #### Confidence Recomputation
 
-After each suggest-mode session, the skill SHALL recompute the confidence score by re-counting SRAD grades across all artifacts in the change and applying the formula (see `_context.md` Confidence Scoring section). The updated `confidence` block is written to `.status.yaml`. This ensures the score reflects resolved Tentative or Unresolved assumptions.
+After each suggest-mode session, the skill SHALL recompute the confidence score by re-counting SRAD grades across all artifacts in the change (scanning the `## Assumptions` tables) and applying the formula (see `_context.md` Confidence Scoring section). The updated `confidence` block is written to `.status.yaml`. Because reclassified grades (Tentative/Confident → Certain) reduce the penalty count, the score increases after clarification.
 
 #### Machine-Readable Result
 
@@ -105,6 +109,12 @@ The skill SHALL only operate on planning stages (`spec`, `tasks`). If the stage 
 **Why**: If the user terminates early or the session is interrupted, all answered questions are already reflected in the artifact. No work is lost.
 **Rejected**: Batch updates at session end — risks losing all clarifications on interruption.
 
+### Grade Reclassification in Assumptions Table
+**Decision**: When `/fab-clarify` resolves a Tentative or Confident assumption, the grade is reclassified to Certain in-place in the artifact's `## Assumptions` table. The confidence recount then reads the updated table, producing a higher score.
+**Why**: Keeps the source of truth co-located with the artifact. The recount reads the Assumptions table directly, so in-place updates make the recount naturally correct. This ensures scores increase after clarification.
+**Rejected**: Separate resolution tracking file — adds complexity, risks drift between the table and the tracker. Removing entries instead of reclassifying — loses the decision record.
+*Introduced by*: 260212-29xv-scoring-formula
+
 ### Audit Trail in Artifact (Not Separate File)
 **Decision**: Append clarification history directly to the artifact under a `## Clarifications` section.
 **Why**: Keeps the audit trail with the artifact it describes. No separate files to track. Sessions accumulate naturally.
@@ -114,6 +124,7 @@ The skill SHALL only operate on planning stages (`spec`, `tasks`). If the stage 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260212-29xv-scoring-formula | 2026-02-12 | Added grade reclassification: resolved Tentative/Confident assumptions become Certain in Assumptions table before confidence recomputation, so scores increase after clarification |
 | 260212-v5p2-simplify-stages-entry-paths | 2026-02-12 | Added brief refinement capability at spec stage with per-artifact taxonomy, removed brief from valid stages |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated stage names to brief/spec/tasks in guard logic and output examples |
 | 260210-nan4-define-auto-mode-signaling | 2026-02-10 | Updated dual-mode operation to use explicit `[AUTO-MODE]` prefix protocol; updated "Mode Selection" design decision |

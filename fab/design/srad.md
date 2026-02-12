@@ -82,7 +82,7 @@ Certain grades are omitted (not worth mentioning). Unresolved grades are asked a
 if unresolved > 0:
   score = 0.0
 else:
-  score = max(0.0, 5.0 - 0.1 * confident - 1.0 * tentative)
+  score = max(0.0, 5.0 - 0.3 * confident - 1.0 * tentative)
 ```
 
 ### Penalty Weights
@@ -90,7 +90,7 @@ else:
 | Grade | Penalty | Rationale |
 |-------|---------|-----------|
 | **Certain** | 0.0 | Deterministic — no ambiguity whatsoever |
-| **Confident** | 0.1 | Minor — strong signal, one obvious interpretation, but technically an assumption |
+| **Confident** | 0.3 | Moderate — strong signal but still an assumption; accumulates meaningfully |
 | **Tentative** | 1.0 | Meaningful — reasonable guess but multiple valid options; could be wrong |
 | **Unresolved** | Hard zero | Cannot run autonomously with unresolved decisions; any single Unresolved sets score to 0.0 |
 
@@ -112,7 +112,7 @@ confidence:
   confident: 3     # count of Confident-graded decisions
   tentative: 2     # count of Tentative-graded decisions
   unresolved: 0    # count of Unresolved-graded decisions
-  score: 2.7       # derived score from formula above
+  score: 2.1       # derived score from formula above
 ```
 
 ---
@@ -123,15 +123,18 @@ confidence:
 
 ### What 3.0 Allows
 
-With the formula `5.0 - 0.1 * confident - 1.0 * tentative`:
+With the formula `5.0 - 0.3 * confident - 1.0 * tentative`:
 
-- **0 Tentative, up to 20 Confident**: score = 5.0 – 2.0 = 3.0 (passes)
-- **1 Tentative, up to 10 Confident**: score = 5.0 – 1.0 – 1.0 = 3.0 (passes)
+- **0 Tentative, up to 6 Confident**: score = 5.0 – 1.8 = 3.2 (passes)
+- **0 Tentative, 7 Confident**: score = 5.0 – 2.1 = 2.9 (fails)
+- **1 Tentative, up to 3 Confident**: score = 5.0 – 1.0 – 0.9 = 3.1 (passes)
+- **1 Tentative, 4 Confident**: score = 5.0 – 1.0 – 1.2 = 2.8 (fails)
 - **2 Tentative, 0 Confident**: score = 5.0 – 2.0 = 3.0 (passes, barely)
-- **3 Tentative**: score = 5.0 – 3.0 = 2.0 (fails — too many guesses)
+- **2 Tentative, 1+ Confident**: score < 3.0 (fails)
+- **3+ Tentative**: score ≤ 2.0 (fails — too many guesses)
 - **Any Unresolved**: score = 0.0 (always fails)
 
-In practice: at most 2 Tentative decisions with some room for Confident erosion.
+In practice: at most 6 Confident decisions (with no Tentative), or 2 Tentative with very few Confident.
 
 ### Gate Behavior
 
@@ -199,9 +202,9 @@ Detailed description specifying the component, location, trigger, and behavior.
 
 **Confidence counts**: Certain: 8, Confident: 2, Tentative: 0, Unresolved: 0
 
-**Score**: `max(0.0, 5.0 - 0.2 - 0.0) = 4.8`
+**Score**: `max(0.0, 5.0 - 0.6 - 0.0) = 4.4`
 
-**Outcome**: `/fab-fff` gate passes (4.8 >= 3.0). The autonomous pipeline can run with high confidence.
+**Outcome**: `/fab-fff` gate passes (4.4 >= 3.0). The autonomous pipeline can run with high confidence.
 
 ---
 
