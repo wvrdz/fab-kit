@@ -70,8 +70,8 @@ get_state_suffix() {
   awk -v state="$state" '
     /^ *- id:/ { current_id = $3 }
     /^ *suffix:/ && current_id == state {
-      gsub(/"/, "", $2)
-      print $2
+      match($0, /"[^"]*"/)
+      if (RSTART > 0) print substr($0, RSTART+1, RLENGTH-2)
       exit
     }
   ' "$WORKFLOW_SCHEMA"
@@ -371,8 +371,9 @@ EXAMPLES:
   done
 
 SEE ALSO:
-  src/stageman/README.md - Full documentation
+  src/stageman/README.md - API reference and development guide
   fab/.kit/schemas/workflow.yaml - Schema definition
+  fab/docs/fab-workflow/schemas.md - Schema overview and design principles
 EOF
 }
 

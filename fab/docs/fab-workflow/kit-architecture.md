@@ -35,10 +35,14 @@ fab/.kit/
 │   ├── spec.md
 │   ├── tasks.md
 │   └── checklist.md
+├── schemas/                # Workflow schema
+│   └── workflow.yaml       # Canonical stage/state definitions
 └── scripts/                # Shell utilities
     ├── fab-setup.sh        # Structural bootstrap
     ├── fab-help.sh         # Print help overview
-    ├── fab-status.sh       # Quick terminal status check
+    ├── fab-preflight.sh    # Pre-flight validation (sources stageman)
+    ├── fab-status.sh       # Quick terminal status check (sources stageman)
+    ├── stageman.sh         # Stage Manager — schema query utility
     ├── fab-update.sh       # Update .kit/ from GitHub Releases
     ├── fab-release.sh      # Package and release .kit/ to GitHub
     └── fab-update-claude-settings.sh
@@ -52,7 +56,7 @@ The structural bootstrap script. Creates directories, symlinks, `docs/index.md`,
 
 #### `fab-status.sh`
 
-Full status display for the active change. Reads `fab/.kit/VERSION`, `fab/current`, and `.status.yaml` to render a formatted status block with version header, change name, branch, stage number, progress table (using `✓ ● ○ — ✗` symbols), checklist counts, and next command suggestion. Handles all error cases. The `/fab-status` skill delegates to this script — all mechanical logic lives here.
+Full status display for the active change. Sources `stageman.sh` for schema-driven stage/state queries. Reads `fab/.kit/VERSION`, `fab/current`, and `.status.yaml` to render a formatted status block with version header, change name, branch, stage number, progress table (using symbols from the workflow schema), checklist counts, and next command suggestion. All stage names, numbers, and state symbols are derived dynamically from the schema — no hardcoded stage knowledge. Handles all error cases. The `/fab-status` skill delegates to this script — all mechanical logic lives here.
 
 #### `fab-help.sh`
 
@@ -195,6 +199,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260212-4tw0-migrate-scripts-stageman | 2026-02-12 | Migrated fab-status.sh and fab-preflight.sh to source stageman.sh; added stageman.sh, fab-preflight.sh, and schemas/ to directory listing |
 | 260212-ipoe-checklist-folder-location | 2026-02-12 | Template listing already shows `checklist.md` — no structural change needed; changelog entry for traceability |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated directory listing: brief.md replaces proposal.md, plan.md removed, fab/design/ replaces fab/specs/ |
 | 260210-h7r3-kit-distribution-update | 2026-02-10 | Added `fab-update.sh` and `fab-release.sh` script descriptions, bootstrap one-liner (Option A), atomic update mechanism, version-based update flow |

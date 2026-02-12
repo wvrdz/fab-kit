@@ -5,6 +5,9 @@ scripts_dir="$(cd "$(dirname "$0")" && pwd)"
 kit_dir="$(dirname "$scripts_dir")"
 fab_root="$(dirname "$kit_dir")"
 
+# Source stageman for schema-driven stage/state queries
+source "$scripts_dir/stageman.sh"
+
 # --- Version ---
 if [ -f "$kit_dir/VERSION" ]; then
   version=$(cat "$kit_dir/VERSION")
@@ -56,19 +59,17 @@ if [ "$git_enabled" = "true" ] && git rev-parse --is-inside-work-tree >/dev/null
   show_branch="true"
 fi
 
-# Progress (default to pending for missing fields)
-p_brief=$(get_nested "brief");       p_brief=${p_brief:-pending}
-p_spec=$(get_nested "spec");         p_spec=${p_spec:-pending}
-p_tasks=$(get_nested "tasks");       p_tasks=${p_tasks:-pending}
-p_apply=$(get_nested "apply");       p_apply=${p_apply:-pending}
-p_review=$(get_nested "review");     p_review=${p_review:-pending}
-p_archive=$(get_nested "archive");   p_archive=${p_archive:-pending}
+# Progress — dynamic extraction from schema stages
+declare -A progress
+for s in $(get_all_stages); do
+  val=$(get_nested "$s")
+  progress[$s]="${val:-pending}"
+done
 
 # Derive current stage from the active entry in the progress map
 stage=""
-for s in brief spec tasks apply review archive; do
-  eval val="\$p_$s"
-  if [ "$val" = "active" ]; then
+for s in $(get_all_stages); do
+  if [ "${progress[$s]}" = "active" ]; then
     stage="$s"
     break
   fi
@@ -89,36 +90,20 @@ conf_confident=$(get_nested "confident")
 conf_tentative=$(get_nested "tentative")
 conf_unresolved=$(get_nested "unresolved")
 
-# --- Stage number ---
-case "${stage:-}" in
-  brief)   stage_num=1 ;; spec)    stage_num=2 ;; tasks)   stage_num=3 ;;
-  apply)   stage_num=4 ;; review)  stage_num=5 ;; archive) stage_num=6 ;;
-  *)       stage_num="?" ;;
-esac
+# --- Stage number (dynamic from schema) ---
+stage_num=$(get_stage_number "$stage" 2>/dev/null || echo "?")
+total_stages=$(get_all_stages | wc -l | tr -d ' ')
 
-# --- Progress symbols ---
-symbol() {
-  case "$1" in
-    done) printf '✓' ;; active)  printf '●' ;; pending) printf '○' ;;
-    skipped) printf '—' ;; failed) printf '✗' ;; *)      printf '○' ;;
-  esac
-}
-
+# --- Progress display (symbols from schema) ---
 progress_line() {
-  local sym extra=""
-  sym=$(symbol "$2")
-  [ "$2" = "skipped" ] && extra=" (skipped)"
-  printf '  %s %s%s\n' "$sym" "$1" "$extra"
+  local sym suffix
+  sym=$(get_state_symbol "$2" 2>/dev/null || printf '○')
+  suffix=$(get_state_suffix "$2" 2>/dev/null || true)
+  printf '  %s %s%s\n' "$sym" "$1" "$suffix"
 }
 
 # --- Next command ---
-current_progress=""
-case "${stage:-}" in
-  brief)   current_progress="$p_brief" ;;
-  spec)    current_progress="$p_spec" ;;
-  tasks)   current_progress="$p_tasks" ;;   apply)   current_progress="$p_apply" ;;
-  review)  current_progress="$p_review" ;;  archive) current_progress="$p_archive" ;;
-esac
+current_progress="${progress[$stage]:-}"
 
 next="/fab-status"
 case "${stage:-}:${current_progress:-}" in
@@ -150,15 +135,12 @@ if [ "$show_branch" = "true" ]; then
     echo "Branch:  (detached)"
   fi
 fi
-echo "Stage:   $stage ($stage_num/6)"
+echo "Stage:   $stage ($stage_num/$total_stages)"
 echo ""
 echo "Progress:"
-progress_line "brief"    "$p_brief"
-progress_line "spec"     "$p_spec"
-progress_line "tasks"    "$p_tasks"
-progress_line "apply"    "$p_apply"
-progress_line "review"   "$p_review"
-progress_line "archive"  "$p_archive"
+for s in $(get_all_stages); do
+  progress_line "$s" "${progress[$s]}"
+done
 echo ""
 if [ "$chk_generated" = "true" ]; then
   echo "Checklist: $chk_completed/$chk_total items"

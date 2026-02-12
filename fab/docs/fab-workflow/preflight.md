@@ -30,12 +30,17 @@ The script validates in this order, stopping at the first failure:
 2. `fab/current` exists and is non-empty (active change set)
 3. Change directory `fab/changes/{name}/` exists
 4. `.status.yaml` exists within the change directory
+5. `.status.yaml` passes schema validation via `validate_status_file()` from `stageman.sh` (catches invalid states, missing stages, multiple active stages)
 
 Each failure exits with code 1 and prints a diagnostic message to stderr.
 
+### Schema-Driven Stage Iteration
+
+The script sources `stageman.sh` and uses `get_all_stages` for all stage iteration. Progress field extraction, active stage detection, and YAML output generation all loop over stages dynamically from the workflow schema — no hardcoded stage names.
+
 ### No External Dependencies
 
-The script uses only POSIX-standard tools (`grep`, `sed`, `tr`, `cat`) and Bash builtins. No `yq`, `jq`, Python, or other non-standard tools required.
+The script uses only POSIX-standard tools (`grep`, `sed`, `tr`, `cat`), Bash builtins, and `stageman.sh` (which itself uses only POSIX tools). No `yq`, `jq`, Python, or other non-standard tools required.
 
 ### Idempotent and Read-Only
 
@@ -59,6 +64,7 @@ Skills exempt from preflight: `init`, `switch`, `status`, `hydrate`, `help`, `ne
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260212-4tw0-migrate-scripts-stageman | 2026-02-12 | Migrated to source stageman.sh: dynamic stage iteration, schema validation via validate_status_file |
 | 260212-v5p2-simplify-stages-entry-paths | 2026-02-12 | Updated from 6 to 5 stages, documented stage derivation from active entry |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated progress map to 6 stages |
 | 260207-5mjv-preflight-grep-scripts | 2026-02-07 | Created preflight doc — script purpose, output format, validation order, skill integration |
