@@ -33,7 +33,9 @@ Do NOT create partial structure. The project must be initialized before starting
 ## Arguments
 
 - **`<description>`** *(required)* — natural language description of the change (e.g., "Add OAuth2 support for Google and GitHub sign-in")
-- **`--no-switch`** *(optional)* — skip Step 9 (the internal `/fab-switch` invocation). The change folder, `.status.yaml`, and `brief.md` are created as normal, but `fab/current` is NOT written and no branch is created or checked out. Use this when batching multiple change captures or when you want to stay focused on the current active change.
+- **`--switch`** *(optional)* — automatically switch to the new change after creation (calls `/fab-switch` internally to write `fab/current` and create/checkout a branch)
+
+**Note:** The skill will also detect switching intent from natural language. If the description includes phrases like "and switch to it", "make it active", "activate it", "switch to it", "set as active", or "and activate", the change will be switched to automatically even without the `--switch` flag.
 
 If no description is provided, ask the user: *"What change do you want to make?"*
 
@@ -181,16 +183,19 @@ Once the user is satisfied with the brief (questions answered, scope agreed):
    - Update `last_updated` to current timestamp
 2. The brief is an input artifact, not a pipeline stage — `.status.yaml` progress remains as initialized (`spec: active`)
 
-### Step 9: Activate Change via `/fab-switch`
+### Step 9: Activate Change via `/fab-switch` (Conditional)
 
-**If `--no-switch` was provided, skip this step entirely.** The change folder, `.status.yaml`, and `brief.md` have already been created. `fab/current` is NOT modified and no branch is created or checked out. Proceed directly to output.
+**Default behavior: Skip this step** — the change folder, `.status.yaml`, and `brief.md` have been created, but `fab/current` is NOT modified and no branch is created or checked out. Proceed directly to output.
 
-**Otherwise (default behavior):**
+**Switch to the new change if ANY of these conditions are true:**
 
-Invoke the `/fab-switch` flow internally to activate the change:
+1. The `--switch` flag was provided
+2. The user's description includes switching intent detected by case-insensitive matching of these phrases: "and switch", "switch to it", "make it active", "activate it", "set as active", "and activate"
+
+**When switching:**
 
 1. Call `/fab-switch {name}` — this writes the change name to `fab/current` and performs branch integration (if `git.enabled`)
-2. From the user's perspective, `/fab-new` still results in an active change with a branch — the internal delegation is transparent
+2. From the user's perspective, `/fab-new` results in an active change with a branch — the internal delegation is transparent
 3. If `/fab-switch` branch integration fails, the change is still activated (fab/current is written) — only the branch creation is affected
 
 ---
@@ -201,7 +206,6 @@ Invoke the `/fab-switch` flow internally to activate the change:
 
 ```
 Created fab/changes/260206-x7k2-add-oauth/
-Branch: 260206-x7k2-add-oauth (created)
 
 ## Brief: Add OAuth2 Support
 
@@ -218,14 +222,13 @@ Brief complete.
 
 2 assumptions made (1 confident, 1 tentative). Run /fab-clarify to review.
 
-Next: /fab-continue or /fab-ff (fast-forward all planning)
+Next: /fab-switch 260206-x7k2-add-oauth to make it active, then /fab-continue or /fab-ff
 ```
 
 ### Ambiguous Description (questions needed)
 
 ```
 Created fab/changes/260206-x7k2-add-oauth/
-Branch: 260206-x7k2-add-oauth (created)
 
 ## Brief: Add OAuth2 Support (Draft)
 
@@ -249,7 +252,7 @@ Brief complete.
 
 1 assumption made (1 confident, 0 tentative).
 
-Next: /fab-continue or /fab-ff (fast-forward all planning)
+Next: /fab-switch 260206-x7k2-add-oauth to make it active, then /fab-continue or /fab-ff
 ```
 
 ### No Git Integration
@@ -266,10 +269,11 @@ Brief complete.
 Next: /fab-continue or /fab-ff (fast-forward all planning)
 ```
 
-### With `--no-switch` Flag
+### With `--switch` Flag
 
 ```
 Created fab/changes/260206-x7k2-add-oauth/
+Branch: 260206-x7k2-add-oauth (created)
 
 ## Brief: Add OAuth2 Support
 
@@ -285,7 +289,7 @@ Brief complete.
 
 1 assumption made (1 confident, 0 tentative). Run /fab-clarify to review.
 
-Next: /fab-switch 260206-x7k2-add-oauth to make it active, then /fab-continue or /fab-ff
+Next: /fab-continue or /fab-ff (fast-forward all planning)
 ```
 
 ---
@@ -302,6 +306,6 @@ Next: /fab-switch 260206-x7k2-add-oauth to make it active, then /fab-continue or
 
 ---
 
-Next (default): `/fab-continue or /fab-ff (fast-forward all planning)`
+Next (default): `/fab-switch {name} to make it active, then /fab-continue or /fab-ff`
 
-Next (with `--no-switch`): `/fab-switch {name} to make it active, then /fab-continue or /fab-ff`
+Next (with `--switch`): `/fab-continue or /fab-ff (fast-forward all planning)`
