@@ -44,6 +44,8 @@
 - [x] [qurg] 2026-02-10: DEV-991 Document the SRAD framework — standalone `fab/specs/srad.md`
 - [x] [6j7w] 2026-02-10: DEV-995 Simplify pipeline stages (7→6), removed "plan" stage
 - [x] [gs42] 2026-02-10: DEV-996 Add attribution / owner for every change - in .status.yaml
+- [x] [1rq4] 2026-02-12: DEV-1010 fab-discuss , fab-new should quickly create brief. Refinement of brief should be what we keep doing later in discuss (resolved by v5p2)
+- [x] [maqp] 2026-02-12: DEV-1013 the two different modes of fab-discuss is confusing. Should have just one way of functioning. (deprecated - fab-discuss removed in v5p2)
 
 ## Backlog
 
@@ -70,12 +72,9 @@
 - [ ] [qnzx] 2026-02-11: DEV-1000 No skill in the pipeline checks or closes backlog items. `/fab-archive` should scan `fab/backlog.md` for related items and offer to mark them done.
 - [x] [c9vt] 2026-02-12: DEV-1001 `fab/backlog.md` is committed to git but is a personal scratchpad. Fix: gitignore, symlink from main worktree, update worktree-init.sh.
 - [ ] [bk1n] 2026-02-11: DEV-1002 Modify fab-ff. fab-ff takes you all the way to archive - but can stop at clarifications. fab-fff takes you to archive, but with auto clarification (doesn't stop, a bit unsafe)
-- [ ] [emcb] 2026-02-12: fab-setup should initialize the fab/design folder - with a template
-- [ ] [tk9g] 2026-02-12: Overlap of responsibility between /fab-init and fab-setup.sh
-- [ ] [1rq4] 2026-02-12: fab-discuss , fab-new should quickly create brief. Refinement of brief should be what we keep doing later in discuss
-- [ ] [ni3o] 2026-02-12: Capture more metrics like: time taken for every stage, tokens used per stage
-- [ ] [0r8e] 2026-02-12: Format for copturing created_by is wrong. Try using github id. Its ok the assume availabilit of the gh command line, with the git fallback
-- [ ] [maqp] 2026-02-12: the two different modes of fab-discuss is confusing. Should have just one way of functioning.
-- [ ] [a4bd] 2026-02-12: rename a few more commands to fab-continue. fab-continue should be able to take it to the end (archive)
-- [ ] [ipoe] 2026-02-12: Whats the point of saving checklists - and only checklists - in a separate folder in the changes folder
-- [ ] [egqa] 2026-02-12: Add a fab-switch variant takes you back to the main branch - no active change
+- [ ] [emcb] 2026-02-12: DEV-1008 Clarify fab-setup responsibilities and initialize fab/design folder (merged with DEV-1009)
+- [ ] [ni3o] 2026-02-12: DEV-1011 Capture more metrics like: time taken for every stage, tokens used per stage
+- [ ] [0r8e] 2026-02-12: DEV-1012 Format for capturing created_by is wrong. Try using github id. Its ok the assume availabilit of the gh command line, with the git fallback
+- [ ] [a4bd] 2026-02-12: DEV-1014 rename a few more commands to fab-continue. fab-continue should be able to take it to the end (archive)
+- [ ] [ipoe] 2026-02-12: DEV-1015 Whats the point of saving checklists - and only checklists - in a separate folder in the changes folder
+- [ ] [egqa] 2026-02-12: DEV-1016 Add a fab-switch variant takes you back to the main branch - no active change
