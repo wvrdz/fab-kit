@@ -38,6 +38,7 @@ list_changes() {
     [[ -d "$dir" ]] || continue
     local name
     name=$(basename "$dir")
+    [[ "$name" == "archive" ]] && continue
     printf "  %s\n" "$name"
   done
 }
@@ -45,7 +46,10 @@ list_changes() {
 all_change_names() {
   for dir in "$CHANGES_DIR"/*/; do
     [[ -d "$dir" ]] || continue
-    basename "$dir"
+    local name
+    name=$(basename "$dir")
+    [[ "$name" == "archive" ]] && continue
+    printf '%s\n' "$name"
   done
 }
 
