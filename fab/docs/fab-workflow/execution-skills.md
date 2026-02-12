@@ -39,7 +39,7 @@ Loads: config, constitution, `design/index.md`, `tasks.md`, `spec.md`, relevant 
 
 The agent SHALL perform all of these checks:
 1. All tasks in `tasks.md` marked `[x]`
-2. All checklist items in `checklists/quality.md` verified and checked off — the agent re-reads each `CHK-*` item, inspects relevant code/tests, and marks `[x]` or reports failure
+2. All checklist items in `checklist.md` verified and checked off — the agent re-reads each `CHK-*` item, inspects relevant code/tests, and marks `[x]` or reports failure
 3. Run tests affected by the change (scoped to modules touched, not the full suite)
 4. Features match spec requirements (spot-check key scenarios from `spec.md`)
 5. No doc drift detected (implementation doesn't contradict centralized docs)
@@ -60,7 +60,7 @@ The general rule: **artifacts at and after the re-entry point are regenerated or
 
 #### Context
 
-Loads: config, constitution, `design/index.md`, `tasks.md`, `checklists/quality.md`, `spec.md`, target centralized doc(s) from `fab/docs/`, relevant source code (files touched by the change).
+Loads: config, constitution, `design/index.md`, `tasks.md`, `checklist.md`, `spec.md`, target centralized doc(s) from `fab/docs/`, relevant source code (files touched by the change).
 
 ### `/fab-archive`
 
@@ -121,6 +121,7 @@ Loads: config, constitution, `design/index.md`, `spec.md`, target centralized do
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260212-ipoe-checklist-folder-location | 2026-02-12 | Updated checklist path references from `checklists/quality.md` to `checklist.md` in `/fab-review` and `/fab-archive` |
 | 260212-bk1n-rework-fab-ff-archive | 2026-02-12 | Added note that `/fab-ff` and `/fab-fff` invoke execution skills internally as part of their full-pipeline behavior |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated stage references from proposal/specs to brief/spec |
 | 260211-endg-add-created-by-field | 2026-02-11 | `fab-status.sh` now displays `Created by:` line when `created_by` field is present in `.status.yaml` |

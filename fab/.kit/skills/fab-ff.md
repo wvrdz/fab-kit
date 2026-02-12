@@ -158,7 +158,7 @@ On successful completion of all tasks, update `.status.yaml`:
 Execute `/fab-review` behavior — validate implementation against specs and checklists:
 
 1. All tasks in `tasks.md` marked `[x]`
-2. All checklist items in `checklists/quality.md` verified and checked off
+2. All checklist items in `checklist.md` verified and checked off
 3. Run tests affected by the change
 4. Features match spec requirements (spot-check key scenarios)
 5. No doc drift detected
@@ -217,7 +217,7 @@ Auto-clarify: tasks — {resolved: N, blocking: 0, non_blocking: N}
 
 ## Quality Checklist
 
-Generated checklists/quality.md with {N} items.
+Generated checklist.md with {N} items.
 
 ## Assumptions (cumulative)
 

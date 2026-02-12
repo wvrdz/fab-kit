@@ -1,0 +1,22 @@
+name: 260212-ipoe-checklist-folder-location
+created: 2026-02-12T16:00:00Z
+created_by: sahil-weaver
+progress:
+  brief: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  archive: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 15
+  total: 15
+confidence:
+  certain: 4
+  confident: 2
+  tentative: 0
+  unresolved: 0
+  score: 4.4
+last_updated: 2026-02-12T16:45:00Z

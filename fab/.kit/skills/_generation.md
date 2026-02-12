@@ -54,8 +54,7 @@
 ## Checklist Generation Procedure
 
 1. Read the template from `fab/.kit/templates/checklist.md`
-2. The `fab/changes/{name}/checklists/` directory is created by `/fab-new` and should already exist. If it doesn't, create it.
-3. Generate `fab/changes/{name}/checklists/quality.md` with:
+2. Generate `fab/changes/{name}/checklist.md` with:
    - `{CHANGE_NAME}`: From the brief
    - `{YYMMDD-XXXX-slug}`: The change folder name
    - `{DATE}`: Today's date

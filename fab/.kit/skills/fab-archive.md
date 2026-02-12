@@ -27,7 +27,7 @@ Then verify stage-specific preconditions using the preflight output:
 
 4. Verify that `progress.review` is `done` (review must have passed before archiving)
 5. Verify that all tasks in `fab/changes/{name}/tasks.md` are checked (`[x]`)
-6. Verify that all checklist items in `fab/changes/{name}/checklists/quality.md` are checked (`[x]`), including items marked **N/A**
+6. Verify that all checklist items in `fab/changes/{name}/checklist.md` are checked (`[x]`), including items marked **N/A**
 
 **If `progress.review` is not `done`, STOP.** Output:
 
@@ -37,7 +37,7 @@ Then verify stage-specific preconditions using the preflight output:
 
 > `{N} of {total} tasks are incomplete. All tasks must be complete before archiving. Run /fab-apply to finish, then /fab-review.`
 
-**If any checklist items are unchecked in `checklists/quality.md`, STOP.** Output:
+**If any checklist items are unchecked in `checklist.md`, STOP.** Output:
 
 > `{N} of {total} checklist items are not verified. All items must be checked (including N/A items). Run /fab-review to complete the checklist.`
 
@@ -64,7 +64,7 @@ Load all context needed for archiving:
 Verify that the change is ready to archive:
 
 1. Read `fab/changes/{name}/tasks.md` — confirm every task is `[x]`
-2. Read `fab/changes/{name}/checklists/quality.md` — confirm every `CHK-*` item is `[x]` (including items marked **N/A**: these must still be `[x]`)
+2. Read `fab/changes/{name}/checklist.md` — confirm every `CHK-*` item is `[x]` (including items marked **N/A**: these must still be `[x]`)
 
 If any item is unchecked, STOP and direct the user to the appropriate skill (see Pre-flight Check messages above).
 
