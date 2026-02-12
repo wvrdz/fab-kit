@@ -1,47 +1,114 @@
-# Stage Manager (stageman) - Development
+# Stage Manager (stageman)
 
-Stage Manager is a bash utility for querying workflow stages and states from the canonical schema.
+Bash utility for querying workflow stages and states from the canonical schema (`fab/.kit/schemas/workflow.yaml`). Source it in scripts to replace hardcoded stage/state knowledge with schema-driven queries.
 
-## Files
+## Sources of Truth
 
-- **stageman.sh** - Symlink to main implementation at `fab/.kit/scripts/stageman.sh`
-- **test-simple.sh** - Basic functionality tests
-- **test.sh** - Comprehensive test suite (WIP)
-- **README.md** - This file
+- **Schema**: `fab/.kit/schemas/workflow.yaml` — canonical workflow definition
+- **Implementation**: `fab/.kit/scripts/stageman.sh` — main file (distributed with kit)
+- **Dev symlink**: `src/stageman/stageman.sh` → `../../fab/.kit/scripts/stageman.sh`
+- **Schema docs**: `fab/docs/fab-workflow/schemas.md` — what the schema defines and design principles
 
-## Directory Structure
+## Usage
 
-```
-fab/.kit/scripts/
-└── stageman.sh          # Main implementation (distribution file)
-
-src/stageman/
-├── stageman.sh          # Symlink → ../../fab/.kit/scripts/stageman.sh
-├── test-simple.sh       # Basic smoke tests
-├── test.sh              # Full test suite
-├── README.md            # Development documentation
-├── SPEC.md              # API specification
-└── CHANGELOG.md         # Version history
-
-fab/.kit/schemas/
-└── workflow.yaml        # Schema definition (queried by stageman)
-```
-
-## Quick Start
+### As Library
 
 ```bash
-# Test the utility
-fab/.kit/scripts/stageman.sh --version
-src/stageman/test-simple.sh
+source "$(dirname "$0")/stageman.sh"
 
-# Use in scripts
-source fab/.kit/scripts/stageman.sh
-get_all_stages
-get_stage_number "spec"
+get_all_stages              # List all stage IDs in order
+get_stage_number "spec"     # Get 1-indexed position (2)
+get_state_symbol "active"   # Get display symbol (●)
+validate_status_file path   # Validate .status.yaml against schema
 ```
 
-## See Also
+### As Command
 
-- [SPEC.md](SPEC.md) - Complete API documentation
-- [CHANGELOG.md](CHANGELOG.md) - Version history
-- [../../fab/.kit/schemas/README.md](../../fab/.kit/schemas/README.md) - Schema documentation
+```bash
+stageman.sh --help      # Show usage and function reference
+stageman.sh --version   # Show library and schema version
+stageman.sh --test      # Run self-tests
+```
+
+## API Reference
+
+### State Queries
+
+| Function | Input | Output | Exit |
+|----------|-------|--------|------|
+| `get_all_states` | — | newline-separated state IDs | 0 |
+| `validate_state <state>` | state ID | — | 0 valid, 1 invalid |
+| `get_state_symbol <state>` | state ID | single symbol char | 0 found, 1 not |
+| `get_state_suffix <state>` | state ID | display suffix (may be empty) | 0 |
+| `is_terminal_state <state>` | state ID | — | 0 terminal, 1 not |
+
+### Stage Queries
+
+| Function | Input | Output | Exit |
+|----------|-------|--------|------|
+| `get_all_stages` | — | newline-separated stage IDs in order | 0 |
+| `validate_stage <stage>` | stage ID | — | 0 valid, 1 invalid |
+| `get_stage_number <stage>` | stage ID | 1-indexed position | 0 |
+| `get_stage_name <stage>` | stage ID | human-readable name | 0 |
+| `get_stage_artifact <stage>` | stage ID | filename or empty | 0 |
+| `get_allowed_states <stage>` | stage ID | newline-separated states | 0 |
+| `get_initial_state <stage>` | stage ID | default state | 0 |
+| `is_required_stage <stage>` | stage ID | — | 0 required, 1 optional |
+| `has_auto_checklist <stage>` | stage ID | — | 0 yes, 1 no |
+
+### Progression
+
+| Function | Input | Output | Exit |
+|----------|-------|--------|------|
+| `get_current_stage <file>` | .status.yaml path | active stage ID | 0 |
+| `get_next_stage <stage>` | current stage ID | next stage ID | 0 found, 1 at end |
+
+### Validation
+
+| Function | Input | Output | Exit |
+|----------|-------|--------|------|
+| `validate_status_file <file>` | .status.yaml path | errors to stderr | 0 valid, 1 invalid |
+| `validate_stage_state <stage> <state>` | stage + state IDs | — | 0 allowed, 1 not |
+
+### Display
+
+| Function | Input | Output | Exit |
+|----------|-------|--------|------|
+| `format_state <state>` | state ID | symbol + suffix | 0 |
+
+## CLI Interface
+
+| Command | Description |
+|---------|-------------|
+| `--help` | Display usage, available functions, examples |
+| `--version` | Display library and schema version |
+| `--test` | Run self-tests on all functions |
+| *(no args)* | Default to `--test` |
+
+## Requirements
+
+- Bash 4.0+
+- GNU coreutils (grep, sed, awk)
+- No external YAML parsers required
+- Works on macOS and Linux
+
+## Testing
+
+```bash
+# Quick smoke test
+src/stageman/test-simple.sh
+
+# Self-test from main file
+fab/.kit/scripts/stageman.sh --test
+```
+
+## Changelog
+
+### 1.0.0 (2026-02-12)
+
+- Renamed from `workflow-lib.sh` to `stageman.sh`
+- Reversed directory structure: main file in `fab/.kit/scripts/`, dev symlink in `src/stageman/`
+- All state/stage query functions (20+)
+- Validation functions (`validate_status_file`, `validate_stage_state`)
+- CLI interface (`--help`, `--version`, `--test`)
+- Path resolution for both src and symlink locations

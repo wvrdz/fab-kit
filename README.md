@@ -114,17 +114,13 @@ validate_status_file .status.yaml       # Validate change status
 # Run basic tests
 src/stageman/test-simple.sh
 
-# View API documentation
-cat src/stageman/SPEC.md
-
-# See complete development guide
+# View API documentation and development guide
 cat src/stageman/README.md
 ```
 
 For complete documentation, see:
-- [fab/.kit/schemas/README.md](fab/.kit/schemas/README.md) - Schema overview
-- [src/stageman/SPEC.md](src/stageman/SPEC.md) - Complete API reference
-- [src/stageman/README.md](src/stageman/README.md) - Development guide
+- [fab/docs/fab-workflow/schemas.md](fab/docs/fab-workflow/schemas.md) - Schema overview
+- [src/stageman/README.md](src/stageman/README.md) - API reference and development guide
 
 ## Documentation Map
 

@@ -2,6 +2,10 @@
 set -euo pipefail
 
 fab_root="$(dirname "$0")/../.."
+scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+
+# Source stageman for schema-driven stage/state queries
+source "$scripts_dir/stageman.sh"
 
 # 1. Project initialization validation
 if [ ! -f "$fab_root/config.yaml" ] || [ ! -f "$fab_root/constitution.md" ]; then
@@ -36,28 +40,33 @@ if [ ! -f "$status_file" ]; then
   exit 1
 fi
 
+# 5. Schema validation — catch state/stage violations early
+if ! validate_status_file "$status_file"; then
+  echo "Status file validation failed for \"$name\". Fix .status.yaml or run /fab-new." >&2
+  exit 1
+fi
+
 # --- All validations passed — emit structured YAML to stdout ---
 
-# Extract progress fields
-p_brief=$(grep '^ *brief:' "$status_file" | sed 's/^ *brief: *//')
-p_spec=$(grep '^ *spec:' "$status_file" | sed 's/^ *spec: *//')
-p_tasks=$(grep '^ *tasks:' "$status_file" | sed 's/^ *tasks: *//')
-p_apply=$(grep '^ *apply:' "$status_file" | sed 's/^ *apply: *//')
-p_review=$(grep '^ *review:' "$status_file" | sed 's/^ *review: *//')
-p_archive=$(grep '^ *archive:' "$status_file" | sed 's/^ *archive: *//')
+# Extract progress fields dynamically from schema stages
+declare -A progress
+for s in $(get_all_stages); do
+  val=$(grep "^ *${s}:" "$status_file" | sed 's/^ *[a-z]*: *//' || echo "")
+  progress[$s]="${val:-pending}"
+done
 
 # Migration shim: if no brief field exists but spec is active, inject brief: done
-if [ -z "$p_brief" ] && [ "$p_spec" = "active" ]; then
-  # Auto-migrate: add brief: done to status file
-  sed -i '/^progress:/a\  brief: done' "$status_file"
-  p_brief="done"
+if [ -z "${progress[brief]:-}" ] || [ "${progress[brief]}" = "pending" ]; then
+  if [ "${progress[spec]:-}" = "active" ]; then
+    sed -i '/^progress:/a\  brief: done' "$status_file"
+    progress[brief]="done"
+  fi
 fi
 
 # Derive current stage from the active entry in the progress map
 stage=""
-for s in brief spec tasks apply review archive; do
-  eval val="\$p_$s"
-  if [ "$val" = "active" ]; then
+for s in $(get_all_stages); do
+  if [ "${progress[$s]}" = "active" ]; then
     stage="$s"
     break
   fi
@@ -79,17 +88,13 @@ conf_tentative=$(grep '^ *tentative:' "$status_file" | sed 's/^ *tentative: *//'
 conf_unresolved=$(grep '^ *unresolved:' "$status_file" | sed 's/^ *unresolved: *//' || true)
 conf_score=$(grep '^ *score:' "$status_file" | sed 's/^ *score: *//' || true)
 
+# Emit YAML output with dynamic stage progress
 cat <<EOF
 name: $name
 change_dir: changes/$name
 stage: $stage
 progress:
-  brief: $p_brief
-  spec: $p_spec
-  tasks: $p_tasks
-  apply: $p_apply
-  review: $p_review
-  archive: $p_archive
+$(for s in $(get_all_stages); do echo "  $s: ${progress[$s]}"; done)
 checklist:
   generated: ${chk_generated:-false}
   completed: ${chk_completed:-0}
