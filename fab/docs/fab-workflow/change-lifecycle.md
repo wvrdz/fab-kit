@@ -46,7 +46,7 @@ Every change folder SHALL contain a `.status.yaml` manifest with these fields:
 - `name` — the full change folder name
 - `created` — ISO 8601 datetime
 - `progress` — map of all stages to their state. The stage marked `active` is the current stage (single source of truth for where the change is). There is no separate `stage:` field — current stage is derived from the `active` entry in the progress map.
-- `checklist` — generation status, path, completion counts
+- `checklist` — generation status, path (default: `checklist.md` at change root), completion counts
 - `confidence` — SRAD confidence scoring: `certain`, `confident`, `tentative`, `unresolved` counts and derived `score` (0.0-5.0). Computed by `/fab-new`, recomputed by `/fab-continue` and `/fab-clarify`. Used as a gate by `/fab-fff` (requires score >= 3.0)
 - `last_updated` — refreshed on every status change
 
@@ -176,6 +176,7 @@ Skills will tolerate old-format files — the preflight script infers `brief: do
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260212-ipoe-checklist-folder-location | 2026-02-12 | Updated `.status.yaml` `checklist.path` default from `checklists/quality.md` to `checklist.md` at change root |
 | 260212-v5p2-brief-pipeline-stage | 2026-02-12 | Restored brief as formal pipeline stage, updated migration note to keep brief: entry |
 | — | 2026-02-12 | Updated `/fab-new` default behavior: no longer auto-switches. Updated `fab/current` lifecycle, git integration description, and Branch Integration design decision |
 | 260212-v5p2-simplify-stages-entry-paths | 2026-02-12 | Updated to 5-stage pipeline, documented state machine with active marker as single source of truth, added migration note |

@@ -45,7 +45,7 @@ states:
 #   - required: Whether this stage can be skipped (false = optional)
 #   - initial_state: Default state when creating a new change
 #   - allowed_states: Which state values are valid for this stage
-#   - auto_checklist: Generate checklists/quality.md when this stage completes
+#   - auto_checklist: Generate checklist.md when this stage completes
 #   - commands: Primary commands that operate on this stage
 stages:
   - id: brief

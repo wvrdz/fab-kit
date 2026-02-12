@@ -27,7 +27,7 @@ Then verify stage-specific preconditions using the preflight output:
 
 4. Verify that `progress.apply` is `done` (implementation must be complete before review)
 5. Verify that `fab/changes/{name}/tasks.md` exists
-6. Verify that `fab/changes/{name}/checklists/quality.md` exists
+6. Verify that `fab/changes/{name}/checklist.md` exists
 
 **If `progress.apply` is not `done`, STOP.** Output:
 
@@ -37,7 +37,7 @@ Then verify stage-specific preconditions using the preflight output:
 
 > `No tasks.md found for this change. Run /fab-continue or /fab-ff to generate tasks first.`
 
-**If `checklists/quality.md` does not exist, STOP.** Output:
+**If `checklist.md` does not exist, STOP.** Output:
 
 > `No quality checklist found. Run /fab-continue or /fab-ff to generate the checklist first.`
 
@@ -51,7 +51,7 @@ Load all context needed for review:
 2. **`fab/constitution.md`** — project principles and constraints
 3. **`fab/design/index.md`** — specifications landscape (pre-implementation design intent, human-curated)
 4. **`fab/changes/{name}/tasks.md`** — the task list (all should be `[x]`)
-5. **`fab/changes/{name}/checklists/quality.md`** — the quality checklist to verify
+5. **`fab/changes/{name}/checklist.md`** — the quality checklist to verify
 6. **`fab/changes/{name}/spec.md`** — requirements and scenarios (the "what" to validate against)
 7. **`fab/changes/{name}/brief.md`** — original intent (for reference)
 8. **Centralized docs** — read `fab/docs/index.md` and the specific docs referenced by the brief's Affected Docs section, to check for doc drift
@@ -80,14 +80,14 @@ If all tasks are checked, report:
 
 ### Step 2: Verify Quality Checklist
 
-Read `fab/changes/{name}/checklists/quality.md` and process each `CHK-*` item:
+Read `fab/changes/{name}/checklist.md` and process each `CHK-*` item:
 
 For **each checklist item**:
 
 1. **Read the item**: Parse the CHK ID, category, and specific verifiable criterion
 2. **Inspect relevant code/tests**: Read the source files and test files that relate to this checklist item. Cross-reference against `spec.md` requirements.
 3. **Evaluate**:
-   - If the criterion is met by the implementation, mark the item `[x]` in `checklists/quality.md`
+   - If the criterion is met by the implementation, mark the item `[x]` in `checklist.md`
    - If the item is not applicable to this change, mark as `[x]` and prefix with **N/A**: `- [x] CHK-{NNN} **N/A**: {reason}`
    - If the criterion is **not met**, leave unchecked (`- [ ]`) and record the failure with a specific explanation
 
@@ -287,7 +287,7 @@ Apply stage is not complete. Run /fab-apply to finish implementation first.
 | Preflight script exits non-zero | Abort with the stderr message from `fab-preflight.sh` |
 | `progress.apply` is not `done` | Abort with: "Apply stage is not complete. Run /fab-apply to finish implementation first." |
 | `tasks.md` missing | Abort with: "No tasks.md found. Run /fab-continue or /fab-ff to generate tasks first." |
-| `checklists/quality.md` missing | Abort with: "No quality checklist found. Run /fab-continue or /fab-ff to generate the checklist first." |
+| `checklist.md` missing | Abort with: "No quality checklist found. Run /fab-continue or /fab-ff to generate the checklist first." |
 | Unchecked tasks found | Abort with incomplete task list — user must run /fab-apply first |
 | Checklist item fails | Record failure with CHK ID and reason; include in final report |
 | Tests fail | Record failure; include in final report |
@@ -305,7 +305,7 @@ Apply stage is not complete. Run /fab-apply to finish implementation first.
 | Advances stage? | **Yes** — sets `progress.review` to `done` on pass (with `archive: active`) or `failed` on failure (with `apply: active`) |
 | Idempotent? | **Yes** — safe to re-invoke; re-evaluates all checks from scratch |
 | Modifies tasks.md? | **Only on rework** — unchecks tasks and adds `<!-- rework: reason -->` comments when user chooses Option 1 |
-| Modifies checklists/quality.md? | **Yes** — marks checklist items `[x]` as they pass verification |
+| Modifies checklist.md? | **Yes** — marks checklist items `[x]` as they pass verification |
 | Modifies source code? | **No** — review only reads and validates, does not change implementation |
 | Updates `.status.yaml`? | **Yes** — sets progress (done/failed), checklist counts, and last_updated |
 

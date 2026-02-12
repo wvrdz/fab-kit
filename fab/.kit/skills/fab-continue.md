@@ -195,7 +195,7 @@ After regenerating the target, invalidate all downstream artifacts:
 - **If target is `spec`**: Tasks are now potentially stale. Leave the file in place but note it needs regeneration. Reset its progress to `pending`.
 - **If target is `tasks`**:
   - Reset all task checkboxes to unchecked: `- [x]` → `- [ ]`
-  - Regenerate the checklist at `fab/changes/{name}/checklists/quality.md`
+  - Regenerate the checklist at `fab/changes/{name}/checklist.md`
   - Reset `checklist.completed` to `0` in `.status.yaml`
 
 ### Step 6: Update `.status.yaml` and Report
@@ -241,7 +241,7 @@ Stage: spec (done). Creating tasks.md...
 
 ## Quality Checklist
 
-Generated checklists/quality.md with {N} items.
+Generated checklist.md with {N} items.
 
 Tasks created.
 

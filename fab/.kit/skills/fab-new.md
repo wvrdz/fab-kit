@@ -118,8 +118,7 @@ Before creating the change folder, perform gap analysis to avoid redundant or ov
 ### Step 3: Create Change Directory
 
 1. Create the directory: `fab/changes/{name}/`
-2. Create the subdirectory: `fab/changes/{name}/checklists/` (pre-created so downstream skills don't need a separate `mkdir`)
-3. If a change folder with the same name already exists:
+2. If a change folder with the same name already exists:
    - **If using backlog ID**: This means a change already exists for this backlog item. Abort with message: "Change already exists for backlog [{backlog_id}]: {existing_folder_name}. Use /fab-switch {existing_folder_name} to switch to it, or choose a different backlog item."
    - **Otherwise**: Regenerate the 4-character random component (`{XXXX}`) and retry (extremely unlikely collision)
 
