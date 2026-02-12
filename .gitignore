@@ -11,3 +11,8 @@ fab/current
 /.agents/
 /ToBeDeleted/
 kit.tar.gz
+
+.claude/
+.opencode/
+.codex/
+.agents/
