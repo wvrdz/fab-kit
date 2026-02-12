@@ -79,4 +79,4 @@
 - [ ] [ipoe] 2026-02-12: DEV-1015 Whats the point of saving checklists - and only checklists - in a separate folder in the changes folder. Check if it can be moved to the root of changes folder (as a sibiling to brief.md)
 - [ ] [egqa] 2026-02-12: DEV-1016 Add a fab-switch variant takes you back to the main branch - ie. the state with no active change. Check if such a flow already exists.
 - [ ] [pr1u] 2026-02-12: BUG During fab-init, fab/changes/archive is created, but without a .gitkeep. Add a .gitkeep in archive folder. In fab-init, Next steps: /fab-new <description> — Start a new change from a description, /fab-hydrate <sources> — Hydrate docs from external sources. Here, give suggent for just "/fab-hydrate" also - the variant that hydrates docs from code analysis
-- [ ] [akhp] 2026-02-12: Rename /fab-backfill to /fab-hydrate-design
+- [ ] [akhp] 2026-02-12: Rename /fab-backfill to /fab-hydrate-design (implemented by 260212-akhp-rename-fab-backfill)

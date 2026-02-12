@@ -16,6 +16,6 @@
 | [model-tiers](model-tiers.md) | Provider-agnostic model tier system — tier naming, selection criteria, skill audit, mapping, dual deployment | 2026-02-12 |
 | [configuration](configuration.md) | `config.yaml` schema, `constitution.md` governance, stage graph definition | 2026-02-07 |
 | [preflight](preflight.md) | `fab-preflight.sh` script — validation, structured YAML output, skill integration | 2026-02-07 |
-| [backfill](backfill.md) | `/fab-backfill` skill — structural gap detection between docs and design, interactive propose-then-apply | 2026-02-09 |
+| [hydrate-design](hydrate-design.md) | `/fab-hydrate-design` skill — structural gap detection between docs and design, interactive propose-then-apply | 2026-02-09 |
 | [design-index](design-index.md) | `fab/design/` directory — pre-implementation design, distinction from docs, bootstrap and context integration | 2026-02-09 |
 | [schemas](schemas.md) | `workflow.yaml` schema — stages, states, transitions, validation rules, design principles | 2026-02-12 |

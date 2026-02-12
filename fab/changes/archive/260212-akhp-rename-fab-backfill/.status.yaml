@@ -2,21 +2,21 @@ name: 260212-akhp-rename-fab-backfill
 created: 2026-02-12T00:00:00Z
 created_by: sahil-weaver
 progress:
-  brief: active
-  spec: pending
-  tasks: pending
-  apply: pending
-  review: pending
-  archive: pending
+  brief: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  archive: done
 checklist:
-  generated: false
+  generated: true
   path: checklist.md
-  completed: 0
-  total: 0
+  completed: 21
+  total: 21
 confidence:
   certain: 1
-  confident: 3
+  confident: 5
   tentative: 0
   unresolved: 0
-  score: 4.7
+  score: 3.5
 last_updated: 2026-02-12T00:00:00Z

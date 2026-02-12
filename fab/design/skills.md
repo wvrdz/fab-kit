@@ -449,7 +449,7 @@ Next: Complete spec.md, then /fab-continue
 
 ---
 
-## `/fab-backfill [domain]`
+## `/fab-hydrate-design [domain]`
 
 **Purpose**: Identify structural gaps between `fab/docs/` and `fab/design/` and propose concise additions back to design specs with interactive confirmation.
 
@@ -460,7 +460,7 @@ Next: Complete spec.md, then /fab-continue
 
 **Example**:
 ```
-/fab-backfill
+/fab-hydrate-design
 → "Found 5 structural gaps (showing top 3):"
 → Gap 1: Preflight Script — Source: preflight.md, Target: architecture.md
 → Shows exact markdown preview, asks: "Add this? (yes / no / done)"

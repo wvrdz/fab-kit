@@ -22,7 +22,7 @@ The design index does not prescribe a domain-based directory hierarchy. Design f
 
 ### Human-Curated Ownership
 
-Design files are written and maintained by humans. No automated tooling creates or enforces structure in `fab/design/`. `/fab-backfill` provides assisted reverse-hydration — it identifies structural gaps between docs and design and proposes concise additions, but every insertion requires explicit user confirmation. Design files remain human-curated.
+Design files are written and maintained by humans. No automated tooling creates or enforces structure in `fab/design/`. `/fab-hydrate-design` provides assisted reverse-hydration — it identifies structural gaps between docs and design and proposes concise additions, but every insertion requires explicit user confirmation. Design files remain human-curated.
 
 ### Bootstrap Integration
 
@@ -37,5 +37,5 @@ Design files are written and maintained by humans. No automated tooling creates 
 | Change | Date | Summary |
 |--------|------|---------|
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Consistent design terminology, updated from specs-index references |
-| 260209-h3v7-fab-backfill | 2026-02-09 | Updated Human-Curated Ownership section to reference `/fab-backfill` as assisted reverse-hydration |
+| 260209-h3v7-fab-backfill | 2026-02-09 | Updated Human-Curated Ownership section to reference `/fab-hydrate-design` as assisted reverse-hydration |
 | 260207-bb1q-add-specs-index | 2026-02-07 | Initial creation — added `fab/design/` directory, design index with boilerplate, bootstrap and context loading integration |
