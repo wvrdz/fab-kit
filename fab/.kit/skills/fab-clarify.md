@@ -196,8 +196,9 @@ After the user responds:
    - Replace `[NEEDS CLARIFICATION]` markers with concrete content
    - Replace `<!-- assumed: ... -->` markers with confirmed content (if user accepts) or updated content (if user overrides)
    - Add `<!-- clarified: {description} -->` HTML comment next to significant changes
-3. Present the next question (return to Step 3)
-4. After the 5th answer (or when the queue is exhausted), proceed to Step 5
+3. **Reclassify the grade in the `## Assumptions` table**: If the resolved question corresponds to an entry in the artifact's Assumptions table (Tentative or Confident), update that entry's Grade column to `Certain`. The user's confirmation eliminates ambiguity, making the decision deterministic. This ensures the recount in Step 7 reflects the resolution.
+4. Present the next question (return to Step 3)
+5. After the 5th answer (or when the queue is exhausted), proceed to Step 5
 
 ### Step 5: Append Audit Trail
 
@@ -243,11 +244,11 @@ Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
 
 After resolving questions, recompute the confidence score:
 
-1. Re-count SRAD grades across **all** artifacts in the change (brief, spec, tasks — whichever exist)
+1. Re-count SRAD grades across **all** artifacts in the change (brief, spec, tasks — whichever exist) by scanning the `## Assumptions` table in each artifact. Count the Grade column values: entries marked `Certain` (including reclassified entries from Step 4.3), `Confident`, and `Tentative`. The `certain` count in `.status.yaml` includes both Certain entries in Assumptions tables and implicit Certain decisions not listed in any table (carried forward from the previous count).
 2. Apply the confidence formula (see `_context.md` Confidence Scoring section)
 3. Write the updated `confidence` block to `.status.yaml`
 
-This ensures the score reflects any resolved Tentative or Unresolved assumptions from this session.
+This ensures the score reflects any resolved Tentative or Unresolved assumptions from this session. Because reclassified grades (Tentative/Confident → Certain) reduce the penalty count, the score will increase after clarification.
 
 ### Step 8: Do NOT Advance Stage
 

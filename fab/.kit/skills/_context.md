@@ -245,7 +245,7 @@ confidence:
   confident: 3     # count of Confident-graded decisions
   tentative: 2     # count of Tentative-graded decisions
   unresolved: 0    # count of Unresolved-graded decisions
-  score: 2.7       # derived score (see formula below)
+  score: 2.1       # derived score (see formula below)
 ```
 
 ### Formula
@@ -254,20 +254,20 @@ confidence:
 if unresolved > 0:
   score = 0.0
 else:
-  score = max(0.0, 5.0 - 0.1 * confident - 1.0 * tentative)
+  score = max(0.0, 5.0 - 0.3 * confident - 1.0 * tentative)
 ```
 
 - **Range**: 0.0 to 5.0
 - **5.0**: All decisions are Certain — maximum confidence
 - **0.0**: Any Unresolved decision, OR 5+ Tentative decisions
 - Certain contributes 0 penalty (deterministic, no ambiguity)
-- Confident contributes 0.1 penalty (minor — strong signal, one obvious interpretation)
+- Confident contributes 0.3 penalty (moderate — strong signal but still an assumption; accumulates meaningfully)
 - Tentative contributes 1.0 penalty (meaningful — reasonable guess but multiple valid options)
 - Unresolved is a hard zero (cannot run autonomously with unresolved decisions)
 
 ### Gate Threshold
 
-`/fab-fff` requires `confidence.score >= 3.0`. This allows at most 2 Tentative decisions (with some Confident erosion).
+`/fab-fff` requires `confidence.score >= 3.0`. This allows at most 2 Tentative decisions, or up to 6 Confident decisions with no Tentative.
 
 ### Lifecycle
 

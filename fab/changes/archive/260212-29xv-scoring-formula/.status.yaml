@@ -1,0 +1,22 @@
+name: 260212-29xv-scoring-formula
+created: 2026-02-12T10:40:29+00:00
+created_by: sahil-weaver
+progress:
+  brief: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  archive: done
+checklist:
+  generated: true
+  path: checklists/quality.md
+  completed: 27
+  total: 27
+confidence:
+  certain: 9
+  confident: 5
+  tentative: 4
+  unresolved: 0
+  score: 0.5
+last_updated: 2026-02-12T11:55:00+00:00
