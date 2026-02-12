@@ -1,4 +1,4 @@
-# Proposal: {CHANGE_NAME}
+# Brief: {CHANGE_NAME}
 
 **Change**: {YYMMDD-XXXX-slug}
 **Created**: {DATE}
@@ -40,7 +40,7 @@
 ## Open Questions
 
 <!-- Clarifying questions the agent couldn't resolve from context alone.
-     Mark each with priority: [BLOCKING] must resolve before specs, [DEFERRED] can resolve before tasks.
+     Mark each with priority: [BLOCKING] must resolve before spec, [DEFERRED] can resolve during spec.
      Maximum 3 [BLOCKING] questions — make informed guesses for the rest. -->
 
 - [BLOCKING] {question}

@@ -71,7 +71,7 @@ project/
 |-----------|-------------|---------|---------|
 | `YYMMDD` | Agent (knows today's date) | Chronological sort, temporal context | `260115` |
 | `XXXX` | Agent (4 random lowercase alphanumeric) | Uniqueness guarantee | `a7k2` |
-| `slug` | Agent (2-4 words from description) | Human readability | `add-oauth` |
+| `slug` | Agent (2-6 words from description) | Human readability | `add-oauth` |
 
 **Examples**: `260115-a7k2-add-oauth`, `260202-m3x1-fix-checkout-bug`, `260205-k8ui-refactor-auth`
 
@@ -146,8 +146,8 @@ Every change folder contains a `.status.yaml` manifest:
 ```yaml
 name: 260115-a7k2-add-oauth
 created: 2026-01-15T14:30:00Z
+created_by: Jane Smith
 branch: 260115-a7k2-add-oauth  # Optional — omitted if user skipped git integration
-stage: spec                     # Current stage
 progress:
   brief: done
   spec: active
@@ -168,8 +168,8 @@ last_updated: 2026-01-16T09:15:00Z
 ```yaml
 name: 260115-a7k2-add-oauth
 created: 2026-01-15T14:30:00Z
+created_by: Jane Smith
 branch: 260115-a7k2-add-oauth
-stage: review
 progress:
   brief: done
   spec: done
@@ -306,15 +306,15 @@ Fab stays out of this. The `branch:` field in `.status.yaml` is a convenience bo
 
 ### How It Works
 
-`/fab-new` detects whether the project is a git repo. If so, it offers three options:
+`/fab-switch` handles branch integration when activating a change. It detects the current git branch and offers options based on context:
 
 | Option | When to use | What happens |
 |--------|-------------|--------------|
-| **Create branch** | Starting fresh on `main` | Creates branch named after the change folder (e.g., `260115-a7k2-add-oauth`) |
+| **Create branch** | On `main`/`master` (auto) or `wt/*` (prompted) | Creates branch named after the change folder (e.g., `260115-a7k2-add-oauth`) |
 | **Adopt current branch** | Already on a feature branch | Records the current branch name in `.status.yaml` — no rename |
 | **Skip** | Non-git repo, or user prefers manual control | No branch field in `.status.yaml` |
 
-The branch name is stored in `.status.yaml` as `branch:` and displayed by `/fab-status`. That's the full extent of git integration — Fab never commits, pushes, merges, or deletes branches.
+`/fab-new` delegates branch integration to `/fab-switch` — it does not handle branches directly. The branch name is stored in `.status.yaml` as `branch:` and displayed by `/fab-status`. That's the full extent of git integration — Fab never commits, pushes, merges, or deletes branches.
 
 ### Branch Naming
 
