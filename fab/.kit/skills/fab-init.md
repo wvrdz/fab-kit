@@ -52,6 +52,7 @@ If `fab/config.yaml` does **not** exist:
    - **Project name** — short identifier (e.g., `my-app`)
    - **Description** — one-line summary of the project
    - **Tech stack and conventions** — languages, frameworks, API style, testing approach, etc.
+   - **Source paths** — which directories contain the implementation code? (e.g., `src/`, `lib/`, `cmd/` + `pkg/`). This tells skills where "the code" lives, as opposed to design specs and docs which are always under `fab/`.
 3. Generate `fab/config.yaml` with this structure:
 
 ```yaml
@@ -90,6 +91,9 @@ stages:
     requires: [apply]
   - id: archive
     requires: [review]
+
+source_paths:
+  - {SOURCE_PATHS}
 
 checklist:
   extra_categories: []

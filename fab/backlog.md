@@ -77,3 +77,4 @@
 - [ ] [0r8e] 2026-02-12: Format for copturing created_by is wrong. Try using github id. Its ok the assume availabilit of the gh command line, with the git fallback
 - [ ] [maqp] 2026-02-12: the two different modes of fab-discuss is confusing. Should have just one way of functioning.
 - [ ] [a4bd] 2026-02-12: rename a few more commands to fab-continue. fab-continue should be able to take it to the end (archive)
+- [ ] [ipoe] 2026-02-12: Whats the point of saving checklists - and only checklists - in a separate folder in the changes folder

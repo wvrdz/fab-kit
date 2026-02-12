@@ -36,6 +36,16 @@ context: |
   Workflow: Fab kit for specification-driven change management
   Structure: Monorepo with doc/, fab/ directories
 
+# source_paths — Directories containing the project's implementation code.
+# Used by skills that need to distinguish "implementation" from design and docs
+# (e.g., /internal-consistency-check, /fab-review, /fab-apply).
+# Paths are relative to the project root. fab/docs/ and fab/design/ are always
+# known — this field answers "where is the code that actually runs?"
+# Consumed by: /fab-apply (source code loading), /fab-review (code inspection),
+#   /internal-consistency-check (implementation layer scanning).
+source_paths:
+  - fab/.kit/
+
 # naming — Controls how change folders are named under fab/changes/.
 # Consumed by: /fab:new, /fab:discuss (folder name generation).
 naming:
