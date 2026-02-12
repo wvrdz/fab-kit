@@ -32,7 +32,10 @@ Do NOT create partial structure. The project must be initialized before starting
 
 ## Arguments
 
-- **`<description>`** *(required)* — natural language description of the change (e.g., "Add OAuth2 support for Google and GitHub sign-in")
+- **`<description>`** *(required)* — natural language description, Linear ticket ID, or backlog ID:
+  - Natural language: "Add OAuth2 support for Google and GitHub sign-in"
+  - Linear ticket ID: `DEV-988` (fetches title and description from Linear)
+  - Backlog ID: `90g5` (reads from `fab/backlog.md`)
 - **`--switch`** *(optional)* — automatically switch to the new change after creation (calls `/fab-switch` internally to write `fab/current` and create/checkout a branch)
 
 **Note:** The skill will also detect switching intent from natural language. If the description includes phrases like "and switch to it", "make it active", "activate it", "switch to it", "set as active", or "and activate", the change will be switched to automatically even without the `--switch` flag.
@@ -43,6 +46,36 @@ If no description is provided, ask the user: *"What change do you want to make?"
 
 ## Behavior
 
+### Step 0: Parse Input and Fetch Context
+
+**Detect input type** using these rules (check in order):
+
+1. **Linear ticket ID** — matches pattern `[A-Z]+-\d+` (e.g., `DEV-988`, `PROJ-123`)
+   - Use `mcp__claude_ai_Linear__get_issue` to fetch the issue details
+   - Extract: `title`, `description`, `state`, `assignee`, `labels`, `branchName`
+   - If fetch fails (issue not found, API error), fall back to treating it as natural language
+   - Continue to Step 1 using the fetched title as the description
+
+2. **Backlog ID** — matches pattern `[a-z0-9]{4}` (e.g., `90g5`, `jgt6`)
+   - Read `fab/backlog.md` and search for the pattern `\[{backlog_id}\]` in brackets
+   - Extract the full line containing the ID
+   - Parse the Linear ticket ID (if present) from the line using pattern `(DEV-\d+|[A-Z]+-\d+)`
+   - If a Linear ticket ID is found, fetch it using `mcp__claude_ai_Linear__get_issue` (same as #1)
+   - If no Linear ticket ID or fetch fails, use the description text from the backlog line
+   - **Store the backlog ID** for use in Step 1 (folder name generation)
+   - Continue to Step 1 using the extracted/fetched information
+
+3. **Natural language** — anything else
+   - Use the description as-is
+   - Continue to Step 1
+
+**Context enrichment:**
+- When Linear ticket data is available, store it for later use in Step 5 (brief generation):
+  - Add the Linear ticket ID to the **Origin** section
+  - Include the Linear description in the **Why** section (if available)
+  - Note any labels or related issues in the **Impact** section
+  - If a `branchName` exists in Linear, use it as a suggestion for branch naming
+
 ### Step 1: Generate Folder Name
 
 Generate a unique folder name using the format `{YYMMDD}-{XXXX}-{slug}`:
@@ -50,8 +83,12 @@ Generate a unique folder name using the format `{YYMMDD}-{XXXX}-{slug}`:
 | Component | How to generate | Constraints |
 |-----------|----------------|-------------|
 | `YYMMDD` | Today's date | 6 digits, zero-padded (e.g., `260206`) |
-| `XXXX` | 4 random characters | Lowercase alphanumeric only (`a-z`, `0-9`) |
+| `XXXX` | Backlog ID if available from Step 0, otherwise 4 random characters | Lowercase alphanumeric only (`a-z`, `0-9`) |
 | `slug` | 2-6 words extracted from description | All lowercase, words joined with `-`, no special characters |
+
+**XXXX component rules**:
+- **If created from backlog ID**: Use the backlog ID as-is (e.g., `90g5`, `jgt6`) — creates a direct linkage between backlog and change folder
+- **Otherwise**: Generate 4 random lowercase alphanumeric characters
 
 **Slug generation rules**:
 - Extract the most descriptive 2-6 words from the description
@@ -82,7 +119,9 @@ Before creating the change folder, perform gap analysis to avoid redundant or ov
 
 1. Create the directory: `fab/changes/{name}/`
 2. Create the subdirectory: `fab/changes/{name}/checklists/` (pre-created so downstream skills don't need a separate `mkdir`)
-3. If a change folder with the same name already exists (extremely unlikely given the random component), regenerate the 4-character random component (`{XXXX}`) and retry
+3. If a change folder with the same name already exists:
+   - **If using backlog ID**: This means a change already exists for this backlog item. Abort with message: "Change already exists for backlog [{backlog_id}]: {existing_folder_name}. Use /fab-switch {existing_folder_name} to switch to it, or choose a different backlog item."
+   - **Otherwise**: Regenerate the 4-character random component (`{XXXX}`) and retry (extremely unlikely collision)
 
 ### Step 4: Initialize `.status.yaml`
 
@@ -130,14 +169,25 @@ Generate `fab/changes/{name}/brief.md` using the template at `fab/.kit/templates
 
 1. Read the template from `fab/.kit/templates/brief.md`
 2. Fill in the metadata fields:
-   - `{CHANGE_NAME}`: The human-readable description provided by the user
+   - `{CHANGE_NAME}`: The human-readable description (from Linear/backlog if available, otherwise user input)
    - `{YYMMDD-XXXX-slug}`: The generated change folder name
    - `{DATE}`: Today's date
-3. Fill in the **Origin** section — capture the user's raw input/prompt verbatim. If conversational mode was used (Step 6), also include a summary of key decisions from the conversation (not the full transcript).
-4. Fill in the **Why** section — explain the motivation based on the user's description
-5. Fill in the **What Changes** section — be specific about new capabilities, modifications, or removals
+3. Fill in the **Origin** section:
+   - Capture the user's raw input/prompt verbatim
+   - **If Linear ticket**: Include the ticket ID (e.g., "Linear: DEV-988") and any backlog ID if applicable
+   - **If backlog ID**: Include the backlog ID reference (e.g., "Backlog: [90g5]")
+   - If conversational mode was used (Step 6), also include a summary of key decisions from the conversation (not the full transcript)
+4. Fill in the **Why** section:
+   - Use Linear description if available, otherwise explain the motivation based on the user's description
+   - If Linear labels suggest urgency/priority, mention it here
+5. Fill in the **What Changes** section:
+   - Be specific about new capabilities, modifications, or removals
+   - If Linear description includes acceptance criteria, incorporate them here
 6. Fill in the **Affected Docs** section — identify which centralized docs (in `fab/docs/`) will be new, modified, or removed by this change. Use `fab/docs/index.md` to understand what exists.
-7. Fill in the **Impact** section — identify affected code areas, APIs, dependencies
+7. Fill in the **Impact** section:
+   - Identify affected code areas, APIs, dependencies
+   - If Linear issue has related/blocking issues, mention them here
+   - If Linear issue has an assignee, note it for context
 8. Fill in the **Open Questions** section (see Step 6 below)
 9. After all sections are filled, append an **`## Assumptions`** section to the artifact listing all Confident and Tentative assumptions made during generation (see Assumptions Summary Block format in `_context.md`)
 
@@ -201,6 +251,49 @@ Once the user is satisfied with the brief (questions answered, scope agreed):
 ---
 
 ## Output
+
+### From Linear Ticket ID
+
+```
+Fetching Linear issue DEV-988...
+
+Created fab/changes/260206-x7k2-branch-creation/
+Branch: 260206-x7k2-branch-creation (created)
+
+## Brief: Branch Creation for Fab Workflow
+
+**Origin**: Linear: DEV-988 (Backlog: [eili])
+User requested: "/fab-new DEV-988 --switch"
+
+**Why**: Enable git branch integration for the fab workflow to support isolated development and PR-based workflows.
+
+{rest of brief content}
+
+Brief complete.
+
+Next: /fab-continue or /fab-ff (fast-forward all planning)
+```
+
+### From Backlog ID
+
+```
+Reading fab/backlog.md for [90g5]...
+Found: DEV-988 Add a constitution command that creates the constitution
+Fetching Linear issue DEV-988...
+
+Created fab/changes/260206-90g5-constitution-command/
+
+## Brief: Add Constitution Command
+
+**Origin**: Backlog: [90g5], Linear: DEV-988
+User requested: "/fab-new 90g5"
+
+{rest of brief content}
+
+Brief complete.
+
+Next: /fab-switch 260206-90g5-constitution-command to make it active, then /fab-continue or /fab-ff
+```
 
 ### Clear Description (no questions needed)
 
@@ -302,7 +395,12 @@ Next: /fab-continue or /fab-ff (fast-forward all planning)
 | `fab/constitution.md` missing | Abort with same message as above |
 | No description provided | Ask: "What change do you want to make?" |
 | `fab/.kit/templates/brief.md` missing | Abort with: "Brief template not found at fab/.kit/templates/brief.md — kit may be corrupted." |
-| `fab/changes/{name}/` already exists | Regenerate the random component (`XXXX`) and retry |
+| `fab/changes/{name}/` already exists (backlog ID) | Abort with: "Change already exists for backlog [{backlog_id}]: {existing_folder_name}. Use /fab-switch {existing_folder_name} to switch to it, or choose a different backlog item." |
+| `fab/changes/{name}/` already exists (random ID) | Regenerate the random component (`XXXX`) and retry |
+| Linear ticket ID not found | Warn: "Linear ticket {ID} not found or inaccessible. Treating as natural language description." Then proceed with the ID string as description |
+| Linear API error | Warn: "Could not fetch Linear ticket {ID}: {error}. Treating as natural language description." Then proceed with the ID string as description |
+| Backlog ID not found | Abort with: "Backlog ID [{ID}] not found in fab/backlog.md. Check the backlog or use a natural language description." |
+| `fab/backlog.md` missing | Abort with: "fab/backlog.md not found. Use a natural language description or Linear ticket ID instead." |
 
 ---
 
