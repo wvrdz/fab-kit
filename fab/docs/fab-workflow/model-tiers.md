@@ -54,7 +54,7 @@ A skill matching ANY `capable` criterion is classified as `capable`, regardless 
 | `fab-apply` | Code implementation, test execution |
 | `fab-review` | Multi-dimensional validation |
 | `fab-archive` | Documentation hydration |
-| `fab-backfill` | Structural gap analysis, spec modification |
+| `fab-hydrate-design` | Structural gap analysis, spec modification |
 | `internal-consistency-check` | Cross-layer drift detection |
 | `internal-retrospect` | Retrospective analysis |
 

@@ -1,10 +1,10 @@
-# Backfill
+# Hydrate Design
 
 **Domain**: fab-workflow
 
 ## Overview
 
-`/fab-backfill` detects structural gaps between `fab/docs/` and `fab/design/` — topics that docs cover but design doesn't mention at all — and proposes concise additions back to design with interactive per-gap confirmation.
+`/fab-hydrate-design` detects structural gaps between `fab/docs/` and `fab/design/` — topics that docs cover but design doesn't mention at all — and proposes concise additions back to design with interactive per-gap confirmation.
 
 ## Requirements
 
@@ -46,4 +46,5 @@ The skill SHALL verify `fab/docs/index.md` and `fab/design/index.md` exist befor
 
 | Change | Date | Summary |
 |--------|------|---------|
-| 260209-h3v7-fab-backfill | 2026-02-09 | Initial creation — `/fab-backfill` skill for detecting and backfilling structural gaps from docs to design |
+| 260209-h3v7-fab-backfill | 2026-02-09 | Initial creation — `/fab-hydrate-design` skill for detecting and hydrating structural gaps from docs to design |
+| 260212-akhp-rename-fab-backfill | 2026-02-12 | Renamed from `/fab-backfill` to `/fab-hydrate-design` for semantic consistency with `/fab-hydrate` |

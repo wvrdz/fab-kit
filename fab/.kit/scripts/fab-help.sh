@@ -45,7 +45,7 @@ COMMANDS
     /fab-archive            Complete change — hydrate docs, move to archive
 
   Maintenance
-    /fab-backfill [domain]  Identify doc→spec gaps and propose concise additions
+    /fab-hydrate-design [domain]  Identify doc→design gaps and propose additions
 
   Setup
     /fab-init               Bootstrap fab/ directory structure (safe to re-run)

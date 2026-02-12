@@ -1,9 +1,9 @@
 ---
-name: fab-backfill
+name: fab-hydrate-design
 description: "Identify structural gaps between docs and specs, propose concise additions back to specs with interactive confirmation."
 ---
 
-# /fab-backfill
+# /fab-hydrate-design
 
 > Read and follow the instructions in `fab/.kit/skills/_context.md` before proceeding.
 
@@ -13,7 +13,7 @@ description: "Identify structural gaps between docs and specs, propose concise a
 
 Detect structural gaps between `fab/docs/` and `fab/design/` — topics that docs cover but specs don't mention at all — and propose concise additions back to specs. Presents the top 3 gaps ranked by impact, with exact markdown previews and per-gap user confirmation before writing anything.
 
-This is the reverse of `/fab-archive` hydration: where archive flows specs → docs, backfill flows docs → specs.
+This is the reverse of `/fab-archive` hydration: where archive flows specs → docs, hydrate-design flows docs → specs.
 
 ---
 
@@ -140,7 +140,7 @@ When inserting:
 After all gaps have been presented (or user stopped early):
 
 ```
-Backfill complete: {N} of {M} gaps applied to specs.
+Hydrate-design complete: {N} of {M} gaps applied to specs.
 {K} additional gaps not shown.
 ```
 

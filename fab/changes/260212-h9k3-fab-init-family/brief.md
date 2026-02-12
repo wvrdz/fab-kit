@@ -70,7 +70,7 @@ Additionally: Document the relationship between fab-update.sh (script) and poten
 
 **Backlog Items**:
 - Resolves [90g5] (DEV-988)
-- References but doesn't implement [akhp] (fab-hydrate-design - separate change)
+- References but doesn't implement [akhp] (/fab-hydrate-design rename - separate change)
 
 ## Open Questions
 

@@ -102,7 +102,7 @@ flowchart TD
         STATUS["/fab-status"]
         SWITCH["/fab-switch"]
         HELP["/fab-help"]
-        BACKFILL["/fab-backfill
+        BACKFILL["/fab-hydrate-design
         (docs → design gap detection)"]
     end
 
