@@ -195,7 +195,7 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 ```
 
 **Behavior**:
-1. Generate folder name: today's date (`YYMMDD`) + 4 random alphanumeric chars + 2-4 word slug from description
+1. Generate folder name: today's date (`YYMMDD`) + 4 random alphanumeric chars + 2-6 word slug from description
 2. Create `fab/changes/{name}/`
 3. Write change name to `fab/current` (sets this as the active change)
 4. **Branch integration** (if `git.enabled` in config and inside a git repo):

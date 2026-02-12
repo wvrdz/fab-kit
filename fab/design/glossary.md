@@ -113,7 +113,7 @@
 
 | Term | Definition |
 |------|-----------|
-| **Folder name format** | `{YYMMDD}-{XXXX}-{slug}` — date + 4 random lowercase alphanumeric + 2–4 word slug. All lowercase. Agent-generated, no script needed. |
+| **Folder name format** | `{YYMMDD}-{XXXX}-{slug}` — date + 4 random lowercase alphanumeric + 2–6 word slug. All lowercase. Agent-generated, no script needed. |
 | **RFC 2119 keywords** | MUST/SHALL (mandatory), SHOULD (recommended), MAY (optional). Used in specs and constitution to express requirement strength. |
 | **GIVEN/WHEN/THEN** | Scenario format used in `spec.md` and centralized docs. Structured as precondition, action, expected outcome. |
 | **[NEEDS CLARIFICATION]** | Inline marker in specs for unresolved ambiguities. Resolved by `/fab-clarify`. |

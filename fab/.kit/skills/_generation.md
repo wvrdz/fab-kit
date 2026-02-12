@@ -13,10 +13,10 @@
 
 1. Read the template from `fab/.kit/templates/spec.md`
 2. Fill in metadata fields:
-   - `{CHANGE_NAME}`: The human-readable name from the proposal
+   - `{CHANGE_NAME}`: The human-readable name from the brief
    - `{YYMMDD-XXXX-slug}`: The change folder name from `.status.yaml`
    - `{DATE}`: Today's date
-   - `{domain}` and `{doc-name}`: From the proposal's Affected Docs section
+   - `{domain}` and `{doc-name}`: From the brief's Affected Docs section
 2b. **Non-Goals** (optional): If the change has meaningful scope exclusions, include a `## Non-Goals` section after the metadata block and before the first domain section. Each non-goal is a bullet: `- {what is excluded} — {brief reason, if not obvious}`. Derive non-goals from the brief's scope boundaries and any explicit exclusions discussed. Omit this section entirely for straightforward changes with no meaningful exclusions.
 3. For each domain/topic affected by this change, create a section with:
    - Requirements using RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
@@ -33,7 +33,7 @@
 
 1. Read the template from `fab/.kit/templates/tasks.md`
 2. Fill in metadata fields:
-   - `{CHANGE_NAME}`: From the proposal
+   - `{CHANGE_NAME}`: From the brief
    - `{YYMMDD-XXXX-slug}`: The change folder name
    - Include `brief.md` reference for traceability
 3. Break implementation into phased tasks:
@@ -56,7 +56,7 @@
 1. Read the template from `fab/.kit/templates/checklist.md`
 2. The `fab/changes/{name}/checklists/` directory is created by `/fab-new` and should already exist. If it doesn't, create it.
 3. Generate `fab/changes/{name}/checklists/quality.md` with:
-   - `{CHANGE_NAME}`: From the proposal
+   - `{CHANGE_NAME}`: From the brief
    - `{YYMMDD-XXXX-slug}`: The change folder name
    - `{DATE}`: Today's date
 4. Populate checklist items derived from:
