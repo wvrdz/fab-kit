@@ -25,8 +25,9 @@ All components MUST be lowercase — avoids collisions on case-insensitive files
 `fab/current` is a plain text file containing the name of the active change folder. It removes the need to scan `changes/` or remember folder names.
 
 **Lifecycle**:
-- **Created** by `/fab-new` — written with the newly created change folder name
-- **Updated** by `/fab-new` or `/fab-switch` — overwritten with the new change name
+- **Created** by `/fab-switch` — written with the newly activated change folder name
+- **Updated** by `/fab-switch` — overwritten with the new change name
+- **Conditionally created** by `/fab-new` — only written if `--switch` flag is used or switching intent is detected in the description; otherwise `/fab-new` does not modify `fab/current`
 - **Read** by every other skill — `/fab-continue`, `/fab-clarify`, `/fab-apply`, `/fab-review`, `/fab-status` all resolve the active change via `current`
 - **Cleared** by `/fab-archive` — file is deleted after archiving (no active change)
 
@@ -83,7 +84,7 @@ The stages split into three phases:
 
 ### Git Integration (Optional)
 
-Fab works without git. Change folders are the unit of identity, not branches — the same change can be worked on across multiple branches, worktrees, or even repos. Git branch integration is handled by `/fab-switch` (which is called internally by `/fab-new`). Fab never couples its state to git state — no `branch:` field is stored in `.status.yaml`.
+Fab works without git. Change folders are the unit of identity, not branches — the same change can be worked on across multiple branches, worktrees, or even repos. Git branch integration is handled by `/fab-switch` (which can be called explicitly or conditionally by `/fab-new` when `--switch` is used). Fab never couples its state to git state — no `branch:` field is stored in `.status.yaml`.
 
 **Why decoupled**: A developer might work on the same change across multiple worktrees, a change might span multiple branches, or a change might move between branches after a rebase. Storing a static `branch:` field would go stale; instead, `/fab-status` uses `git branch --show-current` for live display.
 
@@ -154,10 +155,10 @@ Skills will tolerate old-format files but may produce warnings. Manual migration
 *Source*: doc/fab-spec/TEMPLATES.md
 
 ### Branch Integration in `/fab-switch`, Not `/fab-new`
-**Decision**: Git branch integration is consolidated in `/fab-switch`, not `/fab-new`. `/fab-new` calls `/fab-switch` internally after brief generation. The `branch:` field was removed from `.status.yaml`; `/fab-status` uses `git branch --show-current` for live display.
-**Why**: Consolidating in `/fab-switch` (the "I'm committing to work on this" moment) gives a single, consistent branch integration path. The `branch:` field in `.status.yaml` was purely ceremonial — no skill used it for logic, and it went stale on manual branch switches.
-**Rejected**: Keeping branch in `/fab-new` — couples two concerns. Storing branch in `.status.yaml` — goes stale, no skill needs it.
-*Introduced by*: 260208-q8v3-branch-to-switch
+**Decision**: Git branch integration is consolidated in `/fab-switch`, not `/fab-new`. By default, `/fab-new` does NOT activate changes or call `/fab-switch`. Users must explicitly use `--switch` flag or include switching intent in their description to activate. The `branch:` field was removed from `.status.yaml`; `/fab-status` uses `git branch --show-current` for live display.
+**Why**: Consolidating in `/fab-switch` (the "I'm committing to work on this" moment) gives a single, consistent branch integration path. Not auto-switching reduces disruption when capturing change ideas. The `branch:` field in `.status.yaml` was purely ceremonial — no skill used it for logic, and it went stale on manual branch switches.
+**Rejected**: Keeping branch in `/fab-new` — couples two concerns. Storing branch in `.status.yaml` — goes stale, no skill needs it. Auto-switching by default — disruptive when batching ideas.
+*Introduced by*: 260208-q8v3-branch-to-switch; *Updated*: 2026-02-12 (reversed default to no-switch)
 
 ### Single Source of Truth: Progress Map with `active` Marker
 **Decision**: Remove the `stage:` field from `.status.yaml`. The current stage is determined by finding the `active` entry in the progress map. State vocabulary: `pending`, `active`, `done`, `failed`.
@@ -175,6 +176,7 @@ Skills will tolerate old-format files but may produce warnings. Manual migration
 
 | Change | Date | Summary |
 |--------|------|---------|
+| — | 2026-02-12 | Updated `/fab-new` default behavior: no longer auto-switches. Updated `fab/current` lifecycle, git integration description, and Branch Integration design decision |
 | 260212-v5p2-simplify-stages-entry-paths | 2026-02-12 | Updated to 5-stage pipeline, documented state machine with active marker as single source of truth, added migration note |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | 6-stage pipeline, removed plan/skipped states, updated stage field values and progress keys |
 | 260210-zr1f-discuss-auto-activate-when-no-current | 2026-02-10 | `/fab-discuss` conditionally offers activation when `fab/current` is empty, calls `/fab-switch` internally on accept |
