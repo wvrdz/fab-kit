@@ -101,7 +101,6 @@ Skills classified as `fast` tier (via `model_tier: fast` in frontmatter) get **b
 
 **Claude Code** — generated agent files:
 ```
-.claude/agents/fab-help.md    # Generated with model: haiku
 .claude/agents/fab-init.md
 .claude/agents/fab-status.md
 .claude/agents/fab-switch.md
@@ -196,6 +195,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260213-v8r3-remove-dead-fab-help-agent | 2026-02-13 | Removed `.claude/agents/fab-help.md` from agent files listing — agent was never spawned; skill + script pair covers all usage |
 | 260212-4tw0-migrate-scripts-stageman | 2026-02-12 | Migrated fab-status.sh and fab-preflight.sh to source stageman.sh; added stageman.sh, fab-preflight.sh, and schemas/ to directory listing |
 | 260212-ipoe-checklist-folder-location | 2026-02-12 | Template listing already shows `checklist.md` — no structural change needed; changelog entry for traceability |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated directory listing: brief.md replaces proposal.md, plan.md removed, fab/design/ replaces fab/specs/ |
