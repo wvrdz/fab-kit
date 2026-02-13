@@ -111,14 +111,6 @@ for s in $(get_all_stages); do
   progress[$s]="${val:-pending}"
 done
 
-# Migration shim: if no brief field exists but spec is active, inject brief: done
-if [ -z "${progress[brief]:-}" ] || [ "${progress[brief]}" = "pending" ]; then
-  if [ "${progress[spec]:-}" = "active" ]; then
-    sed -i '/^progress:/a\  brief: done' "$status_file"
-    progress[brief]="done"
-  fi
-fi
-
 # Derive current stage from the active entry in the progress map
 stage=""
 for s in $(get_all_stages); do
@@ -132,10 +124,10 @@ if [ -z "$stage" ]; then
   stage="archive"
 fi
 
-# Extract checklist fields
-chk_generated=$(grep '^ *generated:' "$status_file" | sed 's/^ *generated: *//')
-chk_completed=$(grep '^ *completed:' "$status_file" | sed 's/^ *completed: *//')
-chk_total=$(grep '^ *total:' "$status_file" | sed 's/^ *total: *//')
+# Extract checklist fields (handle missing block gracefully)
+chk_generated=$(grep '^ *generated:' "$status_file" | sed 's/^ *generated: *//' || true)
+chk_completed=$(grep '^ *completed:' "$status_file" | sed 's/^ *completed: *//' || true)
+chk_total=$(grep '^ *total:' "$status_file" | sed 's/^ *total: *//' || true)
 
 # Extract confidence fields (handle missing block gracefully for backwards compat)
 conf_certain=$(grep '^ *certain:' "$status_file" | sed 's/^ *certain: *//' || true)
