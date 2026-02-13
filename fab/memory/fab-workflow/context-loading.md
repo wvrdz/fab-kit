@@ -14,8 +14,8 @@ Every skill (except `/fab-init`, `/fab-switch`, `/fab-status`, `/fab-hydrate`) r
 
 1. `fab/config.yaml` — project configuration, tech stack, naming conventions
 2. `fab/constitution.md` — project principles and constraints (MUST/SHOULD/MUST NOT rules)
-3. `fab/docs/index.md` — documentation landscape (which domains and docs exist)
-4. `fab/design/index.md` — specifications landscape (pre-implementation design intent, human-curated)
+3. `fab/memory/index.md` — documentation landscape (which domains and docs exist)
+4. `fab/specs/index.md` — specifications landscape (pre-implementation design intent, human-curated)
 
 This gives the agent awareness of project configuration, constraints, the documentation landscape, and the specifications landscape before generating any artifact.
 
@@ -36,8 +36,8 @@ The existing 4-step inline validation sequence (check current, check directory, 
 When operating on an active change, skills selectively load relevant domain docs based on the change's scope:
 
 1. Read the brief's Affected Docs section (or spec's Affected docs metadata) to identify relevant domains
-2. For each referenced domain, read `fab/docs/{domain}/index.md`
-3. For each specific doc referenced, read `fab/docs/{domain}/{name}.md`
+2. For each referenced domain, read `fab/memory/{domain}/index.md`
+3. For each specific doc referenced, read `fab/memory/{domain}/{name}.md`
 4. If a referenced domain or doc doesn't exist yet, note this and proceed without error (it will be created during hydrate)
 5. Do not load unrelated domains — keeps context focused and efficient
 
@@ -70,14 +70,14 @@ The following skills skip the standard context loading layers:
 **Rejected**: Per-skill opt-in — too much maintenance overhead and easy to miss new skills.
 *Introduced by*: 260207-q7m3-separate-hydrate-smart-context
 
-### Always Load fab/design/index.md
-**Decision**: Added `fab/design/index.md` to the "Always Load" layer as a 4th baseline file.
+### Always Load fab/specs/index.md
+**Decision**: Added `fab/specs/index.md` to the "Always Load" layer as a 4th baseline file.
 **Why**: Gives every skill awareness of the specifications landscape (pre-implementation design intent) alongside the documentation landscape. The index is lightweight and human-curated, so context cost is minimal.
 **Rejected**: Loading design index only when relevant — same inconsistency risk as with docs/index.md.
 *Introduced by*: 260207-bb1q-add-specs-index
 
-### Always Load fab/docs/index.md
-**Decision**: Added `fab/docs/index.md` to the "Always Load" layer alongside config.yaml and constitution.md.
+### Always Load fab/memory/index.md
+**Decision**: Added `fab/memory/index.md` to the "Always Load" layer alongside config.yaml and constitution.md.
 **Why**: Gives every skill baseline awareness of the documentation landscape. The index is lightweight (a table of domains), so the context cost is minimal.
 **Rejected**: Loading only when needed — would require each skill to independently decide, leading to inconsistency.
 *Introduced by*: 260207-q7m3-separate-hydrate-smart-context
@@ -87,10 +87,10 @@ The following skills skip the standard context loading layers:
 | Change | Date | Summary |
 |--------|------|---------|
 | 260213-w4k9-explicit-change-targeting | 2026-02-13 | Preflight script now accepts optional `$1` change-name override with case-insensitive substring matching; `fab/current` is not modified when override is used |
-| 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated fab/design/index.md reference, removed plan.md from artifact loading |
+| 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated fab/specs/index.md reference, removed plan.md from artifact loading |
 | 260208-k3m7-add-fab-fff | 2026-02-08 | Fixed stale `auto-guess` marker reference in SRAD Protocol section — replaced with `clarified` marker per updated `_context.md` |
 | 260207-09sj-autonomy-framework | 2026-02-08 | Added SRAD protocol section — framework is loaded via `_context.md` as part of Always Load layer |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab-xxx` colon format to `/fab-xxx` hyphen format |
 | 260207-5mjv-preflight-grep-scripts | 2026-02-07 | Added preflight script integration — Change Context layer now uses `fab-preflight.sh` for validation and state resolution |
-| 260207-bb1q-add-specs-index | 2026-02-07 | Added `fab/design/index.md` as 4th file in Always Load layer |
-| 260207-q7m3-separate-hydrate-smart-context | 2026-02-07 | Added `fab/docs/index.md` to always-load, expanded selective loading to all skills on active changes |
+| 260207-bb1q-add-specs-index | 2026-02-07 | Added `fab/specs/index.md` as 4th file in Always Load layer |
+| 260207-q7m3-separate-hydrate-smart-context | 2026-02-07 | Added `fab/memory/index.md` to always-load, expanded selective loading to all skills on active changes |

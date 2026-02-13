@@ -76,7 +76,7 @@ After generating the brief, `/fab-new` computes the SRAD confidence score and wr
 
 #### Context
 
-Loads: config, constitution, `fab/docs/index.md` (to understand the existing doc landscape).
+Loads: config, constitution, `fab/memory/index.md` (to understand the existing doc landscape).
 
 ### `/fab-continue [<change-name>] [<stage>]`
 
@@ -108,7 +108,7 @@ Reset is primarily used after review identifies issues upstream.
 
 #### Context (varies by target stage)
 
-- **Spec**: config, constitution, `brief.md`, target centralized doc(s) from `fab/docs/`
+- **Spec**: config, constitution, `brief.md`, target centralized doc(s) from `fab/memory/`
 - **Tasks**: above + completed `spec.md`
 
 ### `/fab-ff [<change-name>]` (Fast Forward — Full Pipeline)
@@ -174,7 +174,7 @@ Each stage uses the same behavior as its standalone invocation. If planning bail
 
 #### Context
 
-Loads all planning context upfront: config, constitution, `brief.md`, target centralized doc(s) from `fab/docs/`.
+Loads all planning context upfront: config, constitution, `brief.md`, target centralized doc(s) from `fab/memory/`.
 
 ### `/fab-clarify [<change-name>]`
 
@@ -210,7 +210,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 #### Context (varies by current stage)
 
-- **Spec**: config, constitution, `brief.md`, target centralized doc(s) from `fab/docs/`
+- **Spec**: config, constitution, `brief.md`, target centralized doc(s) from `fab/memory/`
 - **Tasks**: above + `spec.md`, `tasks.md`
 
 ## Design Decisions

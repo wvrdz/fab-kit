@@ -38,7 +38,7 @@ This skill loads **minimal context plus config**:
 2. The contents of `fab/changes/` directory (folder names)
 3. The `.status.yaml` of the matched change (to display status after switching)
 
-It does NOT load `fab/constitution.md`, `fab/docs/index.md`, or `fab/design/index.md`.
+It does NOT load `fab/constitution.md`, `fab/memory/index.md`, or `fab/specs/index.md`.
 
 ---
 

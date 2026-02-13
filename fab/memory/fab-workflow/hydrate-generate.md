@@ -4,7 +4,7 @@
 
 ## Overview
 
-`/fab-hydrate` supports a generate mode that scans the codebase for undocumented areas, presents an interactive gap report, and generates structured documentation into `fab/docs/`. Generate mode is triggered when no arguments are provided (scans project root) or when folder paths are passed as arguments (scans those folders). It complements ingest mode, which handles URLs and `.md` files.
+`/fab-hydrate` supports a generate mode that scans the codebase for undocumented areas, presents an interactive gap report, and generates structured documentation into `fab/memory/`. Generate mode is triggered when no arguments are provided (scans project root) or when folder paths are passed as arguments (scans those folders). It complements ingest mode, which handles URLs and `.md` files.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ When `/fab-hydrate` is invoked with no arguments, it SHALL enter generate mode i
 
 ### Codebase Gap Detection
 
-In generate mode, the skill SHALL scan source code to identify undocumented areas by comparing codebase structure against existing `fab/docs/`. The scan MUST identify:
+In generate mode, the skill SHALL scan source code to identify undocumented areas by comparing codebase structure against existing `fab/memory/`. The scan MUST identify:
 
 - **Modules**: Top-level directories and packages with distinct responsibilities
 - **APIs**: Exported functions, classes, endpoints, CLI commands
@@ -65,14 +65,14 @@ If only 1-3 gaps are found, the skill MAY skip the interactive prompt and procee
 
 ### Structured Doc Output
 
-For each selected gap, the skill SHALL generate a doc in `fab/docs/{domain}/{topic}.md` following the centralized doc format (Overview, Requirements with RFC 2119 keywords, Design Decisions, Changelog). Generated docs SHALL synthesize one doc per gap (not per file). When behavior is ambiguous, docs SHOULD include `[INFERRED]` markers inline with explanations.
+For each selected gap, the skill SHALL generate a doc in `fab/memory/{domain}/{topic}.md` following the centralized doc format (Overview, Requirements with RFC 2119 keywords, Design Decisions, Changelog). Generated docs SHALL synthesize one doc per gap (not per file). When behavior is ambiguous, docs SHOULD include `[INFERRED]` markers inline with explanations.
 
 ### Index Maintenance
 
 Generate mode SHALL reuse the same index maintenance logic as ingest mode:
 
-1. Create or update `fab/docs/{domain}/index.md` for each domain touched
-2. Update `fab/docs/index.md` with new domains and doc lists
+1. Create or update `fab/memory/{domain}/index.md` for each domain touched
+2. Update `fab/memory/index.md` with new domains and doc lists
 3. All links SHALL be relative
 4. Existing entries SHALL NOT be removed
 

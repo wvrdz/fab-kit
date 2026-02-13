@@ -85,7 +85,7 @@ last_updated: {ISO_8601_DATETIME}
 - `{domain}/{doc-name}`: {brief description}
 
 ### Modified Docs
-<!-- Existing docs whose requirements are changing. Reference by path in fab/docs/.
+<!-- Existing docs whose requirements are changing. Reference by path in fab/memory/.
      Only list if spec-level behavior changes — implementation-only changes don't need spec updates. -->
 - `{domain}/{doc-name}`: {what requirement is changing}
 
@@ -117,7 +117,7 @@ last_updated: {ISO_8601_DATETIME}
 
 **Change**: {YYMMDD-XXXX-slug}
 **Created**: {DATE}
-**Affected docs**: `fab/docs/{domain}/{doc-name}.md`
+**Affected docs**: `fab/memory/{domain}/{doc-name}.md`
 
 <!--
   CHANGE SPECIFICATION
@@ -174,7 +174,7 @@ last_updated: {ISO_8601_DATETIME}
 
 **Change**: 260115-a7k2-add-oauth
 **Created**: 2026-01-15
-**Affected docs**: `fab/docs/auth/authentication.md`
+**Affected docs**: `fab/memory/auth/authentication.md`
 
 ## Auth: OAuth2 Support
 
@@ -393,14 +393,14 @@ When `/fab-continue` or `/fab-ff` creates `tasks.md`, it also generates `checkli
 
 ---
 
-## Centralized Doc Format (`fab/docs/`)
+## Centralized Doc Format (`fab/memory/`)
 
 Centralized docs are the **source of truth** for what the system does and why it works the way it does. They contain requirements (from `spec.md`), organized hierarchically with index files for navigation.
 
 ### Directory Structure
 
 ```
-fab/docs/
+fab/memory/
 ├── index.md                    # Top-level index: lists all domains
 ├── auth/
 │   ├── index.md                # Domain index: lists all docs in auth/
@@ -415,7 +415,7 @@ fab/docs/
     └── registration.md
 ```
 
-### Top-Level Index (`fab/docs/index.md`)
+### Top-Level Index (`fab/memory/index.md`)
 
 ```markdown
 # Documentation Index
@@ -429,7 +429,7 @@ fab/docs/
 | [users](users/index.md) | User management | registration |
 ```
 
-### Domain Index (`fab/docs/{domain}/index.md`)
+### Domain Index (`fab/memory/{domain}/index.md`)
 
 ```markdown
 # {Domain} Documentation
@@ -440,7 +440,7 @@ fab/docs/
 | [authorization](authorization.md) | Roles, permissions, access control | {DATE} |
 ```
 
-### Individual Doc (`fab/docs/{domain}/{name}.md`)
+### Individual Doc (`fab/memory/{domain}/{name}.md`)
 
 ```markdown
 # {Doc Name}
@@ -495,7 +495,7 @@ fab/docs/
 A fresh project starts with a single index file. The first `/fab-continue` (archive) populates domains and docs:
 
 ```
-fab/docs/
+fab/memory/
 └── index.md
 ```
 

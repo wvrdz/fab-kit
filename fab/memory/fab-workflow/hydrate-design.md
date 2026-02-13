@@ -4,7 +4,7 @@
 
 ## Overview
 
-`/fab-hydrate-design` detects structural gaps between `fab/docs/` and `fab/design/` — topics that docs cover but design doesn't mention at all — and proposes concise additions back to design with interactive per-gap confirmation.
+`/fab-hydrate-design` detects structural gaps between `fab/memory/` and `fab/specs/` — topics that docs cover but design doesn't mention at all — and proposes concise additions back to design with interactive per-gap confirmation.
 
 ## Requirements
 
@@ -22,11 +22,11 @@ Each gap SHALL show the exact markdown that would be inserted, the source doc, a
 
 ### Requirement: No Active Change Required
 
-The skill operates on project-level `fab/docs/` and `fab/design/` directories. It does not require `fab/current`, does not modify `.status.yaml`, and does not create git branches.
+The skill operates on project-level `fab/memory/` and `fab/specs/` directories. It does not require `fab/current`, does not modify `.status.yaml`, and does not create git branches.
 
 ### Requirement: Pre-flight Checks
 
-The skill SHALL verify `fab/docs/index.md` and `fab/design/index.md` exist before proceeding. Missing indexes abort with guidance to run `/fab-init`.
+The skill SHALL verify `fab/memory/index.md` and `fab/specs/index.md` exist before proceeding. Missing indexes abort with guidance to run `/fab-init`.
 
 ## Design Decisions
 

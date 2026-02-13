@@ -79,8 +79,8 @@ Load:
 - `fab/config.yaml` — project config, tech stack
 - `fab/constitution.md` — project principles and constraints
 - `fab/changes/{name}/brief.md` — the completed brief
-- `fab/docs/index.md` — documentation landscape
-- Specific centralized docs referenced by the brief's **Affected Docs** section (read each `fab/docs/{domain}/{doc}.md` listed under New, Modified, or Removed)
+- `fab/memory/index.md` — documentation landscape
+- Specific centralized docs referenced by the brief's **Affected Docs** section (read each `fab/memory/{domain}/{doc}.md` listed under New, Modified, or Removed)
 
 ##### Generating `tasks.md` (spec: active)
 
@@ -92,7 +92,7 @@ Load everything from the spec context above, plus:
 Load:
 - `fab/config.yaml` — project config, tech stack, conventions
 - `fab/constitution.md` — project principles and constraints
-- `fab/design/index.md` — specifications landscape
+- `fab/specs/index.md` — specifications landscape
 - `fab/changes/{name}/tasks.md` — the task list to execute
 - `fab/changes/{name}/spec.md` — requirements and scenarios
 - `fab/changes/{name}/brief.md` — original intent
@@ -102,7 +102,7 @@ Load:
 
 Load everything from the execution context above, plus:
 - `fab/changes/{name}/checklist.md` — the quality checklist to verify
-- **Centralized docs** — read `fab/docs/index.md` and the specific docs referenced by the brief's Affected Docs section, to check for doc drift
+- **Centralized docs** — read `fab/memory/index.md` and the specific docs referenced by the brief's Affected Docs section, to check for doc drift
 - **Relevant source code** — read files touched by the change
 
 #### Hydrate Stage
@@ -110,11 +110,11 @@ Load everything from the execution context above, plus:
 Load:
 - `fab/config.yaml` — project config, tech stack, conventions
 - `fab/constitution.md` — project principles and constraints
-- `fab/design/index.md` — specifications landscape
+- `fab/specs/index.md` — specifications landscape
 - `fab/changes/{name}/spec.md` — requirements and scenarios to hydrate
 - `fab/changes/{name}/brief.md` — original intent, Affected Docs section
-- `fab/docs/index.md` — top-level documentation index
-- **Target centralized doc(s)** — read the specific docs referenced by the brief's Affected Docs section. For each doc path listed, read `fab/docs/{domain}/{name}.md` if it exists. Also read the domain index `fab/docs/{domain}/index.md`.
+- `fab/memory/index.md` — top-level documentation index
+- **Target centralized doc(s)** — read the specific docs referenced by the brief's Affected Docs section. For each doc path listed, read `fab/memory/{domain}/{name}.md` if it exists. Also read the domain index `fab/memory/{domain}/index.md`.
 
 ### Step 2b: SRAD-Based Question Selection (Planning Stages Only)
 
@@ -317,7 +317,7 @@ Verify all tasks `[x]` and all checklist items `[x]`. Report: "Final validation 
 
 Scan `fab/changes/` for other active change folders (exclude current and `archive/`). For each, check if its `spec.md` references the same centralized doc paths. If overlap: warn (not block).
 
-#### Step 3: Hydrate into `fab/docs/`
+#### Step 3: Hydrate into `fab/memory/`
 
 For each centralized doc referenced in the brief's Affected Docs:
 
@@ -349,7 +349,7 @@ Load context as described in the Normal Flow Step 2, for the target stage.
 **Special case for brief reset**: When resetting to brief, regenerate brief.md using:
 - `fab/config.yaml` — project config, tech stack
 - `fab/constitution.md` — project principles and constraints
-- `fab/docs/index.md` — documentation landscape
+- `fab/memory/index.md` — documentation landscape
 
 ### Step 3: Reset `.status.yaml` (Pre-Execution)
 
@@ -513,7 +513,7 @@ Validation: ✓ All tasks and checklist items complete
 Concurrent: ✓ No conflicts
 
 Hydrated docs:
-  - fab/docs/{domain}/{name}.md (updated)
+  - fab/memory/{domain}/{name}.md (updated)
 
 Status:   ✓ hydrate: done
 
@@ -586,7 +586,7 @@ Next: /fab-continue
 | Modifies tasks.md? | **Yes** — marks tasks `[x]` during apply; unchecks during review rework |
 | Modifies checklist.md? | **Yes** — marks items `[x]` during review |
 | Modifies source code? | **Yes** — during apply behavior |
-| Modifies `fab/docs/`? | **Yes** — during hydrate behavior (hydration) |
+| Modifies `fab/memory/`? | **Yes** — during hydrate behavior (hydration) |
 | Updates `.status.yaml`? | **Yes** — after each stage completion |
 | Moves change folder? | **No** — hydrate leaves folder in `fab/changes/`. Use `/fab-archive` to move to archive. |
 | Clears `fab/current`? | **No** — hydrate does not clear the pointer. Use `/fab-archive` to clear. |

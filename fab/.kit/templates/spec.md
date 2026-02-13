@@ -2,7 +2,7 @@
 
 **Change**: {YYMMDD-XXXX-slug}
 **Created**: {DATE}
-**Affected docs**: `fab/docs/{domain}/{doc-name}.md`
+**Affected docs**: `fab/memory/{domain}/{doc-name}.md`
 
 <!--
   CHANGE SPECIFICATION

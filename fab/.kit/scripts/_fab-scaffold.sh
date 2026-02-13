@@ -102,15 +102,15 @@ else
 fi
 
 # ── 3. Docs index ──────────────────────────────────────────────────
-if [ ! -f "$fab_dir/docs/index.md" ]; then
-  cp "$kit_dir/scaffold/docs-index.md" "$fab_dir/docs/index.md"
-  echo "Created: fab/docs/index.md"
+if [ ! -f "$fab_dir/memory/index.md" ]; then
+  cp "$kit_dir/scaffold/memory-index.md" "$fab_dir/memory/index.md"
+  echo "Created: fab/memory/index.md"
 fi
 
 # ── 4. Design index ───────────────────────────────────────────────
-if [ ! -f "$fab_dir/design/index.md" ]; then
-  cp "$kit_dir/scaffold/design-index.md" "$fab_dir/design/index.md"
-  echo "Created: fab/design/index.md"
+if [ ! -f "$fab_dir/specs/index.md" ]; then
+  cp "$kit_dir/scaffold/specs-index.md" "$fab_dir/specs/index.md"
+  echo "Created: fab/specs/index.md"
 fi
 
 # ── 5. Skill symlinks ──────────────────────────────────────────────

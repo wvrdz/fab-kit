@@ -52,8 +52,8 @@ Load all context upfront since fast-forward traverses all stages:
 1. `fab/config.yaml` — project config, tech stack
 2. `fab/constitution.md` — project principles and constraints
 3. `fab/changes/{name}/brief.md` — the completed brief
-4. `fab/docs/index.md` — documentation landscape
-5. Specific centralized docs referenced by the brief's **Affected Docs** section (read each `fab/docs/{domain}/{doc}.md` listed under New, Modified, or Removed)
+4. `fab/memory/index.md` — documentation landscape
+5. Specific centralized docs referenced by the brief's **Affected Docs** section (read each `fab/memory/{domain}/{doc}.md` listed under New, Modified, or Removed)
 
 ---
 
@@ -193,7 +193,7 @@ Execute hydrate behavior:
 
 1. Final validation — review must have passed
 2. Concurrent change check — warn about other active changes modifying the same docs
-3. Hydrate into `fab/docs/` — integrate new/changed requirements from `spec.md`
+3. Hydrate into `fab/memory/` — integrate new/changed requirements from `spec.md`
 4. Update `.status.yaml` to `hydrate: done`
 
 ---

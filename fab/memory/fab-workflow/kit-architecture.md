@@ -35,8 +35,8 @@ fab/.kit/
 ├── scaffold/               # Bootstrap content (read by _fab-scaffold.sh)
 │   ├── envrc               # .envrc symlink target
 │   ├── gitignore-entries   # .gitignore entries (one per line)
-│   ├── docs-index.md       # Initial fab/docs/index.md content
-│   └── design-index.md     # Initial fab/design/index.md content
+│   ├── docs-index.md       # Initial fab/memory/index.md content
+│   └── design-index.md     # Initial fab/specs/index.md content
 ├── schemas/                # Workflow schema
 │   └── workflow.yaml       # Canonical stage/state definitions
 └── scripts/                # Shell utilities
@@ -170,7 +170,7 @@ A monorepo is one Fab project. Place a single `fab/` at the repository root — 
 
 **Why one `fab/`**:
 - Changes naturally span packages — one change folder, one spec
-- Docs are domain-based, not package-based — `fab/docs/auth/` describes auth regardless of which package implements it
+- Docs are domain-based, not package-based — `fab/memory/auth/` describes auth regardless of which package implements it
 - One developer, one change at a time — `fab/current` points to a single active change
 - Simplicity — multiple `fab/` directories means multiple constitutions, doc trees, and symlink conflicts
 
@@ -205,7 +205,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 | 260213-v8r3-remove-dead-fab-help-agent | 2026-02-13 | Removed `.claude/agents/fab-help.md` from agent files listing — agent was never spawned; skill + script pair covers all usage |
 | 260212-4tw0-migrate-scripts-stageman | 2026-02-12 | Migrated fab-status.sh and fab-preflight.sh to source stageman.sh; added stageman.sh, fab-preflight.sh, and schemas/ to directory listing |
 | 260212-ipoe-checklist-folder-location | 2026-02-12 | Template listing already shows `checklist.md` — no structural change needed; changelog entry for traceability |
-| 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated directory listing: brief.md replaces proposal.md, plan.md removed, fab/design/ replaces fab/specs/ |
+| 260211-r3k8-simplify-planning-stages | 2026-02-11 | Updated directory listing: brief.md replaces proposal.md, plan.md removed, fab/specs/ replaces fab/specs/ |
 | 260210-h7r3-kit-distribution-update | 2026-02-10 | Added `fab-upgrade.sh` and `fab-release.sh` script descriptions, bootstrap one-liner (Option A), atomic update mechanism, version-based update flow |
 | 260210-m3k7-multi-agent-support | 2026-02-10 | Added OpenCode commands and Codex skills symlink creation to `_fab-scaffold.sh`; documented all three agent integration paths |
 | 260207-sawf-fix-command-format | 2026-02-07 | Fixed command references from `/fab-xxx` colon format to `/fab-xxx` hyphen format |
