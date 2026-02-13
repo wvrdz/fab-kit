@@ -10,7 +10,7 @@
 | [clarify](clarify.md) | `/fab-clarify` skill — dual modes (suggest/auto), taxonomy scan, structured questions, coverage reports, audit trail, grade reclassification | 2026-02-12 |
 | [execution-skills](execution-skills.md) | Apply, review, and archive behavior — now accessed via `/fab-continue` | 2026-02-12 |
 | [change-lifecycle](change-lifecycle.md) | Change naming, folder structure, `.status.yaml`, `fab/current`, git integration, `/fab-status`, `/fab-switch`, backlog scanning | 2026-02-13 |
-| [templates](templates.md) | Artifact templates (brief, spec, tasks, checklist), skill frontmatter, and centralized doc format | 2026-02-12 |
+| [templates](templates.md) | Artifact templates (brief, spec, tasks, checklist), skill frontmatter, and centralized doc format | 2026-02-13 |
 | [distribution](distribution.md) | How `fab/.kit/` is distributed — bootstrap, update, release workflow | 2026-02-12 |
 | [kit-architecture](kit-architecture.md) | `.kit/` structure, scripts, agent integration, distribution, versioning, monorepos | 2026-02-12 |
 | [model-tiers](model-tiers.md) | Provider-agnostic model tier system — tier naming, selection criteria, skill audit, mapping, dual deployment | 2026-02-12 |

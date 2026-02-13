@@ -21,17 +21,11 @@
 
 ## Affected Docs
 
-### New Docs
-<!-- Docs being introduced. Use kebab-case identifiers matching the centralized doc path. -->
-- `{domain}/{doc-name}`: {brief description}
-
-### Modified Docs
-<!-- Existing docs whose requirements are changing. Reference by path in fab/docs/.
+<!-- Which centralized docs will be created, modified, or removed by this change.
+     Use kebab-case identifiers matching fab/docs/ paths. Mark each with (new), (modify), or (remove).
      Only list if spec-level behavior changes — implementation-only changes don't need spec updates. -->
-- `{domain}/{doc-name}`: {what requirement is changing}
 
-### Removed Docs
-<!-- Docs being fully deprecated/removed. Rare — usually individual requirements are removed via spec. -->
+- `{domain}/{doc-name}`: ({new|modify|remove}) {brief description}
 
 ## Impact
 
@@ -40,8 +34,7 @@
 ## Open Questions
 
 <!-- Clarifying questions the agent couldn't resolve from context alone.
-     Mark each with priority: [BLOCKING] must resolve before spec, [DEFERRED] can resolve during spec.
-     Maximum 3 [BLOCKING] questions — make informed guesses for the rest. -->
+     SRAD handles prioritization at spec generation time — no need for explicit
+     blocking/deferred labels here. Just list the questions. -->
 
-- [BLOCKING] {question}
-- [DEFERRED] {question}
+- {question}

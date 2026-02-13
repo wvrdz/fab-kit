@@ -15,23 +15,22 @@ The brief captures intent, scope, approach, and open questions. Structure:
 - **Origin** — How the change was initiated: description text, interaction mode (one-shot vs. conversational), key decisions from the conversation. Provides traceability for how the brief was developed
 - **Why** — Motivation, 1-3 sentences
 - **What Changes** — Specific capabilities added, modified, or removed
-- **Affected Docs** — Which centralized docs will be created, modified, or removed (kebab-case identifiers matching `fab/docs/` paths)
+- **Affected Docs** — Flat list of centralized docs affected by this change, each with an inline marker: `(new)`, `(modify)`, or `(remove)`. Kebab-case identifiers matching `fab/docs/` paths
 - **Impact** — Affected code areas, APIs, dependencies
-- **Open Questions** — Marked with `[BLOCKING]` (must resolve before spec, max 3) or `[DEFERRED]` (can resolve during spec)
-
-The max 3 `[BLOCKING]` questions constraint forces the agent to make informed guesses rather than deferring everything to the user.
+- **Open Questions** — Plain list of questions the agent couldn't resolve from context. SRAD handles prioritization at spec generation time — no explicit blocking/deferred labels needed
 
 ### `spec.md` (Change Specification)
 
 The spec describes requirements relevant to this change using RFC 2119 keywords (MUST/SHALL/SHOULD/MAY). Structure:
 
 - **Metadata** — Change name, date, affected docs paths
-- **Non-Goals** *(optional)* — Explicit scope exclusions, placed after metadata and before domain sections. Each entry is a bullet: `- {what is excluded} — {brief reason}`. Omit entirely for straightforward changes with no meaningful exclusions
 - **Domain sections** — Organized by domain when the change touches multiple domains
 - **Requirements** — Each with descriptive name and RFC 2119 text
 - **Scenarios** — GIVEN/WHEN/THEN format, at least one per requirement
-- **Design Decisions** *(optional)* — Key design choices with rationale and rejected alternatives, placed after domain sections and before Deprecated Requirements. Each entry: `1. **{Decision}**: {approach}` with `*Why*` and `*Rejected*` sub-items. Omit entirely for trivial changes. When present, decisions are extracted into centralized docs during archive hydration
-- **Deprecated Requirements** — Only if this change removes existing requirements, with reason and migration path
+- **Optional sections** — Added only when needed, omitted entirely otherwise:
+  - **Non-Goals** — Explicit scope exclusions after metadata, before domain sections. Each entry: `- {what} — {reason}`
+  - **Design Decisions** — Key design choices after domain sections. Each entry: `1. **{Decision}**: {approach}` with `*Why*` and `*Rejected*` sub-items. Extracted into centralized docs during archive hydration
+  - **Deprecated Requirements** — Only when removing existing requirements, with Reason and Migration fields
 
 The spec reads as a straightforward requirements document with no delta markers. The agent infers what's new vs changed by comparing against existing centralized docs during archive hydration.
 
@@ -159,10 +158,29 @@ When `/fab-continue` (archive) hydrates into centralized docs:
 **Rejected**: Always include with "N/A" — adds boilerplate to simple changes.
 *Introduced by*: 260211-r4w8-spec-template-sections
 
+### Flat Affected Docs With Inline Markers
+**Decision**: The brief template's Affected Docs section uses a single flat list with `(new)`, `(modify)`, `(remove)` inline markers instead of three headed subsections.
+**Why**: Most changes touch 1-2 docs, leaving empty subsection headings. A flat list is more compact and eliminates structural overhead for the common case.
+**Rejected**: Keep three subsections (New Docs / Modified Docs / Removed Docs) — empty headings add noise for typical changes.
+*Introduced by*: 260213-v4rx-simplify-templates
+
+### SRAD-Driven Open Questions (No BLOCKING/DEFERRED Labels)
+**Decision**: The brief's Open Questions section uses a plain list without explicit priority markers. SRAD handles prioritization at spec generation time.
+**Why**: The BLOCKING/DEFERRED labels duplicated SRAD's prioritization work. SRAD already evaluates reversibility and agent competence to decide what to ask vs. assume.
+**Rejected**: Keep BLOCKING/DEFERRED markers — redundant with SRAD framework, adds template complexity.
+*Introduced by*: 260213-v4rx-simplify-templates
+
+### Optional Sections as Guidance Comment, Not Template Scaffolding
+**Decision**: The spec template's optional sections (Non-Goals, Design Decisions, Deprecated Requirements) are documented in a single guidance comment rather than as standing template sections with placeholder content.
+**Why**: Placeholder content nudges fill-in-the-blank behavior even when sections should be omitted entirely. A comment block preserves the format reference without creating empty scaffolding.
+**Rejected**: Keep standing sections with placeholders — nudges unnecessary fill-in behavior for simple changes.
+*Introduced by*: 260213-v4rx-simplify-templates
+
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260213-v4rx-simplify-templates | 2026-02-13 | Flattened brief Affected Docs to inline markers, removed BLOCKING/DEFERRED from Open Questions, replaced spec optional section placeholders with guidance comment |
 | 260212-ipoe-checklist-folder-location | 2026-02-12 | Moved checklist from `checklists/quality.md` to `checklist.md` at change root; updated .status.yaml template `checklist.path` default |
 | 260212-v5p2-simplify-stages-entry-paths | 2026-02-12 | Updated .status.yaml template (removed stage: field and brief: from progress, spec: active as initial), documented brief template Origin section |
 | 260211-r4w8-spec-template-sections | 2026-02-12 | Added optional Non-Goals and Design Decisions sections to spec.md template |

@@ -2,21 +2,21 @@ name: 260213-v4rx-simplify-templates
 created: 2026-02-13T00:00:00+00:00
 created_by: sahil-weaver
 progress:
-  brief: active
-  spec: pending
-  tasks: pending
-  apply: pending
-  review: pending
-  archive: pending
+  brief: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  archive: done
 checklist:
-  generated: false
+  generated: true
   path: checklist.md
-  completed: 0
-  total: 0
+  completed: 16
+  total: 16
 confidence:
-  certain: 4
-  confident: 0
+  certain: 8
+  confident: 2
   tentative: 0
   unresolved: 0
-  score: 5.0
+  score: 4.4
 last_updated: 2026-02-13T00:00:00+00:00
