@@ -26,22 +26,27 @@ Then run setup and init:
 ```bash
 fab/.kit/scripts/fab-setup.sh   # creates directories, symlinks, .gitignore
 direnv allow # To approve .envrc content, used to add scripts to path
+# Once setup completes, use your AI agent to run:
+#> /fab-init     # generates config.yaml and constitution.md
 ```
 
-Once setup completes, use your AI agent to run:
+## Working with FabKit
 
-```
-/fab-init     # generates config.yaml and constitution.md
-/fab-new      # starts your first change
+To start a new change, open your AI Agent and run:
+
+```bash
+#> /fab-new      # starts your first change
 ```
 
+From there, the agent will inform you the following instructions.
 
 ## Updating
 
 To update `fab/.kit/` to the latest release:
 
 ```bash
-bash fab/.kit/scripts/fab-update.sh
+fab-update.sh 
+# bash fab/.kit/scripts/fab-update.sh
 ```
 
 This will:
@@ -63,7 +68,7 @@ cat fab/.kit/VERSION
 For maintainers of this repo — to publish a new release:
 
 ```bash
-bash fab/.kit/scripts/fab-release.sh [patch|minor|major]
+fab-release.sh [patch|minor|major]
 ```
 
 - `patch` (default): 0.1.0 → 0.1.1

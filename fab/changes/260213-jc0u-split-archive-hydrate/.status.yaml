@@ -1,0 +1,22 @@
+name: 260213-jc0u-split-archive-hydrate
+created: 2026-02-13T12:00:00+00:00
+created_by: sahil-weaver
+progress:
+  brief: done
+  spec: active
+  tasks: pending
+  apply: pending
+  review: pending
+  archive: pending
+checklist:
+  generated: false
+  path: checklist.md
+  completed: 0
+  total: 0
+confidence:
+  certain: 0
+  confident: 4
+  tentative: 0
+  unresolved: 0
+  score: 3.8
+last_updated: 2026-02-13T12:00:00+00:00
