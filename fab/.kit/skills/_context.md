@@ -43,7 +43,7 @@ Selectively load relevant domain docs based on the change's scope:
 
 1. Read the brief's **Affected Docs** section (or spec's **Affected docs** metadata) to identify which domains are relevant
 2. For each referenced domain, read `fab/docs/{domain}/index.md` to understand the domain's docs
-3. Read the specific centralized doc(s) referenced by the Affected Docs entries (the New, Modified, and Removed entries) — read `fab/docs/{domain}/{name}.md` for each listed doc that exists
+3. Read the specific centralized doc(s) referenced by the Affected Docs entries (those marked `(new)`, `(modify)`, or `(remove)`) — read `fab/docs/{domain}/{name}.md` for each listed doc that exists
 4. If a referenced doc or domain does not exist yet (e.g., listed under New Docs), note this and proceed without error — it will be created during archive (via `/fab-continue` or `/fab-ff`)
 5. Use this context to ground all artifact generation (spec, tasks, reviews) in the real current state, not assumptions
 
