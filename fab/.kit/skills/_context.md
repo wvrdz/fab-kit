@@ -107,9 +107,7 @@ When one skill invokes another internally (e.g., `/fab-ff` invoking `/fab-clarif
 
 User-invoked skills never carry the `[AUTO-MODE]` prefix, so called skills default to interactive mode.
 
-### Extending the Protocol
-
-If future skills need additional mode signals, define new bracketed prefixes (e.g., `[BATCH-MODE]`) in this section. The pattern is: one prefix per mode, first-line placement, absence means default.
+To add new mode signals, define new bracketed prefixes (e.g., `[BATCH-MODE]`) here. Pattern: one prefix per mode, first-line placement, absence means default.
 
 ---
 
@@ -170,29 +168,11 @@ Each decision produces an assumption graded on a 4-level scale:
 
 #### Example 2: Error response format
 
-> **Decision point**: Spec says "handle errors." What format — JSON body, plain text, RFC 7807?
->
-> | Dimension | Score | Reasoning |
-> |-----------|-------|-----------|
-> | S — Signal | Medium | "Handle errors" is vague, but the context is a REST API |
-> | R — Reversibility | High | Error format is easily changed later without cascading |
-> | A — Agent Competence | High | Config shows REST/JSON stack; existing codebase uses JSON errors |
-> | D — Disambiguation | High | JSON error body is the obvious default for a REST API |
->
-> **Grade: Confident** — strong codebase signal, easily reversed, one obvious choice. Note in Assumptions summary but do not ask.
+> "Handle errors" in a REST API → S: Medium, R/A/D: High. **Confident** — codebase signal is strong, easily reversed, one obvious default. Note in Assumptions summary, don't ask.
 
 #### Example 3: Test framework selection
 
-> **Decision point**: Adding a new module. Which test framework — Jest, Vitest, project's existing runner?
->
-> | Dimension | Score | Reasoning |
-> |-----------|-------|-----------|
-> | S — Signal | Low | User didn't mention testing approach |
-> | R — Reversibility | High | Test files are self-contained; switching frameworks later is straightforward |
-> | A — Agent Competence | High | `config.yaml` and `package.json` specify the existing test runner |
-> | D — Disambiguation | High | Use whatever the project already uses |
->
-> **Grade: Certain** — config deterministically answers this. No marker, no mention in Assumptions summary.
+> "Which test framework?" → S: Low, R/A/D: High. **Certain** — config deterministically answers this (use existing runner). No marker, no mention.
 
 ### Artifact Markers
 
@@ -261,13 +241,7 @@ else:
   score = max(0.0, 5.0 - 0.3 * confident - 1.0 * tentative)
 ```
 
-- **Range**: 0.0 to 5.0
-- **5.0**: All decisions are Certain — maximum confidence
-- **0.0**: Any Unresolved decision, OR 5+ Tentative decisions
-- Certain contributes 0 penalty (deterministic, no ambiguity)
-- Confident contributes 0.3 penalty (moderate — strong signal but still an assumption; accumulates meaningfully)
-- Tentative contributes 1.0 penalty (meaningful — reasonable guess but multiple valid options)
-- Unresolved is a hard zero (cannot run autonomously with unresolved decisions)
+Range: 0.0 (any Unresolved, or 5+ Tentative) to 5.0 (all Certain). Penalties: Certain 0, Confident 0.3, Tentative 1.0, Unresolved → hard zero.
 
 ### Gate Threshold
 
