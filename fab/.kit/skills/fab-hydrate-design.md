@@ -11,7 +11,7 @@ description: "Identify structural gaps between docs and specs, propose concise a
 
 ## Purpose
 
-Detect structural gaps between `fab/docs/` and `fab/design/` — topics that docs cover but specs don't mention at all — and propose concise additions back to specs. Presents the top 3 gaps ranked by impact, with exact markdown previews and per-gap user confirmation before writing anything.
+Detect structural gaps between `fab/memory/` and `fab/specs/` — topics that docs cover but specs don't mention at all — and propose concise additions back to specs. Presents the top 3 gaps ranked by impact, with exact markdown previews and per-gap user confirmation before writing anything.
 
 This is the reverse of hydrate behavior (in `/fab-continue`): where hydrate flows specs → docs, hydrate-design flows docs → specs.
 
@@ -27,16 +27,16 @@ This is the reverse of hydrate behavior (in `/fab-continue`): where hydrate flow
 
 Before doing anything else:
 
-1. Check that `fab/docs/index.md` exists and is readable
-2. Check that `fab/design/index.md` exists and is readable
+1. Check that `fab/memory/index.md` exists and is readable
+2. Check that `fab/specs/index.md` exists and is readable
 
 **If either check fails, STOP immediately.** Output this message and do nothing else:
 
-> `fab/docs/index.md not found. Run /fab-init first.`
+> `fab/memory/index.md not found. Run /fab-init first.`
 
 or
 
-> `fab/design/index.md not found. Run /fab-init first.`
+> `fab/specs/index.md not found. Run /fab-init first.`
 
 ---
 
@@ -44,8 +44,8 @@ or
 
 This skill loads:
 
-1. `fab/docs/index.md` — to discover all doc domains
-2. `fab/design/index.md` — to discover all spec files
+1. `fab/memory/index.md` — to discover all doc domains
+2. `fab/specs/index.md` — to discover all spec files
 3. All doc files across all domains (or scoped domain if argument provided) — read each file to build the topic inventory
 4. All spec files listed in the specs index — read each file to build the coverage inventory
 
@@ -57,9 +57,9 @@ This skill does **not** require `fab/current`, `fab/config.yaml`, or `fab/consti
 
 ### Step 1: Build Topic Inventory (Docs Side)
 
-1. Read `fab/docs/index.md` to get the list of domains
+1. Read `fab/memory/index.md` to get the list of domains
 2. If a `[domain]` argument was provided, filter to that domain only
-3. For each domain, read the domain index (`fab/docs/{domain}/index.md`) to get doc files
+3. For each domain, read the domain index (`fab/memory/{domain}/index.md`) to get doc files
 4. For each doc file, extract:
    - The doc file path
    - All `## ` and `### ` level headings (these are "topics")
@@ -69,7 +69,7 @@ Result: a list of `(doc_path, topic_heading, summary)` tuples.
 
 ### Step 2: Build Coverage Inventory (Specs Side)
 
-1. Read `fab/design/index.md` to get the list of spec files
+1. Read `fab/specs/index.md` to get the list of spec files
 2. For each spec file, extract:
    - All `## ` and `### ` level headings
    - All inline mentions of key terms (skill names, concept names, behavioral rules)
@@ -157,14 +157,14 @@ No structural gaps found between docs and specs.
 ### Gaps Found
 
 ```
-Scanning fab/docs/ against fab/design/...
+Scanning fab/memory/ against fab/specs/...
 
 Found 5 structural gaps (showing top 3):
 
 ### Gap 1: Preflight Script
 
-**Source**: `fab/docs/fab-workflow/preflight.md` → ## Requirements
-**Target**: `fab/design/architecture.md` → after ## Directory Structure
+**Source**: `fab/memory/fab-workflow/preflight.md` → ## Requirements
+**Target**: `fab/specs/architecture.md` → after ## Directory Structure
 
 **Preview** (what would be added):
 
@@ -172,13 +172,13 @@ Found 5 structural gaps (showing top 3):
 
 A shared validation script that verifies project initialization, active change existence, and `.status.yaml` integrity. Returns structured YAML output for skill consumption. Used by all skills that operate on an active change.
 
-Add this to `fab/design/architecture.md`? (yes / no / done)
+Add this to `fab/specs/architecture.md`? (yes / no / done)
 ```
 
 ### No Gaps
 
 ```
-Scanning fab/docs/ against fab/design/...
+Scanning fab/memory/ against fab/specs/...
 
 No structural gaps found between docs and specs.
 ```
@@ -189,10 +189,10 @@ No structural gaps found between docs and specs.
 
 | Condition | Action |
 |-----------|--------|
-| `fab/docs/index.md` missing | Abort: "fab/docs/index.md not found. Run /fab-init first." |
-| `fab/design/index.md` missing | Abort: "fab/design/index.md not found. Run /fab-init first." |
+| `fab/memory/index.md` missing | Abort: "fab/memory/index.md not found. Run /fab-init first." |
+| `fab/specs/index.md` missing | Abort: "fab/specs/index.md not found. Run /fab-init first." |
 | No doc domains found | Output: "No doc domains found. Run /fab-hydrate first." |
-| No spec files found | Output: "No spec files found in fab/design/index.md." |
+| No spec files found | Output: "No spec files found in fab/specs/index.md." |
 | Domain argument doesn't match any domain | Output: "Domain '{name}' not found. Available: {list}" |
 | Spec file write fails | Report error, continue to next gap |
 

@@ -62,7 +62,7 @@ Same as `/fab-ff` — load all context upfront:
 1. `fab/config.yaml` — project config, tech stack
 2. `fab/constitution.md` — project principles and constraints
 3. `fab/changes/{name}/brief.md` — the completed brief
-4. `fab/docs/index.md` — documentation landscape
+4. `fab/memory/index.md` — documentation landscape
 5. Specific centralized docs referenced by the brief's **Affected Docs** section
 
 ---

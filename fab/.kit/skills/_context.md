@@ -15,8 +15,8 @@ Read these files first — they define the project's identity, constraints, and 
 
 - **`fab/config.yaml`** — project configuration, tech stack, naming conventions, stage configuration
 - **`fab/constitution.md`** — project principles and constraints (MUST/SHOULD/MUST NOT rules)
-- **`fab/docs/index.md`** — documentation landscape (which domains and docs exist)
-- **`fab/design/index.md`** — specifications landscape (pre-implementation design intent, human-curated)
+- **`fab/memory/index.md`** — documentation landscape (which domains and docs exist)
+- **`fab/specs/index.md`** — specifications landscape (pre-implementation design intent, human-curated)
 
 > **Note**: If the skill runs `fab-preflight.sh` (Section 2 above), the init check (config.yaml and constitution.md existence) is already covered by the script. Skills using preflight don't need separate existence checks for these files — they only need to read them for content.
 
@@ -42,8 +42,8 @@ Resolve the active change and load its state by running the preflight script:
 Selectively load relevant domain docs based on the change's scope:
 
 1. Read the brief's **Affected Docs** section (or spec's **Affected docs** metadata) to identify which domains are relevant
-2. For each referenced domain, read `fab/docs/{domain}/index.md` to understand the domain's docs
-3. Read the specific centralized doc(s) referenced by the Affected Docs entries (those marked `(new)`, `(modify)`, or `(remove)`) — read `fab/docs/{domain}/{name}.md` for each listed doc that exists
+2. For each referenced domain, read `fab/memory/{domain}/index.md` to understand the domain's docs
+3. Read the specific centralized doc(s) referenced by the Affected Docs entries (those marked `(new)`, `(modify)`, or `(remove)`) — read `fab/memory/{domain}/{name}.md` for each listed doc that exists
 4. If a referenced doc or domain does not exist yet (e.g., listed under New Docs), note this and proceed without error — it will be created during hydrate (via `/fab-continue` or `/fab-ff`)
 5. Use this context to ground all artifact generation (spec, tasks, reviews) in the real current state, not assumptions
 

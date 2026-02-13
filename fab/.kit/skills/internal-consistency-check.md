@@ -3,8 +3,8 @@
 Scan for inconsistencies between the three sources of truth in this project:
 
 - **Implementation** — the project's source code (paths declared in `source_paths` in `fab/config.yaml`)
-- **Docs** (`fab/docs/`) — centralized documentation (generated/hydrated)
-- **Design** (`fab/design/`) — human-curated design specs and architecture
+- **Docs** (`fab/memory/`) — centralized documentation (generated/hydrated)
+- **Design** (`fab/specs/`) — human-curated design specs and architecture
 
 These layers can drift apart over time — stale references, renamed concepts, missing coverage, contradicted behavior. Use a team of agents to audit all three in parallel.
 
@@ -30,10 +30,10 @@ Include the resolved `{IMPL_PATHS}` in each agent prompt so they know exactly wh
 
 Prompt:
 
-> Audit consistency between design specs (`fab/design/`) and the implementation (directories: `{IMPL_PATHS}`).
+> Audit consistency between design specs (`fab/specs/`) and the implementation (directories: `{IMPL_PATHS}`).
 >
-> 1. Read `fab/design/index.md` to understand the intended architecture and all design docs
-> 2. Read every file in `fab/design/` to catalog the specified skills, stages, workflow steps, naming conventions, and templates
+> 1. Read `fab/specs/index.md` to understand the intended architecture and all design docs
+> 2. Read every file in `fab/specs/` to catalog the specified skills, stages, workflow steps, naming conventions, and templates
 > 3. Read every file in the implementation directories: `{IMPL_PATHS}`
 > 4. Report inconsistencies in these categories:
 >    - **Missing implementations**: things described in design that don't exist in the implementation
@@ -48,10 +48,10 @@ Prompt:
 
 Prompt:
 
-> Audit consistency between centralized docs (`fab/docs/`) and the implementation (directories: `{IMPL_PATHS}`).
+> Audit consistency between centralized docs (`fab/memory/`) and the implementation (directories: `{IMPL_PATHS}`).
 >
-> 1. Read `fab/docs/index.md` to understand the documentation landscape
-> 2. Read every doc in `fab/docs/` recursively
+> 1. Read `fab/memory/index.md` to understand the documentation landscape
+> 2. Read every doc in `fab/memory/` recursively
 > 3. Read every file in the implementation directories: `{IMPL_PATHS}`
 > 4. Report inconsistencies in these categories:
 >    - **Stale docs**: docs describing behavior/features that no longer exist or work differently
@@ -66,16 +66,16 @@ Prompt:
 
 Prompt:
 
-> Audit consistency between design specs (`fab/design/`) and centralized docs (`fab/docs/`).
+> Audit consistency between design specs (`fab/specs/`) and centralized docs (`fab/memory/`).
 >
-> 1. Read `fab/design/index.md` and `fab/docs/index.md`
-> 2. Read every file in both `fab/design/` and `fab/docs/` recursively
+> 1. Read `fab/specs/index.md` and `fab/memory/index.md`
+> 2. Read every file in both `fab/specs/` and `fab/memory/` recursively
 > 3. Report inconsistencies in these categories:
 >    - **Terminology drift**: same concept described with different names across design and docs
 >    - **Coverage gaps**: design concepts not reflected in docs, or doc topics not grounded in design
 >    - **Contradictions**: where docs and design disagree on workflow, stages, behavior, or structure
 >    - **Stale cross-references**: either layer referencing the other with outdated paths, names, or structure
->    - **Glossary drift**: terms defined in `fab/design/glossary.md` that are used inconsistently in docs
+>    - **Glossary drift**: terms defined in `fab/specs/glossary.md` that are used inconsistently in docs
 >
 > For each finding, cite the specific files and lines involved.
 

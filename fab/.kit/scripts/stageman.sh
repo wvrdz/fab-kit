@@ -397,7 +397,7 @@ EXAMPLES:
 SEE ALSO:
   src/stageman/README.md - API reference and development guide
   fab/.kit/schemas/workflow.yaml - Schema definition
-  fab/docs/fab-workflow/schemas.md - Schema overview and design principles
+  fab/memory/fab-workflow/schemas.md - Schema overview and design principles
 EOF
 }
 

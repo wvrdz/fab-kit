@@ -1,13 +1,13 @@
-# Documentation Index
+# Memory Index
 
-> **Docs are post-implementation artifacts** — what actually *happened*. They are the
+> **Memory files are post-implementation artifacts** — what actually *happened*. They are the
 > authoritative source of truth for system behavior and design decisions, maintained by
 > `/fab-continue` (hydrate) and `/fab-archive` after each change is completed.
 >
-> Contrast with [`fab/design/index.md`](../design/index.md): design files are *pre-implementation* —
-> what you planned. Design files capture conceptual design intent and are human-curated.
+> Contrast with [`fab/specs/index.md`](../specs/index.md): specs are *pre-implementation* —
+> what you planned. Specs capture conceptual design intent and are human-curated.
 
-> **New here?** See the [Documentation Map](../../README.md#documentation-map) for recommended reading order. For terminology, see the [Glossary](../design/glossary.md).
+> **New here?** See the [Documentation Map](../../README.md#documentation-map) for recommended reading order. For terminology, see the [Glossary](../specs/glossary.md).
 
 | Domain | Description | Docs |
 |--------|-------------|------|

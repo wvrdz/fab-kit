@@ -22,7 +22,7 @@
 ## Affected Docs
 
 <!-- Which centralized docs will be created, modified, or removed by this change.
-     Use kebab-case identifiers matching fab/docs/ paths. Mark each with (new), (modify), or (remove).
+     Use kebab-case identifiers matching fab/memory/ paths. Mark each with (new), (modify), or (remove).
      Only list if spec-level behavior changes — implementation-only changes don't need spec updates. -->
 
 - `{domain}/{doc-name}`: ({new|modify|remove}) {brief description}

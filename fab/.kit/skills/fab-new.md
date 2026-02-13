@@ -142,7 +142,7 @@ Create `fab/changes/{name}/.status.yaml` using the template at `fab/.kit/templat
 Load context before generating:
 - Read `fab/config.yaml` — project name, tech stack, conventions
 - Read `fab/constitution.md` — project principles and constraints
-- Read `fab/docs/index.md` — understand the existing documentation landscape
+- Read `fab/memory/index.md` — understand the existing documentation landscape
 
 Generate `fab/changes/{name}/brief.md` using the template at `fab/.kit/templates/brief.md`:
 
@@ -162,7 +162,7 @@ Generate `fab/changes/{name}/brief.md` using the template at `fab/.kit/templates
 5. Fill in the **What Changes** section:
    - Be specific about new capabilities, modifications, or removals
    - If Linear description includes acceptance criteria, incorporate them here
-6. Fill in the **Affected Docs** section — identify which centralized docs (in `fab/docs/`) will be new, modified, or removed by this change. Use `fab/docs/index.md` to understand what exists.
+6. Fill in the **Affected Docs** section — identify which centralized docs (in `fab/memory/`) will be new, modified, or removed by this change. Use `fab/memory/index.md` to understand what exists.
 7. Fill in the **Impact** section:
    - Identify affected code areas, APIs, dependencies
    - If Linear issue has related/blocking issues, mention them here

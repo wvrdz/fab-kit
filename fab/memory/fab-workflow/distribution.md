@@ -44,7 +44,7 @@ The existing `cp -r` distribution method SHALL continue to work. The bootstrap o
 
 #### Update Preserves Project Files
 
-`fab-upgrade.sh` MUST NOT modify any files outside of `fab/.kit/`. Preserved: `fab/config.yaml`, `fab/constitution.md`, `fab/docs/`, `fab/design/`, `fab/changes/`, `fab/current`.
+`fab-upgrade.sh` MUST NOT modify any files outside of `fab/.kit/`. Preserved: `fab/config.yaml`, `fab/constitution.md`, `fab/memory/`, `fab/specs/`, `fab/changes/`, `fab/current`.
 
 #### gh CLI as Primary Download Tool
 
@@ -103,5 +103,5 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 |--------|------|---------|
 | 260213-3njv-scaffold-dir | 2026-02-13 | Updated bootstrap description to mention `_fab-scaffold.sh` reads from `scaffold/` files for index templates, envrc, and gitignore entries |
 | 260213-iq2l-rename-setup-scripts | 2026-02-13 | Renamed script references: `fab-setup.sh` → `_fab-scaffold.sh`, `fab-update.sh` → `fab-upgrade.sh` |
-| 260212-emcb-clarify-fab-setup | 2026-02-12 | Updated bootstrap description to include `fab/design/` directory and `design/index.md` in `_fab-scaffold.sh` output |
+| 260212-emcb-clarify-fab-setup | 2026-02-12 | Updated bootstrap description to include `fab/specs/` directory and `design/index.md` in `_fab-scaffold.sh` output |
 | 260210-h7r3-kit-distribution-update | 2026-02-10 | Initial creation — bootstrap, update, release, and repo rename requirements |

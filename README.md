@@ -124,7 +124,7 @@ cat src/stageman/README.md
 ```
 
 For complete documentation, see:
-- [fab/docs/fab-workflow/schemas.md](fab/docs/fab-workflow/schemas.md) - Schema overview
+- [fab/memory/fab-workflow/schemas.md](fab/memory/fab-workflow/schemas.md) - Schema overview
 - [src/stageman/README.md](src/stageman/README.md) - API reference and development guide
 
 ## Documentation Map
@@ -139,8 +139,8 @@ For complete documentation, see:
 2. **[fab/specs/overview.md](fab/specs/overview.md)** — the 7-stage workflow, design principles, quick command reference
 3. **[fab/specs/user-flow.md](fab/specs/user-flow.md)** — visual diagrams of how commands connect
 4. **[fab/specs/glossary.md](fab/specs/glossary.md)** — all terminology defined in one place
-5. **[fab/docs/fab-workflow/init.md](fab/docs/fab-workflow/init.md)** — how `/fab-init` bootstraps your project
-6. **[fab/docs/fab-workflow/change-lifecycle.md](fab/docs/fab-workflow/change-lifecycle.md)** — how changes work: folders, naming, status tracking
+5. **[fab/memory/fab-workflow/init.md](fab/memory/fab-workflow/init.md)** — how `/fab-init` bootstraps your project
+6. **[fab/memory/fab-workflow/change-lifecycle.md](fab/memory/fab-workflow/change-lifecycle.md)** — how changes work: folders, naming, status tracking
 
 #### Contributor — "I want to modify or extend Fab Kit"
 
@@ -149,7 +149,7 @@ For complete documentation, see:
 3. **[fab/constitution.md](fab/constitution.md)** — immutable project principles (MUST/SHOULD rules)
 4. **[fab/specs/architecture.md](fab/specs/architecture.md)** — directory structure, config, naming, agent integration
 5. **[fab/specs/skills.md](fab/specs/skills.md)** — detailed behavior for each `/fab-*` skill
-6. **[fab/docs/fab-workflow/kit-architecture.md](fab/docs/fab-workflow/kit-architecture.md)** — `.kit/` internals, scripts, distribution
+6. **[fab/memory/fab-workflow/kit-architecture.md](fab/memory/fab-workflow/kit-architecture.md)** — `.kit/` internals, scripts, distribution
 7. **[fab/specs/templates.md](fab/specs/templates.md)** — artifact template system
 8. **[src/stageman/README.md](src/stageman/README.md)** — Stage Manager development guide and testing
 
@@ -172,39 +172,39 @@ For complete documentation, see:
 | [fab/specs/overview.md](fab/specs/overview.md) | The Fab workflow specification — design principles, 7 stages, quick command reference |
 | [fab/specs/user-flow.md](fab/specs/user-flow.md) | Visual diagrams showing how commands connect and how a typical development session flows |
 | [fab/specs/glossary.md](fab/specs/glossary.md) | All Fab terminology — core concepts, stages, skills, files, SRAD, conventions |
-| [fab/docs/fab-workflow/init.md](fab/docs/fab-workflow/init.md) | `/fab-init` — structural bootstrap: creates config.yaml, constitution.md, directories |
-| [fab/docs/fab-workflow/configuration.md](fab/docs/fab-workflow/configuration.md) | `config.yaml` schema and `constitution.md` governance |
+| [fab/memory/fab-workflow/init.md](fab/memory/fab-workflow/init.md) | `/fab-init` — structural bootstrap: creates config.yaml, constitution.md, directories |
+| [fab/memory/fab-workflow/configuration.md](fab/memory/fab-workflow/configuration.md) | `config.yaml` schema and `constitution.md` governance |
 
 #### Concepts
 
 | Document | Description |
 |----------|-------------|
 | [fab/constitution.md](fab/constitution.md) | Project principles and constraints — the MUST/SHOULD rules that govern all skills |
-| [fab/docs/fab-workflow/change-lifecycle.md](fab/docs/fab-workflow/change-lifecycle.md) | Change folders, `.status.yaml`, naming conventions, git integration, `/fab-status`, `/fab-switch` |
-| [fab/docs/fab-workflow/context-loading.md](fab/docs/fab-workflow/context-loading.md) | How skills load project context — always-load layer, selective domain loading, SRAD protocol |
-| [fab/docs/fab-workflow/hydrate.md](fab/docs/fab-workflow/hydrate.md) | `/fab-hydrate` — dual-mode: ingest external sources or generate docs from codebase scanning |
-| [fab/docs/fab-workflow/specs-index.md](fab/docs/fab-workflow/specs-index.md) | `fab/specs/` directory — pre-implementation specs, distinction from docs |
+| [fab/memory/fab-workflow/change-lifecycle.md](fab/memory/fab-workflow/change-lifecycle.md) | Change folders, `.status.yaml`, naming conventions, git integration, `/fab-status`, `/fab-switch` |
+| [fab/memory/fab-workflow/context-loading.md](fab/memory/fab-workflow/context-loading.md) | How skills load project context — always-load layer, selective domain loading, SRAD protocol |
+| [fab/memory/fab-workflow/hydrate.md](fab/memory/fab-workflow/hydrate.md) | `/fab-hydrate` — dual-mode: ingest external sources or generate docs from codebase scanning |
+| [fab/memory/fab-workflow/specs-index.md](fab/memory/fab-workflow/specs-index.md) | `fab/specs/` directory — pre-implementation specs, distinction from docs |
 
 #### Reference
 
 | Document | Description |
 |----------|-------------|
 | [fab/specs/skills.md](fab/specs/skills.md) | Detailed behavioral specification for each `/fab-*` skill |
-| [fab/docs/fab-workflow/planning-skills.md](fab/docs/fab-workflow/planning-skills.md) | `/fab-new`, `/fab-discuss`, `/fab-continue`, `/fab-ff`, `/fab-clarify` — the planning pipeline |
-| [fab/docs/fab-workflow/clarify.md](fab/docs/fab-workflow/clarify.md) | `/fab-clarify` — dual modes (suggest/auto), taxonomy scan, structured questions |
-| [fab/docs/fab-workflow/execution-skills.md](fab/docs/fab-workflow/execution-skills.md) | Apply, review, archive behavior — accessed via '/fab-continue' |
-| [fab/docs/fab-workflow/hydrate-design.md](fab/docs/fab-workflow/hydrate-design.md) | `/fab-hydrate-design` — structural gap detection between docs and design |
+| [fab/memory/fab-workflow/planning-skills.md](fab/memory/fab-workflow/planning-skills.md) | `/fab-new`, `/fab-discuss`, `/fab-continue`, `/fab-ff`, `/fab-clarify` — the planning pipeline |
+| [fab/memory/fab-workflow/clarify.md](fab/memory/fab-workflow/clarify.md) | `/fab-clarify` — dual modes (suggest/auto), taxonomy scan, structured questions |
+| [fab/memory/fab-workflow/execution-skills.md](fab/memory/fab-workflow/execution-skills.md) | Apply, review, archive behavior — accessed via '/fab-continue' |
+| [fab/memory/fab-workflow/hydrate-design.md](fab/memory/fab-workflow/hydrate-design.md) | `/fab-hydrate-design` — structural gap detection between docs and design |
 | [fab/specs/templates.md](fab/specs/templates.md) | Artifact templates — proposal, spec, plan, tasks, checklist |
-| [fab/docs/fab-workflow/templates.md](fab/docs/fab-workflow/templates.md) | Template implementation details and centralized doc format |
+| [fab/memory/fab-workflow/templates.md](fab/memory/fab-workflow/templates.md) | Template implementation details and centralized doc format |
 
 #### Internals
 
 | Document | Description |
 |----------|-------------|
 | [fab/specs/architecture.md](fab/specs/architecture.md) | Directory structure, config schema, naming conventions, agent integration |
-| [fab/docs/fab-workflow/kit-architecture.md](fab/docs/fab-workflow/kit-architecture.md) | `.kit/` directory structure, shell scripts, agent integration, distribution |
-| [fab/docs/fab-workflow/preflight.md](fab/docs/fab-workflow/preflight.md) | `fab-preflight.sh` — validation script, structured YAML output, skill integration |
-| [fab/docs/fab-workflow/hydrate-generate.md](fab/docs/fab-workflow/hydrate-generate.md) | `/fab-hydrate` generate mode — codebase scanning, gap detection, doc generation |
+| [fab/memory/fab-workflow/kit-architecture.md](fab/memory/fab-workflow/kit-architecture.md) | `.kit/` directory structure, shell scripts, agent integration, distribution |
+| [fab/memory/fab-workflow/preflight.md](fab/memory/fab-workflow/preflight.md) | `fab-preflight.sh` — validation script, structured YAML output, skill integration |
+| [fab/memory/fab-workflow/hydrate-generate.md](fab/memory/fab-workflow/hydrate-generate.md) | `/fab-hydrate` generate mode — codebase scanning, gap detection, doc generation |
 | [fab/specs/proposal.md](fab/specs/proposal.md) | Original SpecKit vs OpenSpec comparison and design rationale |
 
 ### Index Files
@@ -214,8 +214,8 @@ These are the structural indexes for navigating within each documentation area:
 | Index | What it covers |
 |-------|---------------|
 | [fab/specs/index.md](fab/specs/index.md) | Pre-implementation specifications (design intent) |
-| [fab/docs/index.md](fab/docs/index.md) | Post-implementation centralized docs (what actually shipped) |
-| [fab/docs/fab-workflow/index.md](fab/docs/fab-workflow/index.md) | All fab-workflow domain docs with last-updated dates |
+| [fab/memory/index.md](fab/memory/index.md) | Post-implementation centralized docs (what actually shipped) |
+| [fab/memory/fab-workflow/index.md](fab/memory/fab-workflow/index.md) | All fab-workflow domain docs with last-updated dates |
 
 ## References
 

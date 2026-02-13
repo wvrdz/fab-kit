@@ -88,7 +88,7 @@ Context varies by the **target artifact** (which equals the current stage for pl
 - `fab/config.yaml` — project config, tech stack
 - `fab/constitution.md` — project principles and constraints
 - `fab/changes/{name}/brief.md` — the artifact to refine
-- `fab/docs/index.md` — documentation landscape
+- `fab/memory/index.md` — documentation landscape
 
 ### Spec artifact
 

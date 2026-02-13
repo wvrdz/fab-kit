@@ -16,7 +16,7 @@ A hybrid SDD workflow that combines:
 No system installation required. All workflow logic lives in `fab/.kit/` as markdown templates and skill definitions that any AI agent can execute.
 
 ### 2. Docs Are the Source of Truth
-Code serves documentation, not the other way around. The centralized docs (`fab/docs/`) are the source of truth for what the system does and why it works the way it does.
+Code serves documentation, not the other way around. The centralized docs (`fab/memory/`) are the source of truth for what the system does and why it works the way it does.
 
 ### 3. Change Folder First
 All work happens in change folders. Each change captures its requirements (`spec.md`), which get hydrated into the centralized docs on completion.
@@ -73,7 +73,7 @@ You're ready. Start your first change with `/fab-new <description>`.
 
 ### Hydrating Docs from Existing Sources
 
-After the initial bootstrap, use `/fab-hydrate` to ingest existing documentation into `fab/docs/`:
+After the initial bootstrap, use `/fab-hydrate` to ingest existing documentation into `fab/memory/`:
 
 ```bash
 # Pull in API docs from Notion
@@ -86,7 +86,7 @@ After the initial bootstrap, use `/fab-hydrate` to ingest existing documentation
 /fab-hydrate https://notion.so/myteam/Auth-xyz https://linear.app/myteam/project/payments-abc ./specs/
 ```
 
-Supported sources: **Notion URLs**, **Linear URLs**, **local files/directories**. Each run analyzes the content, maps it to domains, and creates or merges into `fab/docs/`. See [Skills Reference](skills.md#fabhydrate-sources) for details.
+Supported sources: **Notion URLs**, **Linear URLs**, **local files/directories**. Each run analyzes the content, maps it to domains, and creates or merges into `fab/memory/`. See [Skills Reference](skills.md#fabhydrate-sources) for details.
 
 ---
 
@@ -164,7 +164,7 @@ flowchart TD
 | Skill | Purpose | Creates |
 |-------|---------|---------|
 | `/fab-init` | Bootstrap fab/ structure | `config.yaml`, `constitution.md`, `docs/`, skill symlinks (idempotent) |
-| `/fab-hydrate [sources...]` | Ingest external docs into fab/docs/ | Updated `fab/docs/` with indexes |
+| `/fab-hydrate [sources...]` | Ingest external docs into fab/memory/ | Updated `fab/memory/` with indexes |
 | `/fab-new` | Start change (optionally with `--switch`) | `brief.md`, `.status.yaml` |
 | `/fab-continue [<stage>]` | Next artifact (or reset to stage) | Next stage artifact |
 | `/fab-ff` | Fast forward remaining planning | spec.md + tasks + checklist |

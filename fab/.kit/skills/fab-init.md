@@ -92,12 +92,12 @@ Execute the **Constitution Behavior** (below) in create mode. This ensures a sin
 
 If `fab/constitution.md` **already exists**: report "constitution.md already exists — skipping" and move on.
 
-#### 1c. `fab/docs/index.md`
+#### 1c. `fab/memory/index.md`
 
-If `fab/docs/index.md` does **not** exist:
+If `fab/memory/index.md` does **not** exist:
 
-1. Create `fab/docs/` directory if needed
-2. Create `fab/docs/index.md` with an empty index:
+1. Create `fab/memory/` directory if needed
+2. Create `fab/memory/index.md` with an empty index:
 
 ```markdown
 # Documentation Index
@@ -109,14 +109,14 @@ If `fab/docs/index.md` does **not** exist:
 |--------|-------------|------|
 ```
 
-If `fab/docs/index.md` **already exists**: report "docs/index.md already exists — skipping" and move on.
+If `fab/memory/index.md` **already exists**: report "docs/index.md already exists — skipping" and move on.
 
-#### 1d. `fab/design/index.md`
+#### 1d. `fab/specs/index.md`
 
-If `fab/design/index.md` does **not** exist:
+If `fab/specs/index.md` does **not** exist:
 
-1. Create `fab/design/` directory if needed
-2. Create `fab/design/index.md` with an empty index:
+1. Create `fab/specs/` directory if needed
+2. Create `fab/specs/index.md` with an empty index:
 
 ```markdown
 # Specifications Index
@@ -125,7 +125,7 @@ If `fab/design/index.md` does **not** exist:
 > intent, high-level decisions, and the "why" behind features. Specs are human-curated,
 > flat in structure, and deliberately size-controlled for quick reading.
 >
-> Contrast with [`fab/docs/index.md`](../docs/index.md): docs are *post-implementation* —
+> Contrast with [`fab/memory/index.md`](../memory/index.md): docs are *post-implementation* —
 > what actually happened. Docs are the authoritative source of truth for system behavior,
 > maintained by `/fab-continue` (hydrate) and `/fab-archive`.
 >
@@ -136,7 +136,7 @@ If `fab/design/index.md` does **not** exist:
 |------|-------------|
 ```
 
-If `fab/design/index.md` **already exists**: report "design/index.md already exists — skipping" and move on.
+If `fab/specs/index.md` **already exists**: report "design/index.md already exists — skipping" and move on.
 
 #### 1e. `fab/changes/`
 
@@ -188,8 +188,8 @@ Found fab/.kit/ (v{VERSION}). Initializing project...
 {constitution.md generation}
 Created: fab/config.yaml
 Created: fab/constitution.md
-Created: fab/docs/index.md
-Created: fab/design/index.md
+Created: fab/memory/index.md
+Created: fab/specs/index.md
 Created: fab/changes/
 Created: 11 symlinks in .claude/skills/
 Updated: .gitignore (added fab/current)
@@ -218,7 +218,7 @@ fab/ structure verified.
 
 Create a new `fab/config.yaml` interactively or update specific sections of an existing one. Preserves YAML comments and formatting through targeted string replacement. Validates structural correctness after each edit.
 
-**Context loading**: This behavior loads `fab/config.yaml` (the file being edited). It does NOT load `fab/constitution.md`, `fab/docs/index.md`, or `fab/design/index.md`.
+**Context loading**: This behavior loads `fab/config.yaml` (the file being edited). It does NOT load `fab/constitution.md`, `fab/memory/index.md`, or `fab/specs/index.md`.
 
 ### Config Arguments
 
@@ -422,7 +422,7 @@ Revert this change? (yes/no)
 
 Create a new project constitution or amend an existing one. Manages the governance lifecycle of `fab/constitution.md` with semantic versioning, structural preservation, and audit trail output.
 
-**Context loading**: This behavior loads `fab/config.yaml` (required for project context) and `fab/constitution.md` (if it exists). It does NOT load `fab/docs/index.md` or `fab/design/index.md`.
+**Context loading**: This behavior loads `fab/config.yaml` (required for project context) and `fab/constitution.md` (if it exists). It does NOT load `fab/memory/index.md` or `fab/specs/index.md`.
 
 ### Constitution Pre-flight
 
@@ -581,7 +581,7 @@ No changes made. Constitution unchanged at version 1.2.0.
 
 Validate the structural correctness of `fab/config.yaml` and `fab/constitution.md`. Reports issues with actionable fix suggestions. Useful after manual edits, before commits, or as a health check.
 
-**Context loading**: This behavior reads `fab/config.yaml` and `fab/constitution.md` for validation. It does NOT load `fab/docs/index.md` or `fab/design/index.md`.
+**Context loading**: This behavior reads `fab/config.yaml` and `fab/constitution.md` for validation. It does NOT load `fab/memory/index.md` or `fab/specs/index.md`.
 
 ### Validate Pre-flight
 
