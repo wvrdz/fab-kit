@@ -36,27 +36,28 @@ direnv allow                            # approve .envrc (adds scripts to PATH)
 Then open your AI agent and run:
 
 ```
-/fab-init     # generates config.yaml and constitution.md
+/fab-init     # Claude Code
+$fab-init     # Codex
 ```
 
 ### 3. Your first change
 
 ```
-/fab-new Add a loading spinner to the submit button
+/fab-new Add a loading spinner to the submit button      # or $fab-new in Codex
 ```
 
 Here's what happens:
 
 1. The agent creates a `brief.md` capturing intent and scope, asking you clarifying questions
-2. Run `/fab-continue` — generates a `spec.md` with requirements
+2. Run `/fab-continue` (`$fab-continue`) — generates a `spec.md` with requirements
 3. Run `/fab-continue` — generates a `tasks.md` with an implementation checklist
 4. Run `/fab-continue` — the agent implements the code, checking off tasks as it goes
 5. Run `/fab-continue` — reviews the implementation against the spec
 6. Run `/fab-continue` — hydrates learnings into project memory, then archive
 
-At any point, run `/fab-status` to see where you are.
+At any point, run `/fab-status` (`$fab-status`) to see where you are.
 
-For small, well-understood changes, `/fab-ff` fast-forwards through all planning stages at once, and `/fab-fff` runs the entire pipeline autonomously.
+For small, well-understood changes, `/fab-ff` (`$fab-ff`) fast-forwards through all planning stages at once, and `/fab-fff` (`$fab-fff`) runs the entire pipeline autonomously.
 
 ## The 6 Stages
 
@@ -94,6 +95,8 @@ flowchart TD
 
 ## Command Quick Reference
 
+> **Prefix:** Use `/fab-*` in Claude Code, `$fab-*` in Codex.
+
 | Command | Purpose |
 |---------|---------|
 | `/fab-init` | Bootstrap fab/ structure (idempotent) |
@@ -126,7 +129,7 @@ The kit provides the 6-stage workflow above. See [docs/specs/index.md](docs/spec
 fab-upgrade.sh       # downloads latest kit, replaces fab/.kit/, repairs symlinks
 ```
 
-If the upgrade reports a version mismatch, run `/fab-update` in your AI agent to apply migrations. Safe to re-run.
+If the upgrade reports a version mismatch, run `/fab-update` (`$fab-update`) in your AI agent to apply migrations. Safe to re-run.
 
 ## Learn More
 
