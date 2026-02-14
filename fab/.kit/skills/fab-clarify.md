@@ -11,381 +11,108 @@ description: "Refine the current stage artifact — resolve gaps, ambiguities, o
 
 ## Purpose
 
-Deepen and refine the current stage artifact without advancing to the next stage. Operates in two modes:
+Deepen and refine the current stage artifact without advancing. Two modes:
 
-- **Suggest mode** (user invocation) — interactive, structured question flow with recommendations
+- **Suggest mode** (user invocation) — interactive question flow with recommendations
 - **Auto mode** (internal `fab-ff` call) — autonomous resolution, returns machine-readable result
 
-Safe to call multiple times — each invocation refines further.
-
----
-
-## Mode Selection
-
-Mode is determined by the **`[AUTO-MODE]` prefix** defined in the Skill Invocation Protocol section of `_context.md`. There are no `--suggest` or `--auto` flags.
-
-**Detection logic**: Check the first line of the invocation context for the `[AUTO-MODE]` prefix.
-
-| Invocation context | Mode |
-|--------------------|------|
-| `[AUTO-MODE]` prefix **present** (e.g., `/fab-ff` invoking internally) | **Auto** — autonomous, returns structured result |
-| `[AUTO-MODE]` prefix **absent** (e.g., user invokes `/fab-clarify` directly) | **Suggest** — interactive, one question at a time |
-
-See `_context.md` > Skill Invocation Protocol for the full protocol definition.
+Mode determined by `[AUTO-MODE]` prefix (see `_context.md` > Skill Invocation Protocol). Safe to call multiple times.
 
 ---
 
 ## Arguments
 
-- **`<change-name>`** *(optional)* — target a specific change instead of the active one in `fab/current`. Supports full folder names, partial slug matches, or 4-char IDs (e.g., `r3m7`). When provided, passed to the preflight script as `$1` for transient resolution — `fab/current` is **not** modified.
-- **`<target-artifact>`** *(optional)* — one of `brief`, `spec`, or `tasks`. Targets a specific planning artifact instead of the current stage's default. **Required** when the current stage is `apply`, `review`, or `hydrate`. At planning stages, defaults to the current stage's artifact but can be overridden.
+- **`<change-name>`** *(optional)* — target a specific change (see `_context.md` > Change-name override). `fab/current` unchanged.
+- **`<target-artifact>`** *(optional)* — `brief`, `spec`, or `tasks`. **Required** at post-planning stages. Defaults to current stage's artifact at planning stages.
 
-Argument disambiguation: if the argument matches a stage name (`brief`, `spec`, `tasks`), it is treated as a target artifact. Otherwise it is treated as a change name. Both can be provided (e.g., `/fab-clarify spec` or `/fab-clarify r3m7 spec`).
-
-If no arguments are provided, the skill operates on the active change and the current stage's artifact.
+Disambiguation: matches `brief`/`spec`/`tasks` → target artifact; anything else → change name. Both can be provided.
 
 ---
 
-## Pre-flight Check
+## Pre-flight & Stage Guard
 
-Before doing anything else, run the preflight script:
+Run preflight per `_context.md` §2.
 
-1. Execute `fab/.kit/scripts/fab-preflight.sh [change-name]` via Bash — pass the change-name argument if one was provided
-2. If the script exits non-zero, **STOP** and surface the stderr message to the user
-3. Parse the stdout YAML to get `name`, `change_dir`, `stage`, `progress`, `checklist`, and `confidence`
-
-Use the `stage` field from preflight output for the Stage Guard below (do not re-read `.status.yaml`).
-
----
-
-## Stage Guard
-
-fab-clarify operates on planning artifacts (`brief.md`, `spec.md`, `tasks.md`) and can run from **any stage**.
-
-- **Planning stages** (`brief`, `spec`, `tasks`) — defaults to the current stage's artifact. A `<target-artifact>` argument overrides this default (useful when the current stage's artifact doesn't exist yet, e.g., after a reset).
-- **Post-planning stages** (`apply`, `review`, `hydrate`) — requires an explicit `<target-artifact>` argument. If none was provided, prompt:
-
-> `Stage is "{stage}" — which planning artifact do you want to clarify?`
->
-> | # | Artifact | Description |
-> |---|----------|-------------|
-> | 1 | `spec` | Refine requirements and assumptions |
-> | 2 | `tasks` | Refine implementation breakdown |
-> | 3 | `brief` | Refine high-level intent |
->
-> Reply with a number or artifact name.
-
-Use the selected artifact for all subsequent steps (Context Loading, Step 1, etc.).
-
----
-
-## Context Loading
-
-Context varies by the **target artifact** (which equals the current stage for planning stages, or the explicitly selected artifact for post-planning stages). Load only what is relevant:
-
-### Brief artifact
-
-- `fab/config.yaml` — project config, tech stack
-- `fab/constitution.md` — project principles and constraints
-- `fab/changes/{name}/brief.md` — the artifact to refine
-- `fab/memory/index.md` — memory landscape
-
-### Spec artifact
-
-- Everything from brief context above, plus:
-- `fab/changes/{name}/spec.md` — the artifact to refine (if exists)
-- Specific memory files referenced by the brief's **Affected Memory** section
-
-### Tasks artifact
-
-- Everything from spec context above, plus:
-- `fab/changes/{name}/spec.md` — the completed spec (for reference)
-- `fab/changes/{name}/tasks.md` — the artifact to refine
+- **Planning stages** (`brief`, `spec`, `tasks`) — defaults to current stage's artifact; `<target-artifact>` overrides.
+- **Post-planning** (`apply`, `review`, `hydrate`) — requires `<target-artifact>`. If missing, prompt: "Which planning artifact to clarify? (1) spec, (2) tasks, (3) brief"
 
 ---
 
 ## Suggest Mode (User Invocation)
 
-When the user invokes `/fab-clarify` directly, follow this flow.
+### Step 1: Read Target Artifact
 
-### Step 1: Identify the Target Artifact
+Resolve file (`brief.md`, `spec.md`, or `tasks.md`). If missing: STOP with "No {artifact} found. Run /fab-continue to generate it first."
 
-Determine which artifact file to refine. At planning stages, this is the current stage's artifact. At post-planning stages, this is the artifact selected via the `<target-artifact>` argument or the Stage Guard prompt.
+### Step 2: Taxonomy Scan
 
-| Target | Artifact file(s) |
-|--------|-----------------|
-| `brief` | `brief.md` |
-| `spec` | `spec.md` (also scans brief.md for cross-stage gaps) |
-| `tasks` | `tasks.md` |
+Scan for gaps, `[NEEDS CLARIFICATION]`, and `<!-- assumed: ... -->` markers. Categories by target:
 
-Read the artifact file. If it does not exist, STOP with:
+- **Brief**: scope boundaries, affected areas, blocking questions, impact, memory coverage
+- **Spec**: requirement precision (RFC 2119), scenario coverage (GIVEN/WHEN/THEN), edge cases, deprecated requirements, memory cross-references
+- **Tasks**: completeness vs spec, granularity, dependencies, file paths, `[P]` markers
 
-> `No {artifact} found. Run /fab-continue to generate it first.`
+For `<!-- assumed: ... -->` markers, frame current assumption as recommended option with alternatives.
 
-### Step 2: Stage-Scoped Taxonomy Scan
-
-Perform a systematic scan of the artifact for gaps, ambiguities, and `[NEEDS CLARIFICATION]` markers. The scan categories vary by stage — there is no fixed universal list.
-
-#### Brief categories
-
-- Scope boundaries — are boundaries concrete or vague?
-- Affected areas — are all impacted components identified?
-- Blocking questions — any unresolved `[BLOCKING]` items?
-- Impact completeness — does the Impact section cover all areas?
-- Affected memory coverage — are all relevant memory files listed under Affected Memory?
-
-#### Spec categories
-
-- Requirement precision — do requirements use RFC 2119 keywords with specific expected behaviors?
-- Scenario coverage — does every requirement have at least one GIVEN/WHEN/THEN scenario?
-- Edge cases — are error states, boundary conditions, and exceptional paths covered?
-- Deprecated requirements — if behavior is removed, is it captured?
-- Cross-references — do references to memory files match reality?
-
-#### Tasks categories
-
-- Task completeness — does every file and feature from the spec have a task?
-- Granularity — is each task completable in one focused session?
-- Dependency ordering — are non-obvious dependencies in the Execution Order section?
-- File path accuracy — does each task reference exact file paths?
-- Parallel markers — are independent tasks marked `[P]`?
-
-Also scan for:
-- `<!-- assumed: {description} -->` markers (left by any planning skill) — these are Tentative assumptions to confirm or override
-
-When presenting a question derived from an `<!-- assumed: ... -->` marker, frame the current assumption as the **recommended option** and offer alternatives. For example, if the marker says `<!-- assumed: supplement existing auth rather than replace -->`, the recommendation should be "Supplement existing auth" with alternatives like "Replace existing auth" or "Both — configurable".
-
-After scanning, build a **prioritized question queue** (highest-impact gaps first). Cap at **5 questions maximum** per invocation.
-
-**If the scan finds zero gaps**, output:
-
-```
-Stage: {stage} (active). Reviewing {artifact} for gaps...
-
-No gaps found — artifact looks solid. Ready to proceed.
-
-Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
-```
-
-And stop (skip Steps 3-6).
+Build **prioritized question queue** (max 5). If zero gaps: "No gaps found — artifact looks solid." with Next line, stop.
 
 ### Step 3: Present Questions One at a Time
-
-Present only the **first question** from the queue. Do not reveal queued questions.
-
-Each question MUST include:
-
-**For multiple-choice questions** (ambiguity with discrete resolution options):
 
 ```
 **Question {N} of {total}**: {question text}
 
-Recommendation: {recommended option} — {reasoning}
+Recommendation: {option} — {reasoning}
 
 | # | Option | Description |
 |---|--------|-------------|
-| 1 | {option 1} | {description} |
-| 2 | {option 2} | {description} |
-| 3 | {option 3} | {description} |
 
 Reply with a number, "yes"/"recommended" to accept, or your own answer.
 ```
 
-**For short-answer questions** (free-form input needed):
+Short-answer variant uses `Suggested answer:` instead of table.
 
-```
-**Question {N} of {total}**: {question text}
+### Step 4: Process Answer and Update
 
-Suggested answer: {suggested answer} — {reasoning}
+1. Interpret: `yes`/`y`/`recommended` → accept; number → select; `done`/`good`/`no more` → early termination; free text → custom
+2. Update artifact in place: replace markers with resolved content, add `<!-- clarified: ... -->` for significant changes
+3. Reclassify resolved entry to `Certain` in `## Assumptions` table
+4. Present next question or proceed to Step 5 after queue exhaustion / 5th answer
 
-Reply with "yes"/"recommended" to accept, or provide your own answer.
-```
+### Step 5: Audit Trail
 
-### Step 4: Process Answer and Update Artifact
+Append `## Clarifications > ### Session {YYYY-MM-DD}` with Q&A pairs. Append to existing section if present; create if not; skip if 0 answers.
 
-After the user responds:
-
-1. Interpret the answer:
-   - `"yes"`, `"recommended"`, `"y"` (case-insensitive) → accept the recommendation
-   - A number → select that option from the table
-   - Free text → use as the custom answer
-   - `"done"`, `"good"`, `"no more"` (case-insensitive) → **early termination** (skip to Step 6)
-2. **Immediately update the artifact in place** to reflect the resolution:
-   - Replace `[NEEDS CLARIFICATION]` markers with concrete content
-   - Replace `<!-- assumed: ... -->` markers with confirmed content (if user accepts) or updated content (if user overrides)
-   - Add `<!-- clarified: {description} -->` HTML comment next to significant changes
-3. **Reclassify the grade in the `## Assumptions` table**: If the resolved question corresponds to an entry in the artifact's Assumptions table (Tentative or Confident), update that entry's Grade column to `Certain`. The user's confirmation eliminates ambiguity, making the decision deterministic. This ensures the recount in Step 7 reflects the resolution.
-4. Present the next question (return to Step 3)
-5. After the 5th answer (or when the queue is exhausted), proceed to Step 5
-
-### Step 5: Append Audit Trail
-
-After all questions are answered (or on early termination), append an audit trail to the artifact:
-
-```markdown
-## Clarifications
-
-### Session {YYYY-MM-DD}
-
-- **Q**: {question text}
-  **A**: {answer or "accepted recommendation: {description}"}
-- **Q**: {question text}
-  **A**: {answer}
-```
-
-**Rules:**
-- If a `## Clarifications` section already exists, append a new `### Session {date}` subsection (do not replace previous sessions)
-- If no `## Clarifications` section exists, create it at the end of the artifact
-- Only include questions that were actually answered (not deferred/skipped)
-- If 0 questions were answered (early termination on first question), skip the audit trail entirely — there is nothing to record
-
-### Step 6: Display Coverage Summary
-
-Display a summary table:
+### Step 6: Coverage Summary
 
 ```
 Clarification complete.
 
 | Category | Count |
 |----------|-------|
-| Resolved | {N} — gaps addressed in this session |
-| Clear | {N} — categories scanned with no gaps found |
-| Deferred | {N} — gaps the user chose not to address (early termination) |
-| Outstanding | {N} — gaps beyond the 5-question cap, awaiting next invocation |
+| Resolved | {N} |
+| Clear | {N} |
+| Deferred | {N} |
+| Outstanding | {N} |
 
-{N} issues resolved. {M} items remain for further refinement.
-
-Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
+Next: /fab-clarify or /fab-continue or /fab-ff
 ```
 
-### Step 7: Recompute Confidence Score
+### Step 7: Recompute Confidence
 
-After resolving questions, recompute the confidence score:
-
-1. Re-count SRAD grades across **all** artifacts in the change (brief, spec, tasks — whichever exist) by scanning the `## Assumptions` table in each artifact. Count the Grade column values: entries marked `Certain` (including reclassified entries from Step 4.3), `Confident`, and `Tentative`. The `certain` count in `.status.yaml` includes both Certain entries in Assumptions tables and implicit Certain decisions not listed in any table (carried forward from the previous count).
-2. Apply the confidence formula (see `_context.md` Confidence Scoring section)
-3. Write the updated `confidence` block to `.status.yaml`
-
-This ensures the score reflects any resolved Tentative or Unresolved assumptions from this session. Because reclassified grades (Tentative/Confident → Certain) reduce the penalty count, the score will increase after clarification.
+Recompute per `_context.md` § Confidence Scoring across all artifacts' `## Assumptions` tables. Update `.status.yaml` confidence block.
 
 ### Step 8: Do NOT Advance Stage
 
-**Critical**: Do NOT update the `stage` field in `.status.yaml`. Do NOT set any progress field to `done` that wasn't already `done`. The clarify skill is strictly non-advancing.
-
-The only `.status.yaml` updates allowed are `confidence` (recomputed) and `last_updated` (to the current ISO 8601 timestamp).
+Only update `confidence` and `last_updated` in `.status.yaml`.
 
 ---
 
 ## Auto Mode (Internal fab-ff Call)
 
-When called internally by `fab-ff` between stage generations, the skill operates autonomously. No user interaction.
-
-### Step 1: Identify and Read Artifact
-
-Same as Suggest Mode Step 1 — determine the artifact file from the current stage and read it.
-
-### Step 2: Autonomous Gap Analysis
-
-Perform the same stage-scoped taxonomy scan as Suggest Mode Step 2, including scanning for `<!-- assumed: ... -->` markers. For each gap found, attempt autonomous resolution:
-
-1. **Resolvable** — the gap can be resolved using available context (config, constitution, memory files, completed artifacts). Resolve it in place with a `<!-- clarified: {description} -->` marker. For `<!-- assumed: ... -->` markers that can be confirmed from context, remove the marker (assumption confirmed).
-2. **Blocking** — the gap cannot be resolved from available context. It requires user input or external information that the agent does not have. Leave the gap in place with a `<!-- blocking: {description} -->` marker.
-3. **Non-blocking** — a minor gap that does not materially affect downstream artifacts. Leave as-is with no marker.
-
-### Step 3: Return Machine-Readable Result
-
-Auto mode returns a structured result (not displayed to user — consumed by `fab-ff`):
-
-```
-{resolved: N, blocking: N, non_blocking: N}
-```
-
-Where:
-- `resolved` — gaps the agent resolved autonomously
-- `blocking` — gaps requiring user input (cannot proceed safely)
-- `non_blocking` — minor gaps left as-is
-
-If `blocking > 0`, include a description of each blocking issue:
-
-```
-{resolved: 2, blocking: 1, non_blocking: 0, blocking_issues: ["description of blocking issue"]}
-```
-
-### Step 4: Do NOT Advance Stage
-
-Same as Suggest Mode — auto mode is non-advancing. Only update `last_updated` in `.status.yaml`.
-
----
-
-## Output Examples
-
-### Suggest Mode — Gaps Found
-
-```
-Stage: spec (active). Reviewing spec.md for gaps...
-
-Found 3 gaps across 5 categories scanned.
-
-**Question 1 of 3**: The spec mentions "handle authentication errors" but doesn't specify the response format. What should error responses look like?
-
-Recommendation: JSON error body with `{error, message, code}` fields — consistent with existing API patterns in the codebase.
-
-| # | Option | Description |
-|---|--------|-------------|
-| 1 | JSON error body | `{error: "auth_failed", message: "...", code: 401}` |
-| 2 | Plain text | HTTP status code with text body |
-| 3 | RFC 7807 Problem Details | Standard problem+json format |
-
-Reply with a number, "yes"/"recommended" to accept, or your own answer.
-```
-
-### Suggest Mode — No Gaps
-
-```
-Stage: spec (active). Reviewing spec.md for gaps...
-
-No gaps found — artifact looks solid. Ready to proceed.
-
-Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
-```
-
-### Suggest Mode — Early Termination
-
-```
-**Question 2 of 4**: ...
-
-> done
-
-Clarification complete.
-
-| Category | Count |
-|----------|-------|
-| Resolved | 1 — gaps addressed in this session |
-| Clear | 3 — categories scanned with no gaps found |
-| Deferred | 3 — gaps the user chose not to address (early termination) |
-| Outstanding | 0 — gaps beyond the 5-question cap, awaiting next invocation |
-
-1 issue resolved. 3 items remain for further refinement.
-
-Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
-```
-
-### Suggest Mode — Coverage Summary After Full Session
-
-```
-Clarification complete.
-
-| Category | Count |
-|----------|-------|
-| Resolved | 4 — gaps addressed in this session |
-| Clear | 2 — categories scanned with no gaps found |
-| Deferred | 0 — gaps the user chose not to address (early termination) |
-| Outstanding | 0 — gaps beyond the 5-question cap, awaiting next invocation |
-
-4 issues resolved. 0 items remain for further refinement.
-
-Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
-```
+1. **Read target artifact** (same as Suggest Step 1)
+2. **Autonomous gap resolution**: Same taxonomy scan. Resolvable from context → resolve + `<!-- clarified: ... -->`. Needs user input → `<!-- blocking: ... -->`. Minor → leave as-is.
+3. **Return result**: `{resolved: N, blocking: N, non_blocking: N}`. If `blocking > 0`, include `blocking_issues: [...]`.
+4. **Non-advancing**: Only update `last_updated`.
 
 ---
 
@@ -393,12 +120,8 @@ Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
 
 | Condition | Action |
 |-----------|--------|
-| Preflight script exits non-zero | Abort with the stderr message from `fab-preflight.sh` |
-| Stage is `apply`, `review`, or `hydrate` and no `<target-artifact>` provided | Prompt for artifact selection (see Stage Guard) |
-| Artifact file missing for target | Abort with: "No {artifact} found. Run /fab-continue to generate it first." |
-| Taxonomy scan finds zero gaps (suggest mode) | Output "No gaps found" message and stop |
-| Early termination after 0 answered questions | Display coverage summary with 0 resolved, all deferred |
-| Multiple `/fab-clarify` sessions | Audit trail entries accumulate — new session appended, previous sessions preserved |
+| Post-planning stage, no `<target-artifact>` | Prompt for artifact selection |
+| Artifact file missing | "No {artifact} found. Run /fab-continue to generate it first." |
 
 ---
 
@@ -406,17 +129,7 @@ Next: /fab-clarify (refine further) or /fab-continue or /fab-ff
 
 | Property | Value |
 |----------|-------|
-| Advances stage? | **No** — stage field in `.status.yaml` is never changed |
-| Idempotent? | **Yes** — safe to call multiple times; each call refines further |
-| Modifies artifact? | **Yes** — edits existing file in place |
-| Creates new files? | **No** — only modifies the current stage artifact |
-| Updates `.status.yaml`? | **Only** `confidence` (recomputed) and `last_updated` timestamp |
-| Modes | **Suggest** (user invocation) and **Auto** (internal fab-ff call) |
-
----
-
-## Next Steps Reference
-
-After `/fab-clarify` completes:
-
-`Next: /fab-clarify (refine further) or /fab-continue or /fab-ff`
+| Advances stage? | No |
+| Idempotent? | Yes |
+| Modifies artifact? | Yes — edits in place |
+| `.status.yaml` updates | `confidence` + `last_updated` only |
