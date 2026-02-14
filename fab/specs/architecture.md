@@ -18,17 +18,20 @@ project/
 │   │   │   └── checklist.md
 │   │   ├── skills/                 # Skill definitions (markdown prompts)
 │   │   │   ├── fab-init.md
-│   │   │   ├── fab-init-config.md
-│   │   │   ├── fab-init-constitution.md
-│   │   │   ├── fab-init-validate.md
-│   │   │   ├── fab-hydrate.md
+│   │   │   ├── docs-hydrate-memory.md
+│   │   │   ├── docs-hydrate-specs.md
+│   │   │   ├── docs-reorg-memory.md
+│   │   │   ├── docs-reorg-specs.md
 │   │   │   ├── fab-new.md
 │   │   │   ├── fab-continue.md
 │   │   │   ├── fab-ff.md
 │   │   │   ├── fab-fff.md
 │   │   │   ├── fab-clarify.md
 │   │   │   ├── fab-switch.md
-│   │   │   └── fab-status.md
+│   │   │   ├── fab-status.md
+│   │   │   ├── internal-consistency-check.md
+│   │   │   ├── internal-retrospect.md
+│   │   │   └── internal-skill-optimize.md
 │   │   └── scripts/                # Lightweight shell utilities
 │   │       ├── fab-help.sh         # Print Fab Kit help overview
 │   │       └── _init_scaffold.sh        # Structural bootstrap for fab
@@ -95,6 +98,18 @@ Scripts in `fab/.kit/scripts/` follow a prefix convention to distinguish entry p
 
 **Why?** When `.kit/` is distributed via `cp -r`, the `_` prefix makes it immediately clear which scripts are internal plumbing vs. which are user-facing entry points. This matters for discoverability and prevents users from invoking internal scripts directly.
 
+### Batch Scripts
+
+Batch scripts follow the `batch-{verb}-{entity}.sh` naming pattern. Each creates tmux tabs with Claude Code sessions running a specific skill, one per target entity.
+
+| Script | Purpose | Creates per entity |
+|--------|---------|--------------------|
+| `batch-new-backlog.sh` | Create changes from backlog items | Worktree + tmux tab running `/fab-new <description>` |
+| `batch-switch-change.sh` | Switch to existing changes | Worktree + tmux tab running `/fab-switch <change> --no-branch-change` |
+| `batch-archive-change.sh` | Archive completed changes (`hydrate:done`) | Worktree + tmux tab running `/fab-archive <change>` |
+
+All three support `--list` (show targets), `--all` (process all), and direct ID/name arguments with substring matching.
+
 ---
 
 ## Active Change Tracking (`fab/current`)
@@ -105,7 +120,7 @@ Scripts in `fab/.kit/scripts/` follow a prefix convention to distinguish entry p
 - **Created** by `/fab-switch` — written with the change folder name when a change is activated
 - **Updated** by `/fab-switch` — overwritten with the new change name
 - **Read** by every other skill — `/fab-continue`, `/fab-clarify`, `/fab-status` all resolve the active change via `current` rather than requiring a name argument
-- **Cleared** by `/fab-continue` (archive) — file is deleted after archiving (no active change)
+- **Cleared** by `/fab-archive` — file is deleted after archiving (no active change)
 
 **Resolution pattern** (used by all skills):
 ```
@@ -163,7 +178,7 @@ progress:
   tasks: pending
   apply: pending
   review: pending
-  archive: pending
+  hydrate: pending
 checklist:
   generated: false
   path: checklist.md
@@ -184,7 +199,7 @@ progress:
   tasks: done
   apply: done
   review: active
-  archive: pending
+  hydrate: pending
 checklist:
   generated: true
   path: checklist.md
@@ -233,7 +248,7 @@ stages:
     requires: [tasks]
   - id: review
     requires: [apply]
-  - id: archive
+  - id: hydrate
     requires: [review]
 
 checklist:
@@ -358,8 +373,8 @@ Agent-specific skill files are **symlinks** pointing into `fab/.kit/skills/`. Th
 .claude/skills/
 ├── fab-init/
 │   └── SKILL.md → ../../../fab/.kit/skills/fab-init.md
-├── fab-hydrate/
-│   └── SKILL.md → ../../../fab/.kit/skills/fab-hydrate.md
+├── docs-hydrate-memory/
+│   └── SKILL.md → ../../../fab/.kit/skills/docs-hydrate-memory.md
 ├── fab-new/
 │   └── SKILL.md → ../../../fab/.kit/skills/fab-new.md
 ├── fab-continue/
@@ -389,7 +404,7 @@ Same pattern — symlinks from the agent's convention directory into `fab/.kit/s
 1. User obtains .kit/  →  cp -r /path/to/fab-kit fab/.kit
 2. User runs fab/.kit/scripts/_init_scaffold.sh  →  creates directories, symlinks, memory/index.md, .gitignore entry
 3. User runs /fab-init  →  generates config.yaml, constitution.md (structural bootstrap)
-4. User optionally runs /fab-hydrate  →  ingests external sources into fab/memory/
+4. User optionally runs /docs-hydrate-memory  →  ingests external sources into fab/memory/
 5. User runs /fab-new  →  first change is created
 ```
 
@@ -397,7 +412,7 @@ Step 1 is manual. Step 2 is a shell script. Steps 3–5 are skill-driven.
 
 `fab/.kit/scripts/_init_scaffold.sh` handles all structural setup (directories, symlinks, `.gitignore`) and is the single source of truth for that structure. `/fab-init` delegates to it (step 1e) and adds the interactive parts (config, constitution). `fab/.kit/scripts/fab-help.sh` mirrors the skill catalog — it must be updated when skills are added or removed.
 
-**Re-running `/fab-init`**: Init is idempotent — safe to call at any time. On subsequent runs it verifies structure and repairs broken symlinks. To ingest external documentation into `fab/memory/`, use `/fab-hydrate` — see [Skills Reference](SKILLS.md#fabhydrate-sources) for details.
+**Re-running `/fab-init`**: Init is idempotent — safe to call at any time. On subsequent runs it verifies structure and repairs broken symlinks. To ingest external documentation into `fab/memory/`, use `/docs-hydrate-memory` — see [Skills Reference](skills.md#docs-hydrate-memory-sources) for details.
 
 ### How to Obtain `.kit/`
 
@@ -416,7 +431,7 @@ Step 1 is manual. Step 2 is a shell script. Steps 3–5 are skill-driven.
 `/fab-init` is itself a skill defined inside `fab/.kit/skills/fab-init.md`. It cannot run until `.kit/` exists. Rather than solving this chicken-and-egg with a bootstrap script (which would violate "no system installation"), Fab splits setup into:
 
 1. **Manual step**: Get `.kit/` into the project (a directory copy)
-2. **Skill step**: `/fab-init` generates everything project-specific (idempotent — re-runs skip existing artifacts and repair symlinks). Optionally, `/fab-hydrate` ingests external sources.
+2. **Skill step**: `/fab-init` generates everything project-specific (idempotent — re-runs skip existing artifacts and repair symlinks). Optionally, `/docs-hydrate-memory` ingests external sources.
 
 This keeps the workflow entirely prompt-driven after the one-time directory copy.
 

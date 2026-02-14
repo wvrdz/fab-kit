@@ -68,20 +68,20 @@ Run `/fab-status` — it should show "No active change". You're ready. Start you
 
 ### Hydrating Memory from Existing Sources
 
-After the initial bootstrap, use `/fab-hydrate` to ingest existing documentation into `fab/memory/`:
+After the initial bootstrap, use `/docs-hydrate-memory` to ingest existing documentation into `fab/memory/`:
 
 ```bash
 # Pull in API docs from Notion
-/fab-hydrate https://notion.so/myteam/API-Spec-abc123
+/docs-hydrate-memory https://notion.so/myteam/API-Spec-abc123
 
 # Ingest local legacy docs
-/fab-hydrate ./docs/legacy/
+/docs-hydrate-memory ./docs/legacy/
 
 # Multiple sources at once
-/fab-hydrate https://notion.so/myteam/Auth-xyz https://linear.app/myteam/project/payments-abc ./specs/
+/docs-hydrate-memory https://notion.so/myteam/Auth-xyz https://linear.app/myteam/project/payments-abc ./specs/
 ```
 
-Supported sources: **Notion URLs**, **Linear URLs**, **local files/directories**. Each run analyzes the content, maps it to domains, and creates or merges into `fab/memory/`. See [Skills Reference](skills.md#fabhydrate-sources) for details.
+Supported sources: **Notion URLs**, **Linear URLs**, **local files/directories**. Each run analyzes the content, maps it to domains, and creates or merges into `fab/memory/`. See [Skills Reference](skills.md#docs-hydrate-memory-sources) for details.
 
 ---
 
@@ -101,7 +101,7 @@ flowchart TD
     end
     subgraph completion ["Completion"]
         direction LR
-        AR["6 ARCHIVE"] --> H[/"Hydrate into memory"/]
+        AR["6 HYDRATE"] --> H[/"Hydrate into memory"/]
     end
 
     T --> A
@@ -121,7 +121,7 @@ flowchart TD
 | 3 | **Tasks** | Implementation checklist | `tasks.md` | Auto-generated quality checklist (`checklist.md`) |
 | 4 | **Apply** | Execute tasks | code changes | Run tests per task, progress tracking |
 | 5 | **Review** | Validate against spec | validation report | Checklist completion, spec drift detection |
-| 6 | **Archive** | Complete & hydrate | archive entry | Hydrate spec into memory files |
+| 6 | **Hydrate** | Complete & hydrate | memory updates | Hydrate spec into memory files |
 
 ### User Flow
 
@@ -159,14 +159,15 @@ flowchart TD
 | Skill | Purpose | Creates |
 |-------|---------|---------|
 | `/fab-init` | Bootstrap fab/ structure | `config.yaml`, `constitution.md`, `memory/`, skill symlinks (idempotent) |
-| `/fab-hydrate [sources...]` | Ingest external sources into fab/memory/ | Updated `fab/memory/` with indexes |
+| `/docs-hydrate-memory [sources...]` | Ingest external sources into fab/memory/ | Updated `fab/memory/` with indexes |
 | `/fab-new` | Start change (optionally with `--switch`) | `brief.md`, `.status.yaml` |
 | `/fab-continue [<stage>]` | Next artifact (or reset to stage) | Next stage artifact |
 | `/fab-ff` | Fast forward remaining planning | spec.md + tasks + checklist |
 | `/fab-clarify` | Deepen current artifact | Refined artifact (in place) |
 | `/fab-continue` → apply | Implement | Code changes |
 | `/fab-continue` → review | Validate | Validation report |
-| `/fab-continue` → archive | Complete & hydrate | Archive entry, updated memory |
+| `/fab-continue` → hydrate | Complete & hydrate | Updated memory |
+| `/fab-archive` | Archive completed change | Folder moved to archive/ |
 | `/fab-switch` | Change active change | Updated pointer file |
 | `/fab-status` | Check progress | Status display |
 

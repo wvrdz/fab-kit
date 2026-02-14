@@ -70,12 +70,7 @@ All `/fab-*` commands and how they tie together. Solid arrows are the primary fl
 flowchart TD
     subgraph setup ["Setup (once per project)"]
         INIT["/fab-init"]
-        subgraph init_cmds ["Init subcommands"]
-            CONFIG["/fab-init-config"]
-            CONST["/fab-init-constitution"]
-            VALIDATE["/fab-init-validate"]
-        end
-        HYDRATE["/fab-hydrate"]
+        HYDRATE["/docs-hydrate-memory"]
     end
 
     subgraph planning ["Planning"]
@@ -115,11 +110,7 @@ flowchart TD
     end
 
     %% Setup
-    INIT --> CONFIG
-    INIT --> CONST
-    VALIDATE -.->|"check"| INIT
-    CONFIG --> HYDRATE
-    CONST --> HYDRATE
+    INIT --> HYDRATE
     INIT -->|"or skip hydrate"| NEW
     HYDRATE --> NEW
 
@@ -149,7 +140,6 @@ flowchart TD
 
     %% Styles
     style setup fill:#f0f0f0,stroke:#999
-    style init_cmds fill:#f5f5f5,stroke:#bbb
     style planning fill:#e8f4f8,stroke:#2196F3
     style continue fill:#d6eaf8,stroke:#2196F3
     style execution fill:#fff3e0,stroke:#FF9800
@@ -157,7 +147,6 @@ flowchart TD
     style utility fill:#fce4ec,stroke:#e91e63
     style BACKFILL fill:#fff,stroke:#999,stroke-dasharray: 5 5
     style CLARIFY fill:#fff,stroke:#999,stroke-dasharray: 5 5
-    style VALIDATE fill:#fff,stroke:#999,stroke-dasharray: 5 5
 ```
 
 ---
