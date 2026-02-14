@@ -29,7 +29,10 @@ fab/.kit/
 │   ├── fab-clarify.md
 │   ├── fab-switch.md
 │   ├── fab-status.md
-│   └── fab-help.md
+│   ├── fab-help.md
+│   ├── internal-consistency-check.md
+│   ├── internal-retrospect.md
+│   └── internal-skill-optimize.md
 ├── templates/              # Artifact templates
 │   ├── brief.md
 │   ├── spec.md
@@ -234,6 +237,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260214-eikh-consistency-fixes | 2026-02-14 | Added internal skills (`internal-consistency-check.md`, `internal-retrospect.md`, `internal-skill-optimize.md`) to `.kit/skills/` directory listing |
 | 260214-mgh5-calc-score-dev-setup | 2026-02-14 | Added `src/calc-score/` dev folder for `_calc-score.sh` — symlink, README, smoke test, comprehensive test suite (30 tests) |
 | 260214-r8kv-docs-skills-housekeeping | 2026-02-14 | Removed `fab-status.sh` from scripts listing. Renamed doc skills: `fab-hydrate.md` → `docs-hydrate-memory.md`, `fab-hydrate-specs.md` → `docs-hydrate-specs.md`, `fab-reorg-specs.md` → `docs-reorg-specs.md`. Added `docs-reorg-memory.md` to skills listing. |
 | 260213-w8p3-extract-fab-score | 2026-02-14 | Added `_calc-score.sh` to scripts directory listing and Shell Scripts section — internal confidence scoring script |

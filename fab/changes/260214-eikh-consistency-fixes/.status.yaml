@@ -2,21 +2,21 @@ name: 260214-eikh-consistency-fixes
 created: 2026-02-14T12:00:00+05:30
 created_by: sahil-weaver
 progress:
-  brief: active
-  spec: pending
-  tasks: pending
-  apply: pending
-  review: pending
-  hydrate: pending
+  brief: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
 checklist:
-  generated: false
+  generated: true
   path: checklist.md
-  completed: 0
-  total: 0
+  completed: 23
+  total: 23
 confidence:
   certain: 0
-  confident: 0
+  confident: 6
   tentative: 0
   unresolved: 0
-  score: 5.0
-last_updated: 2026-02-14T12:00:00+05:30
+  score: 3.2
+last_updated: 2026-02-14T18:00:00+05:30

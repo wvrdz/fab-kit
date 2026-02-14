@@ -189,6 +189,7 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260214-eikh-consistency-fixes | 2026-02-14 | Verified cf13 (contradictory fab-status.sh/stageman.sh changelog entries) — already resolved by prior changes. No behavioral modifications. |
 | 260214-r8kv-docs-skills-housekeeping | 2026-02-14 | Removed `fab-status.sh` references from changelog entries (updated to reference `/fab-status` skill instead) |
 | 260214-v7k3-archive-restore-mode | 2026-02-14 | Added restore mode to `/fab-archive` — moves archived changes back to active, removes index entry, optional `--switch` flag. Idempotent and resumable. Added Restore as Subcommand design decision. |
 | 260213-jc0u-split-archive-hydrate | 2026-02-13 | Replaced Archive Behavior with Hydrate Behavior (steps 1-4 only, change folder stays). Added `/fab-archive` as standalone housekeeping skill. Updated overview, design decisions. |

@@ -87,7 +87,7 @@ stages:
     required: true
     initial_state: pending
     allowed_states: [pending, active, done]
-    commands: [fab-apply]
+    commands: [fab-continue]
 
   - id: review
     name: "Review"
@@ -97,7 +97,7 @@ stages:
     required: true
     initial_state: pending
     allowed_states: [pending, active, done, failed]
-    commands: [fab-review]
+    commands: [fab-continue]
 
   - id: hydrate
     name: "Hydrate"
