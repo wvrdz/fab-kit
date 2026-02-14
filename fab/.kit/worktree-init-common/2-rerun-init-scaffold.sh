@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-fab/.kit/scripts/lib/init-scaffold.sh
+kit_dir="$(cd "$(dirname "$0")/.." && pwd)"
+"$kit_dir/scripts/lib/init-scaffold.sh"

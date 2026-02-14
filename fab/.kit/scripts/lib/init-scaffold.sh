@@ -9,7 +9,8 @@ set -euo pipefail
 # Run from anywhere: fab/.kit/scripts/lib/init-scaffold.sh
 # Safe to re-run (idempotent).
 
-scripts_dir="$(cd "$(dirname "$0")" && pwd)"
+lib_dir="$(cd "$(dirname "$0")" && pwd)"
+scripts_dir="$(dirname "$lib_dir")"
 kit_dir="$(dirname "$scripts_dir")"
 fab_dir="$(dirname "$kit_dir")"
 repo_root="$(dirname "$fab_dir")"

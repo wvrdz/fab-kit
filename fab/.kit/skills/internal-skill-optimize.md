@@ -1,3 +1,8 @@
+---
+name: internal-skill-optimize
+description: "Condense a skill to its core — remove verbosity and redundancy without losing critical functionality."
+---
+
 # Internal Skill Optimize
 
 Condense a skill (or all skills) to their core — remove verbosity, redundant examples, and re-explained concepts without losing any critical functionality.

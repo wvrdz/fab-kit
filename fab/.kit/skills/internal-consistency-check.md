@@ -1,3 +1,8 @@
+---
+name: internal-consistency-check
+description: "Scan for inconsistencies between implementation, specs, and memory — flag conflicts and suggest fixes."
+---
+
 # Internal Consistency Check
 
 Scan for inconsistencies between the three sources of truth:
