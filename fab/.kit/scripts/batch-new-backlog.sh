@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# fab-batch-new.sh — Per backlog ID: create a worktree, open a tmux tab
+# batch-new-backlog.sh — Per backlog ID: create a worktree, open a tmux tab
 # in it, and start a Claude Code session that runs /fab-new <description>.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,7 +11,7 @@ BACKLOG_FILE="${FAB_DIR}/backlog.md"
 
 usage() {
   cat <<'EOF'
-Usage: fab-batch-new <backlog-id> [<backlog-id>...]
+Usage: batch-new-backlog <backlog-id> [<backlog-id>...]
 
 Per backlog ID: creates a git worktree (named after the ID), opens a new
 tmux tab in that worktree, and starts a Claude Code session that runs
@@ -22,8 +22,8 @@ Options:
   --all     Open tabs for all pending backlog items
 
 Examples:
-  fab-batch-new 90g5 jgt6
-  fab-batch-new --all
+  batch-new-backlog 90g5 jgt6
+  batch-new-backlog --all
 EOF
 }
 

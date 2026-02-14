@@ -41,6 +41,9 @@ fab/.kit/
 │   └── workflow.yaml       # Canonical stage/state definitions
 └── scripts/                # Shell utilities
     ├── _fab-scaffold.sh    # Structural bootstrap
+    ├── batch-archive-change.sh  # Batch archive completed changes via tmux + Claude
+    ├── batch-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
+    ├── batch-switch-change.sh   # Batch switch to changes via tmux + Claude
     ├── fab-help.sh         # Print help overview
     ├── fab-preflight.sh    # Pre-flight validation (sources stageman)
     ├── fab-status.sh       # Quick terminal status check (sources stageman)
@@ -75,6 +78,14 @@ Packages `fab/.kit/` into `kit.tar.gz`, bumps VERSION (accepts `[patch|minor|maj
 #### `fab-update-claude-settings.sh`
 
 Copies `settings.local.json` to the worktree-init assets directory for worktree setup.
+
+#### Batch Scripts
+
+Batch scripts follow the `batch-{verb}-{entity}.sh` naming pattern. Each creates tmux tabs with Claude Code sessions running a specific skill, one per target entity.
+
+- **`batch-new-backlog.sh`** — Per backlog ID: creates a worktree, opens a tmux tab, runs `/fab-new <description>`. Supports `--list` (show pending), `--all` (all pending), and direct ID arguments.
+- **`batch-switch-change.sh`** — Per change name/ID: creates a worktree with the expected branch, opens a tmux tab, runs `/fab-switch <change> --no-branch-change`. Supports `--list`, `--all`, substring matching.
+- **`batch-archive-change.sh`** — Per completed change (`hydrate:done`): creates a worktree, opens a tmux tab, runs `/fab-archive <change>`. Filters by reading `.status.yaml` for `hydrate: done`. Supports `--list`, `--all`, substring matching.
 
 ### Agent Integration via Symlinks
 
@@ -200,6 +211,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260213-v3rn-batch-commands | 2026-02-14 | Renamed `fab-batch-new.sh` → `batch-new-backlog.sh`, `fab-batch-switch.sh` → `batch-switch-change.sh`; added `batch-archive-change.sh`; added batch scripts section to Shell Scripts docs |
 | 260213-3njv-scaffold-dir | 2026-02-13 | Added `scaffold/` directory to tree listing; `_fab-scaffold.sh` now reads bootstrap content from scaffold files instead of hardcoded heredocs |
 | 260213-iq2l-rename-setup-scripts | 2026-02-13 | Renamed `fab-setup.sh` → `_fab-scaffold.sh` and `fab-update.sh` → `fab-upgrade.sh`; updated directory listing and all script references |
 | 260213-v8r3-remove-dead-fab-help-agent | 2026-02-13 | Removed `.claude/agents/fab-help.md` from agent files listing — agent was never spawned; skill + script pair covers all usage |
