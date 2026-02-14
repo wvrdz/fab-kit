@@ -3,7 +3,7 @@ set -euo pipefail
 
 # fab/.kit/scripts/lib/init-scaffold.sh — Structural bootstrap for fab
 #
-# Sets up directories, symlinks, and .gitignore entries that /fab-init
+# Sets up directories, skill links/copies, and .gitignore entries that /fab-init
 # would create (Phase 1 only — no config.yaml or constitution.md generation).
 #
 # Run from anywhere: fab/.kit/scripts/lib/init-scaffold.sh
@@ -168,48 +168,59 @@ for skill in "${skills[@]}"; do
   fi
 done
 
-# create_agent_symlinks <agent_label> <base_dir> <format> <rel_prefix>
+# sync_agent_skills <agent_label> <base_dir> <format> <mode> [<rel_prefix>]
 #   format: "directory" → <base>/<name>/SKILL.md, "flat" → <base>/<name>.md
-#   rel_prefix: relative path from symlink location back to repo root
-create_agent_symlinks() {
+#   mode: "symlink" (needs rel_prefix) or "copy" (copies file content)
+#   rel_prefix: relative path from symlink location back to repo root (symlink mode only)
+sync_agent_skills() {
   local agent_label="$1"
   local base_dir="$2"
   local format="$3"
-  local rel_prefix="$4"
+  local mode="$4"
+  local rel_prefix="${5:-}"
 
   mkdir -p "$base_dir"
 
   local created=0 repaired=0 ok=0
 
   for skill in "${skills[@]}"; do
-    if [ ! -f "$kit_dir/skills/${skill}.md" ]; then
+    local src="$kit_dir/skills/${skill}.md"
+    if [ ! -f "$src" ]; then
       echo "WARN: fab/.kit/skills/${skill}.md missing — skipping"
       continue
     fi
 
-    local target="${rel_prefix}fab/.kit/skills/${skill}.md"
-    local link
-
+    local dest
     if [ "$format" = "directory" ]; then
       mkdir -p "$base_dir/$skill"
-      link="$base_dir/$skill/SKILL.md"
+      dest="$base_dir/$skill/SKILL.md"
     else
-      link="$base_dir/${skill}.md"
+      dest="$base_dir/${skill}.md"
     fi
 
-    if [ -L "$link" ] && [ -e "$link" ]; then
-      ok=$((ok + 1))
-    elif [ -L "$link" ]; then
-      rm "$link"
-      ln -s "$target" "$link"
-      repaired=$((repaired + 1))
-    elif [ -e "$link" ]; then
-      rm "$link"
-      ln -s "$target" "$link"
-      repaired=$((repaired + 1))
+    if [ "$mode" = "copy" ]; then
+      if [ -f "$dest" ] && [ ! -L "$dest" ] && cmp -s "$src" "$dest"; then
+        ok=$((ok + 1))
+      elif [ -e "$dest" ] || [ -L "$dest" ]; then
+        rm "$dest"
+        cp "$src" "$dest"
+        repaired=$((repaired + 1))
+      else
+        cp "$src" "$dest"
+        created=$((created + 1))
+      fi
     else
-      ln -s "$target" "$link"
-      created=$((created + 1))
+      local target="${rel_prefix}fab/.kit/skills/${skill}.md"
+      if [ -L "$dest" ] && [ -e "$dest" ]; then
+        ok=$((ok + 1))
+      elif [ -L "$dest" ] || [ -e "$dest" ]; then
+        rm "$dest"
+        ln -s "$target" "$dest"
+        repaired=$((repaired + 1))
+      else
+        ln -s "$target" "$dest"
+        created=$((created + 1))
+      fi
     fi
   done
 
@@ -218,14 +229,14 @@ create_agent_symlinks() {
     "${agent_label}:" "$total" "${#skills[@]}" "$created" "$repaired" "$ok"
 }
 
-# Claude Code: .claude/skills/<name>/SKILL.md (directory-based)
-create_agent_symlinks "Claude Code" "$repo_root/.claude/skills" "directory" "../../../"
+# Claude Code: .claude/skills/<name>/SKILL.md (directory-based, symlinks)
+sync_agent_skills "Claude Code" "$repo_root/.claude/skills" "directory" "symlink" "../../../"
 
-# OpenCode: .opencode/commands/<name>.md (flat file)
-create_agent_symlinks "OpenCode" "$repo_root/.opencode/commands" "flat" "../../"
+# OpenCode: .opencode/commands/<name>.md (flat file, symlinks)
+sync_agent_skills "OpenCode" "$repo_root/.opencode/commands" "flat" "symlink" "../../"
 
-# Codex: .agents/skills/<name>/SKILL.md (directory-based)
-create_agent_symlinks "Codex" "$repo_root/.agents/skills" "directory" "../../../"
+# Codex: .agents/skills/<name>/SKILL.md (directory-based, copies — Codex ignores symlinks)
+sync_agent_skills "Codex" "$repo_root/.agents/skills" "directory" "copy"
 
 # ── 6. Model tier agent files ────────────────────────────────────────
 # Fast-tier skills get generated agent files (in addition to skill symlinks)
