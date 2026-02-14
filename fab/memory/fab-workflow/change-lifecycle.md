@@ -49,7 +49,7 @@ Every change folder SHALL contain a `.status.yaml` manifest with these fields:
 - `created` — ISO 8601 datetime
 - `progress` — map of all stages to their state. The stage marked `active` is the current stage (single source of truth for where the change is). There is no separate `stage:` field — current stage is derived from the `active` entry in the progress map.
 - `checklist` — generation status, path (default: `checklist.md` at change root), completion counts
-- `confidence` — SRAD confidence scoring: `certain`, `confident`, `tentative`, `unresolved` counts and derived `score` (0.0-5.0). Computed by `_calc-score.sh`, invoked at spec stage by `/fab-continue` and by `/fab-clarify`. Used as a gate by `/fab-fff` (requires score >= 3.0)
+- `confidence` — SRAD confidence scoring: `certain`, `confident`, `tentative`, `unresolved` counts and derived `score` (0.0-5.0). Initialized to 0.0 (no assessed confidence). Computed by `_calc-score.sh`, invoked at spec stage by `/fab-continue` and by `/fab-clarify`. Used as a gate by `/fab-fff` (requires score >= 3.0). Displayed as `{score} of 5.0` to make the scale self-documenting
 - `last_updated` — refreshed on every status change
 
 **State vocabulary** (all progress fields draw from this fixed set):
@@ -209,6 +209,7 @@ Skills will tolerate old-format files — the preflight script infers `brief: do
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260214-lptw-score-init-display | 2026-02-14 | Updated confidence field description: initial score is 0.0 (not 5.0), display format is `{score} of 5.0`. Updated `/fab-status` description to note "of 5.0" display convention. |
 | 260214-v7k3-archive-restore-mode | 2026-02-14 | Added restore mode to `/fab-archive` as `archived → active` lifecycle transition. Updated fab/current lifecycle (optionally written by restore --switch). Added Restoring an Archived Change section. Updated pipeline description with restore path. |
 | 260213-w8p3-extract-fab-score | 2026-02-14 | Updated confidence field description: now computed by `_calc-score.sh` (invoked at spec stage by `/fab-continue` and by `/fab-clarify`), replacing inline computation by `/fab-new`/`/fab-continue`/`/fab-clarify`. |
 | 260213-jc0u-split-archive-hydrate | 2026-02-13 | Terminal pipeline stage renamed from `archive` to `hydrate`. Change folder stays in `fab/changes/` after hydrate. Archiving (folder move, index, backlog, pointer) moved to standalone `/fab-archive` skill. Updated fab/current lifecycle, pipeline diagram, stage phases, and keyword scan design decision. |

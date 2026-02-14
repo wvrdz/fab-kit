@@ -45,7 +45,7 @@ Use `_preflight.sh` and `stageman.sh` for validation and data retrieval. The ski
 - Renders the full status block: version header, change name, branch (when git enabled), stage number, progress table with symbols (`✓` done, `●` active, `○` pending, `—` skipped, `✗` failed), checklist counts, confidence score, and next command suggestion
 - Handles all error cases (no active change, missing `.status.yaml`, missing fields)
 - Defaults missing progress fields to `○` (pending), missing checklist to "not yet generated", and missing confidence to "not yet scored"
-- Confidence display: `Confidence: {score}/5.0 ({N} certain, {N} confident, {N} tentative)` — appends `, {N} unresolved` only when unresolved > 0; shows `Confidence: not yet scored` when the confidence block is absent
+- Confidence display: `Confidence: {score} of 5.0 ({N} certain, {N} confident, {N} tentative)` — appends `, {N} unresolved` only when unresolved > 0; shows `Confidence: not yet scored` when the confidence block is absent
 
 ---
 
