@@ -1,5 +1,7 @@
 # Archive Index
 
+- **260214-r7k3-stageman-yq-metrics** — Migrated stageman from awk-based YAML parsing to yq, added per-stage operational metrics (timing, driver, iterations) to .status.yaml, and introduced .history.jsonl append-only event logging for command invocations, confidence changes, and review outcomes.
+- **260212-f9m3-enhance-srad-fuzzy** — Enhanced SRAD confidence scoring with fuzzy 0-100 dimension evaluation instead of binary high/low, validated penalty weights via sensitivity analysis, and introduced dynamic thresholds based on change type categorization.
 - **260214-w3r8-stageman-write-api** — Added write functions to stageman (set_stage_state, transition_stages, set_checklist_field, set_confidence_block), refactored calc-score to use the new write API, and simplified skill prompts to use Bash calls instead of ad-hoc YAML editing.
 - **260214-q7f2-reorganize-src** — Reorganized src/ to separate test infrastructure (lib/) from dev-only scripts (scripts/), moved fab-release.sh out of the shipped kit, and relocated internal kit library scripts from _ prefix convention to a lib/ subfolder.
 - **260214-m3v8-relocate-docs-dev-scripts** — Moved memory/ and specs/ from fab/ to docs/, updated all path references across skills, templates, scripts, config, and constitution, and added a migration entry for existing users.
