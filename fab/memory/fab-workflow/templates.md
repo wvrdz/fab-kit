@@ -84,6 +84,8 @@ progress:
   hydrate: pending
 ```
 
+The confidence block initializes to zero counts and score 0.0 — a new change has no assessed confidence. The score is computed by `_calc-score.sh` when `/fab-continue` generates the spec.
+
 See [change-lifecycle.md](change-lifecycle.md) for the full `.status.yaml` field reference and state vocabulary.
 
 ### Skill Frontmatter
@@ -180,6 +182,7 @@ When `/fab-continue` (hydrate) hydrates into memory files:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260214-lptw-score-init-display | 2026-02-14 | Added confidence block initial state note: score 0.0 (no assessed confidence). Updated template default from 5.0 to 0.0. |
 | 260213-jc0u-split-archive-hydrate | 2026-02-13 | Updated `.status.yaml` template example (`archive: pending` → `hydrate: pending`), hydration rule references, and checklist gate references to use `hydrate` instead of `archive` |
 | 260213-v4rx-simplify-templates | 2026-02-13 | Flattened brief Affected Memory to inline markers, removed BLOCKING/DEFERRED from Open Questions, replaced spec optional section placeholders with guidance comment |
 | 260212-ipoe-checklist-folder-location | 2026-02-12 | Moved checklist from `checklists/quality.md` to `checklist.md` at change root; updated .status.yaml template `checklist.path` default |

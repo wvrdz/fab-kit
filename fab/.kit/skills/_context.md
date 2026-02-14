@@ -253,4 +253,4 @@ Confidence is computed by `fab/.kit/scripts/_calc-score.sh`, invoked by `/fab-co
 
 ### Template
 
-`fab/.kit/templates/status.yaml` includes the confidence block initialized to zero counts and score 5.0. Template defaults persist until `/fab-continue` generates the spec and invokes `_calc-score.sh`.
+`fab/.kit/templates/status.yaml` includes the confidence block initialized to zero counts and score 0.0. Template defaults persist until `/fab-continue` generates the spec and invokes `_calc-score.sh`.

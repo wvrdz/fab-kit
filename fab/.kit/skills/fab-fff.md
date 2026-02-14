@@ -25,7 +25,7 @@ Run the entire Fab pipeline from planning through hydrate in a single invocation
 
 1. Run preflight per `_context.md` §2
 2. Verify `brief.md` exists. If not, STOP: `Brief not found. Run /fab-new first.`
-3. **Confidence gate**: Read `confidence.score`. If < 3.0 or missing → STOP: `Confidence is {score} (need >= 3.0). Run /fab-clarify to resolve, then retry.`
+3. **Confidence gate**: Read `confidence.score`. If < 3.0 or missing → STOP: `Confidence is {score} of 5.0 (need >= 3.0). Run /fab-clarify to resolve, then retry.`
 
 ---
 
@@ -72,7 +72,7 @@ Execute hydrate behavior — validate review passed, hydrate into `fab/memory/`,
 ## Output
 
 ```
-/fab-fff — confidence {score}, gate passed.
+/fab-fff — confidence {score} of 5.0, gate passed.
 
 --- Planning (fab-ff) ---
 {fab-ff output}

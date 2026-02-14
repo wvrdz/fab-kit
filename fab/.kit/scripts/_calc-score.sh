@@ -76,12 +76,12 @@ done <<< "$all_grades"
 
 # --- Carry-forward implicit Certain counts ---
 prev_certain=0
-prev_score="5.0"
+prev_score="0.0"
 if [ -f "$status_file" ]; then
   prev_certain=$(grep '^ *certain:' "$status_file" | sed 's/^ *certain: *//' || true)
   prev_certain=${prev_certain:-0}
   prev_score=$(grep '^ *score:' "$status_file" | sed 's/^ *score: *//' || true)
-  prev_score=${prev_score:-5.0}
+  prev_score=${prev_score:-0.0}
 fi
 
 # Implicit = previous total - explicit Certain found in tables
