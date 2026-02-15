@@ -86,12 +86,34 @@ Display summary. Include Assumptions summary for planning stages. End with `Next
 - `tasks.md` MUST exist
 - If stage is `tasks`: run `lib/stageman.sh transition <file> tasks apply fab-continue` before starting
 
+### Pattern Extraction
+
+Before executing the first unchecked task, read existing source files in the areas the change will touch and extract:
+
+1. **Naming conventions** — variable/function/class naming style observed in surrounding code
+2. **Error handling** — how the codebase handles errors (exceptions, Result types, error codes, etc.)
+3. **Structure** — typical function length, module boundaries, import organization
+4. **Reusable utilities** — existing helpers or shared modules that new code should use instead of reimplementing
+
+Hold these patterns as context for all subsequent task execution within the same apply run.
+
+If `config.yaml` defines a `code_quality` section, load its `principles` as additional implementation constraints alongside extracted patterns. If `code_quality.test_strategy` is defined, it governs test timing (default: `test-alongside`).
+
+**Skip on resume**: When resuming mid-apply (some tasks already `[x]`), pattern extraction is skipped — patterns are re-derived implicitly from reading task-relevant source files.
+
 ### Task Execution
 
 1. Parse tasks: `- [ ]` = remaining, `- [x]` = skip
 2. If all checked: run `lib/stageman.sh transition <file> apply review fab-continue`. Stop.
 3. Execute in phase order; within phases, non-`[P]` sequential, `[P]` parallelizable. Respect Execution Order constraints.
-4. For each unchecked task: read source, implement per spec/constitution/patterns, run tests, fix failures, mark `[x]` immediately
+4. For each unchecked task:
+   1. Read source files relevant to this task
+   2. Implement per spec, constitution, and extracted patterns
+   3. Prefer reusing existing utilities over creating new ones
+   4. Keep functions focused — if implementation exceeds the codebase's typical function size, consider extracting
+   5. Write tests per `code_quality.test_strategy` (default: `test-alongside`)
+   6. Run tests, fix failures
+   7. Mark `[x]` immediately
 5. On completion: run `lib/stageman.sh transition <file> apply review fab-continue`
 
 ### Resumability
@@ -114,6 +136,14 @@ Starts from first unchecked item. Checked items assumed complete.
 3. **Run affected tests**: Scoped to touched modules/files
 4. **Spot-check spec**: Verify key requirements and GIVEN/WHEN/THEN scenarios
 5. **Memory drift check**: Compare implementation against referenced memory (warning only)
+6. **Code quality check**: For each file modified during apply, verify:
+   - Naming conventions consistent with surrounding code
+   - Functions focused and appropriately sized
+   - Error handling consistent with codebase style
+   - Existing utilities reused where applicable
+   - If `config.yaml` defines `code_quality.principles`, check each applicable principle
+   - If `config.yaml` defines `code_quality.anti_patterns`, check for violations
+   - Code quality issues are review failures with specific file:line references (same rework flow as spec mismatches)
 
 ### Verdict
 
@@ -142,6 +172,7 @@ Starts from first unchecked item. Checked items assumed complete.
 2. Concurrent change check: warn on overlap with other changes referencing same memory paths
 3. Hydrate `docs/memory/`: create new files/domains, update existing (Requirements, Design Decisions, Changelog), update indexes
 4. Run `lib/stageman.sh set-state <file> hydrate done`
+5. **Pattern capture** *(optional)*: If the change introduced non-obvious implementation patterns that future changes should follow (e.g., a new error handling approach, a reusable abstraction), note them in the relevant memory file's Design Decisions section with the change name for traceability. Skip for implementations that follow existing patterns without introducing new ones
 
 ---
 

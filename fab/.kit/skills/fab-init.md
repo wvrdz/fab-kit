@@ -14,7 +14,7 @@ model_tier: fast
 ## Arguments
 
 - **No arguments** — full structural bootstrap (default behavior)
-- **`config [section]`** — create or update `fab/config.yaml` interactively. Optional `[section]` skips the menu and edits that section directly. Valid sections: `project`, `context`, `source_paths`, `stages`, `rules`, `checklist`, `git`, `naming`.
+- **`config [section]`** — create or update `fab/config.yaml` interactively. Optional `[section]` skips the menu and edits that section directly. Valid sections: `project`, `context`, `source_paths`, `stages`, `rules`, `checklist`, `git`, `naming`, `code_quality`.
 - **`constitution`** — create or amend `fab/constitution.md` with semantic versioning
 - **`validate`** — validate structural correctness of `fab/config.yaml` and `fab/constitution.md`
 
@@ -232,6 +232,26 @@ rules:
   spec:
     - Use GIVEN/WHEN/THEN for scenarios
     - "Mark ambiguities with [NEEDS CLARIFICATION]"
+
+# code_quality — Optional coding standards consumed during apply and review.
+#   Projects opt in by uncommenting. All fields are independently optional.
+#
+# code_quality:
+#   # principles — Positive coding standards to follow during implementation.
+#   principles:
+#     - "Readability and maintainability over cleverness"
+#     - "Follow existing project patterns unless there's compelling reason to deviate"
+#     - "Prefer composition over inheritance"
+#
+#   # anti_patterns — Patterns to avoid. Flagged during review.
+#   anti_patterns:
+#     - "God functions (>50 lines without clear reason)"
+#     - "Duplicating existing utilities instead of reusing them"
+#     - "Magic strings or numbers without named constants"
+#
+#   # test_strategy — How tests relate to implementation.
+#   # Values: test-alongside (default) | test-after | tdd
+#   test_strategy: "test-alongside"
 ```
 
 4. Output: `Created fab/config.yaml`
@@ -252,9 +272,10 @@ fab/config.yaml sections:
 6. checklist   — extra quality categories
 7. git         — branch integration settings
 8. naming      — change folder naming format
-9. Done
+9. code_quality — coding standards for apply/review
+10. Done
 
-Which section to update? (1-9)
+Which section to update? (1-10)
 ```
 
 2. Process selection → **Edit Section Flow**

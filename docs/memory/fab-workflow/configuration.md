@@ -35,7 +35,7 @@ Ordered list of stage definitions (6 stages). Each stage:
 - `auto_checklist` — Whether to auto-generate a quality checklist at this stage (boolean, used by `tasks`)
 
 #### `checklist`
-- `extra_categories` — Project-specific quality categories added to the default checklist categories (functional_completeness, behavioral_correctness, scenario_coverage, edge_cases, security)
+- `extra_categories` — Project-specific quality categories added to the default checklist categories (functional_completeness, behavioral_correctness, scenario_coverage, edge_cases, code_quality, security)
 
 #### `rules`
 Per-stage rules that customize artifact generation. Keys are stage IDs, values are lists of instruction strings. Example:
@@ -45,6 +45,12 @@ rules:
     - Use GIVEN/WHEN/THEN for scenarios
     - Mark ambiguities with [NEEDS CLARIFICATION]
 ```
+
+#### `code_quality` *(optional)*
+Optional coding standards consumed during apply and review. Commented out by default — projects opt in by uncommenting. All fields are independently optional:
+- `principles` — List of strings. Positive coding standards the agent follows as soft constraints during apply
+- `anti_patterns` — List of strings. Patterns to avoid, checked during review with file:line references on violation
+- `test_strategy` — Enum string controlling test timing. Valid values: `test-alongside` (default), `test-after`, `tdd`
 
 ### `constitution.md` Structure
 
@@ -104,6 +110,7 @@ Run `/fab-init config` to see all editable sections:
 6. `checklist` — extra quality categories
 7. `git` — branch integration settings
 8. `naming` — change folder naming format
+9. `code_quality` — coding standards for apply/review
 
 Skip the menu with `/fab-init config <section>` (e.g., `/fab-init config context`).
 
@@ -188,6 +195,7 @@ See [init](init.md) for the complete command suite.
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260215-r8k3-DEV-1024-code-quality-layer | 2026-02-15 | Added optional `code_quality` section to config.yaml schema (principles, anti_patterns, test_strategy). Added code_quality to default checklist categories, Lifecycle Management menu, and valid sections list |
 | 260215-w3n8-naming-linear-id-drop-conventions | 2026-02-15 | Updated `naming.format` to `{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}` with optional Linear ID. Removed `conventions` section from config schema (never consumed by any skill) |
 | — | 2026-02-14 | Absorbed config-management.md and constitution-governance.md into Lifecycle Management section (memory reorganization) |
 | 260213-jc0u-split-archive-hydrate | 2026-02-13 | Updated terminal stage ID from `archive` to `hydrate` in stages list |

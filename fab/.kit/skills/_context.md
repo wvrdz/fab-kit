@@ -54,6 +54,8 @@ Load only the source files relevant to the current work:
 1. Read the relevant source files referenced in the task descriptions or spec's affected areas
 2. Scope to files actually touched by the change — do not load the entire codebase
 3. This applies primarily to apply and review behavior in `/fab-continue`
+4. **Apply stage**: Also read neighboring files in the same directories to extract pattern context (naming conventions, error handling style, typical structure, reusable utilities). This supports Pattern Extraction in `/fab-continue` Apply Behavior
+5. **Review stage**: Re-read all files modified during apply, plus their surrounding code in the same directories, to validate consistency with codebase patterns
 
 ---
 

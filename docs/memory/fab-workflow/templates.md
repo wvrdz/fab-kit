@@ -59,11 +59,12 @@ The quality checklist validates that implementation matches the spec. Co-located
 - **Removal Verification** — Deprecated requirements are actually gone
 - **Scenario Coverage** — Key scenarios exercised
 - **Edge Cases & Error Handling** — Error states, boundary conditions
+- **Code Quality** — Always included. Two baseline items (pattern consistency, no unnecessary duplication) when no `code_quality` config; expanded with per-principle and per-anti_pattern items when config exists
 - **Security** — Only if the change has security surface
 
 Items use `CHK-{NNN}` IDs. All items MUST pass before `/fab-continue` (hydrate). Items not applicable are marked `- [x] CHK-NNN **N/A**: {reason}`. Project-specific categories from `config.yaml`'s `checklist.extra_categories` are added to the defaults.
 
-Generation is contextual — items derived from `spec.md` (requirements, design decisions), and the project constitution (quality standards).
+Generation is contextual — items derived from `spec.md` (requirements, design decisions), the project constitution (quality standards), and `config.yaml` `code_quality` section (principles and anti-patterns).
 
 ### `.status.yaml` (Initial State)
 
@@ -182,6 +183,7 @@ When `/fab-continue` (hydrate) hydrates into memory files:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260215-r8k3-DEV-1024-code-quality-layer | 2026-02-15 | Added Code Quality to checklist categories (always included, two baseline items). Updated generation derivation sources to include `code_quality` config |
 | 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_calc-score.sh` → `lib/calc-score.sh` and `_init_scaffold.sh` → `lib/init-scaffold.sh` in references |
 | 260214-lptw-score-init-display | 2026-02-14 | Added confidence block initial state note: score 0.0 (no assessed confidence). Updated template default from 5.0 to 0.0. |
 | 260213-jc0u-split-archive-hydrate | 2026-02-13 | Updated `.status.yaml` template example (`archive: pending` → `hydrate: pending`), hydration rule references, and checklist gate references to use `hydrate` instead of `archive` |

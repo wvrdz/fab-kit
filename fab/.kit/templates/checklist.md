@@ -39,9 +39,15 @@
 <!-- Error states, boundary conditions, failure modes -->
 - [ ] CHK-007 {edge case}: {what should happen}
 
+## Code Quality
+<!-- Always included. Baseline items when no code_quality config; expanded when config exists -->
+- [ ] CHK-008 Pattern consistency: New code follows naming and structural patterns of surrounding code
+- [ ] CHK-009 No unnecessary duplication: Existing utilities reused where applicable
+<!-- When code_quality config exists, add one item per relevant principle and anti_pattern -->
+
 ## Security
 <!-- Only include if the change has security surface -->
-- [ ] CHK-008 {security concern}: {verification}
+- [ ] CHK-010 {security concern}: {verification}
 
 ## Notes
 

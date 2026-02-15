@@ -16,14 +16,24 @@ Execution behavior (apply, review, hydrate) is accessed via `/fab-continue`, whi
 
 `/fab-continue` dispatches to apply behavior when the active stage is `tasks` or `apply`. It executes tasks from `tasks.md` in dependency order, running tests after each completed task.
 
+#### Pattern Extraction
+
+Before executing the first unchecked task, the agent reads existing source files in the areas the change will touch and extracts: naming conventions, error handling style, typical structure, and reusable utilities. These patterns are held as context for all subsequent task execution. If `config.yaml` defines a `code_quality` section, its `principles` are loaded as additional constraints and `test_strategy` governs test timing (default: `test-alongside`). Pattern extraction is skipped when resuming mid-apply.
+
 #### Task Execution
 
 1. Parse `tasks.md` for unchecked items (`- [ ]`)
 2. Execute tasks in dependency order
 3. Respect parallel markers `[P]`
-4. After completing each task, run relevant tests (e.g., the test file for the module just modified). Fix failures before moving on
-5. Mark each task `- [x]` immediately upon completion (not batched at the end)
-6. Update `.status.yaml` progress after each task
+4. For each unchecked task:
+   1. Read source files relevant to this task
+   2. Implement per spec, constitution, and extracted patterns
+   3. Prefer reusing existing utilities over creating new ones
+   4. Keep functions focused — consider extracting if implementation exceeds the codebase's typical function size
+   5. Write tests per `code_quality.test_strategy` (default: `test-alongside`)
+   6. Run tests, fix failures
+   7. Mark `[x]` immediately
+5. Update `.status.yaml` progress after each task
 
 #### Resumability
 
@@ -31,7 +41,7 @@ Apply behavior is inherently resumable. If the agent is interrupted mid-run, re-
 
 #### Context
 
-Loads: config, constitution, `specs/index.md`, `tasks.md`, `spec.md`, relevant source code (files referenced in tasks).
+Loads: config, constitution, `specs/index.md`, `tasks.md`, `spec.md`, relevant source code (files referenced in tasks), neighboring files for pattern extraction.
 
 ### Review Behavior (via `/fab-continue`)
 
@@ -45,6 +55,7 @@ The agent SHALL perform all of these checks:
 3. Run tests affected by the change (scoped to modules touched, not the full suite)
 4. Features match spec requirements (spot-check key scenarios from `spec.md`)
 5. No memory drift detected (implementation doesn't contradict memory files)
+6. Code quality check — for each file modified during apply: naming conventions consistent with surrounding code, functions focused and appropriately sized, error handling consistent with codebase style, existing utilities reused. If `config.yaml` defines `code_quality.principles`, check each applicable principle. If `code_quality.anti_patterns` defined, check for violations. Code quality issues are review failures with specific file:line references (same rework flow as spec mismatches)
 
 #### On Pass
 
@@ -79,6 +90,7 @@ Loads: config, constitution, `specs/index.md`, `tasks.md`, `checklist.md`, `spec
    - Compare against existing memory file to determine what's new vs changed vs removed — no explicit delta markers needed
    - Minimize edits to unchanged sections to prevent drift
 4. **Update status** to `hydrate: done` in `.status.yaml`
+5. **Pattern capture** *(optional)* — if the change introduced non-obvious implementation patterns that future changes should follow (e.g., a new error handling approach, a reusable abstraction), note them in the relevant memory file's Design Decisions section with the change name for traceability. Skip for implementations that follow existing patterns
 
 #### Recovery
 
@@ -135,11 +147,12 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 
 ## Design Decisions
 
-### Checklist Tests Implementation Fidelity, Not Spec Quality
-**Decision**: The quality checklist validates "does the code match the spec?" rather than "is the spec well-written?"
-**Why**: Fab has explicit spec review during the spec stage (via `/fab-clarify`). A separate requirement-quality checklist is redundant. The checklist focuses on what matters at review time: implementation correctness.
-**Rejected**: SpecKit-style requirement-quality checklist — duplicates work already done during planning stages.
+### Checklist Tests Implementation Fidelity and Code Quality
+**Decision**: The quality checklist validates "does the code match the spec?" (implementation fidelity) and "is the code well-written?" (code quality). Code Quality is always included with at least two baseline items (pattern consistency, no unnecessary duplication); additional items derive from `config.yaml` `code_quality` section when present.
+**Why**: Spec quality is addressed during the spec stage (via `/fab-clarify`), but code quality is only observable at review time. The baseline items are universally applicable; project-specific standards come from config.
+**Rejected**: Code quality as opt-in only — would miss quality checks on projects without `code_quality` config. SpecKit-style requirement-quality checklist — duplicates planning-stage work.
 *Source*: doc/fab-spec/TEMPLATES.md
+*Updated by*: 260215-r8k3-DEV-1024-code-quality-layer
 
 ### Review Failure Offers Multiple Re-Entry Points
 **Decision**: On review failure, the agent presents three options (fix code, revise tasks, revise spec) and the user chooses where to loop back.
@@ -193,6 +206,7 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260215-r8k3-DEV-1024-code-quality-layer | 2026-02-15 | Added Pattern Extraction to Apply (naming, error handling, structure, utilities), expanded per-task guidance to 7-step sequence, added code quality check as Review step 6, added optional pattern capture to Hydrate step 5, updated "Checklist Tests Implementation Fidelity" design decision to include code quality |
 | 260214-r7k3-stageman-yq-metrics | 2026-02-14 | Added `driver` parameter requirement to status mutations overview. Added `log-review` calls to review pass/fail behavior. Stage metrics side-effects documented as automatic |
 | 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_stageman.sh` → `lib/stageman.sh` in status mutations overview |
 | 260214-w3r8-stageman-write-api | 2026-02-14 | All execution-stage `.status.yaml` transitions now use `_stageman.sh` CLI commands instead of direct file edits |
