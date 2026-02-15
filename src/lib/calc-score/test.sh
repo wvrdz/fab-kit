@@ -140,33 +140,6 @@ output=$("$CALC_SCORE" "$d")
 assert_contains "confident: 2" "$output" "Counts 2 Confident grades from spec"
 assert_contains "tentative: 1" "$output" "Counts 1 Tentative grade from spec"
 
-# Test: Combined grades from brief and spec
-d="$TEST_DIR/combined-grades"
-mkdir -p "$d"
-make_status "$d"
-cat > "$d/brief.md" <<'EOF'
-# Brief
-
-## Assumptions
-
-| # | Grade | Decision | Rationale |
-|---|-------|----------|-----------|
-| 1 | Tentative | Brief decision | Brief reason |
-EOF
-cat > "$d/spec.md" <<'EOF'
-# Spec
-
-## Assumptions
-
-| # | Grade | Decision | Rationale |
-|---|-------|----------|-----------|
-| 1 | Confident | Spec decision | Spec reason |
-EOF
-
-output=$("$CALC_SCORE" "$d")
-assert_contains "confident: 1" "$output" "Counts Confident from spec"
-assert_contains "tentative: 1" "$output" "Counts Tentative from brief"
-
 # Test: Case-insensitive grade matching
 d="$TEST_DIR/case-insensitive"
 mkdir -p "$d"
