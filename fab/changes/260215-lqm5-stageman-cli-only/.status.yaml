@@ -1,5 +1,5 @@
-name: 260214-k8v2-stageman-cli-only
-created: 2026-02-14T00:00:00+05:30
+name: 260215-lqm5-stageman-cli-only
+created: 2026-02-15T00:00:00+00:00
 created_by: sahil-weaver
 change_type: feature
 progress:
@@ -20,4 +20,6 @@ confidence:
   tentative: 0
   unresolved: 0
   score: 0.0
-last_updated: 2026-02-14T00:00:00+05:30
+stage_metrics:
+  brief: {started_at: "2026-02-15T18:16:01+05:30", driver: fab-new, iterations: 1}
+last_updated: "2026-02-15T18:16:01+05:30"
