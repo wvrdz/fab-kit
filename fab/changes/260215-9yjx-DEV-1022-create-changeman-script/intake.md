@@ -1,4 +1,4 @@
-# Brief: Create changeman.sh and Refactor fab-new Skill
+# Intake: Create changeman.sh and Refactor fab-new Skill
 
 **Change**: 260215-9yjx-DEV-1022-create-changeman-script
 **Created**: 2026-02-15
@@ -6,7 +6,7 @@
 
 ## Origin
 
-> Create changeman.sh to consolidate fab-new's filesystem boilerplate (random ID generation, mkdir, .status.yaml template filling, created_by detection, stageman calls) into a single shell script. Refactor fab-new skill to delegate the mechanical work and focus on AI-driven tasks (slug generation, SRAD, brief writing). Designed CLI-first for eventual Rust rewrite parity with stageman.
+> Create changeman.sh to consolidate fab-new's filesystem boilerplate (random ID generation, mkdir, .status.yaml template filling, created_by detection, stageman calls) into a single shell script. Refactor fab-new skill to delegate the mechanical work and focus on AI-driven tasks (slug generation, SRAD, intake writing). Designed CLI-first for eventual Rust rewrite parity with stageman.
 
 ## Why
 
