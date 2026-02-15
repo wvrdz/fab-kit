@@ -129,7 +129,13 @@ The kit provides the 6-stage workflow above. See [docs/specs/index.md](docs/spec
 fab-upgrade.sh       # downloads latest kit, replaces fab/.kit/, repairs symlinks
 ```
 
-If the upgrade reports a version mismatch, run `/fab-update` (`$fab-update`) in your AI agent to apply migrations. Safe to re-run.
+If the upgrade reports a version mismatch, run `/fab-update` in your AI agent to apply migrations. Safe to re-run.
+
+To repair symlinks and scaffold structure without downloading a new release (useful when developing fab-kit itself):
+
+```bash
+bash fab/.kit/scripts/lib/init-scaffold.sh
+```
 
 ## Learn More
 
