@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260215-r8k3-DEV-1024-code-quality-layer** — Added a code quality layer to the fab-kit pipeline: new `code_quality` config section, pattern extraction during apply, code quality checks during review, quality-focused checklist items, and optional pattern capture during hydrate.
 - **260215-lqm5-stageman-cli-only** — Migrated stageman.sh to CLI-only interface, adding ~24 CLI subcommands for all read/query functions, migrating preflight.sh and calc-score.sh from source-pattern to subprocess invocations, and removing dual-mode scaffolding to prepare for an eventual Rust rewrite.
 - **260215-w3n8-naming-linear-id-drop-conventions** — Added optional Linear issue ID to change naming convention (`{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}`) and removed unused `conventions` config section from `config.yaml` and memory docs.
 - **260214-m3w7-formalize-assumptions-scoring** — Formalized SRAD assumptions tables to include all four grades (Certain, Confident, Tentative, Unresolved) with required Scores column, fixed calc-score.sh to read only spec.md (eliminating double-counting), corrected AWK column index bug, and added formalized table structure to brief and spec templates.
