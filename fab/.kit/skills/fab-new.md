@@ -35,36 +35,32 @@ Detect input type (check in order):
 2. **Backlog ID** (`[a-z0-9]{4}`) — read `fab/backlog.md`, search for `\[{id}\]`. Parse any Linear ID from the line; if found, fetch per #1. Store ID for folder name.
 3. **Natural language** — use as-is
 
-### Step 1: Generate Folder Name
+### Step 1: Generate Slug
 
-Format: `{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}` — date (6 digits), backlog ID or 4 random `[a-z0-9]`, optional uppercase Linear issue ID (e.g., `DEV-988`), 2-6 word slug (lowercase, hyphen-joined, no articles/prepositions).
-
-- **With Linear ID** (parsed in Step 0 from ticket or backlog entry): insert the uppercase issue ID between `{XXXX}` and `{slug}` — e.g., `260115-a7k2-DEV-988-add-oauth`
-- **Without Linear ID**: format stays `{YYMMDD}-{XXXX}-{slug}` — e.g., `260115-a7k2-add-oauth`
+Generate a 2-6 word slug (lowercase, hyphen-joined, no articles/prepositions) from the description. If a Linear issue ID was parsed in Step 0, prefix the slug with it: e.g., `DEV-988-add-oauth`. Without a Linear ID: just the slug, e.g., `add-oauth`. This slug is passed to `changeman.sh` as the `--slug` value.
 
 ### Step 2: Gap Analysis
 
 Check for existing mechanisms or scope concerns covering the idea. If covered: present findings, let user decide. If not: proceed.
 
-### Step 3: Create Change Directory
+### Step 3: Create Change
 
-Create `fab/changes/{name}/`. Backlog ID collision → abort with redirect to existing change. Random ID collision → regenerate and retry.
+Run `lib/changeman.sh new` with appropriate flags:
+- `--slug <slug>` — the slug from Step 1 (includes issue ID prefix if applicable)
+- `--change-id <4char>` — only if a backlog ID was detected in Step 0 (the 4-char backlog ID becomes the change ID)
+- `--log-args <description>` — the original description text
 
-### Step 4: Initialize `.status.yaml`
+Capture the folder name from stdout. The script handles date generation, random ID generation (if no `--change-id`), collision detection, directory creation, `created_by` detection, `.status.yaml` initialization, and `stageman.sh` integration.
 
-Create from `fab/.kit/templates/status.yaml`. Fill `{NAME}` (folder name), `{CREATED}` (ISO 8601 with tz), `{CREATED_BY}` (`gh api user --jq .login` → `git config user.name` → `"unknown"`, silent fallback).
-
-After creation, run `lib/stageman.sh set-state <file> intake active fab-new` to activate intake stage with metrics tracking, then run `lib/stageman.sh log-command <change_dir> "fab-new" "<description>"`.
-
-### Step 5: Generate `intake.md`
+### Step 4: Generate `intake.md`
 
 Follow the **Intake Generation Procedure** (`_generation.md`). Load context per `_context.md` Layer 1 and generate from `fab/.kit/templates/intake.md`.
 
-### Step 6: SRAD-Based Question Selection
+### Step 5: SRAD-Based Question Selection
 
 Apply SRAD (`_context.md`). No fixed question cap — SRAD scoring determines count. Zero questions for clear inputs. **Conversational mode**: when 5+ Unresolved, ask one at a time until resolved or user signals done.
 
-### Step 7: Activate Change (Conditional)
+### Step 6: Activate Change (Conditional)
 
 Default: skip. Switch if `--switch` or intent detected. Calls `/fab-switch {name}` transparently.
 
@@ -98,8 +94,7 @@ Next: {per _context.md Next Steps table}
 | Config/constitution missing | Abort: "Run /fab-init first." |
 | No description | Ask for one |
 | Intake template missing | Abort: "Kit may be corrupted." |
-| Backlog ID collision | Abort: redirect to existing change |
-| Random ID collision | Regenerate and retry |
+| `changeman.sh` failure | Surface stderr output to user and stop |
 | Linear ticket not found / API error | Warn, treat as natural language |
 | Backlog ID not found | Abort with guidance |
 | `fab/backlog.md` missing | Abort: "Use natural language or Linear ID instead." |

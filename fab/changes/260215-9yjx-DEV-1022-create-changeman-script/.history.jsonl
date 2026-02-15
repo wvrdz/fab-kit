@@ -1,1 +1,5 @@
 {"ts":"2026-02-15T18:38:01+05:30","event":"command","cmd":"fab-new","args":"Create changeman.sh and refactor fab-new skill to consolidate filesystem boilerplate into a single script call"}
+{"ts":"2026-02-15T22:31:51+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-15T22:35:31+05:30","event":"confidence","score":3.2,"delta":"+3.2","trigger":"calc-score"}
+{"ts":"2026-02-15T22:37:57+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-15T22:45:33+05:30","event":"review","result":"passed"}
