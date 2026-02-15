@@ -1,6 +1,6 @@
 # Confidence Score Calculator (calc-score.sh)
 
-Computes confidence scores from `## Assumptions` tables in `brief.md` and `spec.md`. Scans for SRAD grade counts (Certain, Confident, Tentative), applies the confidence formula, writes the updated confidence block to `.status.yaml`, and emits YAML with delta to stdout.
+Computes confidence scores from the `## Assumptions` table in `spec.md`. Scans for SRAD grade counts (Certain, Confident, Tentative), applies the confidence formula, writes the updated confidence block to `.status.yaml`, and emits YAML with delta to stdout.
 
 ## Sources of Truth
 
@@ -15,7 +15,7 @@ calc-score.sh <change-dir>
 
 Where `<change-dir>` is the path to a change directory (e.g., `fab/changes/260214-mgh5-calc-score-dev-setup`).
 
-The directory MUST contain `spec.md`. `brief.md` is optional — if present, its Assumptions table is also scanned.
+The directory MUST contain `spec.md` with an `## Assumptions` table.
 
 ## API Reference
 

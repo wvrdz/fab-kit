@@ -1,1 +1,5 @@
 {"ts":"2026-02-15T22:32:43+05:30","event":"command","cmd":"fab-new","args":"Clean stale brief scoring refs in docs and tests"}
+{"ts":"2026-02-15T22:42:33+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-15T22:43:39+05:30","event":"confidence","score":4.7,"delta":"+4.7","trigger":"calc-score"}
+{"ts":"2026-02-15T22:50:49+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-15T22:53:29+05:30","event":"review","result":"passed"}
