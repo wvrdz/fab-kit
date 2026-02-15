@@ -27,9 +27,9 @@ Each skill retains its own orchestration logic (stage guards, question handling,
 
 `/fab-new` starts a new change from a natural language description. It is adaptive: clear inputs get a quick intake, vague inputs trigger conversational exploration. It creates the change folder, initializes status tracking, and generates an intake (with Origin section). By default, the change is NOT activated (no write to `fab/current`, no branch integration). Accepts an optional `--switch` flag or detects switching intent from natural language to call `/fab-switch` internally and activate the change. Output is always a single artifact: `intake.md`.
 
-#### Folder Name Generation
+#### Slug Generation and Change Creation
 
-The agent SHALL generate a folder name in the format `{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}` where YYMMDD is today's date, XXXX is 4 random lowercase alphanumeric chars, ISSUE is an optional uppercase Linear issue ID (e.g., `DEV-988`) included when the change originates from a Linear ticket, and slug is 2-6 words extracted from the description. All components MUST be lowercase EXCEPT `{ISSUE}` which stays uppercase for unambiguous parsing.
+The agent generates a 2-6 word slug (lowercase, hyphen-joined, no articles/prepositions) from the description. If a Linear issue ID was parsed, it prefixes the slug (e.g., `DEV-988-add-oauth`). The folder name format `{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}` is constructed by `lib/changeman.sh`, which handles date generation, random/provided 4-char ID, collision detection, directory creation, `created_by` detection, `.status.yaml` initialization, and stageman integration. The skill calls `changeman.sh new --slug <slug> [--change-id <4char>] [--log-args <description>]` as a single operation and captures the folder name from stdout.
 
 #### Adaptive Behavior (SRAD-Driven)
 
@@ -51,8 +51,8 @@ If an existing mechanism covers the idea, the skill presents its findings and le
 #### Change Initialization
 
 The skill SHALL:
-1. Create `fab/changes/{name}/`
-2. Initialize `.status.yaml` with `created_by` set using a fallback chain: `gh api user --jq .login` (primary), then `git config user.name`, then `"unknown"`. No error or warning on fallback. `intake: active` as the initial progress state
+1. Generate the slug (AI task: word selection, article removal, issue ID prefixing)
+2. Call `lib/changeman.sh new` with `--slug`, optional `--change-id` (backlog ID), and `--log-args` (description). The script handles: directory creation, `created_by` detection (`gh api user` → `git config user.name` → `"unknown"`, silent fallback), `.status.yaml` initialization from template via `sed`, and stageman integration (`set-state intake active fab-new`, `log-command`)
 3. Generate `intake.md` from the template (including Origin section), loading `fab/constitution.md` and `fab/config.yaml` as context
 4. Conditionally call `/fab-switch` to activate the change (writes `fab/current`, performs branch integration) — only if the `--switch` flag was provided OR switching intent is detected in the description (phrases like "and switch to it", "make it active", "activate it")
 
@@ -289,6 +289,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260215-9yjx-DEV-1022-create-changeman-script | 2026-02-15 | Refactored `/fab-new`: "Folder Name Generation" → "Slug Generation and Change Creation" (delegated to `lib/changeman.sh`). Change Initialization steps consolidated — steps 1-2 of old init (mkdir, .status.yaml, created_by, stageman calls) replaced by single `changeman.sh new` call. Skill now focuses on AI tasks (slug generation, gap analysis, intake writing). Error table simplified. |
 | 260215-v4n7-DEV-1025-rename-brief-to-intake | 2026-02-15 | Renamed `brief` → `intake` throughout. Added Intake Generation Procedure to `_generation.md`. Updated `/fab-new` to reference procedure instead of inlining. Renamed "Brief-First" design decision to "Intake-First" |
 | 260215-w3n8-naming-linear-id-drop-conventions | 2026-02-15 | Updated `/fab-new` folder name generation format to `{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}` with optional uppercase Linear issue ID |
 | 260214-m3w7-formalize-assumptions-scoring | 2026-02-14 | Formalized Assumptions tables: all four SRAD grades recorded (not just Confident/Tentative), Scores column required, Unresolved rows include status context. `calc-score.sh` reads only spec.md (not intake+spec), fixed AWK cols[6], removed has_scores detection and Certain carry-forward, parses Unresolved grade. Spec generation reads intake assumptions as starting point (confirm/upgrade/override). Templates include formalized `## Assumptions` sections. Summary line uses 4-grade format. |

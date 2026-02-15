@@ -58,6 +58,7 @@ fab/.kit/
     ├── fab-update-claude-settings.sh
     └── lib/                # Internal scripts (not user-facing)
         ├── calc-score.sh       # Confidence score computation
+        ├── changeman.sh        # Change Manager — change lifecycle operations (new)
         ├── init-scaffold.sh    # Structural bootstrap
         ├── preflight.sh        # Pre-flight validation (calls stageman CLI, sources resolve-change)
         ├── resolve-change.sh   # Change name resolution library (sourced)
@@ -92,6 +93,10 @@ Change name resolution library. Sourced by `lib/preflight.sh`. Provides `resolve
 #### `lib/calc-score.sh`
 
 Internal library script for confidence score computation. Scans the `## Assumptions` table in `spec.md` only (not intake.md — intake assumptions are state transfer, not scored), counts all four SRAD grades (Certain, Confident, Tentative, Unresolved; case-insensitive), extracts dimension scores from the required `Scores` column (`cols[6]`), applies the confidence formula, delegates the `.status.yaml` write to `$STAGEMAN set-confidence` / `$STAGEMAN set-confidence-fuzzy` (CLI subprocess calls), calls `$STAGEMAN log-confidence` to record the score change in `.history.jsonl`, and emits YAML with delta to stdout. Invoked by `/fab-continue` (spec stage) and `/fab-clarify` (suggest mode). Not called directly by users. Dev folder: `src/lib/calc-score/` (symlink, README, smoke test, comprehensive test suite).
+
+#### `lib/changeman.sh`
+
+Change Manager — CLI-only utility for change lifecycle operations. Currently supports the `new` subcommand for creating change directories. Does NOT require `yq` (uses `sed` for template filling). All stageman interactions are via CLI subprocess calls (`$STAGEMAN <subcommand>`). Interface: `changeman.sh new --slug <slug> [--change-id <4char>] [--log-args <description>]`. Performs: argument parsing/validation, date generation (`YYMMDD`), random or provided 4-char ID generation, slug format validation (alphanumeric + hyphens), folder name construction (`{YYMMDD}-{XXXX}-{slug}`), collision detection (fatal for provided IDs, retry for random, up to 10 attempts), directory creation (`mkdir`, not `-p`), `created_by` detection (`gh api user` → `git config user.name` → `"unknown"`, silent fallback), `.status.yaml` template filling via `sed`, and stageman integration (`set-state intake active fab-new`, conditional `log-command`). Prints folder name to stdout; errors to stderr. Called by `/fab-new` (Step 3). Designed CLI-first for eventual Rust rewrite parity with stageman.
 
 #### `fab-help.sh`
 
@@ -248,6 +253,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260215-9yjx-DEV-1022-create-changeman-script | 2026-02-15 | Added `changeman.sh` to `lib/` directory listing and Shell Scripts section. New script handles change creation lifecycle (folder name construction, collision detection, directory creation, created_by detection, .status.yaml initialization, stageman integration). Called by `/fab-new` Step 3. |
 | 260215-g4r2-DEV-1023-batch-rename-default-list | 2026-02-15 | Renamed batch scripts from `batch-{verb}-{entity}.sh` to `batch-fab-{verb}-{entity}.sh`; changed no-arg behavior from showing help to showing `--list` output; updated directory tree, naming pattern, and script descriptions |
 | 260215-v4n7-DEV-1025-rename-brief-to-intake | 2026-02-15 | Updated directory listing: `brief.md` → `intake.md` in templates. Updated script references from brief to intake |
 | 260215-lqm5-stageman-cli-only | 2026-02-15 | Migrated `stageman.sh` to CLI-only interface: added ~25 read/query subcommands, added `set-confidence-fuzzy` write subcommand, removed dual-mode (`source`/CLI) scaffolding (`BASH_SOURCE` guard, `return \|\| exit` patterns). Migrated `preflight.sh` and `calc-score.sh` from `source stageman.sh` to `$STAGEMAN <subcommand>` subprocess calls. `resolve-change.sh` remains source-only (variable-setting pattern). Test suites (131 tests) converted to CLI invocation pattern as contract tests for future Rust rewrite. |
