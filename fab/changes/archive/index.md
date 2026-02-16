@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260216-tk7a-DEV-1037-consolidate-setup-upgrade-flow** — Consolidated three confusing user-facing commands (fab-init, fab-update, fab-upgrade) into a two-entry-point architecture: /fab-setup (LLM skill with subcommands) and fab-sync.sh (standalone bash script), eliminating name confusion and manual handoff failures.
 - **260216-knmw-DEV-1030-swap-ff-fff-review-rework** — Swapped review failure behavior between fab-ff and fab-fff: fab-ff now presents interactive rework options, fab-fff now uses fully autonomous rework with bounded retry (3 cycles) and escalation logic.
 - **260216-f88c-DEV-1029-migrate-existing-tests-to-bats** — Migrated 4 legacy hand-rolled bash test suites (preflight, resolve-change, stageman, calc-score) to bats-core, eliminating the dual-format runner and unifying on a single test framework.
 - **260216-b1k9-DEV-1028-rename-scaffold-add-kit-tests** — Renamed `init-scaffold.sh` to `sync-workspace.sh` to reflect its idempotent convergence behavior, added bats-core test suites for `sync-workspace.sh` and `changeman.sh`, and restructured `just test` with a two-tier runner and per-suite pass/fail summary.
