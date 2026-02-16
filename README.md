@@ -157,6 +157,7 @@ bash fab/.kit/scripts/lib/sync-workspace.sh
 ## Learn More
 
 - **[Design & Workflow Details](docs/specs/overview.md)** — principles, detailed stage descriptions, example workflows
+- **[User Flow Diagrams](docs/specs/user-flow.md)** — visual maps of the full pipeline, shortcuts, rework paths, and state machine
 - **[Full Command Reference](docs/specs/skills.md)** — detailed behavior for every `/fab-*` skill
 - **[Glossary](docs/specs/glossary.md)** — all Fab terminology defined
 - **[Contributing](CONTRIBUTING.md)** — developing, extending, and releasing Fab Kit

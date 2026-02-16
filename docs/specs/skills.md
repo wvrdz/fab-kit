@@ -1,6 +1,6 @@
 # Fab Skills Reference
 
-> Detailed behavior for each `/fab:*` skill. For a quick overview, see the [Quick Reference](README.md#quick-reference).
+> Detailed behavior for each `/fab-*` skill. For a quick overview, see the [Quick Reference](overview.md#quick-reference).
 
 ---
 

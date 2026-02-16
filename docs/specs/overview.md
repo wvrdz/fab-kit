@@ -94,32 +94,7 @@ flowchart TD
 
 ### User Flow
 
-From the user's perspective, the main workflow is `/fab-new` followed by `/fab-continue` (or `/fab-ff` to fast-forward planning). `/fab-clarify` is available at any planning stage to deepen the current artifact before moving on:
-
-```mermaid
-flowchart TD
-    NEW["/fab-new"]
-    THINK["/fab-continue or ff"]
-    APPLY["/fab-continue"]
-    REVIEW["/fab-continue"]
-    ARCHIVE["/fab-continue"]
-    THINK ~~~ CLARIFY["/fab-clarify"]
-
-    NEW -->|intake| THINK
-    THINK -->|spec + tasks| APPLY
-    APPLY -->|code changes| REVIEW
-    REVIEW -->|passed| ARCHIVE
-    REVIEW -->|fix code| APPLY
-    REVIEW -.->|revise spec/tasks| THINK
-    THINK <-.-> CLARIFY
-
-    style NEW fill:#e8f4f8,stroke:#2196F3
-    style THINK fill:#e8f4f8,stroke:#2196F3
-    style APPLY fill:#fff3e0,stroke:#FF9800
-    style REVIEW fill:#fff3e0,stroke:#FF9800
-    style ARCHIVE fill:#e8f5e9,stroke:#4CAF50
-    style CLARIFY fill:#fff,stroke:#999,stroke-dasharray: 5 5
-```
+For detailed visual maps of how commands connect — including shortcuts, rework paths, and the full state machine — see **[User Flow Diagrams](user-flow.md)**.
 
 ---
 
@@ -188,7 +163,8 @@ flowchart TD
 
 ## Further Reading
 
+- [User Flow Diagrams](user-flow.md) — visual maps of the full pipeline, shortcuts, rework paths, and state machine
 - [Architecture](architecture.md) — directory structure, config, conventions
-- [Skills Reference](skills.md) — detailed behavior for each `/fab:*` skill
+- [Skills Reference](skills.md) — detailed behavior for each `/fab-*` skill
 - [Templates](templates.md) — artifact formats and checklist generation
 
