@@ -5,7 +5,7 @@ A Specification-Driven Development (SDD) workflow that runs entirely as AI agent
 ## Why Fab Kit?
 
 - **Resumable by design** — Every stage produces a persistent artifact. Walk away mid-change, come back tomorrow, and pick up exactly where you left off.
-- **Stages that don't get skipped** — Brief, spec, tasks, apply, review, hydrate. The pipeline encodes the discipline so the agent (and you) can't quietly skip straight to code.
+- **Stages that don't get skipped** — Intake, spec, tasks, apply, review, hydrate. The pipeline encodes the discipline so the agent (and you) can't quietly skip straight to code.
 - **Fast-forward when confidence is high** — `/fab-ff` and `/fab-fff` let you blast through multiple stages when the change is well-understood, without sacrificing structure when it isn't.
 - **Deterministic progress tracking** — `.status.yaml` and stage checklists give you a single source of truth for where a change stands.
 
@@ -65,7 +65,7 @@ $fab-init     # Codex
 
 Here's what happens:
 
-1. The agent creates a `brief.md` capturing intent and scope, asking you clarifying questions
+1. The agent creates an `intake.md` capturing intent and scope, asking you clarifying questions
 2. Run `/fab-continue` (`$fab-continue`) — generates a `spec.md` with requirements
 3. Run `/fab-continue` — generates a `tasks.md` with an implementation checklist
 4. Run `/fab-continue` — the agent implements the code, checking off tasks as it goes
@@ -82,7 +82,7 @@ For small, well-understood changes, `/fab-ff` (`$fab-ff`) fast-forwards through 
 flowchart TD
     subgraph planning ["Planning"]
         direction LR
-        B["1 BRIEF"] --> S["2 SPEC"] --> T["3 TASKS"]
+        B["1 INTAKE"] --> S["2 SPEC"] --> T["3 TASKS"]
     end
     subgraph execution ["Execution"]
         direction LR
@@ -103,7 +103,7 @@ flowchart TD
 
 | # | Stage | Purpose | Artifact |
 |---|-------|---------|----------|
-| 1 | **Brief** | Capture intent, scope, approach | `brief.md` |
+| 1 | **Intake** | Capture intent, scope, approach | `intake.md` |
 | 2 | **Spec** | Define requirements | `spec.md` |
 | 3 | **Tasks** | Break into implementation checklist | `tasks.md` + `checklist.md` |
 | 4 | **Apply** | Execute the tasks | Code changes |
@@ -133,7 +133,7 @@ flowchart TD
 fab/.kit/
 ├── VERSION          # Semver version string
 ├── skills/          # Markdown skill definitions for AI agents
-├── templates/       # Artifact templates (brief, spec, tasks, checklist)
+├── templates/       # Artifact templates (intake, spec, tasks, checklist)
 ├── scripts/         # Shell utilities (setup, upgrade, release)
 └── schemas/         # Workflow schema and validation
 ```
