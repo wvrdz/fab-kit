@@ -1,1 +1,5 @@
 {"ts":"2026-02-16T17:05:18+05:30","event":"command","cmd":"fab-new","args":"Replace .envrc symlink with line-ensuring sync (like .gitignore)"}
+{"ts":"2026-02-16T17:26:16+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-16T17:27:33+05:30","event":"confidence","score":4.4,"delta":"+4.4","trigger":"calc-score"}
+{"ts":"2026-02-16T17:29:19+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-16T17:31:59+05:30","event":"review","result":"passed"}

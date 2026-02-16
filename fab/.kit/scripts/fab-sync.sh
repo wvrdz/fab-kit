@@ -102,24 +102,46 @@ else
   echo "Created: fab/VERSION ($version)"
 fi
 
-# ── 2. .envrc ─────────────────────────────────────────────────────
-envrc_link="$repo_root/.envrc"
-envrc_target="fab/.kit/scaffold/envrc"
+# ── 2. .envrc (line-ensuring, same pattern as .gitignore) ─────────
+envrc_file="$repo_root/.envrc"
+envrc_entries="$kit_dir/scaffold/envrc"
 
-if [ -L "$envrc_link" ] && [ -e "$envrc_link" ]; then
-  echo ".envrc: OK (symlink)"
-elif [ -L "$envrc_link" ]; then
-  # Broken symlink — remove and recreate
-  rm "$envrc_link"
-  ln -s "$envrc_target" "$envrc_link"
-  echo ".envrc: repaired broken symlink → $envrc_target"
-elif [ -e "$envrc_link" ]; then
-  rm "$envrc_link"
-  ln -s "$envrc_target" "$envrc_link"
-  echo ".envrc: replaced file with symlink → $envrc_target"
-else
-  ln -s "$envrc_target" "$envrc_link"
-  echo ".envrc: created symlink → $envrc_target"
+if [ -f "$envrc_entries" ]; then
+  # Migrate: if .envrc is a symlink, replace with real file
+  if [ -L "$envrc_file" ]; then
+    resolved="$(cat "$envrc_file" 2>/dev/null || true)"
+    rm "$envrc_file"
+    if [ -n "$resolved" ]; then
+      printf '%s\n' "$resolved" > "$envrc_file"
+    fi
+    echo ".envrc: migrated from symlink to file"
+  fi
+
+  envrc_existed=false
+  [ -f "$envrc_file" ] && envrc_existed=true
+  added=()
+
+  while IFS= read -r entry || [ -n "$entry" ]; do
+    [[ -z "$entry" || "$entry" == \#* ]] && continue
+    if [ ! -f "$envrc_file" ]; then
+      echo "$entry" > "$envrc_file"
+      added+=("$entry")
+    elif ! grep -qxF "$entry" "$envrc_file"; then
+      echo "" >> "$envrc_file"
+      echo "$entry" >> "$envrc_file"
+      added+=("$entry")
+    fi
+  done < "$envrc_entries"
+
+  if [ ${#added[@]} -gt 0 ]; then
+    if [ "$envrc_existed" = false ]; then
+      echo "Created: .envrc (added ${added[*]})"
+    else
+      echo "Updated: .envrc (added ${added[*]})"
+    fi
+  else
+    echo ".envrc: OK"
+  fi
 fi
 
 # ── 3. Memory index ────────────────────────────────────────────────
