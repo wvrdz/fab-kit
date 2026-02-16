@@ -1,0 +1,2 @@
+{"ts":"2026-02-16T20:25:35+05:30","event":"command","cmd":"fab-new","args":"Fold resolve-change.sh into changeman.sh and add switch subcommand"}
+{"ts":"2026-02-16T20:36:45+05:30","event":"command","cmd":"changeman-rename","args":"--folder 260216-oinh-fold-resolve-into-changeman --slug DEV-1045-fold-resolve-into-changeman"}
