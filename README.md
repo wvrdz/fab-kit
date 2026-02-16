@@ -9,6 +9,23 @@ A Specification-Driven Development (SDD) workflow that runs entirely as AI agent
 - **Fast-forward when confidence is high** — `/fab-ff` and `/fab-fff` let you blast through multiple stages when the change is well-understood, without sacrificing structure when it isn't.
 - **Deterministic progress tracking** — `.status.yaml` and stage checklists give you a single source of truth for where a change stands.
 
+## Prerequisites
+
+Install the following with [Homebrew](https://brew.sh/) (works on macOS and Linux):
+
+```bash
+brew install yq gh bats-core direnv
+```
+
+| Tool | Purpose |
+|------|---------|
+| [yq](https://github.com/mikefarah/yq) | YAML processing for status files and schemas |
+| [gh](https://cli.github.com/) | GitHub CLI — used for installation and releases |
+| [bats-core](https://github.com/bats-core/bats-core) | Bash test runner for kit validation |
+| [direnv](https://direnv.net/) | Auto-loads `.envrc` to put fab scripts on PATH |
+
+After installing `gh`, authenticate with `gh auth login`.
+
 ## Quick Start
 
 ### 1. Install

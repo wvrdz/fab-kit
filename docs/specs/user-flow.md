@@ -48,9 +48,9 @@ flowchart TD
 
     %% Shortcuts (full pipeline, from spec onward)
     S -->|"/fab-ff
-    (interactive stops)"| H
-    S -->|"/fab-fff
-    (autonomous, confidence ≥ 3.0)"| H
+    (confidence-gated, bail on failure)"| H
+    B -->|"/fab-fff
+    (full pipeline, interactive rework)"| H
 
     %% Rework (reset to any earlier stage)
     H -.->|"Revise anytime using
@@ -68,17 +68,47 @@ flowchart TD
 
 ---
 
-## 3. Full Command Map
+## 3A. Setup & Utilities
 
-All `/fab-*` commands and how they tie together. Solid arrows are the primary flow; dashed arrows are lateral/utility actions.
+Commands that live outside the change pipeline — run once per project or anytime.
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph setup ["Setup (once per project)"]
         INIT["/fab-init"]
         HYDRATE["/docs-hydrate-memory"]
     end
 
+    subgraph utility ["Utility (anytime)"]
+        direction TB
+        STATUS["/fab-status"] ~~~ HELP["/fab-help"] ~~~ UPDATE["/fab-update"]
+        BACKFILL["/docs-hydrate-specs"] ~~~ REORG_MEM["/docs-reorg-memory"] ~~~ REORG_SPEC["/docs-reorg-specs"]
+        STATUS ~~~ BACKFILL
+    end
+
+    subgraph shell ["Shell Utilities"]
+        direction TB
+        UPGRADE["fab-upgrade.sh"] ~~~ BATCH_NEW["batch-fab-new-backlog.sh"]
+        BATCH_SWITCH["batch-fab-switch-change.sh"] ~~~ BATCH_ARCHIVE["batch-fab-archive-change.sh"]
+        UPGRADE ~~~ BATCH_SWITCH
+    end
+
+    setup ~~~ utility ~~~ shell
+
+    INIT --> HYDRATE
+
+    %% Styles
+    style setup fill:#f0f0f0,stroke:#999
+    style utility fill:#fce4ec,stroke:#e91e63
+    style shell fill:#f0f0f0,stroke:#999
+```
+
+## 3B. Change Flow
+
+The pipeline for a single change: creation, execution (with shortcuts), and completion. Solid arrows are the primary flow; dashed arrows are lateral/utility actions.
+
+```mermaid
+flowchart TD
     subgraph creation ["Creation (once per change)"]
         NEW["/fab-new &lt;desc&gt;"]
     end
@@ -97,12 +127,12 @@ flowchart TD
             CONT_T --> APPLY
         end
 
-        subgraph auto ["Auto (full pipeline)"]
-            FF["/fab-ff
-            (interactive stops)"]
-            FFF["/fab-fff
-            (autonomous, confidence ≥ 3.0)"]
-        end
+        FF["/fab-ff
+        (confidence-gated, interactive rework)"]
+        FFF["/fab-fff
+        (full pipeline, autonomous rework)"]
+
+        FF ~~~ FFF
 
         CLARIFY["/fab-clarify
         (refine any planning artifact)"]
@@ -116,25 +146,15 @@ flowchart TD
         (housekeeping)"]
     end
 
-    subgraph utility ["Utility (anytime)"]
-        STATUS["/fab-status"]
-        HELP["/fab-help"]
-        BACKFILL["/docs-hydrate-specs
-        (memory → specs gap detection)"]
-    end
-
-    %% Setup
-    INIT --> HYDRATE
-    INIT -->|"or skip hydrate"| NEW
-    HYDRATE --> NEW
-
     %% Creation → Activation → Spec
     NEW --> SWITCH
     SWITCH --> CONT_S
 
-    %% Auto alternatives
-    CONT_S -.-> auto
-    execution -.-> auto
+    %% Shortcut alternatives
+    CONT_S -.-> FF
+    SWITCH -.-> FFF
+    FF --> HYD
+    FFF --> HYD
 
     %% Clarify connects to the execution block
     CLARIFY -.->|"refine, then resume"| execution
@@ -145,23 +165,16 @@ flowchart TD
     %% Execution flow
     APPLY --> REVIEW
 
-    %% Shortcuts complete at hydrate
-    auto --> HYD
-
     %% Review outcomes
     REVIEW -->|"pass"| HYD
     HYD -->|"move to archive"| FAB_ARCHIVE
 
     %% Styles
-    style setup fill:#f0f0f0,stroke:#999
     style creation fill:#f3e5f5,stroke:#9C27B0
     style change_exec fill:#fff3e0,stroke:#FF9800
     style execution fill:#d6eaf8,stroke:#2196F3
-    style auto fill:#d6eaf8,stroke:#2196F3
     style completion fill:#e8f5e9,stroke:#4CAF50
-    style utility fill:#fce4ec,stroke:#e91e63
     style FAB_ARCHIVE fill:#f0f0f0,stroke:#999
-    style BACKFILL fill:#fff,stroke:#999,stroke-dasharray: 5 5
     style CLARIFY fill:#fff,stroke:#999,stroke-dasharray: 5 5
     style RESET fill:#fff,stroke:#999,stroke-dasharray: 5 5
 ```
@@ -181,8 +194,8 @@ stateDiagram-v2
     intake --> spec: /fab-continue
 
     spec --> tasks: /fab-continue
-    spec --> hydrate: /fab-ff (interactive)
-    spec --> hydrate: /fab-fff (autonomous, confidence ≥ 3.0)
+    spec --> hydrate: /fab-ff (confidence-gated, bail on failure)
+    intake --> hydrate: /fab-fff (full pipeline, interactive rework)
 
     tasks --> apply: /fab-continue
 
@@ -199,6 +212,11 @@ stateDiagram-v2
         Created by /fab-new
         Contains: requirements,
         goals, constraints
+    end note
+
+    note right of spec
+        Confidence score calculated,
+        /fab-clarify to improve
     end note
 
     note right of apply
