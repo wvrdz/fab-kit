@@ -68,7 +68,7 @@ fab/.kit/
 
 #### `fab-sync.sh`
 
-First-class user-facing workspace sync script in `scripts/` (promoted from `lib/`). Syncs kit assets (directories, symlinks, agent files, `.gitignore` entries) into the workspace. Cleans up stale artifacts from previous kit versions. Creates `docs/memory/index.md`, `docs/specs/index.md`, `fab/VERSION`, and `.gitignore` entries. Reads bootstrap content from `scaffold/` files (index templates, envrc, gitignore entries) rather than hardcoding them. Creates `fab/VERSION` using the dual-version model: new projects get the engine version, existing projects (detected via `config.yaml` presence) get `0.1.0` base version, existing `fab/VERSION` is preserved. It is the single source of truth for structural setup. `/fab-setup` delegates to it and adds the interactive parts (config, constitution).
+First-class user-facing workspace sync script in `scripts/` (promoted from `lib/`). Syncs kit assets (directories, symlinks, agent files, `.gitignore` entries) into the workspace. Cleans up stale artifacts from previous kit versions. Creates directories (`fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/`) with `.gitkeep` files in `fab/changes/` and `fab/changes/archive/`. Creates `docs/memory/index.md`, `docs/specs/index.md`, `fab/VERSION`, and `.gitignore` entries. Reads bootstrap content from `scaffold/` files (index templates, envrc, gitignore entries) rather than hardcoding them. Creates `fab/VERSION` using the dual-version model: new projects get the engine version, existing projects (detected via `config.yaml` presence) get `0.1.0` base version, existing `fab/VERSION` is preserved. It is the single source of truth for structural setup. `/fab-setup` delegates to it and adds the interactive parts (config, constitution).
 
 #### `lib/stageman.sh`
 
@@ -252,6 +252,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260216-pr1u-DEV-1017-add-archive-gitkeep | 2026-02-16 | Added `fab/changes/archive/` to `fab-sync.sh` directory creation loop and `fab/changes/archive/.gitkeep` conditional touch. Updated fab-sync.sh description to enumerate created directories and .gitkeep files. |
 | 260216-u6d5-DEV-1039-add-changeman-rename | 2026-02-16 | Added `rename` subcommand to `changeman.sh` — renames change folder slug while preserving date-ID prefix, updates `.status.yaml` name field, conditionally updates `fab/current`, logs via stageman. Updated directory tree comment and script description. |
 | 260216-tk7a-DEV-1037-consolidate-setup-upgrade-flow | 2026-02-16 | Promoted `lib/sync-workspace.sh` → `scripts/fab-sync.sh` (user-facing); replaced `fab-init.md` + `fab-update.md` with `fab-setup.md` in skills listing; added stale artifact cleanup to fab-sync.sh; updated all cross-references |
 | 260216-f88c-DEV-1029-migrate-existing-tests-to-bats | 2026-02-16 | Migrated 4 legacy `test.sh` suites (preflight, resolve-change, stageman, calc-score) to bats-core `test.bats` format. Deleted all legacy test.sh files. Simplified justfile `test-bash` recipe to bats-only runner. Fixed stale `brief` → `intake` stage name in test fixtures. Fixed legacy bugs: incorrect carry-forward assumption in calc-score tests, wrong fuzzy column order. Total: 6 bats suites, 152 tests. Updated stageman section test reference. |
