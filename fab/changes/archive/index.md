@@ -1,5 +1,9 @@
 # Archive Index
 
+- **260216-ymvx-DEV-1043-envrc-line-sync** — Replaced .envrc symlink with line-ensuring sync in fab-sync.sh, allowing projects to add their own .envrc lines alongside fab's required entries.
+- **260216-pr1u-DEV-1017-add-archive-gitkeep** — Added .gitkeep to fab/changes/archive/ in fab-sync.sh so Git tracks the empty archive folder on fresh projects.
+- **260216-jmy4-DEV-1044-switch-shell-name-resolution** — Delegated fab-switch name resolution from in-prompt LLM string matching to the existing resolve-change.sh shell script, fixing false negatives on long hyphenated folder names.
+- **260216-gcw7-DEV-1041-consolidate-script-signatures** — Consolidated stageman.sh CLI surface area from ~35 to 14 subcommands by merging overlapping commands, removing unused accessors, and updating all callers and tests.
 - **260216-u6d5-DEV-1039-add-changeman-rename** — Added a `rename` subcommand to changeman.sh for atomically renaming change folders, updating .status.yaml and fab/current, with full validation and test coverage.
 - **260216-7ltw-DEV-1038-standardize-state-keyed-suggestions** — Standardized next-step suggestions across all fab skills using a single state-keyed table in _context.md, replacing skill-keyed lookups, per-skill hardcoded Next: lines, and fab-switch's private table, and removing fab-new's --switch flag.
 - **260216-tk7a-DEV-1037-consolidate-setup-upgrade-flow** — Consolidated three confusing user-facing commands (fab-init, fab-update, fab-upgrade) into a two-entry-point architecture: /fab-setup (LLM skill with subcommands) and fab-sync.sh (standalone bash script), eliminating name confusion and manual handoff failures.
