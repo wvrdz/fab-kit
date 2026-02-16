@@ -29,7 +29,7 @@ No arguments. No flags. The script resolves paths relative to its own location.
 
 ### 1. Directory Creation
 
-Creates `fab/changes/`, `docs/memory/`, `docs/specs/` (with `mkdir -p`). Creates `fab/changes/.gitkeep`. Skips existing directories.
+Creates `fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/` (with `mkdir -p`). Creates `fab/changes/.gitkeep` and `fab/changes/archive/.gitkeep`. Skips existing directories and files.
 
 ### 2. fab/VERSION
 

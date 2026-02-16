@@ -71,7 +71,7 @@ yaml_value() {
 
 # ── 1. Directories ──────────────────────────────────────────────────
 docs_dir="$repo_root/docs"
-for dir in "$fab_dir/changes" "$docs_dir/memory" "$docs_dir/specs"; do
+for dir in "$fab_dir/changes" "$fab_dir/changes/archive" "$docs_dir/memory" "$docs_dir/specs"; do
   if [ ! -d "$dir" ]; then
     mkdir -p "$dir"
     echo "Created: ${dir#"$repo_root"/}"
@@ -80,6 +80,10 @@ done
 
 if [ ! -f "$fab_dir/changes/.gitkeep" ]; then
   touch "$fab_dir/changes/.gitkeep"
+fi
+
+if [ ! -f "$fab_dir/changes/archive/.gitkeep" ]; then
+  touch "$fab_dir/changes/archive/.gitkeep"
 fi
 
 # ── 1b. fab/VERSION ──────────────────────────────────────────────────

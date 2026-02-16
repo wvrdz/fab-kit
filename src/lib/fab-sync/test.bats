@@ -121,6 +121,12 @@ teardown() {
   [ -f "$REPO_ROOT/fab/changes/.gitkeep" ]
 }
 
+@test "creates fab/changes/archive/.gitkeep" {
+  run bash "$KIT/scripts/fab-sync.sh"
+  [ "$status" -eq 0 ]
+  [ -f "$REPO_ROOT/fab/changes/archive/.gitkeep" ]
+}
+
 @test "skips directory creation when directories exist" {
   mkdir -p "$REPO_ROOT/fab/changes" "$REPO_ROOT/docs/memory" "$REPO_ROOT/docs/specs"
   run bash "$KIT/scripts/fab-sync.sh"
