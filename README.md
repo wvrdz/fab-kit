@@ -134,7 +134,7 @@ This generates `fab/config.yaml` and `fab/constitution.md` (your project's archi
 
 At any point, run `/fab-status` to see where you are.
 
-For small changes, `/fab-ff` (fast-forward) skips intermediate planning stages. For trivial changes, `/fab-fff` (full fast-forward) runs the entire pipeline autonomously.
+For small changes, `/fab-ff` (fast-forward) skips intermediate planning stages — gated by a [confidence score](#structured-autonomy-not-guesswork) that ensures ambiguity is low enough for safe execution. For trivial changes, `/fab-fff` (full fast-forward) runs the entire pipeline autonomously.
 
 ### 4. Going parallel
 
@@ -156,9 +156,9 @@ Each change is a self-contained folder — multiple AI sessions run in parallel 
 
 AI coding tools give you speed but leave you to manage quality and knowledge yourself. Fab Kit gives you all three:
 
-| [**Speed**](#parallel-by-default) | [**Knowledge**](#shared-memory-that-grows-with-your-project) | [**Quality**](#code-quality-as-a-guardrail) |
-|:---:|:---:|:---:|
-| Parallel changes — never idle | Compounds with every change | Constitution + self-correcting review |
+| [**Speed**](#parallel-by-default) | [**Knowledge**](#shared-memory-that-grows-with-your-project) | [**Quality**](#code-quality-as-a-guardrail) | [**Autonomy**](#structured-autonomy-not-guesswork) |
+|:---:|:---:|:---:|:---:|
+| Parallel changes — never idle | Compounds with every change | Constitution + self-correcting review | SRAD-driven — assumes or asks based on context |
 
 ### Parallel by Default
 
@@ -231,7 +231,7 @@ AI writes code fast. Without structure, it also skips requirements, ignores arch
                 constitution pass
 ```
 
-- **Stages that can't be skipped** — The pipeline requires intake, spec, and tasks before any code is written. The AI can't jump straight to implementation.
+- **Stages that can't be skipped** — The pipeline requires intake, spec, and tasks before any code is written. The AI can't jump straight to implementation. Before code is written, the [SRAD framework](#structured-autonomy-not-guesswork) ensures planning decisions are grounded in context — not silently guessed.
 - **Project constitution** — `fab/constitution.md` defines your architectural rules using MUST/SHOULD/MUST NOT. Every spec, task breakdown, and review checks against it — not just the change's requirements.
 - **Review that fixes, not just flags** — When review finds problems, it loops back to the right stage:
 
@@ -242,6 +242,23 @@ AI writes code fast. Without structure, it also skips requirements, ignores arch
 | Requirements were wrong | → spec | Updates spec, regenerates tasks |
 
 `/fab-fff` (full fast-forward) handles rework autonomously — up to 3 cycles before escalating to you.
+
+### Structured Autonomy, Not Guesswork
+
+AI tools either ask too many questions or silently assume. Fab uses **SRAD** — a 4-dimension framework — to decide which to do for each decision point during planning.
+
+**S**ignal strength · **R**eversibility · **A**gent competence · **D**isambiguation type
+
+Each dimension scores how safe it is to assume. The scores aggregate into a confidence grade:
+
+| Grade | What happens |
+|-------|-------------|
+| **Certain** | Proceeds silently — deterministic from config/codebase |
+| **Confident** | Proceeds, noted in assumptions summary |
+| **Tentative** | Proceeds with marker — resolvable via `/fab-clarify` |
+| **Unresolved** | Blocks and asks — too ambiguous to guess |
+
+Grades aggregate into a **confidence score** that gates `/fab-ff`. If ambiguity is too high, the pipeline refuses to run and tells you what to clarify — no silent guesswork, no unnecessary interruption. [How SRAD works →](docs/specs/srad.md)
 
 ## Command Quick Reference
 
@@ -280,5 +297,6 @@ bash fab/.kit/scripts/fab-sync.sh
 - **[Design & Workflow Details](docs/specs/overview.md)** — principles, detailed stage descriptions, example workflows
 - **[User Flow Diagrams](docs/specs/user-flow.md)** — visual maps of the full pipeline, shortcuts, rework paths, and state machine
 - **[Full Command Reference](docs/specs/skills.md)** — detailed behavior for every `/fab-*` skill
+- **[SRAD Autonomy Framework](docs/specs/srad.md)** — how the pipeline handles ambiguity, confidence scoring, and autonomous execution gates
 - **[Glossary](docs/specs/glossary.md)** — all Fab terminology defined
 - **[Contributing](CONTRIBUTING.md)** — developing, extending, and releasing Fab Kit

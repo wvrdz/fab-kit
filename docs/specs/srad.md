@@ -2,7 +2,7 @@
 
 SRAD is the decision-making framework that governs how Fab planning skills handle ambiguity. When a skill encounters a decision point not explicitly addressed by user input, SRAD determines whether the skill should assume an answer, ask the user, or flag it for later resolution.
 
-SRAD also produces a **confidence score** — a numeric measure of how well-resolved a change's decisions are. This score gates `/fab-fff` (the full autonomous pipeline), ensuring it only runs when ambiguity is low enough for safe unattended execution.
+SRAD also produces a **confidence score** — a numeric measure of how well-resolved a change's decisions are. This score gates `/fab-ff` (the fast-forward pipeline), ensuring it only runs when ambiguity is low enough for safe execution.
 
 ---
 
@@ -142,7 +142,7 @@ else:
 ### Range
 
 - **5.0**: All decisions are Certain — maximum confidence, zero ambiguity
-- **3.0**: The `/fab-fff` gate threshold (see below) — allows at most 2 Tentative decisions
+- **3.0**: The `/fab-ff` gate threshold (see below) — allows at most 2 Tentative decisions
 - **0.0**: Any Unresolved decision exists, OR 5+ Tentative decisions accumulate enough penalty
 
 The `max(0.0, ...)` floor clamps the score — if penalties exceed 5.0 (e.g., 6 Tentative decisions: `5.0 - 6.0 = -1.0`), the score is 0.0, not negative.
@@ -164,7 +164,7 @@ confidence:
 
 ## Gate Threshold
 
-`/fab-fff` requires `confidence.score >= threshold` before executing the autonomous pipeline. The threshold varies by **change type**:
+`/fab-ff` requires `confidence.score >= threshold` before executing the fast-forward pipeline. The threshold varies by **change type**:
 
 | Change Type | Gate Threshold | Rationale |
 |-------------|---------------|-----------|
@@ -192,9 +192,9 @@ In practice: at most 6 Confident decisions (with no Tentative), or 2 Tentative w
 
 ### Gate Behavior
 
-When the user runs `/fab-fff`:
-- **Score >= 3.0**: Pipeline proceeds autonomously through planning, apply, review, and archive
-- **Score < 3.0**: Pipeline refuses to execute and reports the score, suggesting `/fab-clarify` to resolve Tentative assumptions or answer Unresolved questions before retrying
+When the user runs `/fab-ff`:
+- **Score >= threshold**: Pipeline fast-forwards through remaining planning stages, then continues through apply, review, and hydrate
+- **Score < threshold**: Pipeline refuses to execute and reports the score, suggesting `/fab-clarify` to resolve Tentative assumptions or answer Unresolved questions before retrying
 
 ---
 
@@ -204,7 +204,7 @@ When the user runs `/fab-fff`:
 |-------|---------|--------|
 | Computation | `/fab-continue` (spec stage) | `calc-score.sh` scans spec, writes to `.status.yaml` |
 | Recomputation | `/fab-clarify` (suggest mode) | `calc-score.sh` re-scans after resolved assumptions |
-| Gate check | `/fab-fff` | Reads score from `.status.yaml` (no recomputation) |
+| Gate check | `/fab-ff` | Reads score from `.status.yaml` (no recomputation) |
 
 ---
 
@@ -238,7 +238,7 @@ Two words, no detail on mechanism, scope, or integration.
 
 **Score**: `0.0` — any Unresolved decision produces a hard zero.
 
-**Outcome**: `/fab-fff` gate blocks (0.0 < 3.0 feature threshold). The user must answer the Unresolved questions or use `/fab-clarify` to resolve Tentative assumptions before the autonomous pipeline can run.
+**Outcome**: `/fab-ff` gate blocks (0.0 < 3.0 feature threshold). The user must answer the Unresolved questions or use `/fab-clarify` to resolve Tentative assumptions before the fast-forward pipeline can run.
 
 ### Example 2: Low-Ambiguity Intake
 
@@ -256,7 +256,7 @@ Detailed description specifying the component, location, trigger, and behavior.
 
 **Score**: `max(0.0, 5.0 - 0.6 - 0.0) = 4.4`
 
-**Outcome**: `/fab-fff` gate passes (4.4 >= 3.0 feature threshold). The autonomous pipeline can run with high confidence.
+**Outcome**: `/fab-ff` gate passes (4.4 >= 3.0 feature threshold). The fast-forward pipeline can run with high confidence.
 
 ---
 
@@ -266,7 +266,7 @@ SRAD manifests differently depending on which skill is running. Skills closer to
 
 | Aspect | `/fab-new` | `/fab-continue` | `/fab-ff` | `/fab-fff` |
 |--------|------------|-----------------|-----------|-----------|
-| **Posture** | SRAD-driven adaptive questioning, gap analysis, conversational mode, intake-only output | Surface tentative, ask top ~3 unresolved | Batch all unresolved upfront, then go | Same as `/fab-ff`; gated on confidence >= 3.0 |
+| **Posture** | SRAD-driven adaptive questioning, gap analysis, conversational mode, intake-only output | Surface tentative, ask top ~3 unresolved | Batch all unresolved upfront, then go; gated on confidence >= threshold | Same as `/fab-ff` (frontloaded questions); no confidence gate |
 | **Interruption budget** | Adaptive — SRAD-driven (no fixed cap) | 1–2 per stage | 0–1 batch at start | Same as `/fab-ff` (frontloaded) |
 | **Output** | Intake + confidence score + assumptions summary | Key Decisions + Assumptions summary + [NEEDS CLARIFICATION] count | Cumulative Assumptions summary | Same as `/fab-ff` + apply/review/archive output |
 | **Escape valve** | `/fab-clarify` | `/fab-clarify` | `/fab-clarify` | `/fab-clarify` (bails on blockers or review failure) |
