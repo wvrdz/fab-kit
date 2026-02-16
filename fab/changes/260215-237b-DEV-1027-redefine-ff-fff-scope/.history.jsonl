@@ -1,0 +1,1 @@
+{"ts":"2026-02-15T23:01:59+05:30","event":"command","cmd":"fab-new","args":"redefine fab-ff and fab-fff: fff becomes full pipeline from intake with no gate, ff becomes spec-onward with confidence gate > 3"}
