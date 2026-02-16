@@ -46,17 +46,7 @@ flowchart TD
 
 Each stage produces a persistent artifact. Interrupt anything — `/fab-continue` picks up from the last checkpoint.
 
-### Self-correction built in
-
-When review finds problems, it loops back to the right stage instead of just reporting failures:
-
-| Review finds | Loops back to | What happens |
-|-------------|---------------|--------------|
-| Implementation bug | → apply | Unchecks failed tasks, re-runs them |
-| Missing/wrong tasks | → tasks | Revises tasks, re-applies |
-| Requirements were wrong | → spec | Updates spec, regenerates tasks |
-
-`/fab-fff` (full fast-forward) handles rework autonomously — up to 3 cycles before escalating to you.
+Review validates against both your spec and [project constitution](#code-quality-as-a-guardrail) — when it finds issues, it loops back for automatic rework rather than just reporting failures.
 
 A change folder looks like this:
 
@@ -168,6 +158,12 @@ Each change is a self-contained folder — multiple AI sessions run in parallel 
 
 ## Why Fab Kit
 
+AI coding tools give you speed but leave you to manage quality and knowledge yourself. Fab Kit gives you all three:
+
+| [**Speed**](#parallel-by-default) | [**Knowledge**](#shared-memory-that-grows-with-your-project) | [**Quality**](#code-quality-as-a-guardrail) |
+|:---:|:---:|:---:|
+| Parallel changes — never idle | Compounds with every change | Constitution + self-correcting review |
+
 ### Parallel by Default
 
 <!-- Diagram: Traditional one-at-a-time workflow vs assembly line. In the traditional approach, you and AI alternate between working and idle. In the assembly line, you create batches of changes while AI executes previous batches — both stay busy. -->
@@ -221,6 +217,35 @@ This creates a self-reinforcing cycle:
 - **Team knowledge, not personal notes** — Memory lives in git. Every developer and every AI session reads the same source of truth. Onboarding means cloning the repo.
 - **Bootstrap from existing docs** — `/docs-hydrate-memory` ingests documentation from Notion, Linear, or local files. The pipeline keeps it current from there.
 - **Structured, not append-only** — Memory is organized by domain (`auth/`, `payments/`, `users/`). `/docs-reorg-memory` restructures as it grows. `/docs-hydrate-specs` updates spec files with relevant details from memory.
+
+### Code Quality as a Guardrail
+
+AI writes code fast. Without structure, it also skips requirements, ignores architectural conventions, and ships the first thing that works. Fab enforces quality through structure, a constitution, and self-correcting review.
+
+```
+         ┌───────────────────────────┐
+         │    fab/constitution.md    │
+         │  MUST · SHOULD · MUST NOT │
+         └─────────────┬─────────────┘
+                       │
+  intake → spec → tasks → apply → review → hydrate
+             ↑       ↑       ↑        │
+             └───────┴───────┴────────┘
+                rework until spec +
+                constitution pass
+```
+
+- **Stages that can't be skipped** — The pipeline requires intake, spec, and tasks before any code is written. The AI can't jump straight to implementation.
+- **Project constitution** — `fab/constitution.md` defines your architectural rules using MUST/SHOULD/MUST NOT. Every spec, task breakdown, and review checks against it — not just the change's requirements.
+- **Review that fixes, not just flags** — When review finds problems, it loops back to the right stage:
+
+| Review finds | Loops back to | What happens |
+|-------------|---------------|--------------|
+| Implementation bug | → apply | Unchecks failed tasks, re-runs them |
+| Missing/wrong tasks | → tasks | Revises tasks, re-applies |
+| Requirements were wrong | → spec | Updates spec, regenerates tasks |
+
+`/fab-fff` (full fast-forward) handles rework autonomously — up to 3 cycles before escalating to you.
 
 ## Command Quick Reference
 
