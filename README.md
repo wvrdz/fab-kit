@@ -114,27 +114,23 @@ This generates `fab/config.yaml` and `fab/constitution.md` (your project's archi
 
 ### 3. Your first change
 
-```
+```bash
+# In your AI agent:
 /fab-new Add a loading spinner to the submit button
+  # Creation — creates change folder, writes intake.md, asks clarifying questions
+/fab-continue
+  # Planning — generates spec.md (structured requirements)
+/fab-continue
+  # Planning — generates tasks.md (implementation checklist)
+/fab-continue
+  # Execution — implements the code, checking off tasks as it goes
+/fab-continue
+  # Execution — reviews implementation against spec + constitution
+/fab-continue
+  # Completion — saves learnings into docs/memory/
+/fab-archive
+  # Completion — archives the change folder
 ```
-
-#### Creation
-
-1. Agent creates `intake.md` — captures intent, asks clarifying questions
-
-#### Planning (run `/fab-continue` after each)
-
-2. Generates `spec.md` — structured requirements
-3. Generates `tasks.md` — implementation checklist
-
-#### Execution
-
-4. Agent implements the code, checking off tasks as it goes
-5. Reviews the implementation against the spec
-
-#### Completion
-
-6. Saves learnings into `docs/memory/`, then archives the change
 
 At any point, run `/fab-status` to see where you are.
 

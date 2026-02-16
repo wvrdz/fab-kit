@@ -1,0 +1,1 @@
+{"ts":"2026-02-16T17:05:18+05:30","event":"command","cmd":"fab-new","args":"Replace .envrc symlink with line-ensuring sync (like .gitignore)"}
