@@ -569,10 +569,21 @@ validate_status_file() {
 # History Logging
 # ─────────────────────────────────────────────────────────────────────────────
 
+# resolve_change_dir <change_dir>
+# If change_dir is relative, resolve it against the fab root (STAGEMAN_DIR/../../..).
+resolve_change_dir() {
+  local dir="$1"
+  if [[ "$dir" != /* ]]; then
+    dir="$STAGEMAN_DIR/../../../$dir"
+  fi
+  echo "$dir"
+}
+
 # log_command <change_dir> <cmd> [args]
 # Append a "command" event to <change_dir>/.history.jsonl.
 log_command() {
-  local change_dir="$1"
+  local change_dir
+  change_dir="$(resolve_change_dir "$1")"
   local cmd="$2"
   local args="${3:-}"
   local now
@@ -590,7 +601,8 @@ log_command() {
 # log_confidence <change_dir> <score> <delta> <trigger>
 # Append a "confidence" event to <change_dir>/.history.jsonl.
 log_confidence() {
-  local change_dir="$1"
+  local change_dir
+  change_dir="$(resolve_change_dir "$1")"
   local score="$2"
   local delta="$3"
   local trigger="$4"
@@ -603,7 +615,8 @@ log_confidence() {
 # log_review <change_dir> <result> [rework]
 # Append a "review" event to <change_dir>/.history.jsonl.
 log_review() {
-  local change_dir="$1"
+  local change_dir
+  change_dir="$(resolve_change_dir "$1")"
   local result="$2"
   local rework="${3:-}"
   local now
