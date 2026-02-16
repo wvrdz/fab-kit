@@ -25,8 +25,9 @@
 
 ### `/fab-fff` — Full pipeline, no gate
 
-- **Starts**: intake exists (spec pending or later)
-- **Scope**: spec → tasks → apply → review → hydrate (unchanged from current `/fab-ff`)
+- **Minimum prerequisite**: intake exists (spec pending or later)
+- **Scope**: current stage → hydrate (skips whatever is already `done`)
+- **Callable from**: Any stage at or after intake — picks up from the current stage and runs forward
 - **Gate**: None (remove the current confidence gate)
 - **Auto-clarify**: Yes, interleaved between planning stages (same as current `/fab-ff`)
 - **On review failure**: Interactive rework menu — fix code, revise tasks, revise spec (inherits current `/fab-ff` behavior)
@@ -35,8 +36,9 @@
 
 ### `/fab-ff` — Fast-forward from spec, gated
 
-- **Starts**: spec `active` or later (spec.md and score already exist)
+- **Minimum prerequisite**: spec `active` or later (spec.md and score already exist)
 - **Scope**: current stage → hydrate (skips whatever is already `done`)
+- **Callable from**: Any stage at or after spec — picks up from the current stage and runs forward
 - **Gate**: Confidence score > 3 (moved from current `/fab-fff`)
 - **Auto-clarify**: Minimal — only between tasks generation if tasks aren't done yet
 - **On review failure**: Bail immediately with actionable message (inherits current `/fab-fff` behavior)
