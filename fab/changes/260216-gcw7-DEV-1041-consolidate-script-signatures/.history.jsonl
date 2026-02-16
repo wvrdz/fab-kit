@@ -1,0 +1,2 @@
+{"ts":"2026-02-16T17:15:54+05:30","event":"command","cmd":"fab-new","args":"Clean up and consolidate the signatures of all the command line scripts. Right now, are there too many sub-options for every single script? Can they be reduced to a fewer number that need to be maintained?"}
+{"ts":"2026-02-16T17:17:19+05:30","event":"command","cmd":"changeman-rename","args":"--folder 260216-gcw7-consolidate-script-signatures --slug DEV-1041-consolidate-script-signatures"}
