@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260215-237b-DEV-1027-redefine-ff-fff-scope** — Redefined `/fab-ff` and `/fab-fff` scope: fab-fff becomes the full pipeline command (spec → hydrate) with no confidence gate, fab-ff becomes fast-forward-from-spec (tasks → hydrate) gated on confidence > 3, resolving the chicken-and-egg problem.
 - **260215-h7q4-DEV-1026-clean-stale-brief-scoring-refs** — Removed stale references to brief.md scanning in calc-score README, SRAD spec, and test suite — the script only scans spec.md by design.
 - **260215-g4r2-DEV-1023-batch-rename-default-list** — Renamed batch scripts from `batch-*` to `batch-fab-*` and changed default no-arg behavior to show `--list` output instead of help text.
 - **260215-9yjx-DEV-1022-create-changeman-script** — Created changeman.sh to consolidate fab-new's filesystem boilerplate (ID generation, mkdir, .status.yaml template filling, created_by detection, stageman calls) into a single shell script, and refactored fab-new to delegate mechanical work and focus on AI-driven tasks.

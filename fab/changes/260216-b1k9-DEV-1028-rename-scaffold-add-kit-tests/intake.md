@@ -26,11 +26,33 @@ The rename emerged from reviewing `init-scaffold.sh` responsibilities — "scaff
 ### 1. Rename `init-scaffold.sh` → `sync-workspace.sh`
 
 - Rename the file at `fab/.kit/scripts/lib/init-scaffold.sh` → `fab/.kit/scripts/lib/sync-workspace.sh`
-- Update all internal references:
-  - The comment header and `#` description line in the script itself
-  - `changeman.sh` line 128 references `init-scaffold.sh` in a comment — update to `sync-workspace.sh`
-  - Any other scripts, skills, or memory files that reference the old name
-- Update docs/memory files that mention `init-scaffold.sh`
+- Rename the worktree hook: `fab/.kit/worktree-init-common/2-rerun-init-scaffold.sh` → `2-rerun-sync-workspace.sh` (and update the call inside)
+- Update the script's own header comment and description line
+- Update **all** references across the codebase (grep found 40+ occurrences outside the intake itself):
+
+  **Kit scripts and config:**
+  - `fab/.kit/scripts/lib/changeman.sh` line 128 — comment referencing `init-scaffold.sh`
+  - `fab/.kit/scripts/fab-upgrade.sh` lines 7, 96, 97 — comment + echo + bash invocation
+  - `fab/.kit/model-tiers.yaml` line 4 — comment
+
+  **Skills:**
+  - `fab/.kit/skills/fab-init.md` lines 48, 106, 124 — delegation references
+
+  **Memory files (docs/memory/fab-workflow/):**
+  - `distribution.md` — 7 references (bootstrap description, upgrade flow, symlink repair)
+  - `kit-architecture.md` — 10+ references (directory tree, section heading, design decisions, bootstrap flow)
+  - `init.md` — 15+ references (delegation table, bootstrap path, changelog entries)
+  - `model-tiers.md` — 4 references (skill deployment, agent generation)
+  - `templates.md` — 2 references (model_tier deployment)
+  - `hydrate.md` — 2 references (glob pattern)
+  - `preflight.md` — 1 reference (design decision)
+  - `migrations.md` — 3 references (VERSION creation, design decision)
+  - `index.md` — 1 reference (init entry description)
+
+  **README.md:**
+  - Lines 32 and 137 — directory tree and setup command
+
+  **Note**: Archived change artifacts (`fab/changes/archive/`) contain historical references. These are NOT updated — they are immutable records of past changes.
 
 ### 2. Adopt bats-core as bash testing framework
 
