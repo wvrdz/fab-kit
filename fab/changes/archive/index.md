@@ -1,5 +1,7 @@
 # Archive Index
 
+- **260216-u6d5-DEV-1039-add-changeman-rename** — Added a `rename` subcommand to changeman.sh for atomically renaming change folders, updating .status.yaml and fab/current, with full validation and test coverage.
+- **260216-7ltw-DEV-1038-standardize-state-keyed-suggestions** — Standardized next-step suggestions across all fab skills using a single state-keyed table in _context.md, replacing skill-keyed lookups, per-skill hardcoded Next: lines, and fab-switch's private table, and removing fab-new's --switch flag.
 - **260216-tk7a-DEV-1037-consolidate-setup-upgrade-flow** — Consolidated three confusing user-facing commands (fab-init, fab-update, fab-upgrade) into a two-entry-point architecture: /fab-setup (LLM skill with subcommands) and fab-sync.sh (standalone bash script), eliminating name confusion and manual handoff failures.
 - **260216-knmw-DEV-1030-swap-ff-fff-review-rework** — Swapped review failure behavior between fab-ff and fab-fff: fab-ff now presents interactive rework options, fab-fff now uses fully autonomous rework with bounded retry (3 cycles) and escalation logic.
 - **260216-f88c-DEV-1029-migrate-existing-tests-to-bats** — Migrated 4 legacy hand-rolled bash test suites (preflight, resolve-change, stageman, calc-score) to bats-core, eliminating the dual-format runner and unifying on a single test framework.
