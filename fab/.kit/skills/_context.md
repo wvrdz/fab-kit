@@ -148,7 +148,7 @@ For each decision point, evaluate four dimensions on a **continuous 0–100 scal
 
 **Aggregation**: Compute a composite score via weighted mean: `composite = 0.25*S + 0.30*R + 0.25*A + 0.20*D`. Map to grade using thresholds: Certain (85–100), Confident (60–84), Tentative (30–59), Unresolved (0–29). Critical Rule override: R < 25 AND A < 25 → always Unresolved.
 
-Record per-dimension scores in the Assumptions table's required `Scores` column (e.g., `S:75 R:80 A:65 D:70`). The Scores column is mandatory for every row. `calc-score.sh` parses these and writes aggregate dimension statistics to `.status.yaml`.
+Record per-dimension scores in the Assumptions table's required `Scores` column (e.g., `S:75 R:80 A:65 D:70`). The Scores column is mandatory for every row. `fab/.kit/scripts/lib/calc-score.sh` parses these and writes aggregate dimension statistics to `.status.yaml`.
 
 ### Confidence Grades
 
@@ -276,8 +276,8 @@ Range: 0.0 (any Unresolved, or 5+ Tentative) to 5.0 (all Certain). Penalties: Ce
 
 ### Invocation
 
-Confidence is computed by `fab/.kit/scripts/lib/calc-score.sh`, invoked by `/fab-continue` (spec stage) and `/fab-clarify` (suggest mode). `/fab-ff` gates on the existing score via `calc-score.sh --check-gate` but does not recompute. `/fab-fff` does not gate or recompute.
+Confidence is computed by `fab/.kit/scripts/lib/calc-score.sh`, invoked by `/fab-continue` (spec stage) and `/fab-clarify` (suggest mode). `/fab-ff` gates on the existing score via `fab/.kit/scripts/lib/calc-score.sh --check-gate` but does not recompute. `/fab-fff` does not gate or recompute.
 
 ### Template
 
-`fab/.kit/templates/status.yaml` includes the confidence block initialized to zero counts and score 0.0. Template defaults persist until `/fab-continue` generates the spec and invokes `lib/calc-score.sh`.
+`fab/.kit/templates/status.yaml` includes the confidence block initialized to zero counts and score 0.0. Template defaults persist until `/fab-continue` generates the spec and invokes `fab/.kit/scripts/lib/calc-score.sh`.

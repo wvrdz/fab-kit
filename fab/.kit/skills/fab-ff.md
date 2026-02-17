@@ -11,7 +11,7 @@ description: "Fast-forward from spec — confidence-gated pipeline from current 
 
 ## Purpose
 
-Fast-forward from spec through hydrate: tasks → apply → review → hydrate. Gated on confidence score (dynamic per-type thresholds via `calc-score.sh --check-gate`). Minimal auto-clarify (tasks only). On review failure, auto-loops between apply and review (sub-agent review, prioritized findings, comment triage) for up to 3 cycles, then falls back to interactive rework options. Resumable — re-running picks up from the first incomplete stage.
+Fast-forward from spec through hydrate: tasks → apply → review → hydrate. Gated on confidence score (dynamic per-type thresholds via `fab/.kit/scripts/lib/calc-score.sh --check-gate`). Minimal auto-clarify (tasks only). On review failure, auto-loops between apply and review (sub-agent review, prioritized findings, comment triage) for up to 3 cycles, then falls back to interactive rework options. Resumable — re-running picks up from the first incomplete stage.
 
 ---
 
@@ -25,7 +25,7 @@ Fast-forward from spec through hydrate: tasks → apply → review → hydrate. 
 
 1. Run preflight per `_context.md` Section 2. Pass `<change-name>` if provided.
 2. **Spec prerequisite**: Check that spec is `active` or later (not `pending`). If `spec: pending`, STOP: `Spec not started. Run /fab-continue to generate the spec first, or use /fab-fff for the full pipeline.`
-3. **Confidence gate**: Run `lib/calc-score.sh --check-gate <change_dir>`. If the gate fails → STOP: `Confidence is {score} of 5.0 (need > {threshold} for {change_type}). Run /fab-clarify to resolve, then retry.`
+3. **Confidence gate**: Run `fab/.kit/scripts/lib/calc-score.sh --check-gate <change_dir>`. If the gate fails → STOP: `Confidence is {score} of 5.0 (need > {threshold} for {change_type}). Run /fab-clarify to resolve, then retry.`
 4. Log invocation: `fab/.kit/scripts/lib/stageman.sh log-command <change_dir> "fab-ff"`
 
 ---
