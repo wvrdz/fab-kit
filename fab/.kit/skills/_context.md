@@ -18,7 +18,7 @@ Read these files first — they define the project's identity, constraints, and 
 - **`docs/memory/index.md`** — memory landscape (which domains and memory files exist)
 - **`docs/specs/index.md`** — specifications landscape (pre-implementation design intent, human-curated)
 
-> **Note**: If the skill runs `lib/preflight.sh` (Section 2 above), the init check (config.yaml and constitution.md existence) is already covered by the script. Skills using preflight don't need separate existence checks for these files — they only need to read them for content.
+> **Note**: If the skill runs `fab/.kit/scripts/lib/preflight.sh` (Section 2 above), the init check (config.yaml and constitution.md existence) is already covered by the script. Skills using preflight don't need separate existence checks for these files — they only need to read them for content.
 
 ### 2. Change Context (when operating on an active change)
 

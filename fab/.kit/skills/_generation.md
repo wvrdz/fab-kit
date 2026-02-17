@@ -92,6 +92,6 @@
    - Additional categories from `fab/config.yaml` `checklist.extra_categories` (if any)
 5. Use sequential IDs: CHK-001, CHK-002, ...
 6. Update `.status.yaml` via CLI:
-   - `lib/stageman.sh set-checklist <file> generated true`
-   - `lib/stageman.sh set-checklist <file> total <count>` (number of checklist items generated)
-   - `lib/stageman.sh set-checklist <file> completed 0`
+   - `fab/.kit/scripts/lib/stageman.sh set-checklist <file> generated true`
+   - `fab/.kit/scripts/lib/stageman.sh set-checklist <file> total <count>` (number of checklist items generated)
+   - `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed 0`

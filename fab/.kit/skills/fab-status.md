@@ -38,7 +38,7 @@ Run the preflight script to resolve the change, then render the status display:
 bash fab/.kit/scripts/lib/preflight.sh [change-name]
 ```
 
-Use `lib/preflight.sh` and `lib/stageman.sh` for validation and data retrieval. The skill handles formatting and presentation:
+Use `fab/.kit/scripts/lib/preflight.sh` and `fab/.kit/scripts/lib/stageman.sh` for validation and data retrieval. The skill handles formatting and presentation:
 
 - Reads `fab/.kit/VERSION`, `fab/VERSION` (if exists), `fab/current`, `fab/changes/{name}/.status.yaml`, and `fab/config.yaml` (for `git.enabled`)
 - Queries live branch via `git branch --show-current` when git is enabled (instead of reading a static `branch:` field from `.status.yaml`)
