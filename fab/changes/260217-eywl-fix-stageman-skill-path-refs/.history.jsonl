@@ -1,1 +1,5 @@
 {"ts":"2026-02-17T19:02:34+05:30","event":"command","cmd":"fab-new","args":"Fix stageman path references in skill files — all lib/stageman.sh references should be fab/.kit/scripts/lib/stageman.sh (repo-root-relative)"}
+{"ts":"2026-02-18T02:20:04+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-18T02:21:12+05:30","event":"confidence","score":5.0,"delta":"+5.0","trigger":"calc-score"}
+{"ts":"2026-02-18T02:30:07+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-18T02:35:44+05:30","event":"review","result":"passed"}

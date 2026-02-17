@@ -6,7 +6,7 @@
 
 Execution behavior (apply, review, hydrate) is accessed via `/fab-continue`, which dispatches to the appropriate behavior based on the active stage. The standalone skills `/fab-apply` and `/fab-review` no longer exist as separate commands — their behavior is consolidated into `/fab-continue`. `/fab-archive` exists as a standalone housekeeping skill (not a pipeline stage) for moving completed changes to the archive. All execution behaviors in `/fab-continue` inherit the optional `[change-name]` argument, which is passed to the preflight script for transient change resolution without modifying `fab/current`.
 
-**Status mutations**: All `.status.yaml` progress transitions, checklist updates, and confidence writes use `lib/stageman.sh` CLI commands (`transition`, `set-state`, `set-checklist`, `set-confidence`) via the Bash tool, rather than direct file editing. This centralizes validation and ensures atomic writes with `last_updated` refresh. All `transition` calls require a `driver` parameter (the invoking skill name); `set-state` requires `driver` when setting to `active`. Stage metrics (started_at, completed_at, driver, iterations) are updated automatically as side-effects.
+**Status mutations**: All `.status.yaml` progress transitions, checklist updates, and confidence writes use `fab/.kit/scripts/lib/stageman.sh` CLI commands (`transition`, `set-state`, `set-checklist`, `set-confidence`) via the Bash tool, rather than direct file editing. This centralizes validation and ensures atomic writes with `last_updated` refresh. All `transition` calls require a `driver` parameter (the invoking skill name); `set-state` requires `driver` when setting to `active`. Stage metrics (started_at, completed_at, driver, iterations) are updated automatically as side-effects.
 
 **Pipeline invocation**: Both `/fab-fff` and `/fab-ff` use the same execution behavior internally as part of their pipeline runs. All three pipeline skills (`/fab-continue`, `/fab-ff`, `/fab-fff`) dispatch review to a sub-agent in a separate execution context, producing structured findings with three-tier priority (must-fix / should-fix / nice-to-have). `/fab-continue` preserves manual rework on failure; `/fab-ff` auto-loops between apply and review (up to 3 cycles) with interactive fallback on exhaustion; `/fab-fff` uses autonomous rework with bounded retry (3-cycle cap, escalation after 2 consecutive fix-code failures, bail on exhaustion). Both `/fab-ff` and `/fab-fff` accept an optional `[change-name]` argument.
 
@@ -73,11 +73,11 @@ Each finding includes: severity tier, description, and file:line reference where
 
 #### On Pass
 
-All checks succeed → stage advances to review done. The skill calls `lib/stageman.sh log-review <change_dir> "passed"` to record the review outcome in `.history.jsonl`.
+All checks succeed → stage advances to review done. The skill calls `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"` to record the review outcome in `.history.jsonl`.
 
 #### On Failure
 
-The skill calls `lib/stageman.sh log-review <change_dir> "failed" "<rework-option>"` to record the review outcome. Rework behavior differs by invoking skill:
+The skill calls `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "failed" "<rework-option>"` to record the review outcome. Rework behavior differs by invoking skill:
 
 **`/fab-continue` (manual rework)**: Presents the sub-agent's prioritized findings to the user, then offers three rework options:
 
@@ -246,6 +246,7 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260217-eywl-fix-stageman-skill-path-refs | 2026-02-18 | All `lib/stageman.sh` references in skill files updated to repo-root-relative `fab/.kit/scripts/lib/stageman.sh`. Also fixed 2 short-form `lib/preflight.sh` references in `_context.md` and `fab-status.md`. Memory file references updated to match. |
 | 260216-7ltw-DEV-1038-standardize-state-keyed-suggestions | 2026-02-16 | All `Next:` lines in execution skills (`/fab-continue`, `/fab-archive`) now derived from canonical state table in `_context.md`. Removed hardcoded suggestions from review pass verdict and archive mode output. `/fab-archive` restore without `--switch` now uses activation preamble before state-derived commands. |
 | 260216-gqpp-DEV-1040-code-review-loop | 2026-02-16 | Review dispatched to sub-agent in separate execution context for all three pipeline skills. Structured findings with three-tier priority (must-fix / should-fix / nice-to-have). `/fab-ff` gains auto-loop (3 cycles) with interactive fallback; `/fab-fff` retains auto-loop with bail. Comment triage by applying agent. Escalation rule after 2 consecutive fix-code. |
 | 260216-knmw-DEV-1030-swap-ff-fff-review-rework | 2026-02-16 | Swapped pipeline invocation note: `/fab-ff` now presents interactive rework on review failure; `/fab-fff` now uses autonomous rework with bounded retry (3-cycle cap, escalation after 2 consecutive fix-code) |
