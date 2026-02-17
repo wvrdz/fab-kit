@@ -64,12 +64,13 @@ fab/current/add-spinner/
 Install with [Homebrew](https://brew.sh/) (macOS and Linux):
 
 ```bash
-brew install yq gh bats-core direnv
+brew install yq jq gh bats-core direnv
 ```
 
 | Tool | Purpose |
 |------|---------|
 | [yq](https://github.com/mikefarah/yq) | YAML processing for status files and schemas |
+| [jq](https://jqlang.github.io/jq/) | JSON processing for settings merge during sync |
 | [gh](https://cli.github.com/) | GitHub CLI — used for installation and releases |
 | [bats-core](https://github.com/bats-core/bats-core) | Bash test runner for kit validation |
 | [direnv](https://direnv.net/) | Auto-loads `.envrc` to put fab scripts on PATH |

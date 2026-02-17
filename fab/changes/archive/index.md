@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260217-elxh-fix-continue-single-dispatch** — Added single-dispatch rule to fab-continue Normal Flow to prevent auto-advancing through multiple stages in one invocation, scoped to avoid breaking fab-ff/fab-fff pipeline behavior.
 - **260217-17pe-DEV-1046-scaffold-setup-templates** — Extracted inline config.yaml and constitution.md templates from fab-setup.md into scaffold files, eliminating template duplication and drift risk between skill prose and scaffold directory.
 - **260216-oinh-DEV-1045-fold-resolve-into-changeman** — Folded resolve-change.sh into changeman.sh as `resolve` and `switch` subcommands, simplifying /fab-switch to a single bash call and eliminating the only remaining sourced library script.
 - **260216-gqpp-DEV-1040-code-review-loop** — Introduced a review sub-agent for fresh-context code review with an apply-review loop, prioritized review comments (must-fix/should-fix/nice-to-have), and bounded retry in fab-ff and fab-fff.

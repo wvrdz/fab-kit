@@ -426,4 +426,45 @@ if [ -f "$gitignore_entries" ]; then
   fi
 fi
 
+# ── 8. .claude/settings.local.json (JSON merge) ─────────────────────
+# Scaffold provides baseline permissions for fab-kit scripts, git, gh, etc.
+# If the file exists, merge scaffold entries into existing allow list.
+# If it doesn't exist, copy the scaffold as-is.
+settings_scaffold="$kit_dir/scaffold/settings.local.json"
+settings_target="$repo_root/.claude/settings.local.json"
+
+if [ -f "$settings_scaffold" ]; then
+  mkdir -p "$repo_root/.claude"
+
+  if [ ! -f "$settings_target" ]; then
+    cp "$settings_scaffold" "$settings_target"
+    count=$(jq '.permissions.allow | length' "$settings_target")
+    echo "Created: .claude/settings.local.json ($count permission rules)"
+  elif command -v jq >/dev/null 2>&1; then
+    merged=$(jq -s '
+      (.[0].permissions.allow // []) as $scaffold |
+      (.[1] // {}) as $existing |
+      ($existing.permissions.allow // []) as $current |
+      ($scaffold | map(select(. as $s | $current | index($s) | not))) as $new |
+      if ($new | length) > 0 then
+        $existing | .permissions.allow = ($current + $new)
+      else
+        $existing
+      end
+    ' "$settings_scaffold" "$settings_target")
+    new_count=$(echo "$merged" | jq '
+      (input.permissions.allow // [] | length) as $before |
+      (.permissions.allow | length) - $before
+    ' - "$settings_target")
+    if [ "$new_count" -gt 0 ]; then
+      printf '%s\n' "$merged" > "$settings_target"
+      echo "Updated: .claude/settings.local.json (added $new_count permission rules)"
+    else
+      echo ".claude/settings.local.json: OK"
+    fi
+  else
+    echo "WARN: jq not found — skipping .claude/settings.local.json merge"
+  fi
+fi
+
 echo "Done."

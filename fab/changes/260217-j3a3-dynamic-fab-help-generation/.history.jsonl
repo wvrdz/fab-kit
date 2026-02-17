@@ -1,0 +1,1 @@
+{"ts":"2026-02-17T18:40:30+05:30","event":"command","cmd":"fab-new","args":"Rewrite fab-help.sh to dynamically generate command list from skill file frontmatter"}

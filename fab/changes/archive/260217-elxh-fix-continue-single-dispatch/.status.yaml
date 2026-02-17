@@ -1,0 +1,30 @@
+name: 260217-elxh-fix-continue-single-dispatch
+created: 2026-02-17T18:54:31+05:30
+created_by: sahil-weaver
+change_type: feature
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: false
+  path: checklist.md
+  completed: 0
+  total: 0
+confidence:
+  certain: 0
+  confident: 0
+  tentative: 0
+  unresolved: 0
+  score: 0.0
+stage_metrics:
+  intake: {started_at: "2026-02-17T18:54:31+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-17T19:01:32+05:30"}
+  spec: {completed_at: "2026-02-17T19:01:32+05:30"}
+  tasks: {completed_at: "2026-02-17T19:01:32+05:30"}
+  apply: {completed_at: "2026-02-17T19:01:32+05:30"}
+  review: {completed_at: "2026-02-17T19:01:32+05:30"}
+  hydrate: {completed_at: "2026-02-17T19:01:32+05:30"}
+last_updated: "2026-02-17T19:01:32+05:30"

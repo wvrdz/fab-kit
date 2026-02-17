@@ -49,6 +49,8 @@ Dispatch on preflight's derived `stage`. If progress is `pending`, set to `activ
 | `hydrate` | Execute hydrate → `hydrate: done` |
 | all `done` | Block: "Change is complete." |
 
+**Single-dispatch rule**: Execute exactly ONE stage per invocation. After the dispatched stage completes its work and transitions to the next stage (Step 4), proceed directly to Step 5 (Output) and STOP. Do NOT loop back to re-evaluate the new current stage — the user will run `/fab-continue` again to advance further.
+
 ### Step 2: Load Context
 
 Load per `_context.md` layers. Stage-specific additions: planning stages load intake + memory files; apply loads spec + tasks + source code; review adds checklist + memory; hydrate loads memory index + target files.
@@ -114,7 +116,7 @@ If `config.yaml` defines a `code_quality` section, load its `principles` as addi
    5. Write tests per `code_quality.test_strategy` (default: `test-alongside`)
    6. Run tests, fix failures
    7. Mark `[x]` immediately
-5. On completion: run `lib/stageman.sh transition <file> apply review fab-continue`
+5. On completion: run `lib/stageman.sh transition <file> apply review fab-continue`.
 
 ### Resumability
 
@@ -170,7 +172,7 @@ Each finding includes: severity tier, description, and file:line reference where
 
 ### Verdict
 
-**Pass**: Run `lib/stageman.sh transition <file> review hydrate fab-continue`. Run `lib/stageman.sh log-review <change_dir> "passed"`. Update checklist via `lib/stageman.sh set-checklist <file> completed <N>`. Output report + `Next: {per state table}`
+**Pass**: Run `lib/stageman.sh transition <file> review hydrate fab-continue`. Run `lib/stageman.sh log-review <change_dir> "passed"`. Update checklist via `lib/stageman.sh set-checklist <file> completed <N>`. Output report + `Next: {per state table}`.
 
 **Fail** (manual rework — `/fab-continue` only): Run `lib/stageman.sh set-state <file> review failed` then `lib/stageman.sh set-state <file> apply active fab-continue`. Run `lib/stageman.sh log-review <change_dir> "failed" "<rework-option>"` after user selects rework. Update checklist via `lib/stageman.sh set-checklist <file> completed <N>`. Present findings with priority annotations, then offer rework options:
 

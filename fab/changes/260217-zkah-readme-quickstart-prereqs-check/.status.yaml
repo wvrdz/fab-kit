@@ -1,9 +1,9 @@
-name: 260217-ny8o-DEV-1047-add-fab-pr-review
-created: 2026-02-17T08:46:14+05:30
+name: 260217-zkah-readme-quickstart-prereqs-check
+created: 2026-02-17T18:56:47+05:30
 created_by: sahil-weaver
 change_type: feature
 progress:
-  intake: active
+  intake: done
   spec: pending
   tasks: pending
   apply: pending
@@ -21,5 +21,5 @@ confidence:
   unresolved: 0
   score: 0.0
 stage_metrics:
-  intake: {started_at: "2026-02-17T08:46:14+05:30", driver: fab-new, iterations: 1}
-last_updated: "2026-02-17T08:46:14+05:30"
+  intake: {started_at: "2026-02-17T18:56:47+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-17T18:57:47+05:30"}
+last_updated: "2026-02-17T18:57:47+05:30"
