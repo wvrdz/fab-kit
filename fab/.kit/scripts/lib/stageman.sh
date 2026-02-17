@@ -570,11 +570,11 @@ validate_status_file() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 # resolve_change_dir <change_dir>
-# If change_dir is relative, resolve it against the fab root (STAGEMAN_DIR/../../..).
+# If change_dir is relative, resolve it against the git repo root.
 resolve_change_dir() {
   local dir="$1"
   if [[ "$dir" != /* ]]; then
-    dir="$STAGEMAN_DIR/../../../$dir"
+    dir="$(git rev-parse --show-toplevel)/$dir"
   fi
   echo "$dir"
 }
