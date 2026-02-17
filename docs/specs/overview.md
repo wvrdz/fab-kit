@@ -106,7 +106,7 @@ For detailed visual maps of how commands connect — including shortcuts, rework
 | `/docs-hydrate-memory [sources...]` | Ingest external sources into docs/memory/ | Updated `docs/memory/` with indexes |
 | `/fab-new` | Start change (optionally with `--switch`) | `intake.md`, `.status.yaml` |
 | `/fab-continue [<stage>]` | Next artifact (or reset to stage) | Next stage artifact |
-| `/fab-ff` | Fast forward from spec with auto-rework loop | tasks + checklist + apply + sub-agent review |
+| `/fab-ff` | Fast forward from spec with auto-rework loop | tasks + checklist + apply + sub-agent review + hydrate (updated memory) |
 | `/fab-fff` | Full autonomous pipeline with sub-agent rework | All artifacts through hydrate |
 | `/fab-clarify` | Deepen current artifact | Refined artifact (in place) |
 | `/fab-continue` → apply | Implement | Code changes |

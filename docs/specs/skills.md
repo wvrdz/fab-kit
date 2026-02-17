@@ -247,7 +247,7 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 
 **Purpose**: Fast-forward from spec through hydrate. Confidence-gated, with sub-agent review, auto-rework loop (up to 3 cycles with prioritized findings), and interactive fallback on retry cap exhaustion. Requires an active change with a completed spec.
 
-**Context**: config, constitution, `intake.md`, target memory file(s) from `docs/memory/` (all loaded upfront since ff traverses all planning stages)
+**Context**: config, constitution, `intake.md`, target memory file(s) from `docs/memory/` (loaded once for the spec → hydrate run)
 
 **Flow**: spec → tasks (+ checklist) → apply → review → hydrate
 

@@ -59,7 +59,7 @@ The sub-agent performs all of these checks:
 3. Run tests affected by the change (scoped to modules touched, not the full suite)
 4. Features match spec requirements (spot-check key scenarios from `spec.md`)
 5. No memory drift detected (implementation doesn't contradict memory files)
-6. Code quality check — for each file modified during apply: naming conventions consistent with surrounding code, functions focused and appropriately sized, error handling consistent with codebase style, existing utilities reused. If `config.yaml` defines `code_quality.principles`, check each applicable principle. If `code_quality.anti_patterns` defined, check for violations. Code quality issues are review failures with specific file:line references (same rework flow as spec mismatches)
+6. Code quality check — for each file modified during apply: naming conventions consistent with surrounding code, functions focused and appropriately sized, error handling consistent with codebase style, existing utilities reused. If `config.yaml` defines `code_quality.principles`, check each applicable principle. If `code_quality.anti_patterns` defined, check for violations. Report code quality issues with specific file:line references; classify as should-fix by default, and as must-fix only when they correspond to spec mismatches, functional defects, or violations of hard project constraints
 
 #### Structured Review Output
 
