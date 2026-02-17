@@ -1,5 +1,9 @@
 # Archive Index
 
+- **260218-hpzb-fix-calc-score-path-refs** — Fixed short-form `calc-score.sh` path references in skill files to use repo-root-relative `fab/.kit/scripts/lib/calc-score.sh`, matching the convention from the stageman path fix.
+- **260218-bb93-restructure-config-yaml** — Extracted context and code_quality sections from config.yaml to companion markdown files, deleted dead stages: section, and merged model-tiers.yaml into config.yaml.
+- **260218-95xn-split-stage-display-from-routing** — Split stage display from routing in stageman/preflight/changeman so users see "where you are" vs "what's next" instead of a single misleading stage indicator.
+- **260217-zkah-readme-quickstart-prereqs-check** — Restructured README Quick Start to fold Initialize and Updating under Install as sub-sections, and added a prerequisites validation step to fab-sync.
 - **260218-bx4d-consolidate-worktree-init-into-sync** — Consolidated worktree-init.sh into fab-sync.sh as a single bootstrap entry point, eliminating the circular call chain and reducing two entry points to one.
 - **260217-eywl-fix-stageman-skill-path-refs** — Fixed all `lib/stageman.sh` references in skill markdown files to use repo-root-relative paths (`fab/.kit/scripts/lib/stageman.sh`), consistent with the preflight.sh convention in _context.md.
 - **260217-elxh-fix-continue-single-dispatch** — Added single-dispatch rule to fab-continue Normal Flow to prevent auto-advancing through multiple stages in one invocation, scoped to avoid breaking fab-ff/fab-fff pipeline behavior.
