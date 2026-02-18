@@ -10,7 +10,7 @@
 
 ### Standalone Hydrate Skill
 
-The system provides `/docs-hydrate-memory [sources...|folders...]` as an independent skill containing hydration and generation logic. It is defined in `fab/.kit/skills/docs-hydrate-memory.md` and is auto-discovered by `sync/3-sync-workspace.sh`'s `*.md` glob pattern.
+The system provides `/docs-hydrate-memory [sources...|folders...]` as an independent skill containing hydration and generation logic. It is defined in `fab/.kit/skills/docs-hydrate-memory.md` and is auto-discovered by `sync/2-sync-workspace.sh`'s `*.md` glob pattern.
 
 ### Argument-Driven Mode Selection
 
@@ -84,7 +84,7 @@ Every hydration operation maintains navigable indexes:
 
 | Change | Date | Summary |
 |--------|------|---------|
-| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` (3 occurrences) and `lib/sync-workspace.sh` → `sync/3-sync-workspace.sh` in glob pattern reference |
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` (3 occurrences) and `lib/sync-workspace.sh` → `sync/2-sync-workspace.sh` in glob pattern reference |
 | 260214-m3v8-relocate-docs-dev-scripts | 2026-02-14 | Updated hydration target paths from `fab/memory/` to `docs/memory/` |
 | 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_init_scaffold.sh` → `lib/sync-workspace.sh` in glob pattern reference |
 | 260214-r8kv-docs-skills-housekeeping | 2026-02-14 | Renamed skill from `/fab-hydrate` to `/docs-hydrate-memory`; updated skill file path, glob pattern reference, and all cross-references |

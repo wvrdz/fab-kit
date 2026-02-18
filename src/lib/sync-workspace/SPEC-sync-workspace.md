@@ -1,10 +1,10 @@
-# Workspace Sync (3-sync-workspace)
+# Workspace Sync (2-sync-workspace)
 
 Structural bootstrap script that syncs kit assets into the workspace. Creates directories, skill symlinks, agent files, skeleton docs, `.envrc`, `fab/VERSION`, and `.gitignore` entries. Cleans up stale artifacts from deleted skills. Idempotent — safe to re-run.
 
 ## Sources of Truth
 
-- **Implementation**: `fab/.kit/sync/3-sync-workspace.sh` — main file (distributed with kit)
+- **Implementation**: `fab/.kit/sync/2-sync-workspace.sh` — main file (distributed with kit)
 - **Runner**: `fab/.kit/scripts/fab-sync.sh` — orchestrator that runs all `fab/.kit/sync/*.sh` scripts in order
 - **Architecture docs**: `docs/memory/fab-workflow/kit-architecture.md` — directory structure, script descriptions
 
@@ -15,7 +15,7 @@ Structural bootstrap script that syncs kit assets into the workspace. Creates di
 fab/.kit/scripts/fab-sync.sh
 
 # Run this script directly
-fab/.kit/sync/3-sync-workspace.sh
+fab/.kit/sync/2-sync-workspace.sh
 ```
 
 No arguments. No flags. The script resolves paths relative to its own location.

@@ -102,7 +102,7 @@ cp -r /path/to/fab-kit/fab/.kit ./fab/
 
 ```bash
 fab/.kit/scripts/fab-sync.sh            # creates directories, symlinks, docs/memory/, .gitignore
-direnv allow                            # approve .envrc (adds scripts to PATH)
+# direnv allow                          # Done by fab-sync.sh automatically. approve .envrc (adds scripts to PATH)
 # No direnv? export PATH="$PWD/fab/.kit/scripts:$PATH"
 ```
 

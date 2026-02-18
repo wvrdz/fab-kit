@@ -374,7 +374,7 @@ Agent-specific skill files are **symlinks** pointing into `fab/.kit/skills/`. Th
 
 ### Claude Code (`.claude/skills/`)
 
-`fab/.kit/scripts/fab-sync.sh` (via `sync/3-sync-workspace.sh`) creates skill subdirectories with symlinks:
+`fab/.kit/scripts/fab-sync.sh` (via `sync/2-sync-workspace.sh`) creates skill subdirectories with symlinks:
 ```
 .claude/skills/
 ├── fab-setup/
