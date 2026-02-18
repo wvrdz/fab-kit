@@ -75,6 +75,11 @@ If exists: skip.
 If missing: copy `fab/.kit/scaffold/code-quality.md` to `fab/code-quality.md`. Report "Created: fab/code-quality.md".
 If exists: skip.
 
+#### 1b4. `fab/code-review.md`
+
+If missing: copy `fab/.kit/scaffold/code-review.md` to `fab/code-review.md`. Report "Created: fab/code-review.md".
+If exists: skip.
+
 #### 1c. `docs/memory/index.md`
 
 If missing, create `docs/memory/` directory and copy `fab/.kit/scaffold/memory-index.md` to `docs/memory/index.md`.
@@ -135,6 +140,7 @@ Created: fab/config.yaml
 Created: fab/constitution.md
 Created: fab/context.md
 Created: fab/code-quality.md
+Created: fab/code-review.md
 Created: fab/VERSION ({version})
 Created: docs/memory/index.md
 Created: docs/specs/index.md
@@ -158,7 +164,7 @@ Create a new `fab/config.yaml` interactively or update specific sections. Preser
 
 ### Config Arguments
 
-- **`[section]`** *(optional)* — section to edit directly, skipping the menu. Valid values: `project`, `source_paths`, `rules`, `checklist`, `git`, `naming`, `model_tiers`.
+- **`[section]`** *(optional)* — section to edit directly, skipping the menu. Valid values: `project`, `source_paths`, `rules`, `checklist`, `git`, `naming`, `model_tiers`, `context`, `code-quality`, `code-review`.
 
 ### Config Pre-flight
 
@@ -184,20 +190,23 @@ When invoked without a section argument:
 
 ```
 fab/config.yaml sections:
-1. project      — name and description
-2. source_paths — implementation code directories
-3. rules        — per-stage generation rules
-4. checklist    — extra quality categories
-5. git          — branch integration settings
-6. naming       — change folder naming format
-7. model_tiers  — model tier mappings for skill deployment
-8. Done
+1. project       — name and description
+2. source_paths  — implementation code directories
+3. rules         — per-stage generation rules
+4. checklist     — extra quality categories
+5. git           — branch integration settings
+6. naming        — change folder naming format
+7. model_tiers   — model tier mappings for skill deployment
+8. context.md    — free-form project context
+9. code-quality.md — coding standards for apply/review
+10. code-review.md — review policy for validation sub-agent
+11. Done
 
-Which section to update? (1-8)
+Which section to update? (1-11)
 ```
 
 2. Process selection -> **Edit Section Flow**
-3. After editing: "Update another section? (1-7 or 'done')"
+3. After editing: "Update another section? (1-10 or 'done')"
 4. Loop until Done
 
 When invoked with a section argument: validate against valid sections (error if invalid), go directly to **Edit Section Flow**, then offer to update another section.

@@ -263,6 +263,22 @@ AI writes code fast. Without structure, it also skips requirements, ignores arch
 
 `/fab-fff` and `/fab-ff` auto-loop between apply and review (up to 3 cycles) — each re-review uses a fresh sub-agent. `/fab-ff` falls back to interactive rework after exhausting auto-retries.
 
+#### The 5 Cs of Quality
+
+Five configuration files shape how AI works in your project. Each answers a different question:
+
+| C | File | Question |
+|---|------|----------|
+| **Constitution** | `fab/constitution.md` | What are our non-negotiable principles? |
+| **Context** | `fab/context.md` | What are we working with? |
+| **Code Quality** | `fab/code-quality.md` | How should code look when we write it? |
+| **Code Review** | `fab/code-review.md` | What should we look for when we validate? |
+| **Config** | `fab/config.yaml` | What are the project's factual settings? |
+
+Notice the author-vs-critic split: `code-quality.md` guides the **writing** agent during apply — coding standards, anti-patterns, test strategy. `code-review.md` guides the **reviewing** sub-agent during review — severity definitions, scope boundaries, rework budget. Different cognitive modes, different concerns, different files.
+
+All five are optional except `constitution.md` and `config.yaml`. Run `/fab-setup` to generate them from scaffolds with sensible defaults.
+
 ### Structured Autonomy, Not Guesswork
 
 AI tools either ask too many questions or silently assume. Fab uses **SRAD** — a 4-dimension framework — to decide which to do for each decision point during planning.

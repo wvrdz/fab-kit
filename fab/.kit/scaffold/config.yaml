@@ -8,6 +8,7 @@
 #   fab/constitution.md    — project principles & constraints (MUST/SHOULD rules)
 #   fab/context.md         — free-form project context (tech stack, conventions)
 #   fab/code-quality.md    — coding standards for apply/review (optional)
+#   fab/code-review.md     — review policy for validation sub-agent (optional)
 #   docs/memory/index.md   — centralized documentation index
 #
 # ─────────────────────────────────────────────────────────────────────────────
