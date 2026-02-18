@@ -46,6 +46,8 @@ naming:
   # Example without Linear ID: 260115-a7k2-add-oauth
   # Example with Linear ID:    260115-a7k2-DEV-988-add-oauth
   format: "{YYMMDD}-{XXXX}-[{ISSUE}-]{slug}"
+  backlog_format: "- [ ] [{XXXX}] {YYYY-MM-DD}: {ISSUE} {title}"
+
 
 # git — Optional git integration. Fab never commits, pushes, or merges —
 #   this only controls branch prompts and status display.
