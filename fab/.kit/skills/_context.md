@@ -17,6 +17,7 @@ Read these files first — they define the project's identity, constraints, and 
 - **`fab/constitution.md`** — project principles and constraints (MUST/SHOULD/MUST NOT rules)
 - **`fab/context.md`** — free-form project context: tech stack, conventions, architecture *(optional — no error if missing)*
 - **`fab/code-quality.md`** — coding standards for apply/review: principles, anti-patterns, test strategy *(optional — no error if missing)*
+- **`fab/code-review.md`** — review policy: severity definitions, scope, rework budget *(optional — no error if missing)*
 - **`docs/memory/index.md`** — memory landscape (which domains and memory files exist)
 - **`docs/specs/index.md`** — specifications landscape (pre-implementation design intent, human-curated)
 
