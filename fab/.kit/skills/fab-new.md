@@ -74,7 +74,7 @@ Created fab/changes/{name}/
 
 Intake complete.
 
-{if assumptions: "## Assumptions\n\n| # | Grade | Decision | Rationale |\n..."}
+{if assumptions: "## Assumptions\n\n| # | Grade | Decision | Rationale | Scores |\n..."}
 
 Next: {per state table — activation preamble + intake state}
 ```
