@@ -39,7 +39,7 @@ A skill matching ANY `capable` criterion is classified as `capable`, regardless 
 | `fab-help` | Delegates to `fab-help.sh` |
 | `fab-status` | Delegates to `lib/preflight.sh` + `lib/stageman.sh` |
 | `fab-switch` | State lookup, branch operations, no artifact generation |
-| `fab-init` | Structural bootstrap, delegates to `lib/sync-workspace.sh` |
+| `fab-setup` | Structural bootstrap, delegates to `fab-sync.sh` |
 
 **Capable tier** (no `model_tier` field):
 
@@ -75,7 +75,7 @@ When `config.yaml` has no `model_tiers:` section (or doesn't exist), `fab-sync.s
 
 ### Deployment: Dual Strategy
 
-`lib/sync-workspace.sh` deploys fast-tier skills to both skill and agent directories:
+`sync/3-sync-workspace.sh` deploys fast-tier skills to both skill and agent directories:
 
 - **Skill directory** (`.claude/skills/`): Symlink as usual — for user invocation via `/fab-help`
 - **Agent directory** (`.claude/agents/`): Generated file with translated `model:` field — for pipeline invocation via Task tool
@@ -131,6 +131,7 @@ If in doubt, use **capable** (the default — just omit `model_tier`).
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `fab-init` → `fab-setup` in skill classification and `lib/sync-workspace.sh` → correct paths (`fab-sync.sh`, `sync/3-sync-workspace.sh`) in deployment references |
 | 260218-bb93-restructure-config-yaml | 2026-02-18 | Deleted `fab/.kit/model-tiers.yaml`, consolidated into `config.yaml` `model_tiers:` section with hardcoded `haiku` fallback. Updated mapping file section, provider instructions, and design decisions |
 | 260216-gqpp-DEV-1040-code-review-loop | 2026-02-16 | Added review sub-agent classification as capable tier — spawned during pipeline execution by `/fab-continue`, `/fab-ff`, `/fab-fff` |
 | 260215-v4n7-DEV-1025-rename-brief-to-intake | 2026-02-15 | Renamed `brief` stage/artifact to `intake` throughout — stage identifiers, artifact filenames, YAML keys, prose references |

@@ -10,7 +10,7 @@ The context loading convention defines how fab skills load project context befor
 
 ### Always Load Layer
 
-Every skill (except `/fab-init`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`) reads seven files as baseline context:
+Every skill (except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`) reads seven files as baseline context:
 
 1. `fab/config.yaml` — project configuration, naming conventions, model tiers
 2. `fab/constitution.md` — project principles and constraints (MUST/SHOULD/MUST NOT rules)
@@ -76,7 +76,7 @@ No skill duplicates or maintains its own suggestion logic — all derive from th
 ### Exception Skills
 
 The following skills skip the standard context loading layers:
-- `/fab-init` — bootstraps structure, doesn't need project memory
+- `/fab-setup` — bootstraps structure, doesn't need project memory
 - `/fab-switch` — navigation only
 - `/fab-status` — read-only status display
 - `/docs-hydrate-memory` — ingests sources, doesn't need to load them first
@@ -105,6 +105,7 @@ The following skills skip the standard context loading layers:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` in exception list (2 occurrences) |
 | 260218-xkkc-add-code-review-5cs-quality | 2026-02-18 | Expanded Always Load layer from 6 to 7 files — added `fab/code-review.md` (optional, review policy) as item 5 after `code-quality.md`, grouping all `fab/` files before `docs/` files |
 | 260218-bb93-restructure-config-yaml | 2026-02-18 | Expanded Always Load layer from 4 to 6 files — added `fab/context.md` (optional, free-form project context) and `fab/code-quality.md` (optional, coding standards) |
 | 260216-7ltw-DEV-1038-standardize-state-keyed-suggestions | 2026-02-16 | Added Next Steps Convention (State Table) section — documents the state-keyed suggestion derivation convention in `_context.md` replacing the old skill-keyed lookup table |

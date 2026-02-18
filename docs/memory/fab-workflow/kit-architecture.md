@@ -15,7 +15,6 @@ The `.kit/` directory SHALL contain:
 ```
 fab/.kit/
 ├── VERSION                 # Semver string (e.g., "0.1.0")
-├── model-tiers.yaml        # Provider-agnostic tier → model mapping
 ├── skills/                 # Skill definitions (markdown prompts)
 │   ├── _context.md         # Shared context loading convention
 │   ├── fab-setup.md
@@ -26,6 +25,7 @@ fab/.kit/
 │   ├── fab-new.md
 │   ├── fab-continue.md
 │   ├── fab-ff.md
+│   ├── fab-fff.md
 │   ├── fab-clarify.md
 │   ├── fab-switch.md
 │   ├── fab-status.md
@@ -314,6 +314,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Removed deleted `model-tiers.yaml` from directory tree; added missing `fab-fff.md` after `fab-ff.md` in skills listing |
 | 260218-09fa-scaffold-overlay-tree | 2026-02-18 | Restructured `scaffold/` from flat directory to repo-root overlay tree. Files now mirror destination paths; 3 merge files use `fragment-` prefix (`.envrc`, `.gitignore`, `settings.local.json`), 8 others use copy-if-absent. Replaced 6 bespoke sections (2, 3, 4, 7, 8, 9) in `3-sync-workspace.sh` with generic tree-walk dispatching on `fragment-` prefix and file extension. Extracted `line_ensure_merge` and `json_merge_permissions` helper functions (absorbing legacy `.envrc` symlink migration). Updated `fab-setup.md`: 7 scaffold path references, template detection for `config.yaml`/`constitution.md` (placeholder check instead of existence check). Updated `0.7.0-to-0.8.0.md` scaffold path. Renumbered sync script sections (1, 1b, 2, 3, 3b, 4). Added "Scaffold Overlay Tree" design decision. |
 | 260218-e0tj-document-wt-idea-packages | 2026-02-18 | Added static PACKAGES footer section to `fab-help.sh` listing wt commands (wt-create, wt-list, wt-open, wt-delete, wt-init, wt-pr) and idea with one-liner descriptions. Created `docs/specs/packages.md` covering both packages at concept/workflow level (overview, wt section with assembly-line integration, idea section with backlog→fab-new flow, package architecture). Added packages.md entry to `docs/specs/index.md`. Updated `fab-help.sh` description to mention PACKAGES section. |
 | 260218-qcqx-harden-wt-resilience | 2026-02-18 | Added resilience patterns to wt package: LIFO rollback stack with EXIT trap (`wt_register_rollback`, `wt_rollback`, `wt_disarm_rollback`), signal handling (`wt_cleanup_on_signal` for INT/TERM), hash-based stash (`wt_stash_create`/`wt_stash_apply` using `git stash create`+`store`), branch name validation (`wt_validate_branch_name`). Integrated into wt-create (rollback, traps, validation, dirty-state check) and wt-delete (hash-based stash migration, signal traps, stash rollback registration). Added `wt-pr` command for PR-based worktree creation via `gh` CLI. Moved shared worktree creation functions from wt-create to wt-common.sh. Updated bin listing to include wt-pr. Added 2 design decisions (rollback stack, hash-based stash). |

@@ -26,7 +26,7 @@ Spec files are written and maintained by humans. No automated tooling creates or
 
 ### Bootstrap Integration
 
-`/fab-init` creates `docs/specs/index.md` during structural bootstrap (after memory/index.md). The creation is idempotent — if the file already exists, init skips it with a status message.
+`/fab-setup` creates `docs/specs/index.md` during structural bootstrap (after memory/index.md). The creation is idempotent — if the file already exists, setup skips it with a status message.
 
 ### Context Loading Integration
 
@@ -36,6 +36,7 @@ Spec files are written and maintained by humans. No automated tooling creates or
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` in bootstrap integration reference |
 | 260214-m3v8-relocate-docs-dev-scripts | 2026-02-14 | Updated all path references from `fab/specs/` to `docs/specs/` |
 | 260211-r3k8-simplify-planning-stages | 2026-02-11 | Consistent design terminology, updated from specs-index references |
 | 260209-h3v7-fab-backfill | 2026-02-09 | Updated Human-Curated Ownership section to reference `/docs-hydrate-specs` as assisted reverse-hydration |

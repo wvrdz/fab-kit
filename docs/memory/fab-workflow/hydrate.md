@@ -4,13 +4,13 @@
 
 ## Overview
 
-`/docs-hydrate-memory [sources...|folders...]` is a standalone skill that operates in two modes: **ingest mode** (fetching URLs or reading `.md` files into `docs/memory/`) and **generate mode** (scanning the codebase for undocumented areas and producing structured memory files). Mode is determined automatically by argument type — no flags needed. It requires `docs/memory/` to exist (created by `/fab-init`). See [hydrate-generate](hydrate-generate.md) for full generate mode requirements.
+`/docs-hydrate-memory [sources...|folders...]` is a standalone skill that operates in two modes: **ingest mode** (fetching URLs or reading `.md` files into `docs/memory/`) and **generate mode** (scanning the codebase for undocumented areas and producing structured memory files). Mode is determined automatically by argument type — no flags needed. It requires `docs/memory/` to exist (created by `/fab-setup`). See [hydrate-generate](hydrate-generate.md) for full generate mode requirements.
 
 ## Requirements
 
 ### Standalone Hydrate Skill
 
-The system provides `/docs-hydrate-memory [sources...|folders...]` as an independent skill containing hydration and generation logic. It is defined in `fab/.kit/skills/docs-hydrate-memory.md` and is auto-discovered by `lib/sync-workspace.sh`'s `*.md` glob pattern.
+The system provides `/docs-hydrate-memory [sources...|folders...]` as an independent skill containing hydration and generation logic. It is defined in `fab/.kit/skills/docs-hydrate-memory.md` and is auto-discovered by `sync/3-sync-workspace.sh`'s `*.md` glob pattern.
 
 ### Argument-Driven Mode Selection
 
@@ -42,7 +42,7 @@ When arguments route to generate mode (no arguments or folder paths), the skill 
 
 ### Prerequisite
 
-`/docs-hydrate-memory` requires `docs/memory/` to exist. If missing, it aborts with: "docs/memory/ not found. Run /fab-init first to create the memory directory."
+`/docs-hydrate-memory` requires `docs/memory/` to exist. If missing, it aborts with: "docs/memory/ not found. Run /fab-setup first to create the memory directory."
 
 ### Idempotent Hydration
 
@@ -69,7 +69,7 @@ Every hydration operation maintains navigable indexes:
 *Introduced by*: 260207-q7m3-separate-hydrate-smart-context
 
 ### Hydrate Requires docs/memory/ to Exist
-**Decision**: `/docs-hydrate-memory` checks for `docs/memory/` and aborts if missing, directing user to run `/fab-init` first.
+**Decision**: `/docs-hydrate-memory` checks for `docs/memory/` and aborts if missing, directing user to run `/fab-setup` first.
 **Why**: Keeps the dependency clear — init creates structure, hydrate populates it.
 **Rejected**: Auto-creating `docs/memory/` in hydrate — would blur the separation of concerns.
 *Introduced by*: 260207-q7m3-separate-hydrate-smart-context
@@ -84,6 +84,7 @@ Every hydration operation maintains navigable indexes:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` (3 occurrences) and `lib/sync-workspace.sh` → `sync/3-sync-workspace.sh` in glob pattern reference |
 | 260214-m3v8-relocate-docs-dev-scripts | 2026-02-14 | Updated hydration target paths from `fab/memory/` to `docs/memory/` |
 | 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_init_scaffold.sh` → `lib/sync-workspace.sh` in glob pattern reference |
 | 260214-r8kv-docs-skills-housekeeping | 2026-02-14 | Renamed skill from `/fab-hydrate` to `/docs-hydrate-memory`; updated skill file path, glob pattern reference, and all cross-references |
