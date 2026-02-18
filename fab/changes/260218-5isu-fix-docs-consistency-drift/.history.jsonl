@@ -1,0 +1,1 @@
+{"ts":"2026-02-18T17:01:31+05:30","event":"command","cmd":"fab-new","args":"Fix documentation inconsistencies found by consistency check: replace /fab-init → /fab-setup, fix archive → hydrate in template spec, update stale script references, add missing .status.yaml fields, remove orphaned references"}
