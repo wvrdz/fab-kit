@@ -1,5 +1,8 @@
 # Archive Index
 
+- **260218-xkkc-add-code-review-5cs-quality** — Added code-review.md scaffold for project-specific review policy (severity definitions, scope, rework budget), documented the 5 Cs of Quality mental model in README, and wired code-review.md into context loading and /fab-setup.
+- **260218-qcqx-harden-wt-resilience** — Hardened the wt package with rollback on partial failure, signal trapping for Ctrl-C safety, named stash references, branch name validation, main repo dirty-state warnings, and a new wt-pr command for PR-based worktree creation.
+- **260218-cif4-eliminate-symlinks-distribute-packages** — Eliminated 5 test symlinks in src/lib/ by switching to repo-root-relative paths, moved package production code (idea, wt) into fab/.kit/packages/ for automatic distribution via kit tarball, and added env-packages.sh for unified PATH setup.
 - **260217-j3a3-dynamic-fab-help-generation** — Rewrote fab-help.sh to dynamically generate command list from skill file frontmatter instead of hardcoding it, extracted frontmatter_field() to a shared lib, and deleted the redundant .claude/agents/fab-help.md agent file.
 - **260218-hpzb-fix-calc-score-path-refs** — Fixed short-form `calc-score.sh` path references in skill files to use repo-root-relative `fab/.kit/scripts/lib/calc-score.sh`, matching the convention from the stageman path fix.
 - **260218-bb93-restructure-config-yaml** — Extracted context and code_quality sections from config.yaml to companion markdown files, deleted dead stages: section, and merged model-tiers.yaml into config.yaml.
