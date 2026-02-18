@@ -75,7 +75,7 @@ The migration runner, now a subcommand of `/fab-setup` (previously the standalon
 ### Version Drift Detection
 
 - **`fab-upgrade.sh`**: prints drift reminder when `fab/VERSION` < engine after upgrade; prints init guidance if `fab/VERSION` missing
-- **`/fab-status`**: displays `⚠ Version drift: local {X}, engine {Y} — run /fab-update` when versions differ
+- **`/fab-status`**: displays `⚠ Version drift: local {X}, engine {Y} — run /fab-setup migrations` when versions differ
 - **`fab-release.sh`**: warns when no migration targets the new release version; warns on overlapping migration ranges
 
 ### `fab/VERSION` Creation
@@ -112,6 +112,7 @@ Handled by `fab-sync.sh` during structural bootstrap:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-update` → `/fab-setup migrations` in `/fab-status` version drift display message |
 | 260216-tk7a-DEV-1037-consolidate-setup-upgrade-flow | 2026-02-16 | `/fab-update` absorbed into `/fab-setup migrations` subcommand; `lib/sync-workspace.sh` → `fab-sync.sh`; updated design decision wording |
 | 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_init_scaffold.sh` → `fab-sync.sh` in VERSION creation and design decision references |
 | 260213-k7m2-kit-version-migrations | 2026-02-14 | Initial creation — migration system, dual-version model, `/fab-setup migrations` skill, version drift detection, `fab/VERSION` creation |

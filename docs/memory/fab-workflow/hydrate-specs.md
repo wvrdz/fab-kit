@@ -26,7 +26,7 @@ The skill operates on project-level `docs/memory/` and `docs/specs/` directories
 
 ### Requirement: Pre-flight Checks
 
-The skill SHALL verify `docs/memory/index.md` and `docs/specs/index.md` exist before proceeding. Missing indexes abort with guidance to run `/fab-init`.
+The skill SHALL verify `docs/memory/index.md` and `docs/specs/index.md` exist before proceeding. Missing indexes abort with guidance to run `/fab-setup`.
 
 ## Design Decisions
 
@@ -46,6 +46,7 @@ The skill SHALL verify `docs/memory/index.md` and `docs/specs/index.md` exist be
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` in pre-flight check guidance |
 | 260214-m3v8-relocate-docs-dev-scripts | 2026-02-14 | Updated path references from `fab/memory/` and `fab/specs/` to `docs/memory/` and `docs/specs/` |
 | 260209-h3v7-fab-backfill | 2026-02-09 | Initial creation — `/docs-hydrate-specs` skill for detecting and hydrating structural gaps from memory to specs |
 | 260212-akhp-rename-fab-backfill | 2026-02-12 | Renamed from `/fab-backfill` to `/docs-hydrate-specs` for semantic consistency with `/fab-hydrate` |

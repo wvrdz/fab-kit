@@ -41,7 +41,7 @@
 
 | Term | Definition |
 |------|-----------|
-| `/fab-init` | Bootstraps the `fab/` structure in a project. Generates `config.yaml`, `constitution.md`, `memory/`, skill symlinks. Idempotent. |
+| `/fab-setup` | Bootstraps the `fab/` structure in a project. Generates `config.yaml`, `constitution.md`, `memory/`, skill symlinks. Provides subcommands for config, constitution, and migrations. Idempotent. |
 | `/docs-hydrate-memory` | Ingests external documentation (Notion, Linear, local files) into `docs/memory/` with domain mapping. Dual-mode: ingest from sources or generate from codebase analysis. |
 | `/fab-new` | Starts a new change from a description. Creates the change folder, `.status.yaml`, and `intake.md`. Adaptive SRAD-driven questioning with gap analysis and conversational mode. |
 | `/fab-continue` | Advances to the next stage, or resets to a given stage and regenerates from there. The step-by-step progression skill. |
@@ -75,7 +75,7 @@
 | `docs/specs/` | Human-curated pre-implementation design specifications. Flat structure, not managed by Fab tooling. |
 | `fab/.kit/` | The Fab engine directory — templates, skills, scripts. Replaceable upstream without affecting project-specific files. |
 | `fab/.kit/templates/` | Markdown scaffolds that skills fill with concrete content. Includes templates for all artifact types. |
-| `fab/.kit/scripts/` | Shell utilities — `_init_scaffold.sh` (structural bootstrap), `_preflight.sh` (pre-skill validation), `fab-help.sh` (skill catalog). |
+| `fab/.kit/scripts/` | Shell utilities — `fab-sync.sh` (workspace sync orchestrator), `fab-help.sh` (skill catalog), `fab-upgrade.sh` (kit updater), plus `lib/` for internal scripts (`stageman.sh`, `preflight.sh`, `calc-score.sh`, `changeman.sh`). |
 
 ---
 
@@ -121,7 +121,7 @@
 | **GIVEN/WHEN/THEN** | Scenario format used in `spec.md` and memory files. Structured as precondition, action, expected outcome. |
 | **[NEEDS CLARIFICATION]** | Inline marker in specs for unresolved ambiguities. Resolved by `/fab-clarify`. |
 | **[BLOCKING]** | Priority marker for open questions in intakes. Must resolve before advancing to spec. Max 3 per intake. |
-| **[DEFERRED]** | Priority marker for open questions in briefs. Can resolve during spec stage. |
+| **[DEFERRED]** | Priority marker for open questions in intakes. Can resolve during spec stage. |
 | **[P]** | Task marker in `tasks.md` indicating the task is parallelizable — can execute alongside other `[P]` tasks in the same phase. |
 | **CHK-###** | Checklist item ID in `checklist.md` (e.g., CHK-001). Sequential. Verified by `/fab-continue` (review). |
 | **T###** | Task ID in `tasks.md` (e.g., T001). Sequential within the change. |

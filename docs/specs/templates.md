@@ -18,7 +18,7 @@ All status fields draw from a fixed set of states. This prevents ad-hoc state na
 | `skipped` | Intentionally bypassed | *(reserved)* |
 | `failed` | Completed with failures requiring rework | review |
 
-**`progress` map keys**: `intake` | `spec` | `tasks` | `apply` | `review` | `archive`
+**`progress` map keys**: `intake` | `spec` | `tasks` | `apply` | `review` | `hydrate`
 
 The current stage is derived from the `progress` map — the entry marked `active` is the current stage. There is no separate `stage:` field.
 
@@ -30,26 +30,37 @@ The current stage is derived from the `progress` map — the entry marked `activ
 name: {YYMMDD-XXXX-slug}
 created: {ISO_8601_DATETIME}       # e.g., 2026-01-15T14:30:00Z
 created_by: {GIT_USER_NAME}        # Auto-detected from git config user.name; fallback "unknown"
+change_type: feature               # feature | bugfix | refactor | architecture
 progress:
   intake: active                    # pending | active | done
   spec: pending                     # pending | active | done
   tasks: pending                    # pending | active | done
   apply: pending                    # pending | active | done
   review: pending                   # pending | active | done | failed
-  archive: pending                  # pending | active | done
+  hydrate: pending                  # pending | active | done
 checklist:
   generated: false
   path: checklist.md
   completed: 0
   total: 0
+confidence:
+  certain: 0                        # count of Certain-graded SRAD decisions
+  confident: 0                      # count of Confident-graded decisions
+  tentative: 0                      # count of Tentative-graded decisions
+  unresolved: 0                     # count of Unresolved-graded decisions
+  score: 0.0                        # derived score (0.0–5.0)
+stage_metrics: {}                   # populated by stageman.sh as stages progress
 last_updated: {ISO_8601_DATETIME}
 ```
 
 **Field notes**:
 - `created_by` is write-once — set at change creation time by `/fab-new`, never modified afterward. Auto-detected from `git config user.name`; falls back to `"unknown"` if git config is unset. Skills reading this field must tolerate its absence (older changes won't have it).
+- `change_type` classifies the change for dynamic confidence gate thresholds (bugfix=2.0, feature/refactor=3.0, architecture=4.0). Defaults to `feature`.
 - The current stage is derived from the `progress` map — the entry marked `active` is the current stage. All skills read this first.
 - `review: failed` is set when `/fab-continue` (review) finds issues. The review entry remains `failed` so `/fab-status` shows the failure.
 - `checklist.completed` / `checklist.total` are updated by `/fab-continue` (review) as it checks items.
+- `confidence` block initializes to zero counts and score 0.0 — a new change has no assessed confidence. Computed by `lib/calc-score.sh` when `/fab-continue` generates the spec.
+- `stage_metrics` is populated by `lib/stageman.sh` as stages progress — tracks `started_at`, `completed_at`, `driver`, and `iterations` per stage.
 - `last_updated` is refreshed on every status change.
 
 ---
@@ -490,7 +501,7 @@ docs/memory/
 
 **Design rationale**: The index-based hierarchy solves discoverability — agents and humans can navigate from top-level down to any requirement without scanning folders. The Design Decisions section captures durable "why" context, so developers don't need to dig through archived changes to understand architectural choices. The Changelog table provides traceability back to the change that introduced each modification. Domain indexes include "Last Updated" so stale files are visible at a glance.
 
-### Initial Memory (created by `/fab-init`)
+### Initial Memory (created by `/fab-setup`)
 
 A fresh project starts with a single index file. The first `/fab-continue` (archive) populates domains and files:
 

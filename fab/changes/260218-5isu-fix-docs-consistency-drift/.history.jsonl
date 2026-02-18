@@ -1,1 +1,5 @@
 {"ts":"2026-02-18T17:01:31+05:30","event":"command","cmd":"fab-new","args":"Fix documentation inconsistencies found by consistency check: replace /fab-init → /fab-setup, fix archive → hydrate in template spec, update stale script references, add missing .status.yaml fields, remove orphaned references"}
+{"ts":"2026-02-18T17:10:20+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-18T17:11:11+05:30","event":"confidence","score":4.4,"delta":"+4.4","trigger":"calc-score"}
+{"ts":"2026-02-18T17:11:49+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-18T17:24:59+05:30","event":"review","result":"passed"}

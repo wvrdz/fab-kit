@@ -21,7 +21,7 @@ The stage named "spec" refers to the *activity* of writing the specification —
 
 Every skill that generates or validates artifacts MUST load relevant context before proceeding. This ensures agents produce accurate, grounded output rather than hallucinating requirements or ignoring existing patterns.
 
-**Always loaded** (by every skill except `/fab-init`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`):
+**Always loaded** (by every skill except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`):
 - `fab/config.yaml` — project configuration, tech stack, conventions
 - `fab/constitution.md` — project principles and constraints
 - `docs/memory/index.md` — memory landscape (which domains and memory files exist)
@@ -55,7 +55,7 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 
 | After | Stage reached | Next line |
 |-------|---------------|-----------|
-| `/fab-init` | initialized | `Next: /fab-new <description> or /docs-hydrate-memory <sources>` |
+| `/fab-setup` | initialized | `Next: /fab-new <description> or /docs-hydrate-memory <sources>` |
 | `/docs-hydrate-memory` | memory hydrated | `Next: /fab-new <description> or /docs-hydrate-memory <more-sources>` |
 | `/fab-new` | intake done | `Next: /fab-continue or /fab-ff (fast-forward all planning)` |
 | `/fab-continue` → spec | spec done | `Next: /fab-continue (tasks) or /fab-ff (fast-forward) or /fab-clarify (refine spec)` |
@@ -69,50 +69,55 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 
 ---
 
-## `/fab-init`
+## `/fab-setup`
 
-**Purpose**: Bootstrap `fab/` in an existing project. Safe to run repeatedly — structural artifacts are created once and symlinks are repaired if broken.
+**Purpose**: Bootstrap `fab/` in an existing project and manage ongoing configuration. Delegates structural setup to `fab-sync.sh` and adds interactive configuration on top. Safe to run repeatedly (idempotent). Also provides subcommands for config, constitution, and migrations.
 
 **Prerequisite**: `fab/.kit/` must exist. If missing, abort with: *"fab/.kit/ not found. Copy the kit directory into fab/.kit/ first — see the Getting Started guide."*
 
-**Arguments**: None. If arguments are provided, abort with: *"Did you mean /docs-hydrate-memory? /fab-init no longer accepts source arguments."*
+**Subcommands**:
+
+| Subcommand | Purpose |
+|------------|---------|
+| `/fab-setup config [section]` | Create or update `fab/config.yaml` interactively, preserving comments |
+| `/fab-setup constitution` | Create or amend `fab/constitution.md` with semantic versioning |
+| `/fab-setup migrations [file]` | Run version migrations against the current project |
+
+When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fab-sync.sh` for structural setup, then delegates to `config` and `constitution` subcommands for any missing artifacts. Unrecognized arguments are rejected with a message listing valid subcommands.
 
 **Creates** (first run only — skipped if already present):
-- `fab/config.yaml` — project configuration (prompts for name, tech stack, conventions)
-- `fab/constitution.md` — project principles and constraints (generated from conversation or existing documentation)
-- `docs/memory/index.md` — initial memory index
-- `fab/changes/` — empty, ready for change folders
-- `.claude/skills/` — symlinks pointing into `fab/.kit/skills/`
+- `fab/config.yaml` — project configuration (via `/fab-setup config`)
+- `fab/constitution.md` — project principles and constraints (via `/fab-setup constitution`)
+- `fab/VERSION` — local project version (via `fab-sync.sh`)
+- `docs/memory/index.md` — initial memory index (via `fab-sync.sh`)
+- `docs/specs/index.md` — specifications index (via `fab-sync.sh`)
+- `fab/changes/` — empty, ready for change folders (via `fab-sync.sh`)
+- `.claude/skills/` — symlinks pointing into `fab/.kit/skills/` (via `fab-sync.sh`)
+
+**Delegation pattern**: `fab-sync.sh` handles all non-interactive structural setup (directories, symlinks, indexes, `.envrc`, `.gitignore`). `/fab-setup` adds the interactive parts (config, constitution). `fab-sync.sh` can be run independently (e.g., in CI or after bootstrap download) without requiring `/fab-setup`.
 
 **Examples**:
 ```
 # First run — full bootstrap
-/fab-init
-→ "Found fab/.kit/ (v0.1.0). Initializing project..."
+/fab-setup
+→ "Running fab-sync.sh... structure created."
 → "What's the project name?"
 → "Describe the tech stack and conventions..."
 → "fab/ initialized with config, constitution, and empty memory index."
 → "Next: /fab-new <description> or /docs-hydrate-memory <sources>"
 
 # Re-run — structural health check
-/fab-init
-→ "fab/ already initialized. Verified structure, repaired 1 missing symlink."
+/fab-setup
+→ "fab/ already initialized. Verified structure."
 
-# Arguments are redirected
-/fab-init https://notion.so/myteam/API-Spec-abc123
-→ "Did you mean /docs-hydrate-memory? /fab-init no longer accepts source arguments."
+# Subcommand — update config
+/fab-setup config
+→ "Updating fab/config.yaml..."
+
+# Subcommand — run migrations after kit upgrade
+/fab-setup migrations
+→ "Applying migration 0.2.0-to-0.3.0... done."
 ```
-
-**Behavior**:
-
-1. **Pre-flight check**: Verify `fab/.kit/` exists (abort with guidance if not). If arguments are provided, abort with redirect to `/docs-hydrate-memory`.
-2. **Structural bootstrap** (idempotent — each step skips if artifact already exists):
-   a. `fab/config.yaml` — if missing, prompt for project name, description, tech stack and generate
-   b. `fab/constitution.md` — if missing, generate from project context (README, existing documentation, conversation)
-   c. `docs/memory/index.md` — if missing, create empty index
-   d. `fab/changes/` — if missing, create empty directory
-   e. `.claude/skills/` symlinks — create missing ones, repair broken ones
-   f. `.gitignore` — append `fab/current` if not already present
 
 ---
 
@@ -120,7 +125,7 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 
 **Purpose**: Ingest external sources into `docs/memory/` with domain mapping and index maintenance. Safe to run repeatedly — content is merged into existing memory files without duplication.
 
-**Prerequisite**: `docs/memory/` must exist (run `/fab-init` first). If missing, abort with: *"docs/memory/ not found. Run /fab-init first to create the memory directory."*
+**Prerequisite**: `docs/memory/` must exist (run `/fab-setup` first). If missing, abort with: *"docs/memory/ not found. Run /fab-setup first to create the memory directory."*
 
 **Arguments**:
 - `[sources...]` *(required)* — one or more URLs or local paths containing documentation to ingest. Supported source types:

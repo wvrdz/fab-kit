@@ -102,7 +102,7 @@ For detailed visual maps of how commands connect — including shortcuts, rework
 
 | Skill | Purpose | Creates |
 |-------|---------|---------|
-| `/fab-init` | Bootstrap fab/ structure | `config.yaml`, `constitution.md`, `memory/`, skill symlinks (idempotent) |
+| `/fab-setup` | Bootstrap fab/ structure | `config.yaml`, `constitution.md`, `memory/`, skill symlinks (idempotent) |
 | `/docs-hydrate-memory [sources...]` | Ingest external sources into docs/memory/ | Updated `docs/memory/` with indexes |
 | `/fab-new` | Start change (optionally with `--switch`) | `intake.md`, `.status.yaml` |
 | `/fab-continue [<stage>]` | Next artifact (or reset to stage) | Next stage artifact |

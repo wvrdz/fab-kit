@@ -79,13 +79,13 @@ Commands that live outside the change pipeline — run once per project or anyti
 ```mermaid
 flowchart LR
     subgraph setup ["Setup (once per project)"]
-        INIT["/fab-init"]
+        INIT["/fab-setup"]
         HYDRATE["/docs-hydrate-memory"]
     end
 
     subgraph utility ["Utility (anytime)"]
         direction TB
-        STATUS["/fab-status"] ~~~ HELP["/fab-help"] ~~~ UPDATE["/fab-update"]
+        STATUS["/fab-status"] ~~~ HELP["/fab-help"]
         BACKFILL["/docs-hydrate-specs"] ~~~ REORG_MEM["/docs-reorg-memory"] ~~~ REORG_SPEC["/docs-reorg-specs"]
         STATUS ~~~ BACKFILL
     end
