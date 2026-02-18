@@ -23,7 +23,13 @@ echo "Found fab/.kit/ (v${version}). Setting up structure..."
 # ── Helper functions ─────────────────────────────────────────────────
 
 # frontmatter_field() — sourced from shared library
-source "$kit_dir/scripts/lib/frontmatter.sh"
+frontmatter_lib="$kit_dir/scripts/lib/frontmatter.sh"
+if [ ! -f "$frontmatter_lib" ]; then
+  echo "ERROR: Required library not found: $frontmatter_lib" >&2
+  echo "       Ensure your fab kit includes scripts/lib/frontmatter.sh." >&2
+  exit 1
+fi
+source "$frontmatter_lib"
 
 # Extract a value from a 3-level nested YAML structure.
 # Usage: yaml_value <file> <root_key> <second_key> <third_key>

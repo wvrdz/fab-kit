@@ -17,7 +17,10 @@ setup() {
 
   # Build minimal fab/.kit/ structure
   KIT="$REPO_ROOT/fab/.kit"
-  mkdir -p "$KIT/sync" "$KIT/scaffold" "$KIT/skills" "$KIT/templates" "$KIT/schemas"
+  mkdir -p "$KIT/sync" "$KIT/scaffold" "$KIT/skills" "$KIT/templates" "$KIT/schemas" "$KIT/scripts/lib"
+
+  # Shared frontmatter parser (sourced by 3-sync-workspace.sh)
+  cp "$REPO_SRC_ROOT/fab/.kit/scripts/lib/frontmatter.sh" "$KIT/scripts/lib/frontmatter.sh"
 
   # VERSION file
   echo "1.2.3" > "$KIT/VERSION"
