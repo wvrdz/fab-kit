@@ -22,24 +22,14 @@ echo "Found fab/.kit/ (v${version}). Setting up structure..."
 
 # ── Helper functions ─────────────────────────────────────────────────
 
-# Extract a field value from YAML frontmatter (between --- markers).
-# Usage: frontmatter_field <file> <field_name>
-# Returns the value (unquoted) or empty string if not found.
-frontmatter_field() {
-  local file="$1" field="$2"
-  sed -n '
-    /^---$/,/^---$/{
-      /^---$/d
-      /^'"$field"': */{
-        s/^'"$field"': *//
-        s/^"//; s/"$//
-        s/ *#.*//
-        p
-        q
-      }
-    }
-  ' "$file"
-}
+# frontmatter_field() — sourced from shared library
+frontmatter_lib="$kit_dir/scripts/lib/frontmatter.sh"
+if [ ! -f "$frontmatter_lib" ]; then
+  echo "ERROR: Required library not found: $frontmatter_lib" >&2
+  echo "       Ensure your fab kit includes scripts/lib/frontmatter.sh." >&2
+  exit 1
+fi
+source "$frontmatter_lib"
 
 # Extract a value from a 3-level nested YAML structure.
 # Usage: yaml_value <file> <root_key> <second_key> <third_key>
