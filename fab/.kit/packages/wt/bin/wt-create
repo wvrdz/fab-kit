@@ -46,9 +46,7 @@ wt_create_worktree() {
     local mode="${3:-existing}"
 
     if [[ "$mode" == "new" ]]; then
-        local default_branch
-        default_branch=$(wt_get_default_branch)
-        git worktree add -b "$branch" "$wt_path" "$default_branch" 2>/dev/null || {
+        git worktree add -b "$branch" "$wt_path" 2>/dev/null || {
             wt_error_with_code "$WT_EXIT_GIT_ERROR" \
                 "Failed to create worktree" \
                 "git worktree add failed for branch '$branch' at '$wt_path'" \

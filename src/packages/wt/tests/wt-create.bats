@@ -358,6 +358,91 @@ teardown() {
 }
 
 # ============================================================================
+# Branch Base Tests (worktrees branch off HEAD, not main)
+# ============================================================================
+
+@test "wt-create: exploratory worktree branches off current branch, not main" {
+    # Create a feature branch with a unique commit
+    git checkout -b feature/has-marker
+    echo "marker" > marker.txt
+    git add marker.txt
+    git commit -q -m "Add marker on feature branch"
+    local feature_commit=$(git rev-parse HEAD)
+
+    # Stay on the feature branch and create an exploratory worktree
+    run wt-create --non-interactive --worktree-name from-feature
+
+    assert_success
+
+    # The worktree should contain the marker file (branched off feature, not main)
+    local wt_path=$(echo "$output" | tail -n 1)
+    assert_file_exists "${wt_path}/marker.txt"
+
+    # The worktree's HEAD should be the feature commit
+    local wt_commit=$(git -C "$wt_path" rev-parse HEAD)
+    [ "$wt_commit" = "$feature_commit" ]
+}
+
+@test "wt-create: new branch creation branches off current branch, not main" {
+    # Create a feature branch with a unique commit
+    git checkout -b feature/base-branch
+    echo "base content" > base.txt
+    git add base.txt
+    git commit -q -m "Add base content"
+    local base_commit=$(git rev-parse HEAD)
+
+    # Create a new (non-existent) branch worktree while on feature branch
+    run wt-create --non-interactive --worktree-name derived-wt derived-branch
+
+    assert_success
+
+    # The worktree should have the base content (derived from feature, not main)
+    local wt_path=$(echo "$output" | tail -n 1)
+    assert_file_exists "${wt_path}/base.txt"
+
+    # The worktree's HEAD should match the feature branch commit
+    local wt_commit=$(git -C "$wt_path" rev-parse HEAD)
+    [ "$wt_commit" = "$base_commit" ]
+}
+
+@test "wt-create: exploratory worktree from main still works" {
+    # On main, behavior should be the same as before
+    local main_commit=$(git rev-parse HEAD)
+
+    run wt-create --non-interactive --worktree-name from-main
+
+    assert_success
+
+    local wt_path=$(echo "$output" | tail -n 1)
+    local wt_commit=$(git -C "$wt_path" rev-parse HEAD)
+    [ "$wt_commit" = "$main_commit" ]
+}
+
+@test "wt-create: existing branch checkout is unaffected by current branch" {
+    # Create two branches with different content
+    git checkout -b branch-a
+    echo "branch-a content" > a.txt
+    git add a.txt
+    git commit -q -m "Add a.txt"
+    git checkout main
+
+    git checkout -b branch-b
+    echo "branch-b content" > b.txt
+    git add b.txt
+    git commit -q -m "Add b.txt"
+
+    # While on branch-b, check out branch-a into a worktree
+    run wt-create --non-interactive --worktree-name checkout-a branch-a
+
+    assert_success
+
+    # Should have branch-a's content, not branch-b's
+    local wt_path=$(echo "$output" | tail -n 1)
+    assert_file_exists "${wt_path}/a.txt"
+    assert_file_not_exists "${wt_path}/b.txt"
+}
+
+# ============================================================================
 # Integration Tests
 # ============================================================================
 
