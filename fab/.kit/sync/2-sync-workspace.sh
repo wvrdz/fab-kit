@@ -3,8 +3,8 @@ set -euo pipefail
 
 # fab/.kit/sync/2-sync-workspace.sh — Structural bootstrap for fab
 #
-# Syncs kit assets (directories, skill links/copies, agent files, .gitignore
-# entries) into the workspace. Idempotent — safe to re-run at any time.
+# Syncs kit assets (directories, skill copies/symlinks, .gitignore entries)
+# into the workspace. Idempotent — safe to re-run at any time.
 
 sync_dir="$(cd "$(dirname "$0")" && pwd)"
 kit_dir="$(dirname "$sync_dir")"
@@ -222,7 +222,7 @@ if [ -d "$scaffold_dir" ]; then
   done < <(find "$scaffold_dir" -type f | sort)
 fi
 
-# ── 3. Skill symlinks ──────────────────────────────────────────────
+# ── 3. Skill deployment ────────────────────────────────────────────
 # Canonical list: every *.md in .kit/skills/ except _context.md
 skills=()
 for f in "$kit_dir"/skills/*.md; do
@@ -259,10 +259,11 @@ for skill in "${skills[@]}"; do
   fi
 done
 
-# sync_agent_skills <agent_label> <base_dir> <format> <mode> [<rel_prefix>]
+# sync_agent_skills <agent_label> <base_dir> <format> <mode> [<5th_param>]
 #   format: "directory" → <base>/<name>/SKILL.md, "flat" → <base>/<name>.md
 #   mode: "symlink" (needs rel_prefix) or "copy" (copies file content)
-#   rel_prefix: relative path from symlink location back to repo root (symlink mode only)
+#   5th param: symlink mode → relative path from symlink location back to repo root
+#              copy mode → optional sed expression applied during copy (for model templating)
 sync_agent_skills() {
   local agent_label="$1"
   local base_dir="$2"
@@ -290,15 +291,39 @@ sync_agent_skills() {
     fi
 
     if [ "$mode" = "copy" ]; then
-      if [ -f "$dest" ] && [ ! -L "$dest" ] && cmp -s "$src" "$dest"; then
-        ok=$((ok + 1))
-      elif [ -e "$dest" ] || [ -L "$dest" ]; then
-        rm "$dest"
-        cp "$src" "$dest"
-        repaired=$((repaired + 1))
+      if [ -n "$rel_prefix" ]; then
+        # Copy with sed templating: compare templated content for idempotency
+        local expected
+        expected=$(sed "$rel_prefix" "$src")
+        if [ -f "$dest" ] && [ ! -L "$dest" ]; then
+          local current
+          current=$(cat "$dest")
+          if [ "$expected" = "$current" ]; then
+            ok=$((ok + 1))
+          else
+            printf '%s\n' "$expected" > "$dest"
+            repaired=$((repaired + 1))
+          fi
+        elif [ -e "$dest" ] || [ -L "$dest" ]; then
+          rm "$dest"
+          printf '%s\n' "$expected" > "$dest"
+          repaired=$((repaired + 1))
+        else
+          printf '%s\n' "$expected" > "$dest"
+          created=$((created + 1))
+        fi
       else
-        cp "$src" "$dest"
-        created=$((created + 1))
+        # Plain copy: use cmp for byte-accurate comparison
+        if [ -f "$dest" ] && [ ! -L "$dest" ] && cmp -s "$src" "$dest"; then
+          ok=$((ok + 1))
+        elif [ -e "$dest" ] || [ -L "$dest" ]; then
+          rm "$dest"
+          cp "$src" "$dest"
+          repaired=$((repaired + 1))
+        else
+          cp "$src" "$dest"
+          created=$((created + 1))
+        fi
       fi
     else
       local target="${rel_prefix}fab/.kit/skills/${skill}.md"
@@ -371,8 +396,25 @@ clean_stale_skills() {
   fi
 }
 
-# Claude Code: .claude/skills/<name>/SKILL.md (directory-based, symlinks)
-sync_agent_skills "Claude Code" "$repo_root/.claude/skills" "directory" "symlink" "../../../"
+# ── 3c. Resolve fast-tier model for Claude Code ───────────────────────
+# Used as sed expression during copy to replace model_tier: → model:
+claude_fast_model=""
+if [ ${#fast_skills[@]} -gt 0 ]; then
+  if [ -f "$fab_dir/project/config.yaml" ]; then
+    claude_fast_model=$(yaml_value "$fab_dir/project/config.yaml" "model_tiers" "fast" "claude")
+  fi
+  if [ -z "$claude_fast_model" ]; then
+    claude_fast_model="haiku"
+  fi
+fi
+
+# Claude Code: .claude/skills/<name>/SKILL.md (directory-based, copies with model templating)
+if [ -n "$claude_fast_model" ]; then
+  sync_agent_skills "Claude Code" "$repo_root/.claude/skills" "directory" "copy" \
+    "s/^model_tier: .*/model: $claude_fast_model/"
+else
+  sync_agent_skills "Claude Code" "$repo_root/.claude/skills" "directory" "copy"
+fi
 clean_stale_skills "$repo_root/.claude/skills" "directory"
 
 # OpenCode: .opencode/commands/<name>.md (flat file, symlinks)
@@ -383,74 +425,23 @@ clean_stale_skills "$repo_root/.opencode/commands" "flat"
 sync_agent_skills "Codex" "$repo_root/.agents/skills" "directory" "copy"
 clean_stale_skills "$repo_root/.agents/skills" "directory"
 
-# ── 4. Model tier agent files ────────────────────────────────────────
-# Fast-tier skills get generated agent files (in addition to skill symlinks)
-# so pipeline operations can invoke them with cost-appropriate models.
-
-if [ ${#fast_skills[@]} -gt 0 ]; then
-  # Resolve Claude model for "fast" tier from config.yaml, with hardcoded fallback
-  claude_fast_model=""
-  if [ -f "$fab_dir/project/config.yaml" ]; then
-    claude_fast_model=$(yaml_value "$fab_dir/project/config.yaml" "model_tiers" "fast" "claude")
-  fi
-
-  # Fallback: use haiku if config.yaml has no model_tiers or doesn't exist
-  if [ -z "$claude_fast_model" ]; then
-    claude_fast_model="haiku"
-  fi
-
-  # Generate Claude Code agent files: .claude/agents/<name>.md
-  claude_agents_dir="$repo_root/.claude/agents"
-  mkdir -p "$claude_agents_dir"
-
-  created=0 updated=0 ok=0
-  for skill in "${fast_skills[@]}"; do
-    skill_file="$kit_dir/skills/${skill}.md"
-    agent_file="$claude_agents_dir/${skill}.md"
-
-    # Generate agent file: replace model_tier with platform-specific model
-    new_content=$(sed 's/^model_tier: .*/model: '"$claude_fast_model"'/' "$skill_file")
-
-    if [ -f "$agent_file" ]; then
-      existing=$(cat "$agent_file")
-      if [ "$new_content" = "$existing" ]; then
-        ok=$((ok + 1))
-      else
-        printf '%s\n' "$new_content" > "$agent_file"
-        updated=$((updated + 1))
-      fi
-    else
-      printf '%s\n' "$new_content" > "$agent_file"
-      created=$((created + 1))
-    fi
-  done
-
-  total=$((created + updated + ok))
-  printf "%-12s %d/%d (created %d, updated %d, already valid %d)\n" \
-    "Agents:" "$total" "${#fast_skills[@]}" "$created" "$updated" "$ok"
-
-  # Clean stale agent files: remove agents for skills no longer in fast_skills[]
-  # Only remove files whose basename (without .md) matches a known skill name pattern
-  # (i.e., exists or once existed in .kit/skills/). Preserve user-created agents.
+# ── 4. Transitional agent cleanup ──────────────────────────────────
+# Remove .claude/agents/ files matching known skill names (legacy from
+# dual-deployment strategy). Preserves user-created agents.
+# TODO: Remove this block after one release cycle.
+claude_agents_dir="$repo_root/.claude/agents"
+if [ -d "$claude_agents_dir" ]; then
   stale_agents=0
   for agent_file in "$claude_agents_dir"/*.md; do
     [ -f "$agent_file" ] || continue
     local_name="$(basename "$agent_file" .md)"
-    found=false
-    for skill in "${fast_skills[@]}"; do
+    for skill in "${skills[@]}"; do
       if [ "$skill" = "$local_name" ]; then
-        found=true
+        rm -f "$agent_file"
+        stale_agents=$((stale_agents + 1))
         break
       fi
     done
-    if [ "$found" = false ]; then
-      # Only remove if a corresponding skill once existed (name matches skill naming pattern)
-      # but is no longer in .kit/skills/ — this preserves truly user-created agents
-      if [ ! -f "$kit_dir/skills/${local_name}.md" ]; then
-        rm -f "$agent_file"
-        stale_agents=$((stale_agents + 1))
-      fi
-    fi
   done
   if [ "$stale_agents" -gt 0 ]; then
     echo "Cleaned: $stale_agents stale agent files from .claude/agents/"

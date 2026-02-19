@@ -73,20 +73,21 @@ model_tiers:
 
 When `config.yaml` has no `model_tiers:` section (or doesn't exist), `fab-sync.sh` falls back to `haiku` for the fast tier. There is no separate mapping file — the former `fab/.kit/model-tiers.yaml` was deleted in v0.8.0, consolidating all configuration into `config.yaml`.
 
-### Deployment: Dual Strategy
+### Deployment: Copy-with-Template
 
-`sync/2-sync-workspace.sh` deploys fast-tier skills to both skill and agent directories:
+`sync/2-sync-workspace.sh` deploys skills to platform-specific directories using the appropriate mode:
 
-- **Skill directory** (`.claude/skills/`): Symlink as usual — for user invocation via `/fab-help`
-- **Agent directory** (`.claude/agents/`): Generated file with translated `model:` field — for pipeline invocation via Task tool
+- **Claude Code** (`.claude/skills/`): Copies with model templating — `model_tier: fast` is replaced with `model: {resolved}` during copy. Capable skills are copied verbatim. The sed expression is applied during copy, and idempotency uses string comparison of templated content against the existing file.
+- **OpenCode** (`.opencode/commands/`): Symlinks to canonical skill files in `.kit/skills/`
+- **Codex** (`.agents/skills/`): Plain copies (Codex ignores symlinks)
 
-Capable skills get symlinks only (no agent files). This is because Claude Code skills don't support `model:` in frontmatter; only agents do.
+All skills are deployed to all platforms. The `model_tier:` → `model:` substitution is Claude Code-specific; other platforms receive the canonical file as-is.
 
 ### Adding a New Provider
 
 1. Add the platform key under the relevant tier in `fab/project/config.yaml` `model_tiers:` (and in `fab/.kit/scaffold/config.yaml` for new projects)
-2. Update `fab-sync.sh` to read the new platform key and generate agent files
-3. Add the symlink/agent creation call in the appropriate section
+2. Update `2-sync-workspace.sh` to read the new platform key
+3. Add the sync call (copy or symlink) in the appropriate section, with a sed expression if the platform supports model frontmatter
 
 ### Selecting a Tier for New Skills
 
@@ -115,11 +116,11 @@ If in doubt, use **capable** (the default — just omit `model_tier`).
 **Rejected**: Explicit `model_tier: capable` on all skills.
 *Introduced by*: 260212-k8m3-skill-model-tiers
 
-### Dual Deployment for Fast-Tier
-**Decision**: Fast-tier skills get both a skill symlink and a generated agent file.
-**Why**: Claude Code skills don't support `model:` — only agents do. Skill symlinks preserve user invocation; agent files enable model selection in pipelines.
-**Rejected**: Generated skill files (model: ignored in skill context). Agent-only (breaks user invocation).
+### ~~Dual Deployment for Fast-Tier~~ (Superseded)
+**Decision**: ~~Fast-tier skills get both a skill symlink and a generated agent file.~~
+**Superseded by**: Copy-with-template — Claude Code skills now support `model:` in frontmatter natively, so the dual deployment strategy is no longer needed. Skills are deployed as copies with `model_tier:` → `model:` substitution applied during copy. Agent files (`.claude/agents/`) are no longer generated; a transitional cleanup step removes stale agent files matching known skill names.
 *Introduced by*: 260212-k8m3-skill-model-tiers
+*Superseded by*: 260219-d2y2-copy-template-skills-drop-agents
 
 ### Single Source in config.yaml with Hardcoded Fallback
 **Decision**: Model tier mappings live exclusively in `config.yaml`. When absent, `fab-sync.sh` uses a hardcoded `haiku` fallback. The former `fab/.kit/model-tiers.yaml` was deleted.
@@ -131,6 +132,7 @@ If in doubt, use **capable** (the default — just omit `model_tier`).
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260219-d2y2-copy-template-skills-drop-agents | 2026-02-19 | Replaced dual deployment (symlinks + agent files) with copy-with-template: Claude Code skills deployed as copies with `model_tier:` → `model:` substitution. Removed agent file generation. Added transitional agent cleanup. Marked Dual Deployment design decision as superseded |
 | 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `fab-init` → `fab-setup` in skill classification and `lib/sync-workspace.sh` → correct paths (`fab-sync.sh`, `sync/2-sync-workspace.sh`) in deployment references |
 | 260218-bb93-restructure-config-yaml | 2026-02-18 | Deleted `fab/.kit/model-tiers.yaml`, consolidated into `config.yaml` `model_tiers:` section with hardcoded `haiku` fallback. Updated mapping file section, provider instructions, and design decisions |
 | 260216-gqpp-DEV-1040-code-review-loop | 2026-02-16 | Added review sub-agent classification as capable tier — spawned during pipeline execution by `/fab-continue`, `/fab-ff`, `/fab-fff` |
