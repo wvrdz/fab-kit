@@ -1,2 +1,6 @@
 {"ts":"2026-02-19T12:04:08+05:30","event":"command","cmd":"fab-new","args":"Replace skill symlinks with copy-with-template (like Codex) so model_tier gets resolved to model: in SKILL.md, and stop generating .claude/agents/ files for fast-tier skills"}
 {"ts":"2026-02-19T12:05:10+05:30","event":"command","cmd":"fab-new","args":"copy-template-skills-drop-agents"}
+{"ts":"2026-02-19T12:06:50+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-19T12:09:50+05:30","event":"confidence","score":4.1,"delta":"+4.1","trigger":"calc-score"}
+{"ts":"2026-02-19T12:22:11+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-19T12:30:01+05:30","event":"review","result":"passed"}

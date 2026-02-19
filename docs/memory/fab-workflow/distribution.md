@@ -19,10 +19,10 @@ mkdir -p fab
 curl -sL https://github.com/wvrdz/fab-kit/releases/latest/download/kit.tar.gz | tar xz -C fab/
 ```
 
-After extraction, the user MUST run `fab/.kit/scripts/fab-sync.sh` to validate prerequisites (`yq`, `jq`, `gh`, `direnv`, `bats`), create directories (`changes/`, `memory/`, `specs/`), skeleton files (copied from `scaffold/memory-index.md` and `scaffold/specs-index.md`), symlinks, `.envrc` entries (from `scaffold/envrc`, line-ensuring), and `.gitignore` entries (from `scaffold/gitignore-entries`). The bootstrap only provides `.kit/` — no `config.yaml`, `constitution.md`, or other project files.
+After extraction, the user MUST run `fab/.kit/scripts/fab-sync.sh` to validate prerequisites (`yq`, `jq`, `gh`, `direnv`, `bats`), create directories (`changes/`, `memory/`, `specs/`), skeleton files (copied from `scaffold/memory-index.md` and `scaffold/specs-index.md`), deploy skills (copies with model templating for Claude Code, symlinks for OpenCode, copies for Codex), `.envrc` entries (from `scaffold/envrc`, line-ensuring), and `.gitignore` entries (from `scaffold/gitignore-entries`). The bootstrap only provides `.kit/` — no `config.yaml`, `constitution.md`, or other project files.
 
 **Scenarios**:
-- Bootstrap a new project (no `fab/` directory) — creates `fab/.kit/` with all skills, templates, scripts, and VERSION file; running `fab-sync.sh` first validates prerequisites (yq, jq, gh, direnv, bats), then creates `changes/`, `memory/index.md`, `specs/index.md`, symlinks, `.envrc` (line-ensuring from scaffold), and `.gitignore` entry
+- Bootstrap a new project (no `fab/` directory) — creates `fab/.kit/` with all skills, templates, scripts, and VERSION file; running `fab-sync.sh` first validates prerequisites (yq, jq, gh, direnv, bats), then creates `changes/`, `memory/index.md`, `specs/index.md`, skill deployments (copies/symlinks per platform), `.envrc` (line-ensuring from scaffold), and `.gitignore` entry
 - Bootstrap with existing `fab/` directory — creates or replaces `fab/.kit/`; existing files outside `.kit/` (config.yaml, constitution.md, memory/, specs/, changes/) are NOT affected
 
 #### Manual Copy Still Works
@@ -35,7 +35,7 @@ The existing `cp -r` distribution method SHALL continue to work. The bootstrap o
 
 #### Update Script (`fab-upgrade.sh`)
 
-`fab/.kit/scripts/fab-upgrade.sh` SHALL download the latest `kit.tar.gz` from GitHub Releases, extract it to replace the current `fab/.kit/` contents, display the version change, and re-run `fab-sync.sh` to repair directories and agents.
+`fab/.kit/scripts/fab-upgrade.sh` SHALL download the latest `kit.tar.gz` from GitHub Releases, extract it to replace the current `fab/.kit/` contents, display the version change, and re-run `fab-sync.sh` to repair directories and skill deployments.
 
 **Scenarios**:
 - Update to a newer version — replaces `.kit/` contents, displays version change (e.g., "0.1.0 → 0.2.0"), re-runs `fab-sync.sh`, checks for version drift and prints `/fab-setup migrations` reminder if needed, preserves all files outside `.kit/`
@@ -61,9 +61,9 @@ The existing `cp -r` distribution method SHALL continue to work. The bootstrap o
 - Interrupted during extraction to temp dir — existing `.kit/` unchanged, temp dir cleaned up on next run
 - Extraction verification fails — aborts without replacing `.kit/`, displays error
 
-#### Symlink Repair After Update
+#### Skill Deployment Repair After Update
 
-After extracting the new `.kit/` contents, `fab-upgrade.sh` SHALL re-run `fab-sync.sh` to ensure all agent symlinks (`.claude/skills/`, `.opencode/commands/`, `.agents/skills/`) point to the updated skill files.
+After extracting the new `.kit/` contents, `fab-upgrade.sh` SHALL re-run `fab-sync.sh` to ensure all skill deployments are up to date: copies refreshed (`.claude/skills/`, `.agents/skills/`), symlinks valid (`.opencode/commands/`), and stale agent files cleaned up (`.claude/agents/`).
 
 ### Release
 
@@ -103,6 +103,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260219-d2y2-copy-template-skills-drop-agents | 2026-02-19 | Updated references from symlinks to copies for Claude Code skills. Renamed "Symlink Repair After Update" to "Skill Deployment Repair After Update". Updated bootstrap and upgrade descriptions to reflect copy-with-template deployment |
 | 260218-cif4-eliminate-symlinks-distribute-packages | 2026-02-18 | Package production code (idea, wt) now distributed via `kit.tar.gz` under `.kit/packages/`. Updated release archive contents description. Updated `fab-upgrade.sh` description (symlinks → directories and agents). Added `env-packages.sh` for centralized PATH setup, sourced by `scaffold/envrc` (direnv) and `src/packages/rc-init.sh` (shell rc). |
 | 260217-zkah-readme-quickstart-prereqs-check | 2026-02-18 | Added prerequisites validation to `fab-sync.sh` pipeline (via `sync/1-prerequisites.sh`). Updated bootstrap description to mention prerequisites check. Restructured README Quick Start: folded Initialize and Updating under Install as sub-sections. |
 | 260216-ymvx-DEV-1043-envrc-line-sync | 2026-02-16 | Updated `.envrc` references from symlink to line-ensuring: bootstrap description now says "`.envrc` entries (from `scaffold/envrc`, line-ensuring)"; scenario updated to note line-ensuring from scaffold |
