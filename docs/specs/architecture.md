@@ -41,8 +41,9 @@ project/
 │   │           ├── changeman.sh    # Change Manager CLI
 │   │           ├── preflight.sh    # Pre-flight validation
 │   │           └── calc-score.sh   # Confidence score computation
-│   ├── config.yaml                 # Project-specific configuration
-│   ├── constitution.md             # Project principles & constraints
+│   ├── project/
+│   │   ├── config.yaml             # Project-specific configuration
+│   │   └── constitution.md         # Project principles & constraints
 │   ├── current                     # Pointer file (contains active change name)
 │   ├── memory/                     # Centralized source of truth
 │   │   ├── index.md               # Top-level memory index
@@ -219,7 +220,7 @@ last_updated: 2026-01-18T11:00:00Z
 ## Configuration (config.yaml)
 
 ```yaml
-# fab/config.yaml
+# fab/project/config.yaml
 
 project:
   name: "My App"
@@ -275,7 +276,7 @@ rules:
 
 ---
 
-## Project Constitution (`fab/constitution.md`)
+## Project Constitution (`fab/project/constitution.md`)
 
 The constitution is the **architectural DNA** of a Fab project. It defines immutable principles that govern how specifications become code. Inspired by SpecKit's constitutional system, adapted for Fab's lightweight workflow.
 
@@ -360,7 +361,7 @@ fab/current          # Local working state — each developer has their own acti
 ```
 
 **What to commit** (shared with team):
-- `fab/config.yaml`, `fab/constitution.md`, `docs/memory/`, `fab/.kit/` — project configuration and memory
+- `fab/project/config.yaml`, `fab/project/constitution.md`, `docs/memory/`, `fab/.kit/` — project configuration and memory
 - `fab/changes/` — change artifacts (intakes, specs, tasks)
 
 **What to ignore** (local state):
@@ -459,8 +460,8 @@ This keeps the workflow entirely prompt-driven after the one-time directory copy
 2. That's it — symlinks in `.claude/skills/` (and other agent directories) automatically resolve to the new files
 
 **What's preserved** (lives outside `.kit/`, never touched by updates):
-- `fab/config.yaml` — project configuration
-- `fab/constitution.md` — project principles and constraints
+- `fab/project/config.yaml` — project configuration
+- `fab/project/constitution.md` — project principles and constraints
 - `docs/memory/` — memory files (post-implementation truth)
 - `fab/changes/` — active and archived changes
 - `fab/current` — active change pointer
@@ -517,6 +518,6 @@ Skills loading context will naturally scope to the relevant section based on wha
 | `fab/current` (single pointer) | Fine — one change at a time |
 | `fab/changes/` (flat) | Fine — changes reference affected packages in their spec |
 | `docs/memory/` (domain-based) | Already monorepo-friendly |
-| `fab/constitution.md` | Shared principles apply repo-wide; use sections for package-specific conventions if needed |
+| `fab/project/constitution.md` | Shared principles apply repo-wide; use sections for package-specific conventions if needed |
 | `.claude/skills/` | One skill set per repo — correct for a single `fab/` |
 | Git branches | Repo-wide by nature — matches single `fab/` model |

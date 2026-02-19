@@ -9,7 +9,7 @@ STAGEMAN="$scripts_dir/lib/stageman.sh"
 CHANGEMAN="$scripts_dir/lib/changeman.sh"
 
 # 1. Project initialization validation
-if [ ! -f "$fab_root/config.yaml" ] || [ ! -f "$fab_root/constitution.md" ]; then
+if [ ! -f "$fab_root/project/config.yaml" ] || [ ! -f "$fab_root/project/constitution.md" ]; then
   echo "fab/ is not initialized. Run /fab-setup first." >&2
   exit 1
 fi

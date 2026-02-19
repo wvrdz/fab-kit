@@ -98,15 +98,15 @@ bash "$kit_dir/scripts/fab-sync.sh"
 
 # ── Version drift check ──────────────────────────────────────────────
 
-if [ -f "$fab_dir/VERSION" ]; then
-  local_version=$(cat "$fab_dir/VERSION" | tr -d '[:space:]')
+if [ -f "$fab_dir/project/VERSION" ]; then
+  local_version=$(cat "$fab_dir/project/VERSION" | tr -d '[:space:]')
   if [ "$local_version" != "$new_version" ]; then
     echo ""
-    echo "Note: fab/VERSION ($local_version) is behind engine ($new_version). Run /fab-setup migrations to apply migrations."
+    echo "Note: fab/project/VERSION ($local_version) is behind engine ($new_version). Run /fab-setup migrations to apply migrations."
   fi
 else
   echo ""
-  echo "Note: fab/VERSION not found. Run /fab-setup to create it, then /fab-setup migrations for migrations."
+  echo "Note: fab/project/VERSION not found. Run /fab-setup to create it, then /fab-setup migrations for migrations."
 fi
 
 echo ""

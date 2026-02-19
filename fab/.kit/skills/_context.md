@@ -27,11 +27,11 @@ Before generating or validating any artifact, load the relevant context layers b
 
 Read these files first — they define the project's identity, constraints, and documentation landscape:
 
-- **`fab/config.yaml`** — project configuration, naming conventions, model tiers
-- **`fab/constitution.md`** — project principles and constraints (MUST/SHOULD/MUST NOT rules)
-- **`fab/context.md`** — free-form project context: tech stack, conventions, architecture *(optional — no error if missing)*
-- **`fab/code-quality.md`** — coding standards for apply/review: principles, anti-patterns, test strategy *(optional — no error if missing)*
-- **`fab/code-review.md`** — review policy: severity definitions, scope, rework budget *(optional — no error if missing)*
+- **`fab/project/config.yaml`** — project configuration, naming conventions, model tiers
+- **`fab/project/constitution.md`** — project principles and constraints (MUST/SHOULD/MUST NOT rules)
+- **`fab/project/context.md`** — free-form project context: tech stack, conventions, architecture *(optional — no error if missing)*
+- **`fab/project/code-quality.md`** — coding standards for apply/review: principles, anti-patterns, test strategy *(optional — no error if missing)*
+- **`fab/project/code-review.md`** — review policy: severity definitions, scope, rework budget *(optional — no error if missing)*
 - **`docs/memory/index.md`** — memory landscape (which domains and memory files exist)
 - **`docs/specs/index.md`** — specifications landscape (pre-implementation design intent, human-curated)
 
@@ -49,7 +49,7 @@ Resolve the active change and load its state by running the preflight script:
 > **Change-name override**: When a `[change-name]` argument is passed to the preflight script, it resolves the change using case-insensitive substring matching against `fab/changes/` folder names (excluding `archive/`) instead of reading `fab/current`. The override is **transient** — `fab/current` is never modified. This enables parallel workflows where multiple tabs target different changes concurrently. Supports full folder names, partial slugs, or 4-char IDs (e.g., `r3m7`).
 
 > **What the script validates internally** (for reference — agents do not need to duplicate these checks):
-> 1. `fab/config.yaml` and `fab/constitution.md` exist (project initialized)
+> 1. `fab/project/config.yaml` and `fab/project/constitution.md` exist (project initialized)
 > 2. `fab/current` exists and is non-empty (active change set) — OR `$1` override resolves to a valid change
 > 3. Change directory `fab/changes/{name}/` exists
 > 4. `.status.yaml` exists within the change directory
@@ -97,8 +97,8 @@ Every skill MUST end its output with a `Next:` line derived from the State Table
 | hydrate | /fab-archive | /fab-archive |
 
 **State derivation**:
-- **(none)**: `fab/config.yaml` does not exist
-- **initialized**: `fab/config.yaml` exists AND no active change (`fab/current` absent or empty)
+- **(none)**: `fab/project/config.yaml` does not exist
+- **initialized**: `fab/project/config.yaml` exists AND no active change (`fab/current` absent or empty)
 - **intake** through **apply**: Derived from the active change's `.status.yaml` progress map (the stage with `active` state)
 - **review (pass)**: `progress.review == done`
 - **review (fail)**: `progress.review == failed`

@@ -12,7 +12,7 @@
 | **Memory files** | The source-of-truth documentation in `docs/memory/`. Organized by domain, updated by `/fab-continue` (hydrate) and `/docs-hydrate-memory` ingestion. Contrast with **spec.md** (change-scoped). |
 | **Change** | A unit of work tracked as a folder under `fab/changes/`. Contains all artifacts from intake through hydrate. Identified by its folder name (e.g., `260115-a7k2-add-oauth`). |
 | **Change folder** | The directory `fab/changes/{YYMMDD}-{XXXX}-{slug}/` that holds all artifacts and status for a single change. The primary unit of identity in Fab — not branches. |
-| **Constitution** | The file `fab/constitution.md`. Defines immutable project principles using MUST/SHOULD/MUST NOT keywords. Loaded as context by most skills; violations are flagged during review. |
+| **Constitution** | The file `fab/project/constitution.md`. Defines immutable project principles using MUST/SHOULD/MUST NOT keywords. Loaded as context by most skills; violations are flagged during review. |
 | **Domain** | A topic area in `docs/memory/` (e.g., `auth/`, `payments/`). Each domain has its own `index.md` and one or more memory files. |
 | **Hydration** | The process of integrating knowledge into `docs/memory/`. Two modes: (1) **pipeline hydration** — merging change artifacts (spec.md) into memory files via `/fab-continue` (hydrate stage) on change completion, and (2) **source hydration** — ingesting external documentation or generating from codebase analysis via `/docs-hydrate-memory` (supports both ingest and generate modes). |
 | **Kit** | The `fab/.kit/` directory containing the Fab engine — templates, skill definitions, and scripts. Replaceable upstream; everything outside `.kit/` is project-specific. |
@@ -66,7 +66,7 @@
 | Term | Definition |
 |------|-----------|
 | `.status.yaml` | The status manifest inside each change folder. Tracks progress of all stages, checklist counts, and confidence score. Current stage is derived from the `active` entry in the progress map. Single source of truth for where a change is. |
-| `config.yaml` | Project configuration at `fab/config.yaml`. Defines project identity, tech stack context, naming format, git settings, stage pipeline, checklist categories, and per-stage rules. |
+| `config.yaml` | Project configuration at `fab/project/config.yaml`. Defines project identity, tech stack context, naming format, git settings, stage pipeline, checklist categories, and per-stage rules. |
 | `checklist.md` | Auto-generated quality checklist inside a change folder. Items derived from spec and constitution. Verified by `/fab-continue` (review); all items must pass before hydrate. |
 | `fab/current` | Pointer file containing the active change name. Read by every skill; updated by `/fab-switch`; cleared by `/fab-archive`. |
 | `fab/changes/` | Directory holding all active change folders. Completed changes are moved to `fab/changes/archive/`. |

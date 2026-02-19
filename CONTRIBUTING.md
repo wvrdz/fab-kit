@@ -13,7 +13,7 @@ Fab Kit's documentation is split into two categories:
 
 1. **[docs/specs/overview.md](docs/specs/overview.md)** — workflow design and principles (prerequisite for everything)
 2. **[docs/specs/glossary.md](docs/specs/glossary.md)** — terminology you'll see everywhere
-3. **[fab/constitution.md](fab/constitution.md)** — immutable project principles (MUST/SHOULD rules)
+3. **[fab/project/constitution.md](fab/project/constitution.md)** — immutable project principles (MUST/SHOULD rules)
 4. **[docs/specs/architecture.md](docs/specs/architecture.md)** — directory structure, config, naming, agent integration
 5. **[docs/specs/skills.md](docs/specs/skills.md)** — detailed behavior for each `/fab-*` skill
 6. **[docs/memory/fab-workflow/kit-architecture.md](docs/memory/fab-workflow/kit-architecture.md)** — `.kit/` internals, scripts, distribution
@@ -45,7 +45,7 @@ Fab Kit's documentation is split into two categories:
 
 | Document | Description |
 |----------|-------------|
-| [fab/constitution.md](fab/constitution.md) | Project principles and constraints — the MUST/SHOULD rules that govern all skills |
+| [fab/project/constitution.md](fab/project/constitution.md) | Project principles and constraints — the MUST/SHOULD rules that govern all skills |
 | [docs/memory/fab-workflow/change-lifecycle.md](docs/memory/fab-workflow/change-lifecycle.md) | Change folders, `.status.yaml`, naming conventions, git integration, `/fab-status`, `/fab-switch` |
 | [docs/memory/fab-workflow/context-loading.md](docs/memory/fab-workflow/context-loading.md) | How skills load project context — always-load layer, selective domain loading, SRAD protocol |
 | [docs/memory/fab-workflow/hydrate.md](docs/memory/fab-workflow/hydrate.md) | `/docs-hydrate-memory` — dual-mode: ingest external sources or generate docs from codebase scanning |

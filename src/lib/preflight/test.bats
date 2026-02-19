@@ -11,7 +11,7 @@ setup() {
   TEST_DIR="$(mktemp -d)"
 
   local fab="$TEST_DIR/fab"
-  mkdir -p "$fab/.kit/scripts/lib" "$fab/.kit/schemas" "$fab/changes"
+  mkdir -p "$fab/.kit/scripts/lib" "$fab/.kit/schemas" "$fab/changes" "$fab/project"
 
   # Copy real scripts and schema
   cp "$PROJECT_ROOT/fab/.kit/scripts/lib/preflight.sh" "$fab/.kit/scripts/lib/"
@@ -21,8 +21,8 @@ setup() {
   chmod +x "$fab/.kit/scripts/lib/preflight.sh"
 
   # Create required init files
-  echo "version: 1" > "$fab/config.yaml"
-  echo "# Constitution" > "$fab/constitution.md"
+  echo "version: 1" > "$fab/project/config.yaml"
+  echo "# Constitution" > "$fab/project/constitution.md"
 
   PREFLIGHT="$TEST_DIR/fab/.kit/scripts/lib/preflight.sh"
 }
@@ -55,7 +55,7 @@ run_preflight_combined() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 @test "rejects when config.yaml missing" {
-  rm "$TEST_DIR/fab/config.yaml"
+  rm "$TEST_DIR/fab/project/config.yaml"
   set_current "test-change"
   create_change "test-change" "progress:
   intake: active
@@ -69,7 +69,7 @@ run_preflight_combined() {
 }
 
 @test "rejects when constitution.md missing" {
-  rm "$TEST_DIR/fab/constitution.md"
+  rm "$TEST_DIR/fab/project/constitution.md"
   set_current "test-change"
   create_change "test-change" "progress:
   intake: active
@@ -83,7 +83,7 @@ run_preflight_combined() {
 }
 
 @test "rejects when both init files missing" {
-  rm "$TEST_DIR/fab/config.yaml" "$TEST_DIR/fab/constitution.md"
+  rm "$TEST_DIR/fab/project/config.yaml" "$TEST_DIR/fab/project/constitution.md"
   run run_preflight_combined
   [ "$status" -eq 1 ]
 }
@@ -433,7 +433,7 @@ confidence:
 # ─────────────────────────────────────────────────────────────────────────────
 
 @test "error msg: project not initialized" {
-  rm "$TEST_DIR/fab/config.yaml"
+  rm "$TEST_DIR/fab/project/config.yaml"
   set_current "x"
   run run_preflight_combined
   [[ "$output" == *"not initialized"* ]]

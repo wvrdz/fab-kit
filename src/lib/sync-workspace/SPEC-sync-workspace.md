@@ -1,6 +1,6 @@
 # Workspace Sync (2-sync-workspace)
 
-Structural bootstrap script that syncs kit assets into the workspace. Creates directories, skill symlinks, agent files, skeleton docs, `.envrc`, `fab/VERSION`, and `.gitignore` entries. Cleans up stale artifacts from deleted skills. Idempotent — safe to re-run.
+Structural bootstrap script that syncs kit assets into the workspace. Creates directories, skill symlinks, agent files, skeleton docs, `.envrc`, `fab/project/VERSION`, and `.gitignore` entries. Cleans up stale artifacts from deleted skills. Idempotent — safe to re-run.
 
 ## Sources of Truth
 
@@ -30,10 +30,10 @@ No arguments. No flags. The script resolves paths relative to its own location.
 
 Creates `fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/` (with `mkdir -p`). Creates `fab/changes/.gitkeep` and `fab/changes/archive/.gitkeep`. Skips existing directories and files.
 
-### 2. fab/VERSION
+### 2. fab/project/VERSION
 
-- **New project** (no `fab/config.yaml`): copies `fab/.kit/VERSION` value
-- **Existing project** (has `config.yaml`, no `fab/VERSION`): writes `0.1.0`
+- **New project** (no `fab/project/config.yaml`): copies `fab/.kit/VERSION` value
+- **Existing project** (has `config.yaml`, no `fab/project/VERSION`): writes `0.1.0`
 - **Already exists**: preserves existing file
 
 ### 3. .envrc Management
@@ -60,7 +60,7 @@ Reports created/repaired/valid counts per platform.
 
 Identifies `fast`-tier skills (via `model_tier: fast` in YAML frontmatter). For each:
 
-- Reads the Claude model mapping from `fab/config.yaml` `model_tiers.fast.claude` (falls back to `haiku` if absent or no config.yaml)
+- Reads the Claude model mapping from `fab/project/config.yaml` `model_tiers.fast.claude` (falls back to `haiku` if absent or no config.yaml)
 - Generates `.claude/agents/<name>.md` with `model_tier:` replaced by `model:` platform-specific value
 - Updates existing agent files if content changed
 - Removes stale agent files for skills that no longer exist in `.kit/skills/`

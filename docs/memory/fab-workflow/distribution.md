@@ -41,12 +41,12 @@ The existing `cp -r` distribution method SHALL continue to work. The bootstrap o
 - Update to a newer version — replaces `.kit/` contents, displays version change (e.g., "0.1.0 → 0.2.0"), re-runs `fab-sync.sh`, checks for version drift and prints `/fab-setup migrations` reminder if needed, preserves all files outside `.kit/`
 - Already up to date — informs user, no files modified
 - No network access — exits non-zero with error message, existing `.kit/` unchanged
-- `fab/VERSION` missing after upgrade — prints guidance to run `/fab-setup` then `/fab-setup migrations`
-- `fab/VERSION` behind new engine version — prints reminder to run `/fab-setup migrations` to apply migrations
+- `fab/project/VERSION` missing after upgrade — prints guidance to run `/fab-setup` then `/fab-setup migrations`
+- `fab/project/VERSION` behind new engine version — prints reminder to run `/fab-setup migrations` to apply migrations
 
 #### Update Preserves Project Files
 
-`fab-upgrade.sh` MUST NOT modify any files outside of `fab/.kit/`. Preserved: `fab/config.yaml`, `fab/constitution.md`, `fab/VERSION`, `docs/memory/`, `docs/specs/`, `fab/changes/`, `fab/current`.
+`fab-upgrade.sh` MUST NOT modify any files outside of `fab/.kit/`. Preserved: `fab/project/config.yaml`, `fab/project/constitution.md`, `fab/project/VERSION`, `docs/memory/`, `docs/specs/`, `fab/changes/`, `fab/current`.
 
 #### gh CLI as Primary Download Tool
 

@@ -22,8 +22,8 @@ The stage named "spec" refers to the *activity* of writing the specification —
 Every skill that generates or validates artifacts MUST load relevant context before proceeding. This ensures agents produce accurate, grounded output rather than hallucinating requirements or ignoring existing patterns.
 
 **Always loaded** (by every skill except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`):
-- `fab/config.yaml` — project configuration, tech stack, conventions
-- `fab/constitution.md` — project principles and constraints
+- `fab/project/config.yaml` — project configuration, tech stack, conventions
+- `fab/project/constitution.md` — project principles and constraints
 - `docs/memory/index.md` — memory landscape (which domains and memory files exist)
 
 **Change context** (loaded by skills operating on an active change):
@@ -79,16 +79,16 @@ Every skill MUST end its output with a `Next:` line suggesting the available fol
 
 | Subcommand | Purpose |
 |------------|---------|
-| `/fab-setup config [section]` | Create or update `fab/config.yaml` interactively, preserving comments |
-| `/fab-setup constitution` | Create or amend `fab/constitution.md` with semantic versioning |
+| `/fab-setup config [section]` | Create or update `fab/project/config.yaml` interactively, preserving comments |
+| `/fab-setup constitution` | Create or amend `fab/project/constitution.md` with semantic versioning |
 | `/fab-setup migrations [file]` | Run version migrations against the current project |
 
 When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fab-sync.sh` for structural setup, then delegates to `config` and `constitution` subcommands for any missing artifacts. Unrecognized arguments are rejected with a message listing valid subcommands.
 
 **Creates** (first run only — skipped if already present):
-- `fab/config.yaml` — project configuration (via `/fab-setup config`)
-- `fab/constitution.md` — project principles and constraints (via `/fab-setup constitution`)
-- `fab/VERSION` — local project version (via `fab-sync.sh`)
+- `fab/project/config.yaml` — project configuration (via `/fab-setup config`)
+- `fab/project/constitution.md` — project principles and constraints (via `/fab-setup constitution`)
+- `fab/project/VERSION` — local project version (via `fab-sync.sh`)
 - `docs/memory/index.md` — initial memory index (via `fab-sync.sh`)
 - `docs/specs/index.md` — specifications index (via `fab-sync.sh`)
 - `fab/changes/` — empty, ready for change folders (via `fab-sync.sh`)
@@ -112,7 +112,7 @@ When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fa
 
 # Subcommand — update config
 /fab-setup config
-→ "Updating fab/config.yaml..."
+→ "Updating fab/project/config.yaml..."
 
 # Subcommand — run migrations after kit upgrade
 /fab-setup migrations
@@ -202,7 +202,7 @@ When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fa
 1. Generate folder name: today's date (`YYMMDD`) + 4 random alphanumeric chars + 2-6 word slug from description
 2. Create `fab/changes/{name}/`
 3. Initialize `.status.yaml` with `progress.intake: active`
-4. Generate `intake.md` using template (loading `fab/constitution.md` and `fab/config.yaml` as context)
+4. Generate `intake.md` using template (loading `fab/project/constitution.md` and `fab/project/config.yaml` as context)
 5. Perform gap analysis — check whether the change is already covered by existing mechanisms
 6. Use SRAD-driven adaptive questioning (no fixed cap) to resolve ambiguities conversationally
 7. Leave intake as `active` — `/fab-continue` handles the intake → spec transition
@@ -234,7 +234,7 @@ When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fa
 **Behavior** (no argument — normal forward flow):
 1. Read `.status.yaml` to determine current stage
 2. Identify next artifact to create
-3. Load relevant template + context (including `fab/constitution.md` for project principles)
+3. Load relevant template + context (including `fab/project/constitution.md` for project principles)
 4. Generate artifact (with clarification/research as needed)
 5. Auto-generate checklist when creating tasks
 7. Update `.status.yaml`

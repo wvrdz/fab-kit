@@ -23,7 +23,7 @@ If no argument (and no `--blank`): list all active changes and ask user to pick.
 
 ## Context Loading
 
-Loads `fab/config.yaml` (for `git.enabled`, `git.branch_prefix`) and matched change's `.status.yaml`. Name resolution and switch logic are delegated to `fab/.kit/scripts/lib/changeman.sh`. Does NOT load constitution, memory, or specs.
+Loads `fab/project/config.yaml` (for `git.enabled`, `git.branch_prefix`) and matched change's `.status.yaml`. Name resolution and switch logic are delegated to `fab/.kit/scripts/lib/changeman.sh`. Does NOT load constitution, memory, or specs.
 
 ---
 
@@ -104,7 +104,7 @@ Branch line omitted if git disabled or not in a repo. Deactivation shows `No act
 | No changes exist | "No active changes found. Run /fab-new." |
 | Matched folder missing `.status.yaml` | Switch anyway, warn: "Warning: .status.yaml not found — change may be corrupted." |
 | `fab/changes/` doesn't exist | "fab/changes/ not found. Run /fab-setup." |
-| `fab/config.yaml` not found | Skip branch integration |
+| `fab/project/config.yaml` not found | Skip branch integration |
 | Git branch creation/checkout fails | Report error, continue without branch change. Switch still completes. |
 
 ---

@@ -192,7 +192,7 @@ cmd_switch() {
   # 3. Read config for git settings
   local git_enabled=true
   local branch_prefix=""
-  local config_file="$FAB_ROOT/config.yaml"
+  local config_file="$FAB_ROOT/project/config.yaml"
   if [ -f "$config_file" ] && command -v yq >/dev/null 2>&1; then
     local val
     val=$(yq '.git.enabled // "true"' "$config_file" 2>/dev/null) && git_enabled="$val"

@@ -26,7 +26,7 @@ If no argument is provided, the skill displays status for the active change in `
 
 ## Context Loading
 
-This skill uses **minimal context** — it does not need to load `fab/config.yaml` or `fab/constitution.md` (as noted in `_context.md`, status is exempt from the "Always Load" requirement).
+This skill uses **minimal context** — it does not need to load `fab/project/config.yaml` or `fab/project/constitution.md` (as noted in `_context.md`, status is exempt from the "Always Load" requirement).
 
 ---
 
@@ -40,9 +40,9 @@ bash fab/.kit/scripts/lib/preflight.sh [change-name]
 
 Use `fab/.kit/scripts/lib/preflight.sh` and `fab/.kit/scripts/lib/stageman.sh` for validation and data retrieval. The skill handles formatting and presentation:
 
-- Reads `fab/.kit/VERSION`, `fab/VERSION` (if exists), `fab/current`, `fab/changes/{name}/.status.yaml`, and `fab/config.yaml` (for `git.enabled`)
+- Reads `fab/.kit/VERSION`, `fab/project/VERSION` (if exists), `fab/current`, `fab/changes/{name}/.status.yaml`, and `fab/project/config.yaml` (for `git.enabled`)
 - Queries live branch via `git branch --show-current` when git is enabled (instead of reading a static `branch:` field from `.status.yaml`)
-- **Version drift check**: if `fab/VERSION` exists and its value is less than `fab/.kit/VERSION`, display a warning: `⚠ Version drift: local {local}, engine {engine} — run /fab-setup migrations`. If versions match, no warning. If `fab/VERSION` doesn't exist, no warning (handled by `/fab-setup`)
+- **Version drift check**: if `fab/project/VERSION` exists and its value is less than `fab/.kit/VERSION`, display a warning: `⚠ Version drift: local {local}, engine {engine} — run /fab-setup migrations`. If versions match, no warning. If `fab/project/VERSION` doesn't exist, no warning (handled by `/fab-setup`)
 - Uses `display_stage` and `display_state` from preflight output for the primary "Stage:" line, showing the stage with a state qualifier (e.g., `Stage: intake (1/6) — done`). The "Next:" line shows the routing stage with the default command (e.g., `Next: spec (via /fab-continue)`). When all stages are done, shows `Next: /fab-archive`
 - Renders the full status block: version header, change name, branch (when git enabled), stage with state qualifier, next action, progress table with symbols (`✓` done, `●` active, `○` pending, `—` skipped, `✗` failed), checklist counts, confidence score, version drift warning (if applicable)
 - Handles all error cases (no active change, missing `.status.yaml`, missing fields)

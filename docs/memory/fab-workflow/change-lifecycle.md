@@ -155,11 +155,11 @@ There is no `/fab-abandon` skill — this is a manual operation. To preserve con
 
 `/fab-status` shows the current change state at a glance: name, live git branch (when `git.enabled`), display stage with state qualifier, next action, progress through all stages, checklist status, confidence score, and version drift warning.
 
-The skill uses `lib/preflight.sh` for data retrieval (including `display_stage` and `display_state` fields), then formats the output. The "Stage:" line shows the display stage (where you are) with a state qualifier (e.g., `Stage: intake (1/6) — done`). The "Next:" line shows the routing stage with the default command (e.g., `Next: spec (via /fab-continue)`). It reads `fab/config.yaml` for `git.enabled` and uses `git branch --show-current` for live branch display.
+The skill uses `lib/preflight.sh` for data retrieval (including `display_stage` and `display_state` fields), then formats the output. The "Stage:" line shows the display stage (where you are) with a state qualifier (e.g., `Stage: intake (1/6) — done`). The "Next:" line shows the routing stage with the default command (e.g., `Next: spec (via /fab-continue)`). It reads `fab/project/config.yaml` for `git.enabled` and uses `git branch --show-current` for live branch display.
 
 ### `/fab-switch [change-name] [--blank] [--branch <name>]`
 
-`/fab-switch` changes the active change and handles git branch integration. It reads `fab/config.yaml` for `git.enabled` and `git.branch_prefix`.
+`/fab-switch` changes the active change and handles git branch integration. It reads `fab/project/config.yaml` for `git.enabled` and `git.branch_prefix`.
 
 **Switching to a change:**
 1. Match `change-name` against `fab/changes/` (supports partial/slug match)

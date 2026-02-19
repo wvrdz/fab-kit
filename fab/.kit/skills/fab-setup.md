@@ -9,15 +9,15 @@ model_tier: fast
 > Read and follow the instructions in `fab/.kit/skills/_context.md` before proceeding.
 > **Exception**: `/fab-setup` has subcommand-specific context loading:
 > - **bare / config / constitution**: Skip the "Always Load" context layer if files don't exist (first-run). Load them only if they already exist (re-run scenario).
-> - **migrations**: Load `fab/config.yaml` (MUST exist). Skip Change Context loading — migrations operate on project-level files, not a specific change.
+> - **migrations**: Load `fab/project/config.yaml` (MUST exist). Skip Change Context loading — migrations operate on project-level files, not a specific change.
 
 ---
 
 ## Arguments
 
 - **No arguments** — full structural bootstrap (default behavior)
-- **`config [section]`** — create or update `fab/config.yaml` interactively. Optional `[section]` skips the menu and edits that section directly. Valid sections: `project`, `source_paths`, `rules`, `checklist`, `git`, `naming`, `model_tiers`.
-- **`constitution`** — create or amend `fab/constitution.md` with semantic versioning
+- **`config [section]`** — create or update `fab/project/config.yaml` interactively. Optional `[section]` skips the menu and edits that section directly. Valid sections: `project`, `source_paths`, `rules`, `checklist`, `git`, `naming`, `model_tiers`.
+- **`constitution`** — create or amend `fab/project/constitution.md` with semantic versioning
 - **`migrations [file]`** — apply version migrations to bring project files in sync with the installed kit version (absorbed from fab-update)
 - **`validate`** — redirect message: "Validation is built into `/fab-setup config` and `/fab-setup constitution` — each validates after every edit."
 
@@ -55,29 +55,29 @@ When invoked with no arguments, perform the full structural bootstrap. `/fab-set
 
 Each step is **idempotent** — skip if the artifact already exists and is valid. On re-run, verify and repair rather than recreate.
 
-#### 1a. `fab/config.yaml`
+#### 1a. `fab/project/config.yaml`
 
 If missing or raw template (contains `{PROJECT_NAME}`): execute **Config Behavior** (below) in create mode.
 If exists and not a raw template: report "config.yaml already exists — skipping".
 
-#### 1b. `fab/constitution.md`
+#### 1b. `fab/project/constitution.md`
 
 If missing or raw template (contains `{Project Name}`): execute **Constitution Behavior** (below) in create mode.
 If exists and not a raw template: report "constitution.md already exists — skipping".
 
-#### 1b2. `fab/context.md`
+#### 1b2. `fab/project/context.md`
 
-If missing: copy `fab/.kit/scaffold/fab/context.md` to `fab/context.md`. Report "Created: fab/context.md".
+If missing: copy `fab/.kit/scaffold/fab/project/context.md` to `fab/project/context.md`. Report "Created: fab/project/context.md".
 If exists: skip.
 
-#### 1b3. `fab/code-quality.md`
+#### 1b3. `fab/project/code-quality.md`
 
-If missing: copy `fab/.kit/scaffold/fab/code-quality.md` to `fab/code-quality.md`. Report "Created: fab/code-quality.md".
+If missing: copy `fab/.kit/scaffold/fab/project/code-quality.md` to `fab/project/code-quality.md`. Report "Created: fab/project/code-quality.md".
 If exists: skip.
 
-#### 1b4. `fab/code-review.md`
+#### 1b4. `fab/project/code-review.md`
 
-If missing: copy `fab/.kit/scaffold/fab/code-review.md` to `fab/code-review.md`. Report "Created: fab/code-review.md".
+If missing: copy `fab/.kit/scaffold/fab/project/code-review.md` to `fab/project/code-review.md`. Report "Created: fab/project/code-review.md".
 If exists: skip.
 
 #### 1c. `docs/memory/index.md`
@@ -92,18 +92,18 @@ If missing, create `docs/specs/` directory and copy `fab/.kit/scaffold/docs/spec
 
 If exists: skip.
 
-#### 1e. `fab/VERSION`
+#### 1e. `fab/project/VERSION`
 
-Handled by `fab-sync.sh` (step 1f). The scaffold script creates `fab/VERSION` with version logic based on project state:
+Handled by `fab-sync.sh` (step 1f). The scaffold script creates `fab/project/VERSION` with version logic based on project state:
 
-- **New project** (no `fab/config.yaml`): copies `fab/.kit/VERSION` value (engine version)
-- **Existing project** (has `fab/config.yaml`, no `fab/VERSION`): writes `0.1.0` (base version, run `/fab-setup migrations` to migrate)
-- **Already exists**: preserves existing `fab/VERSION` — no overwrite
+- **New project** (no `fab/project/config.yaml`): copies `fab/.kit/VERSION` value (engine version)
+- **Existing project** (has `fab/project/config.yaml`, no `fab/project/VERSION`): writes `0.1.0` (base version, run `/fab-setup migrations` to migrate)
+- **Already exists**: preserves existing `fab/project/VERSION` — no overwrite
 
 On bootstrap output:
-- New project: `Created: fab/VERSION ({engine_version})`
-- Existing project: `Created: fab/VERSION (0.1.0 — existing project, run /fab-setup migrations to migrate)`
-- Re-run: `fab/VERSION` reported as part of scaffold output (no modification)
+- New project: `Created: fab/project/VERSION ({engine_version})`
+- Existing project: `Created: fab/project/VERSION (0.1.0 — existing project, run /fab-setup migrations to migrate)`
+- Re-run: `fab/project/VERSION` reported as part of scaffold output (no modification)
 
 #### 1f. `fab/changes/`
 
@@ -112,7 +112,7 @@ If exists: ensure `fab/changes/archive/` exists, then skip.
 
 #### 1g. `.claude/skills/` Symlinks
 
-Run `fab/.kit/scripts/fab-sync.sh` to create or repair all skill symlinks, directories, and `fab/VERSION`. The script discovers skills by globbing `fab/.kit/skills/fab-*.md` and creates:
+Run `fab/.kit/scripts/fab-sync.sh` to create or repair all skill symlinks, directories, and `fab/project/VERSION`. The script discovers skills by globbing `fab/.kit/skills/fab-*.md` and creates:
 
 ```
 .claude/skills/fab-{name}/SKILL.md → ../../../fab/.kit/skills/fab-{name}.md
@@ -136,12 +136,12 @@ Read `.gitignore` (create if missing). If `fab/current` is not listed, append it
 Found fab/.kit/ (v{VERSION}). Initializing project...
 {config.yaml prompts and creation}
 {constitution.md generation}
-Created: fab/config.yaml
-Created: fab/constitution.md
-Created: fab/context.md
-Created: fab/code-quality.md
-Created: fab/code-review.md
-Created: fab/VERSION ({version})
+Created: fab/project/config.yaml
+Created: fab/project/constitution.md
+Created: fab/project/context.md
+Created: fab/project/code-quality.md
+Created: fab/project/code-review.md
+Created: fab/project/VERSION ({version})
 Created: docs/memory/index.md
 Created: docs/specs/index.md
 Created: fab/changes/
@@ -158,9 +158,9 @@ On re-run, report each artifact as OK/repaired instead of Created, ending with `
 
 ## Config Behavior
 
-Create a new `fab/config.yaml` interactively or update specific sections. Preserves YAML comments via targeted string replacement. Validates after each edit.
+Create a new `fab/project/config.yaml` interactively or update specific sections. Preserves YAML comments via targeted string replacement. Validates after each edit.
 
-**Context loading**: Loads `fab/config.yaml` only (the file being edited). Does NOT load constitution, memory, or specs.
+**Context loading**: Loads `fab/project/config.yaml` only (the file being edited). Does NOT load constitution, memory, or specs.
 
 ### Config Arguments
 
@@ -168,19 +168,19 @@ Create a new `fab/config.yaml` interactively or update specific sections. Preser
 
 ### Config Pre-flight
 
-- **Update mode**: `fab/config.yaml` must exist. If missing (direct invocation): STOP with `fab/config.yaml not found. Run /fab-setup to create it.`
-- **Create mode** (from bootstrap): `fab/config.yaml` does not exist.
+- **Update mode**: `fab/project/config.yaml` must exist. If missing (direct invocation): STOP with `fab/project/config.yaml not found. Run /fab-setup to create it.`
+- **Create mode** (from bootstrap): `fab/project/config.yaml` does not exist.
 
 ### Config Create Mode
 
-When `fab/config.yaml` does not exist:
+When `fab/project/config.yaml` does not exist:
 
 1. Read the project's README, package.json, or other root-level files for context
 2. Ask the user: project name, description, source paths
-3. Read `fab/.kit/scaffold/fab/config.yaml` as the starting template
+3. Read `fab/.kit/scaffold/fab/project/config.yaml` as the starting template
 4. Substitute placeholders with user-provided values: `{PROJECT_NAME}`, `{PROJECT_DESCRIPTION}`, `{SOURCE_PATHS}`
-5. Write the result to `fab/config.yaml`
-6. Output: `Created fab/config.yaml`
+5. Write the result to `fab/project/config.yaml`
+6. Output: `Created fab/project/config.yaml`
 
 ### Config Update Mode — Menu Flow
 
@@ -189,7 +189,7 @@ When invoked without a section argument:
 1. Display the section menu:
 
 ```
-fab/config.yaml sections:
+fab/project/config.yaml sections:
 1. project       — name and description
 2. source_paths  — implementation code directories
 3. rules         — per-stage generation rules
@@ -223,13 +223,13 @@ If no changes made, output: `No changes made. config.yaml unchanged.`
 
 ### Config Output
 
-Show `Created fab/config.yaml` (create mode), `{N} sections updated in fab/config.yaml` (update mode), or `No changes made` (no-op). Next steps: `/fab-new` after create.
+Show `Created fab/project/config.yaml` (create mode), `{N} sections updated in fab/project/config.yaml` (update mode), or `No changes made` (no-op). Next steps: `/fab-new` after create.
 
 ### Config Error Handling
 
 | Condition | Action |
 |-----------|--------|
-| `fab/config.yaml` missing (update mode, direct invocation) | Abort with creation guidance |
+| `fab/project/config.yaml` missing (update mode, direct invocation) | Abort with creation guidance |
 | Invalid section argument | Output valid section names |
 | YAML parse failure after edit | Report error, offer revert |
 | Missing required field after edit | Report which field, offer revert |
@@ -241,27 +241,27 @@ Show `Created fab/config.yaml` (create mode), `{N} sections updated in fab/confi
 
 Create a new project constitution or amend an existing one with semantic versioning and structural preservation.
 
-**Context loading**: Loads `fab/config.yaml` and `fab/constitution.md` (if it exists). Does NOT load memory or specs.
+**Context loading**: Loads `fab/project/config.yaml` and `fab/project/constitution.md` (if it exists). Does NOT load memory or specs.
 
 ### Constitution Pre-flight
 
-1. `fab/config.yaml` must exist. If missing (direct invocation): STOP with `fab/config.yaml not found. Run /fab-setup first.`
-2. Read `fab/config.yaml` for project context
-3. Check whether `fab/constitution.md` exists -> determines mode
+1. `fab/project/config.yaml` must exist. If missing (direct invocation): STOP with `fab/project/config.yaml not found. Run /fab-setup first.`
+2. Read `fab/project/config.yaml` for project context
+3. Check whether `fab/project/constitution.md` exists -> determines mode
 
 ### Constitution Create Mode
 
-When `fab/constitution.md` does not exist:
+When `fab/project/constitution.md` does not exist:
 
-1. Read project context from `fab/config.yaml` + README, existing docs, codebase structure
-2. Read `fab/.kit/scaffold/fab/constitution.md` as the starting skeleton
+1. Read project context from `fab/project/config.yaml` + README, existing docs, codebase structure
+2. Read `fab/.kit/scaffold/fab/project/constitution.md` as the starting skeleton
 3. Generate principles based on the project's actual patterns, tech stack, and constraints — fill in the skeleton structure (replace `{Project Name}`, `{Principle Name}`, `{DATE}` placeholders; generate 3-7 principles with MUST/SHALL/SHOULD keywords)
-4. Write the result to `fab/constitution.md`
-5. Output: `Created fab/constitution.md (version 1.0.0) with {N} principles.`
+4. Write the result to `fab/project/constitution.md`
+5. Output: `Created fab/project/constitution.md (version 1.0.0) with {N} principles.`
 
 ### Constitution Update Mode
 
-When `fab/constitution.md` already exists:
+When `fab/project/constitution.md` already exists:
 
 1. Read and display current content, read version from Governance
 2. Present amendment menu:
@@ -296,14 +296,14 @@ What would you like to change?
 
 ### Constitution Output
 
-Show `Created fab/constitution.md (version 1.0.0) with {N} principles.` (create) or amendment summary with `Version: {old} -> {new}` (update). Next steps: `/fab-new`.
+Show `Created fab/project/constitution.md (version 1.0.0) with {N} principles.` (create) or amendment summary with `Version: {old} -> {new}` (update). Next steps: `/fab-new`.
 
 ### Constitution Error Handling
 
 | Condition | Action |
 |-----------|--------|
-| `fab/config.yaml` missing (direct invocation) | Abort with guidance |
-| `fab/constitution.md` malformed (update mode) | Warn: "Structure appears non-standard. Proceeding with best-effort parsing." |
+| `fab/project/config.yaml` missing (direct invocation) | Abort with guidance |
+| `fab/project/constitution.md` malformed (update mode) | Warn: "Structure appears non-standard. Proceeding with best-effort parsing." |
 | Governance section missing version | Warn and start from 1.0.0 |
 | Roman numeral parsing fails | Warn and proceed with sequential numbering from I |
 
@@ -311,28 +311,28 @@ Show `Created fab/constitution.md (version 1.0.0) with {N} principles.` (create)
 
 ## Migrations Behavior
 
-Compare `fab/VERSION` (local project version) to `fab/.kit/VERSION` (engine version), discover applicable migration files in `fab/.kit/migrations/`, and apply them sequentially. Each migration is a markdown instruction file — the skill reads it and executes the steps as an LLM agent.
+Compare `fab/project/VERSION` (local project version) to `fab/.kit/VERSION` (engine version), discover applicable migration files in `fab/.kit/migrations/`, and apply them sequentially. Each migration is a markdown instruction file — the skill reads it and executes the steps as an LLM agent.
 
 When `[file]` is provided, read and apply that specific migration file directly, bypassing version range discovery.
 
 ### Migrations Context Loading
 
-1. Read `fab/VERSION` and `fab/.kit/VERSION`
-2. Read `fab/config.yaml` (Always Load layer — MUST exist). Skip Change Context.
+1. Read `fab/project/VERSION` and `fab/.kit/VERSION`
+2. Read `fab/project/config.yaml` (Always Load layer — MUST exist). Skip Change Context.
 3. Scan `fab/.kit/migrations/` for migration files
 
 ### Migrations Pre-flight Checks
 
 Before attempting any migration, verify:
 
-1. **`fab/VERSION` exists** — if not: STOP with `fab/VERSION not found. Run fab-sync.sh to create it.`
+1. **`fab/project/VERSION` exists** — if not: STOP with `fab/project/VERSION not found. Run fab-sync.sh to create it.`
 2. **`fab/.kit/VERSION` exists** — if not: STOP with `fab/.kit/VERSION not found — kit may be corrupted.`
-3. **`fab/config.yaml` exists** — if not: STOP with `fab/config.yaml not found. Run /fab-setup to create it.`
+3. **`fab/project/config.yaml` exists** — if not: STOP with `fab/project/config.yaml not found. Run /fab-setup to create it.`
 4. Read both version strings and parse as `MAJOR.MINOR.PATCH` integers
 
 ### Migrations Step 1: Compare Versions
 
-- Read `fab/VERSION` -> `current`
+- Read `fab/project/VERSION` -> `current`
 - Read `fab/.kit/VERSION` -> `target`
 - If `current` >= `target`: report and stop (see scenarios below)
 
@@ -350,11 +350,11 @@ Execute the migration discovery algorithm:
 1. Find the first migration where `FROM <= current < TO`
 2. **If found**: apply it (see [Applying a Migration](#applying-a-migration)), set `current = TO`, repeat from (1)
 3. **If not found but a migration exists with `FROM > current`**: skip to that FROM — log: `No migration needed for {current} -> {FROM}, skipping.` — repeat from (1)
-4. **If not found and no later migrations exist**: set `fab/VERSION` to engine version, done
+4. **If not found and no later migrations exist**: set `fab/project/VERSION` to engine version, done
 
 ### Migrations Step 4: Finalize
 
-- Write `fab/VERSION` with the engine version (should already match after migrations)
+- Write `fab/project/VERSION` with the engine version (should already match after migrations)
 - Output completion summary
 
 ---
@@ -367,7 +367,7 @@ For each migration file:
 2. **Execute Pre-check** section: verify each condition. If any fails -> STOP, report which pre-check failed, do NOT proceed
 3. **Execute Changes** section: apply each change in order. Read referenced files, make modifications, write results
 4. **Execute Verification** section: validate each condition. If any fails -> STOP, report which verification step failed
-5. **Update version**: write `TO` to `fab/VERSION`
+5. **Update version**: write `TO` to `fab/project/VERSION`
 
 ---
 
@@ -382,13 +382,13 @@ Migrations found: {N}
 
 [1/{N}] Applying {FROM} -> {TO}...
 {migration output}
--> fab/VERSION updated to {TO}
+-> fab/project/VERSION updated to {TO}
 
 [2/{N}] Applying {FROM} -> {TO}...
 {migration output}
--> fab/VERSION updated to {TO}
+-> fab/project/VERSION updated to {TO}
 
-All migrations complete. fab/VERSION: {original} -> {final}
+All migrations complete. fab/project/VERSION: {original} -> {final}
 ```
 
 ### Migration with Gap Skip
@@ -402,9 +402,9 @@ No migration needed for {current} -> {FROM}, skipping.
 
 [1/{N}] Applying {FROM} -> {TO}...
 {migration output}
--> fab/VERSION updated to {TO}
+-> fab/project/VERSION updated to {TO}
 
-All migrations complete. fab/VERSION: {original} -> {final}
+All migrations complete. fab/project/VERSION: {original} -> {final}
 ```
 
 ### Versions Already Equal
@@ -416,7 +416,7 @@ Already up to date ({version}).
 ### Local Version Ahead
 
 ```
-Local version (fab/VERSION) is ahead of engine version (fab/.kit/VERSION): {local} > {engine}.
+Local version (fab/project/VERSION) is ahead of engine version (fab/.kit/VERSION): {local} > {engine}.
 This is unexpected — check your fab/.kit/ installation.
 ```
 
@@ -425,7 +425,7 @@ This is unexpected — check your fab/.kit/ installation.
 ```
 Local version:  {current}
 Engine version: {target}
-No migrations found. fab/VERSION updated to {target}.
+No migrations found. fab/project/VERSION updated to {target}.
 ```
 
 ### Overlapping Ranges
@@ -440,7 +440,7 @@ Overlapping migration ranges detected: {file1} and {file2}. Fix the migrations d
 [{N}/{total}] Applying {FROM} -> {TO}...
 {partial output}
 FAIL: Migration failed at {Pre-check|Changes|Verification} step: {description}
-fab/VERSION remains at {current_version}.
+fab/project/VERSION remains at {current_version}.
 Fix the issue and re-run /fab-setup migrations to continue from {current_version}.
 ```
 
@@ -464,9 +464,9 @@ All paths are safe to re-run. Structural artifacts are created once (skipped on 
 |----------|-------|
 | Advances stage? | No — project-level tool |
 | Idempotent? | Yes |
-| Modifies `fab/config.yaml`? | Yes (bootstrap creates, config subcommand updates, migrations may modify) |
-| Modifies `fab/constitution.md`? | Yes (bootstrap creates, constitution subcommand updates, migrations may modify) |
-| Modifies `fab/VERSION`? | Yes (migrations) |
+| Modifies `fab/project/config.yaml`? | Yes (bootstrap creates, config subcommand updates, migrations may modify) |
+| Modifies `fab/project/constitution.md`? | Yes (bootstrap creates, constitution subcommand updates, migrations may modify) |
+| Modifies `fab/project/VERSION`? | Yes (migrations) |
 | Modifies `fab/.kit/`? | No — migrations only touch project-level files |
 | Requires active change? | No |
 

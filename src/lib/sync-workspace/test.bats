@@ -25,11 +25,12 @@ setup() {
   # VERSION file
   echo "1.2.3" > "$KIT/VERSION"
 
-  # Scaffold files
-  echo "# Memory Index" > "$KIT/scaffold/memory-index.md"
-  echo "# Specs Index" > "$KIT/scaffold/specs-index.md"
-  echo "layout_variable" > "$KIT/scaffold/envrc"
-  echo "fab/current" > "$KIT/scaffold/gitignore-entries"
+  # Scaffold files (mirror real scaffold directory structure)
+  mkdir -p "$KIT/scaffold/docs/memory" "$KIT/scaffold/docs/specs"
+  echo "# Memory Index" > "$KIT/scaffold/docs/memory/index.md"
+  echo "# Specs Index" > "$KIT/scaffold/docs/specs/index.md"
+  echo "layout_variable" > "$KIT/scaffold/fragment-.envrc"
+  echo "fab/current" > "$KIT/scaffold/fragment-.gitignore"
 
   # Template status.yaml (minimal)
   cat > "$KIT/templates/status.yaml" <<'YAML'
@@ -133,29 +134,31 @@ teardown() {
 
 # ── VERSION File Logic ──────────────────────────────────────────────
 
-@test "new project gets engine version in fab/VERSION" {
+@test "new project gets engine version in fab/project/VERSION" {
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ -f "$REPO_ROOT/fab/VERSION" ]
-  [ "$(cat "$REPO_ROOT/fab/VERSION")" = "1.2.3" ]
+  [ -f "$REPO_ROOT/fab/project/VERSION" ]
+  [ "$(cat "$REPO_ROOT/fab/project/VERSION")" = "1.2.3" ]
 }
 
 @test "existing project without VERSION gets 0.1.0" {
   # Create config.yaml to indicate existing project
-  cat > "$REPO_ROOT/fab/config.yaml" <<'YAML'
+  mkdir -p "$REPO_ROOT/fab/project"
+  cat > "$REPO_ROOT/fab/project/config.yaml" <<'YAML'
 project:
   name: test
 YAML
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ "$(cat "$REPO_ROOT/fab/VERSION")" = "0.1.0" ]
+  [ "$(cat "$REPO_ROOT/fab/project/VERSION")" = "0.1.0" ]
 }
 
-@test "existing fab/VERSION is preserved" {
-  echo "0.5.0" > "$REPO_ROOT/fab/VERSION"
+@test "existing fab/project/VERSION is preserved" {
+  mkdir -p "$REPO_ROOT/fab/project"
+  echo "0.5.0" > "$REPO_ROOT/fab/project/VERSION"
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ "$(cat "$REPO_ROOT/fab/VERSION")" = "0.5.0" ]
+  [ "$(cat "$REPO_ROOT/fab/project/VERSION")" = "0.5.0" ]
 }
 
 # ── .envrc File ─────────────────────────────────────────────────────
@@ -331,7 +334,8 @@ YAML
 }
 
 @test "reads model_tiers from config.yaml when present" {
-  cat > "$REPO_ROOT/fab/config.yaml" <<'YAML'
+  mkdir -p "$REPO_ROOT/fab/project"
+  cat > "$REPO_ROOT/fab/project/config.yaml" <<'YAML'
 project:
   name: test
 model_tiers:

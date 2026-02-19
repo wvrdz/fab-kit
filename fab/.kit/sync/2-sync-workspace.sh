@@ -155,20 +155,22 @@ if [ ! -f "$fab_dir/changes/archive/.gitkeep" ]; then
   touch "$fab_dir/changes/archive/.gitkeep"
 fi
 
-# ── 1b. fab/VERSION ──────────────────────────────────────────────────
+# ── 1b. fab/project/VERSION ───────────────────────────────────────────
 # Track the local project's kit version. New projects get the engine version;
 # existing projects (have config.yaml) get the base version 0.1.0 so
 # /fab-setup migrations runs all needed migrations.
-if [ -f "$fab_dir/VERSION" ]; then
-  echo "fab/VERSION: OK ($(cat "$fab_dir/VERSION"))"
-elif [ -f "$fab_dir/config.yaml" ]; then
+if [ -f "$fab_dir/project/VERSION" ]; then
+  echo "fab/project/VERSION: OK ($(cat "$fab_dir/project/VERSION"))"
+elif [ -f "$fab_dir/project/config.yaml" ]; then
   # Existing project: set base version so /fab-setup migrations applies migrations
-  echo "0.1.0" > "$fab_dir/VERSION"
-  echo "Created: fab/VERSION (0.1.0 — existing project, run /fab-setup migrations to migrate)"
+  mkdir -p "$fab_dir/project"
+  echo "0.1.0" > "$fab_dir/project/VERSION"
+  echo "Created: fab/project/VERSION (0.1.0 — existing project, run /fab-setup migrations to migrate)"
 else
   # New project: match engine version
-  cp "$kit_dir/VERSION" "$fab_dir/VERSION"
-  echo "Created: fab/VERSION ($version)"
+  mkdir -p "$fab_dir/project"
+  cp "$kit_dir/VERSION" "$fab_dir/project/VERSION"
+  echo "Created: fab/project/VERSION ($version)"
 fi
 
 # ── 2. Scaffold tree-walk ─────────────────────────────────────────
@@ -388,8 +390,8 @@ clean_stale_skills "$repo_root/.agents/skills" "directory"
 if [ ${#fast_skills[@]} -gt 0 ]; then
   # Resolve Claude model for "fast" tier from config.yaml, with hardcoded fallback
   claude_fast_model=""
-  if [ -f "$fab_dir/config.yaml" ]; then
-    claude_fast_model=$(yaml_value "$fab_dir/config.yaml" "model_tiers" "fast" "claude")
+  if [ -f "$fab_dir/project/config.yaml" ]; then
+    claude_fast_model=$(yaml_value "$fab_dir/project/config.yaml" "model_tiers" "fast" "claude")
   fi
 
   # Fallback: use haiku if config.yaml has no model_tiers or doesn't exist

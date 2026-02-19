@@ -12,11 +12,11 @@ The context loading convention defines how fab skills load project context befor
 
 Every skill (except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`) reads seven files as baseline context:
 
-1. `fab/config.yaml` — project configuration, naming conventions, model tiers
-2. `fab/constitution.md` — project principles and constraints (MUST/SHOULD/MUST NOT rules)
-3. `fab/context.md` — free-form project context: tech stack, conventions, architecture *(optional — no error if missing)*
-4. `fab/code-quality.md` — coding standards for apply/review: principles, anti-patterns, test strategy *(optional — no error if missing)*
-5. `fab/code-review.md` — review policy: severity definitions, scope, rework budget *(optional — no error if missing)*
+1. `fab/project/config.yaml` — project configuration, naming conventions, model tiers
+2. `fab/project/constitution.md` — project principles and constraints (MUST/SHOULD/MUST NOT rules)
+3. `fab/project/context.md` — free-form project context: tech stack, conventions, architecture *(optional — no error if missing)*
+4. `fab/project/code-quality.md` — coding standards for apply/review: principles, anti-patterns, test strategy *(optional — no error if missing)*
+5. `fab/project/code-review.md` — review policy: severity definitions, scope, rework budget *(optional — no error if missing)*
 6. `docs/memory/index.md` — documentation landscape (which domains and memory files exist)
 7. `docs/specs/index.md` — specifications landscape (pre-implementation design intent, human-curated)
 

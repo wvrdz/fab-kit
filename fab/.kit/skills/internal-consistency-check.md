@@ -7,7 +7,7 @@ description: "Scan for inconsistencies between implementation, specs, and memory
 
 Scan for inconsistencies between the three sources of truth:
 
-- **Implementation** — source code (paths from `source_paths` in `fab/config.yaml`)
+- **Implementation** — source code (paths from `source_paths` in `fab/project/config.yaml`)
 - **Memory** (`docs/memory/`) — centralized memory (generated/hydrated)
 - **Specs** (`docs/specs/`) — human-curated specifications
 
@@ -15,8 +15,8 @@ Scan for inconsistencies between the three sources of truth:
 
 ## Pre-flight
 
-1. Read `fab/config.yaml`, extract `source_paths`
-2. If `source_paths` missing or empty: STOP with `No source_paths defined in fab/config.yaml.`
+1. Read `fab/project/config.yaml`, extract `source_paths`
+2. If `source_paths` missing or empty: STOP with `No source_paths defined in fab/project/config.yaml.`
 
 ---
 

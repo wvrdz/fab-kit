@@ -101,7 +101,7 @@ Kit-level sync script. Runs `direnv allow` (idempotent, no guard needed). Execut
 
 #### `sync/2-sync-workspace.sh`
 
-Kit-level sync script (the largest sync step) containing the full workspace sync logic. Organized into 4 sections: (1) directories, (1b) fab/VERSION, (2) scaffold tree-walk, (3+3b+4) skill symlinks and agent files. Cleans up stale artifacts from previous kit versions. Creates directories (`fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/`) with `.gitkeep` files in `fab/changes/` and `fab/changes/archive/`. Creates `fab/VERSION` using the dual-version model: new projects get the engine version, existing projects (detected via `config.yaml` presence) get `0.1.0` base version, existing `fab/VERSION` is preserved.
+Kit-level sync script (the largest sync step) containing the full workspace sync logic. Organized into 4 sections: (1) directories, (1b) fab/project/VERSION, (2) scaffold tree-walk, (3+3b+4) skill symlinks and agent files. Cleans up stale artifacts from previous kit versions. Creates directories (`fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/`) with `.gitkeep` files in `fab/changes/` and `fab/changes/archive/`. Creates `fab/project/VERSION` using the dual-version model: new projects get the engine version, existing projects (detected via `config.yaml` presence) get `0.1.0` base version, existing `fab/project/VERSION` is preserved.
 
 The scaffold tree-walk (section 2) generically processes all files under `scaffold/` using the overlay tree convention: each file's path relative to `scaffold/` mirrors its destination relative to the repo root. Strategy dispatch is based on the `fragment-` filename prefix: `fragment-` + `.json` → `json_merge_permissions` (merge `permissions.allow` arrays via jq), `fragment-` + other → `line_ensure_merge` (append non-duplicate, non-comment lines), no prefix → copy-if-absent. Both merge helpers are defined in the same file. `line_ensure_merge` absorbs the legacy `.envrc` symlink-to-file migration (resolves symlink targets before line-ensuring). Template files (`config.yaml`, `constitution.md`) are copied by the tree-walk via copy-if-absent; `/fab-setup` detects raw templates at runtime by checking for placeholder strings (`{PROJECT_NAME}`, `{Project Name}`) and overwrites them interactively. It is the single source of truth for structural setup. `/fab-setup` delegates to `fab-sync.sh` (the orchestrator) and adds the interactive parts (config, constitution).
 
@@ -146,7 +146,7 @@ Shared sourceable shell library defining `frontmatter_field()` — extracts a fi
 
 #### `fab-upgrade.sh`
 
-Downloads the latest `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/` (extract to temp dir, verify, swap), displays the version change, and re-runs `fab-sync.sh` to repair directories and agents. After upgrade, checks for version drift between `fab/VERSION` and the new `fab/.kit/VERSION` — prints a reminder to run `/fab-setup migrations` if behind, or init guidance if `fab/VERSION` is missing. Requires `gh` CLI. Preserves all project files outside `.kit/`. Handles errors: gh CLI missing, network failure, extraction verification failure, already-up-to-date.
+Downloads the latest `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/` (extract to temp dir, verify, swap), displays the version change, and re-runs `fab-sync.sh` to repair directories and agents. After upgrade, checks for version drift between `fab/project/VERSION` and the new `fab/.kit/VERSION` — prints a reminder to run `/fab-setup migrations` if behind, or init guidance if `fab/project/VERSION` is missing. Requires `gh` CLI. Preserves all project files outside `.kit/`. Handles errors: gh CLI missing, network failure, extraction verification failure, already-up-to-date.
 
 #### `fab-release.sh` (dev-only, at `src/scripts/fab-release.sh`)
 
@@ -233,13 +233,13 @@ Step 1 is a shell script. Steps 2-4 are skill-driven.
 Two VERSION files track the relationship between the installed engine and the project's file format:
 
 - **`fab/.kit/VERSION`** (engine version) — ships inside `.kit/`, replaced on each `fab-upgrade.sh` run. Enables version display, update comparison, and migration targeting.
-- **`fab/VERSION`** (local project version) — lives outside `.kit/`, NOT replaced on upgrades. Tracks the version the project's `config.yaml`, `.status.yaml`, and conventions were written for. Created by `sync/2-sync-workspace.sh`.
+- **`fab/project/VERSION`** (local project version) — lives outside `.kit/`, NOT replaced on upgrades. Tracks the version the project's `config.yaml`, `.status.yaml`, and conventions were written for. Created by `sync/2-sync-workspace.sh`.
 
 Both contain a bare semver string (`MAJOR.MINOR.PATCH`). See [migrations.md](migrations.md) for the full migration system.
 
 ### Updating `.kit/`
 
-Run `fab/.kit/scripts/fab-upgrade.sh` to update to the latest release. The script downloads `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/`, and re-runs `fab-sync.sh` to repair directories and agents. After the upgrade, if `fab/VERSION` is behind the new engine version, the script prints a reminder to run `/fab-setup migrations` to apply migrations. Requires the `gh` CLI.
+Run `fab/.kit/scripts/fab-upgrade.sh` to update to the latest release. The script downloads `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/`, and re-runs `fab-sync.sh` to repair directories and agents. After the upgrade, if `fab/project/VERSION` is behind the new engine version, the script prints a reminder to run `/fab-setup migrations` to apply migrations. Requires the `gh` CLI.
 
 Symlinks in `.claude/skills/`, `.opencode/commands/`, and `.agents/skills/` automatically resolve to the new files after the update.
 
@@ -248,7 +248,7 @@ Symlinks in `.claude/skills/`, `.opencode/commands/`, and `.agents/skills/` auto
 
 ### Portability
 
-The `.kit/` directory MUST work in any project via `cp -r`. It SHALL have no assumptions about the host project's structure, language, or toolchain beyond the presence of a `fab/` directory. Project-specific configuration belongs in `fab/config.yaml` and `fab/constitution.md`, not in `.kit/`.
+The `.kit/` directory MUST work in any project via `cp -r`. It SHALL have no assumptions about the host project's structure, language, or toolchain beyond the presence of a `fab/` directory. Project-specific configuration belongs in `fab/project/config.yaml` and `fab/project/constitution.md`, not in `.kit/`.
 
 ### Monorepo Guidance
 
@@ -268,7 +268,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 **Decision**: Workflow logic lives in markdown skill files and shell scripts. No system dependencies, no package managers, no CLI binaries, no build steps.
 **Why**: Constitution I (Pure Prompt Play). Any AI agent that can read markdown and execute shell commands can drive the workflow.
 **Rejected**: CLI tool, npm package, or Python script — all introduce system dependencies.
-*Source*: doc/fab-spec/README.md, fab/constitution.md
+*Source*: doc/fab-spec/README.md, fab/project/constitution.md
 
 ### Symlinks for Agent Integration
 **Decision**: Agent skill directories contain symlinks into `.kit/skills/`, not copies.
@@ -314,6 +314,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260219-wq0e-move-5cs-to-project-folder | 2026-02-19 | Moved project identity files (5 Cs + VERSION) from `fab/` root into `fab/project/` subdirectory. Updated `fab/` directory tree (top-level now: `.kit/`, `project/`, `changes/`, `sync/`, `backlog.md`, `current`). Updated scaffold overlay tree (`fab/.kit/scaffold/fab/project/`). Updated all shell script path references (`preflight.sh`, `changeman.sh`, `fab-upgrade.sh`, `batch-fab-switch-change.sh`, `2-sync-workspace.sh`). Updated section comment in `2-sync-workspace.sh` (`fab/project/VERSION`). |
 | 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Removed deleted `model-tiers.yaml` from directory tree; added missing `fab-fff.md` after `fab-ff.md` in skills listing |
 | 260218-09fa-scaffold-overlay-tree | 2026-02-18 | Restructured `scaffold/` from flat directory to repo-root overlay tree. Files now mirror destination paths; 3 merge files use `fragment-` prefix (`.envrc`, `.gitignore`, `settings.local.json`), 8 others use copy-if-absent. Replaced 6 bespoke sections (2, 3, 4, 7, 8, 9) in `2-sync-workspace.sh` with generic tree-walk dispatching on `fragment-` prefix and file extension. Extracted `line_ensure_merge` and `json_merge_permissions` helper functions (absorbing legacy `.envrc` symlink migration). Updated `fab-setup.md`: 7 scaffold path references, template detection for `config.yaml`/`constitution.md` (placeholder check instead of existence check). Updated `0.7.0-to-0.8.0.md` scaffold path. Renumbered sync script sections (1, 1b, 2, 3, 3b, 4). Added "Scaffold Overlay Tree" design decision. |
 | 260218-e0tj-document-wt-idea-packages | 2026-02-18 | Added static PACKAGES footer section to `fab-help.sh` listing wt commands (wt-create, wt-list, wt-open, wt-delete, wt-init, wt-pr) and idea with one-liner descriptions. Created `docs/specs/packages.md` covering both packages at concept/workflow level (overview, wt section with assembly-line integration, idea section with backlog→fab-new flow, package architecture). Added packages.md entry to `docs/specs/index.md`. Updated `fab-help.sh` description to mention PACKAGES section. |

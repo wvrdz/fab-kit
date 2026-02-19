@@ -11,7 +11,7 @@ description: "Start a new change from a natural language description. Creates th
 
 ## Pre-flight
 
-1. Verify `fab/config.yaml` and `fab/constitution.md` exist
+1. Verify `fab/project/config.yaml` and `fab/project/constitution.md` exist
 2. **If either missing, STOP**: `fab/ is not initialized. Run /fab-setup first to bootstrap the project.`
 
 ---

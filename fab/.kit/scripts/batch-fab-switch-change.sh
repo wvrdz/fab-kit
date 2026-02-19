@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KIT_DIR="$(dirname "$SCRIPT_DIR")"
 FAB_DIR="$(dirname "$KIT_DIR")"
 CHANGES_DIR="${FAB_DIR}/changes"
-CONFIG_FILE="${FAB_DIR}/config.yaml"
+CONFIG_FILE="${FAB_DIR}/project/config.yaml"
 CHANGEMAN="${SCRIPT_DIR}/lib/changeman.sh"
 
 usage() {
@@ -56,7 +56,7 @@ all_change_names() {
 }
 
 get_branch_prefix() {
-  # Extract branch_prefix from fab/config.yaml
+  # Extract branch_prefix from fab/project/config.yaml
   # Looks for: branch_prefix: "value" or branch_prefix: ""
   if [[ -f "$CONFIG_FILE" ]]; then
     grep -E '^\s*branch_prefix:' "$CONFIG_FILE" | \
