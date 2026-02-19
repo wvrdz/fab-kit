@@ -5,6 +5,20 @@
 
 ---
 
+## Path Convention
+
+All script and file paths in skills are **relative to the repo root** (the agent's CWD). Never expand them to absolute paths.
+
+```
+# correct
+bash fab/.kit/scripts/lib/preflight.sh
+
+# wrong
+bash /home/user/project/fab/.kit/scripts/lib/preflight.sh
+```
+
+---
+
 ## Context Loading
 
 Before generating or validating any artifact, load the relevant context layers below. This ensures output is grounded in the actual project state, not assumptions.
