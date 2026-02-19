@@ -1,3 +1,3 @@
-[x] [v5jb] 2026-02-18: Add code-review.md
-[x] [qcqx] 2026-02-18: Improve worktree commands using https://github.com/johnlindquist/worktree-cli
-[x] [xc2q] 2026-02-18: Make wt commands work on the current branch instead of main always
+- [x] [v5jb] 2026-02-18: Add code-review.md
+- [x] [qcqx] 2026-02-18: Improve worktree commands using https://github.com/johnlindquist/worktree-cli
+- [x] [xc2q] 2026-02-18: Make wt commands work on the current branch instead of main always
