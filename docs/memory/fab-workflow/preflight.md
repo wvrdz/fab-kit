@@ -33,7 +33,7 @@ Agents consume this output by running the script via Bash and parsing the stdout
 
 The script validates in this order, stopping at the first failure:
 
-1. `fab/config.yaml` and `fab/constitution.md` exist (project initialized)
+1. `fab/project/config.yaml` and `fab/project/constitution.md` exist (project initialized)
 2. Change name resolves (via `lib/changeman.sh resolve` — from `$1` override or `fab/current`)
 3. Change directory `fab/changes/{name}/` exists
 4. `.status.yaml` exists within the change directory

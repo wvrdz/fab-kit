@@ -1,14 +1,14 @@
-# fab/config.yaml
+# fab/project/config.yaml
 #
 # Project configuration for the Fab workflow. This file is loaded by nearly
 # every /fab-* skill as grounding context. It is generated once by /fab-setup
 # and then hand-maintained.
 #
 # Companion files (not configured here):
-#   fab/constitution.md    — project principles & constraints (MUST/SHOULD rules)
-#   fab/context.md         — free-form project context (tech stack, conventions)
-#   fab/code-quality.md    — coding standards for apply/review (optional)
-#   fab/code-review.md     — review policy for validation sub-agent (optional)
+#   fab/project/constitution.md    — project principles & constraints (MUST/SHOULD rules)
+#   fab/project/context.md         — free-form project context (tech stack, conventions)
+#   fab/project/code-quality.md    — coding standards for apply/review (optional)
+#   fab/project/code-review.md     — review policy for validation sub-agent (optional)
 #   docs/memory/index.md   — centralized documentation index
 #
 # ─────────────────────────────────────────────────────────────────────────────

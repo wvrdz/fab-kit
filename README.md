@@ -113,7 +113,7 @@ fab/.kit/scripts/fab-sync.sh            # creates directories, symlinks, docs/me
 $fab-setup    # Codex
 ```
 
-This generates `fab/config.yaml` and `fab/constitution.md` (your project's architectural rules).
+This generates `fab/project/config.yaml` and `fab/project/constitution.md` (your project's architectural rules).
 
 #### Updating from a previous version
 
@@ -237,7 +237,7 @@ AI writes code fast. Without structure, it also skips requirements, ignores arch
 
 ```
          ┌───────────────────────────┐
-         │    fab/constitution.md    │
+         │  fab/project/constitution.md  │
          │  MUST · SHOULD · MUST NOT │
          └─────────────┬─────────────┘
                        │
@@ -250,7 +250,7 @@ AI writes code fast. Without structure, it also skips requirements, ignores arch
 ```
 
 - **Stages that can't be skipped** — The pipeline requires intake, spec, and tasks before any code is written. The AI can't jump straight to implementation. Before code is written, the [SRAD framework](#structured-autonomy-not-guesswork) ensures planning decisions are grounded in context — not silently guessed.
-- **Project constitution** — `fab/constitution.md` defines your architectural rules using MUST/SHOULD/MUST NOT. Every spec, task breakdown, and review checks against it — not just the change's requirements.
+- **Project constitution** — `fab/project/constitution.md` defines your architectural rules using MUST/SHOULD/MUST NOT. Every spec, task breakdown, and review checks against it — not just the change's requirements.
 - **Review that fixes, not just flags** — A **sub-agent** reviews in a fresh context, returning prioritized findings. The applying agent triages by severity and loops back to the right stage:
 
 | Review finds | Priority | Loops back to | What happens |
@@ -269,15 +269,15 @@ Five configuration files shape how AI works in your project. Each answers a diff
 
 | C | File | Question |
 |---|------|----------|
-| **Constitution** | `fab/constitution.md` | What are our non-negotiable principles? |
-| **Context** | `fab/context.md` | What are we working with? |
-| **Code Quality** | `fab/code-quality.md` | How should code look when we write it? |
-| **Code Review** | `fab/code-review.md` | What should we look for when we validate? |
-| **Config** | `fab/config.yaml` | What are the project's factual settings? |
+| **Constitution** | `fab/project/constitution.md` | What are our non-negotiable principles? |
+| **Context** | `fab/project/context.md` | What are we working with? |
+| **Code Quality** | `fab/project/code-quality.md` | How should code look when we write it? |
+| **Code Review** | `fab/project/code-review.md` | What should we look for when we validate? |
+| **Config** | `fab/project/config.yaml` | What are the project's factual settings? |
 
 Notice the author-vs-critic split: `code-quality.md` guides the **writing** agent during apply — coding standards, anti-patterns, test strategy. `code-review.md` guides the **reviewing** sub-agent during review — severity definitions, scope boundaries, rework budget. Different cognitive modes, different concerns, different files.
 
-All five are optional except `constitution.md` and `config.yaml`. Run `/fab-setup` to generate them from scaffolds with sensible defaults.
+All five are optional except `constitution.md` and `config.yaml`. They live in `fab/project/`. Run `/fab-setup` to generate them from scaffolds with sensible defaults.
 
 ### Structured Autonomy, Not Guesswork
 

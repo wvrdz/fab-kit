@@ -63,7 +63,7 @@ Shared partials (`_context.md`, `_generation.md`) are not deployable and have no
 
 ### Model Tier Configuration
 
-Model tier mappings live in `fab/config.yaml` under the `model_tiers:` section:
+Model tier mappings live in `fab/project/config.yaml` under the `model_tiers:` section:
 
 ```yaml
 model_tiers:
@@ -84,7 +84,7 @@ Capable skills get symlinks only (no agent files). This is because Claude Code s
 
 ### Adding a New Provider
 
-1. Add the platform key under the relevant tier in `fab/config.yaml` `model_tiers:` (and in `fab/.kit/scaffold/config.yaml` for new projects)
+1. Add the platform key under the relevant tier in `fab/project/config.yaml` `model_tiers:` (and in `fab/.kit/scaffold/config.yaml` for new projects)
 2. Update `fab-sync.sh` to read the new platform key and generate agent files
 3. Add the symlink/agent creation call in the appropriate section
 

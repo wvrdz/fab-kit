@@ -60,7 +60,7 @@ For the complete API reference, see `src/lib/stageman/README.md`.
 
 ## Future Enhancements
 
-1. **Custom workflows** — Allow `fab/config.yaml` to override or extend `workflow.yaml`
+1. **Custom workflows** — Allow `fab/project/config.yaml` to override or extend `workflow.yaml`
 2. **Conditional stages** — Skip stages based on change attributes (e.g., docs-only changes skip `apply`)
 3. **Parallel stages** — Multiple stages active simultaneously for different artifacts
 4. **Stage hooks** — Run scripts before/after stage transitions

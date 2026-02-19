@@ -28,7 +28,7 @@ The script reads the kit version from `fab/.kit/VERSION` (falling back to "unkno
 
 ## Context Loading
 
-This skill uses **no context** — it does not load `fab/config.yaml`, `fab/constitution.md`, or any change artifacts. The only file read is `fab/.kit/VERSION` (by the script).
+This skill uses **no context** — it does not load `fab/project/config.yaml`, `fab/project/constitution.md`, or any change artifacts. The only file read is `fab/.kit/VERSION` (by the script).
 
 ---
 

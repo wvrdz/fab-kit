@@ -53,7 +53,7 @@ If an existing mechanism covers the idea, the skill presents its findings and le
 The skill SHALL:
 1. Generate the slug (AI task: word selection, article removal, issue ID prefixing)
 2. Call `lib/changeman.sh new` with `--slug`, optional `--change-id` (backlog ID), and `--log-args` (description). The script handles: directory creation, `created_by` detection (`gh api user` → `git config user.name` → `"unknown"`, silent fallback), `.status.yaml` initialization from template via `sed`, and stageman integration (`set-state intake active fab-new`, `log-command`)
-3. Generate `intake.md` from the template (including Origin section), loading `fab/constitution.md` and `fab/config.yaml` as context
+3. Generate `intake.md` from the template (including Origin section), loading `fab/project/constitution.md` and `fab/project/config.yaml` as context
 
 `/fab-new` never activates changes — this reduces disruption when capturing change ideas. The user activates via `/fab-switch` after creation. Branch integration is delegated to `/fab-switch`, which provides consistent branch handling.
 
@@ -76,7 +76,7 @@ Loads: config, constitution, `docs/memory/index.md` (to understand the existing 
    - For planning stages (intake, spec, tasks): if `progress.{stage} == 'done'` AND stage is `tasks`, transition to apply. If `progress.{stage} == 'active'`, allow generation to resume. If `progress.{stage} == 'pending'`, allow generation to start.
    - For execution stages (apply, review, hydrate): dispatch to the stage's behavior (apply executes tasks, review validates implementation, hydrate completes the change).
 3. Identify next artifact to create
-4. Load relevant template + context (including `fab/constitution.md` for principles)
+4. Load relevant template + context (including `fab/project/constitution.md` for principles)
 5. Generate artifact using the shared generation procedures from `_generation.md` (with clarification/research as needed)
 6. Run `lib/calc-score.sh` (spec stage only — computes confidence from spec Assumptions table)
 7. Auto-generate checklist when creating tasks (using `_generation.md` Checklist Generation Procedure)

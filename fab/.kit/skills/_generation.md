@@ -87,9 +87,9 @@
    - Deprecated requirements → **Removal Verification** items
    - Key scenarios from spec → **Scenario Coverage** items
    - Edge cases identified in spec → **Edge Cases & Error Handling** items
-   - `fab/code-quality.md` → **Code Quality** items. If `fab/code-quality.md` exists: one item per relevant principle from `## Principles`, one per relevant anti-pattern from `## Anti-Patterns` that applies to the change's scope, plus the two baseline items. If no `fab/code-quality.md`: include the two baseline items only (pattern consistency, no unnecessary duplication)
+   - `fab/project/code-quality.md` → **Code Quality** items. If `fab/project/code-quality.md` exists: one item per relevant principle from `## Principles`, one per relevant anti-pattern from `## Anti-Patterns` that applies to the change's scope, plus the two baseline items. If no `fab/project/code-quality.md`: include the two baseline items only (pattern consistency, no unnecessary duplication)
    - Security-relevant changes → **Security** items (only if applicable)
-   - Additional categories from `fab/config.yaml` `checklist.extra_categories` (if any)
+   - Additional categories from `fab/project/config.yaml` `checklist.extra_categories` (if any)
 5. Use sequential IDs: CHK-001, CHK-002, ...
 6. Update `.status.yaml` via CLI:
    - `fab/.kit/scripts/lib/stageman.sh set-checklist <file> generated true`
