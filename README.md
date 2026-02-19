@@ -236,17 +236,17 @@ This creates a self-reinforcing cycle:
 AI writes code fast. Without structure, it also skips requirements, ignores architectural conventions, and ships the first thing that works. Fab enforces quality through structure, a constitution, and self-correcting review.
 
 ```
-         ┌───────────────────────────┐
-         │  fab/project/constitution.md  │
-         │  MUST · SHOULD · MUST NOT │
-         └─────────────┬─────────────┘
-                       │
+        ┌───────────────────────────────┐
+        │  fab/project/constitution.md  │
+        │    MUST · SHOULD · MUST NOT   │
+        └───────────────┬───────────────┘
+                        │
   intake → spec → tasks → apply ⇄ review → hydrate
-             ↑       ↑       ↑    ↗    │
-             └───────┴───────┴────┘    │
-                sub-agent review       │
-                with prioritized       │
-                findings               │
+             ↑       ↑       ↑    ↗
+             └───────┴───────┴────┘
+                sub-agent review
+                with prioritized
+                findings
 ```
 
 - **Stages that can't be skipped** — The pipeline requires intake, spec, and tasks before any code is written. The AI can't jump straight to implementation. Before code is written, the [SRAD framework](#structured-autonomy-not-guesswork) ensures planning decisions are grounded in context — not silently guessed.
