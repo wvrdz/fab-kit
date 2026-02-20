@@ -81,6 +81,8 @@ The following skills skip the standard context loading layers:
 - `/fab-status` — read-only status display
 - `/docs-hydrate-memory` — ingests sources, doesn't need to load them first
 
+**Special case**: `/fab-discuss` is *not* an exception — it loads the full 7-file always-load layer. However, it is the only skill whose entire purpose is to surface that layer. Other skills load the always-load layer as a preamble to generating or validating artifacts; `fab-discuss` loads it as its primary output, presenting an orientation summary for exploratory discussion sessions. It does not run preflight, does not require an active change, and does not advance any stage.
+
 ## Design Decisions
 
 ### Smart Loading for All Skills on Active Changes
@@ -105,6 +107,7 @@ The following skills skip the standard context loading layers:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260220-9ogw-add-fab-discuss | 2026-02-20 | Added `fab-discuss` special case note in Exception Skills section — the only skill whose primary output IS the always-load layer |
 | 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Replaced stale `/fab-init` → `/fab-setup` in exception list (2 occurrences) |
 | 260218-xkkc-add-code-review-5cs-quality | 2026-02-18 | Expanded Always Load layer from 6 to 7 files — added `fab/code-review.md` (optional, review policy) as item 5 after `code-quality.md`, grouping all `fab/` files before `docs/` files |
 | 260218-bb93-restructure-config-yaml | 2026-02-18 | Expanded Always Load layer from 4 to 6 files — added `fab/context.md` (optional, free-form project context) and `fab/code-quality.md` (optional, coding standards) |

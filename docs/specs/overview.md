@@ -115,6 +115,7 @@ For detailed visual maps of how commands connect — including shortcuts, rework
 | `/fab-archive` | Archive completed change | Folder moved to archive/ |
 | `/fab-switch` | Change active change | Updated pointer file |
 | `/fab-status` | Check progress | Status display |
+| `/fab-discuss` | Prime agent with project context for discussion | — (read-only) |
 
 ---
 

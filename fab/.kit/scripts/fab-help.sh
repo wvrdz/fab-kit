@@ -35,6 +35,7 @@ declare -A skill_to_group=(
   [fab-new]="Start & Navigate"
   [fab-switch]="Start & Navigate"
   [fab-status]="Start & Navigate"
+  [fab-discuss]="Start & Navigate"
   [fab-continue]="Planning"
   [fab-ff]="Planning"
   [fab-fff]="Planning"
