@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260219-d2y2-copy-template-skills-drop-agents** — Replaced skill symlinks with copy-with-template so model_tier resolves to model: in SKILL.md frontmatter, removed agent file generation for fast-tier skills, and updated model-tiers and distribution memory docs.
 - **260219-wq0e-move-5cs-to-project-folder** — Moved the 5 Cs (constitution, context, code-quality, code-review, config.yaml) and VERSION into a new fab/project/ subfolder, updated all references across scripts, skills, agents, specs, and docs, and added a 0.9.0-to-0.10.0 migration for existing installs.
 - **260218-e0tj-document-wt-idea-packages** — Added a Packages footer section to fab-help.sh for wt and idea discoverability, created docs/specs/packages.md covering concepts, workflows, and package architecture, and updated the specs index.
 - **260218-5isu-fix-docs-consistency-drift** — Fixed 12 documentation consistency findings (stale /fab-init, /fab-update, archive stage, and script path references) across specs and memory, aligning them with current implementation after recent renames and reorganizations.
