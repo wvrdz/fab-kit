@@ -22,9 +22,13 @@ The stage named "spec" refers to the *activity* of writing the specification —
 Every skill that generates or validates artifacts MUST load relevant context before proceeding. This ensures agents produce accurate, grounded output rather than hallucinating requirements or ignoring existing patterns.
 
 **Always loaded** (by every skill except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-memory`):
-- `fab/project/config.yaml` — project configuration, tech stack, conventions
-- `fab/project/constitution.md` — project principles and constraints
+- `fab/project/config.yaml` — project configuration, naming conventions, model tiers
+- `fab/project/constitution.md` — project principles and constraints (MUST/SHOULD/MUST NOT rules)
+- `fab/project/context.md` — free-form project context: tech stack, conventions, architecture *(optional — no error if missing)*
+- `fab/project/code-quality.md` — coding standards for apply/review: principles, anti-patterns, test strategy *(optional — no error if missing)*
+- `fab/project/code-review.md` — review policy: severity definitions, scope, rework budget *(optional — no error if missing)*
 - `docs/memory/index.md` — memory landscape (which domains and memory files exist)
+- `docs/specs/index.md` — specifications landscape (pre-implementation design intent, human-curated)
 
 **Change context** (loaded by skills operating on an active change):
 - `.status.yaml` — current stage, progress
@@ -520,6 +524,23 @@ Checklist: not yet generated (created at tasks stage)
 
 Next: Complete intake.md, then /fab-continue
 ```
+
+---
+
+## `/fab-discuss`
+
+**Purpose**: Prime the agent with project context for a discussion session. Loads the standard always-load layer and presents an orientation summary of the project landscape — memory domains, specs, active change (if any). Session entry point for exploratory conversations, not a pipeline stage.
+
+**Context**: Same as always-load (`_context.md` §1) — `config.yaml`, `constitution.md`, `context.md` (optional), `code-quality.md` (optional), `code-review.md` (optional), `docs/memory/index.md`, `docs/specs/index.md`. Also reads `fab/current` + `.status.yaml` for active change awareness (light touch).
+
+**Key properties**:
+- No active change required — works without `fab/current`, without `fab/changes/`
+- Read-only — modifies no files
+- Idempotent — safe to invoke repeatedly
+- Does not run preflight
+- Does not output a `Next:` pipeline command — ends with "Ready to discuss. What would you like to explore?"
+
+**Output**: Structured orientation summary with project identity, memory domains (with file counts), specs landscape, optional file status, active change name/stage (if any), and a ready signal.
 
 ---
 

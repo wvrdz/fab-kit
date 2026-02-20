@@ -19,3 +19,9 @@ kit.tar.gz
 .agents/
 
 .tmp
+
+.agents
+
+.claude
+
+.opencode
