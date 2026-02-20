@@ -1,1 +1,7 @@
+# Fab Specific
 fab/current
+
+# Optional - ignore agent specific folders
+.agents
+.claude
+.opencode
