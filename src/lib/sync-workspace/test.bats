@@ -215,12 +215,13 @@ YAML
 
 # ── Skill Sync ──────────────────────────────────────────────────────
 
-@test "creates Claude Code skill symlinks (directory-based)" {
+@test "creates Claude Code skill copies (directory-based)" {
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ -L "$REPO_ROOT/.claude/skills/fab-continue/SKILL.md" ]
-  [ -e "$REPO_ROOT/.claude/skills/fab-continue/SKILL.md" ]
-  [ -L "$REPO_ROOT/.claude/skills/fab-status/SKILL.md" ]
+  [ -f "$REPO_ROOT/.claude/skills/fab-continue/SKILL.md" ]
+  [ ! -L "$REPO_ROOT/.claude/skills/fab-continue/SKILL.md" ]
+  [ -f "$REPO_ROOT/.claude/skills/fab-status/SKILL.md" ]
+  [ ! -L "$REPO_ROOT/.claude/skills/fab-status/SKILL.md" ]
 }
 
 @test "creates OpenCode command symlinks (flat)" {
@@ -245,27 +246,32 @@ YAML
   [ ! -e "$REPO_ROOT/.claude/skills/_context.md" ]
 }
 
-# ── Model-Tier Agent Generation ─────────────────────────────────────
+# ── Model-Tier Templating ──────────────────────────────────────────
 
-@test "generates agent file for fast-tier skill" {
+@test "fast-tier skill copy has model: instead of model_tier:" {
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ -f "$REPO_ROOT/.claude/agents/fab-status.md" ]
+  local skill_content
+  skill_content="$(cat "$REPO_ROOT/.claude/skills/fab-status/SKILL.md")"
+  [[ "$skill_content" == *"model: haiku"* ]]
+  [[ "$skill_content" != *"model_tier: fast"* ]]
 }
 
-@test "fast-tier agent file has model: instead of model_tier:" {
+@test "capable-tier skill copy preserves content without model override" {
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  local agent_content
-  agent_content="$(cat "$REPO_ROOT/.claude/agents/fab-status.md")"
-  [[ "$agent_content" == *"model: haiku"* ]]
-  [[ "$agent_content" != *"model_tier: fast"* ]]
+  local skill_content
+  skill_content="$(cat "$REPO_ROOT/.claude/skills/fab-continue/SKILL.md")"
+  [[ "$skill_content" != *"model:"* ]]
 }
 
-@test "does not generate agent file for capable-tier skill" {
+@test "transitional cleanup removes stale agent files" {
+  # Pre-create a stale agent file matching a known skill name
+  mkdir -p "$REPO_ROOT/.claude/agents"
+  echo "stale" > "$REPO_ROOT/.claude/agents/fab-status.md"
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ ! -f "$REPO_ROOT/.claude/agents/fab-continue.md" ]
+  [ ! -f "$REPO_ROOT/.claude/agents/fab-status.md" ]
 }
 
 # ── .gitignore Management ───────────────────────────────────────────
@@ -327,10 +333,9 @@ YAML
   # No config.yaml at all — should fall back to haiku
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ -f "$REPO_ROOT/.claude/agents/fab-status.md" ]
-  local agent_content
-  agent_content="$(cat "$REPO_ROOT/.claude/agents/fab-status.md")"
-  [[ "$agent_content" == *"model: haiku"* ]]
+  local skill_content
+  skill_content="$(cat "$REPO_ROOT/.claude/skills/fab-status/SKILL.md")"
+  [[ "$skill_content" == *"model: haiku"* ]]
 }
 
 @test "reads model_tiers from config.yaml when present" {
@@ -344,7 +349,7 @@ model_tiers:
 YAML
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  local agent_content
-  agent_content="$(cat "$REPO_ROOT/.claude/agents/fab-status.md")"
-  [[ "$agent_content" == *"model: sonnet"* ]]
+  local skill_content
+  skill_content="$(cat "$REPO_ROOT/.claude/skills/fab-status/SKILL.md")"
+  [[ "$skill_content" == *"model: sonnet"* ]]
 }
