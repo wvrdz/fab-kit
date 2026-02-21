@@ -61,6 +61,8 @@ fi
 
 declare -A WORKTREE_PATHS  # change-id → worktree path
 CURRENT_DISPATCH=""        # change-id being dispatched (for SIGINT summary)
+LOG_PANE_ID=""             # tmux pane running tail -f (for cleanup)
+LOG_FILE=""                # dispatch output log file path
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -373,6 +375,10 @@ print_summary() {
 on_sigint() {
   echo ""
   log "Caught SIGINT — shutting down..."
+  # Close the log tail pane if we created one
+  if [[ -n "$LOG_PANE_ID" ]]; then
+    tmux kill-pane -t "$LOG_PANE_ID" 2>/dev/null || true
+  fi
   print_summary "$MANIFEST"
   exit 130
 }
@@ -384,8 +390,23 @@ trap on_sigint INT
 # ---------------------------------------------------------------------------
 
 main() {
+  local manifest_name
+  manifest_name=$(basename "$MANIFEST" .yaml)
+
+  # Set up log file for dispatch output
+  LOG_FILE="/tmp/fab-pipeline-${manifest_name}.log"
+  : > "$LOG_FILE"  # truncate
+
   log "Starting pipeline: $MANIFEST"
   log "Poll interval: ${POLL_INTERVAL}s"
+  log "Log file: $LOG_FILE"
+
+  # Open a tmux split pane for live log tailing (if inside tmux)
+  if [[ -n "${TMUX:-}" ]]; then
+    LOG_PANE_ID=$(tmux split-window -h -d -P -F '#{pane_id}' \
+      "tail -f '$LOG_FILE'")
+    log "Log pane: $LOG_PANE_ID"
+  fi
   echo ""
 
   # Initial validation
@@ -422,19 +443,35 @@ main() {
       local parent_branch
       parent_branch=$(get_parent_branch "$MANIFEST" "$next_id")
 
-      # Dispatch — capture output for worktree path, exit code 1 = infra failure
-      local dispatch_output
-      if dispatch_output=$(bash "$DISPATCH" "$next_id" "$resolved_id" "$parent_branch" "$MANIFEST" 2>&1 | tee /dev/stderr); then
-        : # success
-      else
-        log "Infrastructure failure during dispatch of $next_id — aborting"
+      # Write separator to log file
+      printf '\n═══ Dispatching: %s at %s ═══\n\n' \
+        "$resolved_id" "$(date '+%H:%M:%S')" >> "$LOG_FILE"
+
+      # Dispatch — run in background so SIGINT can interrupt `wait`
+      local dispatch_exit=0 dispatch_pid
+      bash "$DISPATCH" "$next_id" "$resolved_id" "$parent_branch" "$MANIFEST" \
+        >> "$LOG_FILE" 2>&1 &
+      dispatch_pid=$!
+      wait "$dispatch_pid" || dispatch_exit=$?
+
+      if [[ "$dispatch_exit" -eq 1 ]]; then
+        log "Infrastructure failure during dispatch of $next_id — aborting (see $LOG_FILE)"
         print_summary "$MANIFEST"
         exit 1
       fi
 
-      # Extract worktree path from dispatch output for summary
+      # Report result in orchestrator pane
+      local result_stage
+      result_stage=$(get_stage "$MANIFEST" "$next_id")
+      if [[ "$result_stage" == "done" ]]; then
+        log "Done: $resolved_id"
+      elif [[ "$result_stage" == "failed" || "$result_stage" == "invalid" ]]; then
+        log "Failed: $resolved_id ($result_stage — see log pane)"
+      fi
+
+      # Record worktree path (read from dispatch log)
       local wt_line
-      wt_line=$(echo "$dispatch_output" | grep '\[pipeline\] Dispatching:.*worktree:' | head -1 || true)
+      wt_line=$(grep '\[pipeline\] Dispatching:.*worktree:' "$LOG_FILE" | tail -1 || true)
       if [[ -n "$wt_line" ]]; then
         local wt_path
         wt_path=$(echo "$wt_line" | sed 's/.*worktree: \(.*\))/\1/')

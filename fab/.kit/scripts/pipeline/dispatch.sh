@@ -100,7 +100,7 @@ create_worktree() {
     # Branch doesn't exist locally — create it
     if git ls-remote --exit-code --heads origin "$PARENT_BRANCH" &>/dev/null; then
       # Parent exists on remote — branch from it (dependent node)
-      git branch "$CHANGE_BRANCH" "origin/$PARENT_BRANCH"
+      git branch "$CHANGE_BRANCH" "origin/$PARENT_BRANCH" >/dev/null 2>&1
     fi
     # If parent not on remote, wt-create will create from HEAD (root node)
   fi
