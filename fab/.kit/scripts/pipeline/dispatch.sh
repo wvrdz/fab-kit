@@ -214,16 +214,25 @@ run_pipeline() {
   fi
 
   if [[ -z "$pane_id" ]]; then
-    log "Failed: $CHANGE_ID — tmux split-window failed"
+    log "Failed: $CHANGE_ID — tmux split-window failed (infrastructure)"
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    return 2
+    exit 1
   fi
 
   # Step 2: Send fab-switch to the interactive pane via send-keys
   sleep "$CLAUDE_STARTUP_DELAY"
-  tmux send-keys -t "$pane_id" "/fab-switch $CHANGE_ID --no-branch-change"
+  if ! check_pane_alive "$pane_id"; then
+    log "Failed: $CHANGE_ID — pane died before fab-switch could be sent"
+    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
+    return 0
+  fi
+  tmux send-keys -t "$pane_id" "/fab-switch $CHANGE_ID --no-branch-change" 2>/dev/null || {
+    log "Failed: $CHANGE_ID — tmux send-keys failed for fab-switch"
+    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
+    return 0
+  }
   sleep 0.5
-  tmux send-keys -t "$pane_id" Enter
+  tmux send-keys -t "$pane_id" Enter 2>/dev/null || true
 
   # Step 3: Poll fab/current until it matches the expected change ID
   local fab_current_file="$wt_path/fab/current"
@@ -237,7 +246,6 @@ run_pipeline() {
     if ! check_pane_alive "$pane_id"; then
       log "Failed: $CHANGE_ID — interactive pane died during fab-switch"
       write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-      echo "$pane_id"
       return 0
     fi
 
@@ -255,15 +263,23 @@ run_pipeline() {
   if ! "$switch_ok"; then
     log "Failed: $CHANGE_ID — fab-switch polling timed out (${SWITCH_POLL_TIMEOUT}s)"
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    echo "$pane_id"
     return 0
   fi
 
   # Step 4: Send fab-ff after switch completion
   sleep "$POST_SWITCH_DELAY"
-  tmux send-keys -t "$pane_id" "/fab-ff"
+  if ! check_pane_alive "$pane_id"; then
+    log "Failed: $CHANGE_ID — pane died before fab-ff could be sent"
+    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
+    return 0
+  fi
+  tmux send-keys -t "$pane_id" "/fab-ff" 2>/dev/null || {
+    log "Failed: $CHANGE_ID — tmux send-keys failed for fab-ff"
+    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
+    return 0
+  }
   sleep 0.5
-  tmux send-keys -t "$pane_id" Enter
+  tmux send-keys -t "$pane_id" Enter 2>/dev/null || true
 
   # Output pane ID — run.sh captures this
   echo "$pane_id"
