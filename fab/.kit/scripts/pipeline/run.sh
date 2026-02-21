@@ -75,7 +75,7 @@ PIPELINE_SHIP_TIMEOUT="${PIPELINE_SHIP_TIMEOUT:-300}" # 5 minutes
 # ---------------------------------------------------------------------------
 
 log() {
-  echo "[pipeline] $*"
+  echo "$*"
 }
 
 write_stage() {

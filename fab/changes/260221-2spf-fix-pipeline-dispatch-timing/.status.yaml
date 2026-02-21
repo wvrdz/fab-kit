@@ -4,8 +4,8 @@ created_by: sahil-weaver
 change_type: feature
 progress:
   intake: done
-  spec: pending
-  tasks: pending
+  spec: done
+  tasks: active
   apply: pending
   review: pending
   hydrate: pending
@@ -15,11 +15,19 @@ checklist:
   completed: 0
   total: 0
 confidence:
-  certain: 0
-  confident: 0
+  certain: 3
+  confident: 4
   tentative: 0
   unresolved: 0
-  score: 0.0
+  score: 3.8
+  fuzzy: true
+  dimensions:
+    signal: 76.4
+    reversibility: 89.3
+    competence: 77.1
+    disambiguation: 81.4
 stage_metrics:
   intake: {started_at: "2026-02-21T16:45:14+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-21T16:45:56+05:30"}
-last_updated: "2026-02-21T16:45:56+05:30"
+  spec: {started_at: "2026-02-21T16:59:23+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-21T17:00:24+05:30"}
+  tasks: {started_at: "2026-02-21T17:00:24+05:30", driver: fab-continue, iterations: 1}
+last_updated: "2026-02-21T17:00:24+05:30"
