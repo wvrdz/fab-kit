@@ -1,0 +1,1 @@
+{"ts":"2026-02-21T16:45:14+05:30","event":"command","cmd":"fab-new","args":"Fix pipeline orchestrator: replace claude -p fab-switch with direct fab/current write, and add delay before sending /changes:ship to tmux pane so Claude has time to finish its turn"}
