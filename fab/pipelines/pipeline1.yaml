@@ -71,11 +71,12 @@ base: main
 changes:
   - id: alng
     depends_on: []
-    # - id: 260221-b3m1-auth-endpoints
-    #   depends_on: [260221-a7k2-user-model]
 
-    # - id: 260221-c9p4-sessions
-    #   depends_on: [260221-a7k2-user-model]
+
+# - id: 260221-b3m1-auth-endpoints
+#   depends_on: [260221-a7k2-user-model]
+# - id: 260221-c9p4-sessions
+#   depends_on: [260221-a7k2-user-model]
 #
 # B and C both depend on A. The orchestrator dispatches them in list order
 # (B first, then C) since v1 is serial.

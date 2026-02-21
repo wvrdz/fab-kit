@@ -86,6 +86,14 @@ CHANGE_BRANCH="${BRANCH_PREFIX}${CHANGE_ID}"
 create_worktree() {
   local wt_path
 
+  # Reuse existing worktree if present (resuming a previous run)
+  source "$KIT_DIR/packages/wt/lib/wt-common.sh"
+  if wt_path=$(wt_get_worktree_path_by_name "$CHANGE_ID"); then
+    log "Reusing existing worktree: $wt_path"
+    echo "$wt_path"
+    return 0
+  fi
+
   # For dependent nodes (PARENT_BRANCH is another change's branch, not base),
   # create the change branch from the parent's pushed branch
   if ! git show-ref --verify --quiet "refs/heads/$CHANGE_BRANCH" 2>/dev/null; then
