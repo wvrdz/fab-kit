@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260221-ay66-interactive-pipeline-pane** — Replaced the pipeline's passive log pane with an interactive Claude session in the right tmux pane, preserving conversation context across fab-ff and ship steps for better visibility, user intervention, and contextually richer commit messages and PR descriptions.
 - **260221-alng-batch-script-frontmatter** — Added shell-comment frontmatter to batch scripts and extended fab-help.sh to discover and display them under a new "Batch Operations" group.
 - **260221-wy0e-pipeline-orchestrator** — Added a pipeline orchestrator that reads a live YAML manifest and executes fab changes in dependency order via worktrees, with serial dispatch, .status.yaml polling, and a commented-out example manifest for documentation.
 - **260221-i0z6-move-env-packages-add-fab-pipeline** — Moved env-packages.sh from fab/.kit/scripts/ to lib/ (removing it from user PATH) and added a fab-pipeline.sh wrapper in scripts/ as a PATH-accessible entry point for the pipeline orchestrator.
