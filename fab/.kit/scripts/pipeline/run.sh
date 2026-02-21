@@ -115,7 +115,7 @@ validate_manifest() {
       local current_stage
       current_stage=$(yq -r "(.changes[$i]).stage // \"\"" "$manifest")
       if [[ -z "$current_stage" || "$current_stage" == "null" ]]; then
-        echo "[pipeline] Multi-parent dependency not supported in v1: $id depends on $deps_count changes. Marking invalid." >&2
+        echo "[pipeline] Multi-parent dependency not supported in v1: $id depends on $deps_count changes. Merge parent branches manually." >&2
         yq -i "(.changes[$i]).stage = \"invalid\"" "$manifest"
       fi
     fi
@@ -428,11 +428,13 @@ main() {
 
       CURRENT_DISPATCH=""
     else
-      # Nothing to dispatch — count completed for idle message
-      local total completed_count
+      # Nothing to dispatch — show detailed status for idle message
+      local total completed_count failed_count invalid_count pending_count
       total=$(yq '.changes | length' "$MANIFEST")
       completed_count=$(yq '[.changes[] | select(.stage == "done")] | length' "$MANIFEST")
-      local pending_count=$((total - completed_count))
+      failed_count=$(yq '[.changes[] | select(.stage == "failed")] | length' "$MANIFEST")
+      invalid_count=$(yq '[.changes[] | select(.stage == "invalid")] | length' "$MANIFEST")
+      pending_count=$((total - completed_count - failed_count - invalid_count))
 
       log "Waiting for new entries... ($completed_count completed, $pending_count pending)"
       sleep "$POLL_INTERVAL"

@@ -119,6 +119,7 @@ provision_artifacts() {
       echo "Error: source change folder not found at $source_dir" >&2
       return 1
     fi
+    mkdir -p "$(dirname "$target_dir")"
     cp -r "$source_dir" "$target_dir"
     log "Copied artifacts: fab/changes/$CHANGE_ID → worktree"
   fi
@@ -146,19 +147,22 @@ validate_prerequisites() {
 
   # calc-score.sh path is relative to the worktree's kit directory
   local wt_calc_score="$wt_path/fab/.kit/scripts/lib/calc-score.sh"
-  if [[ -f "$wt_calc_score" ]]; then
-    local gate_result
-    gate_result=$(bash "$wt_calc_score" --check-gate "$change_dir" 2>/dev/null) || true
-    local gate_status
-    gate_status=$(echo "$gate_result" | grep "^gate:" | sed 's/gate: //')
-    if [[ "$gate_status" == "fail" ]]; then
-      local score threshold
-      score=$(echo "$gate_result" | grep "^score:" | sed 's/score: //')
-      threshold=$(echo "$gate_result" | grep "^threshold:" | sed 's/threshold: //')
-      log "Failed: $CHANGE_ID — prerequisite failed: confidence $score below gate $threshold"
-      write_stage "$CHANGE_ID" "invalid" "$MANIFEST"
-      return 2
-    fi
+  if [[ ! -f "$wt_calc_score" ]]; then
+    log "Failed: $CHANGE_ID — infrastructure failure: calc-score.sh not found at $wt_calc_score"
+    exit 1
+  fi
+
+  local gate_result
+  gate_result=$(bash "$wt_calc_score" --check-gate "$change_dir" 2>/dev/null) || true
+  local gate_status
+  gate_status=$(echo "$gate_result" | grep "^gate:" | sed 's/gate: //')
+  if [[ "$gate_status" == "fail" ]]; then
+    local score threshold
+    score=$(echo "$gate_result" | grep "^score:" | sed 's/score: //')
+    threshold=$(echo "$gate_result" | grep "^threshold:" | sed 's/threshold: //')
+    log "Failed: $CHANGE_ID — prerequisite failed: confidence $score below gate $threshold"
+    write_stage "$CHANGE_ID" "invalid" "$MANIFEST"
+    return 2
   fi
 
   return 0
@@ -213,7 +217,7 @@ ship() {
   local target_branch="$2"
 
   if ! (cd "$wt_path" && claude -p --dangerously-skip-permissions \
-    "Commit all changes and create a PR targeting $target_branch. Include a summary of what this change does based on the spec."); then
+    "Commit all changes and create a PR targeting '$target_branch'. Include a summary of what this change does based on the spec."); then
     log "Failed: $CHANGE_ID — shipping failed"
     write_stage "$CHANGE_ID" "failed" "$MANIFEST"
     return 0
