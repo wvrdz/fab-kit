@@ -202,8 +202,10 @@ wt_show_menu() {
     shift
 
     local default_choice=""
-    # Check if first arg is a number (default choice)
-    if [[ "$1" =~ ^[0-9]+$ ]]; then
+    # Check if first arg is a number (default choice) or empty (no default)
+    if [[ -z "$1" ]]; then
+        shift
+    elif [[ "$1" =~ ^[0-9]+$ ]]; then
         default_choice="$1"
         shift
     fi

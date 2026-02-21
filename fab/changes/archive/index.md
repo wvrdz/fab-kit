@@ -1,5 +1,9 @@
 # Archive Index
 
+- **260221-h1l8-fix-orchestrator-false-fail-on-review** — Removed the `:failed` catch-all from poll_change() so `review:failed` no longer kills the pipeline dispatch, allowing fab-ff's auto-rework loop to complete normally.
+- **260221-8bs9-add-pipeline-orchestrator-tests** — Added BATS test suites for pipeline orchestrator scripts (run.sh, dispatch.sh) covering manifest validation, cycle detection, dispatch ordering, poll state machine, and provision logic with PATH-override stubs.
+- **260221-6ljc-fix-pipeline-ship-timing** — Added an 8-second delay and split send-keys pattern before sending `/changes:ship pr` to the tmux pane, preventing Enter from being swallowed while Claude finishes its turn output.
+- **260221-2spf-fix-pipeline-dispatch-timing** — Moved fab-switch from an invisible `claude -p` pre-step into the interactive tmux pane with send-keys, adding fab/current polling and delayed fab-ff dispatch for immediate user visibility.
 - **260221-5tj7-rename-context-to-preamble** — Renamed `_context.md` to `_preamble.md` to disambiguate from project `context.md`, updating all references across 15 skill files and ~10 documentation files.
 - **260221-ay66-interactive-pipeline-pane** — Replaced the pipeline's passive log pane with an interactive Claude session in the right tmux pane, preserving conversation context across fab-ff and ship steps for better visibility, user intervention, and contextually richer commit messages and PR descriptions.
 - **260221-alng-batch-script-frontmatter** — Added shell-comment frontmatter to batch scripts and extended fab-help.sh to discover and display them under a new "Batch Operations" group.

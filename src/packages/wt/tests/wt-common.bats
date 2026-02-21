@@ -216,6 +216,47 @@ teardown() {
     [[ -f new-file.txt ]]
 }
 
+# ============================================================================
+# Menu Display (wt_show_menu)
+# ============================================================================
+
+@test "menu: empty default_choice does not create blank option" {
+    # Simulate choosing option 1
+    run bash -c 'echo "1" | wt_show_menu "Pick one:" "" "Alpha" "Beta"'
+
+    # Should show "1) Alpha" and "2) Beta" — not a blank "1)" followed by "2) Alpha"
+    assert_output --partial "1) Alpha"
+    assert_output --partial "2) Beta"
+    refute_output --regexp '^\s*1\)\s*$'
+}
+
+@test "menu: numeric default_choice is not rendered as an option" {
+    run bash -c 'echo "1" | wt_show_menu "Pick one:" 2 "Alpha" "Beta"'
+
+    assert_output --partial "1) Alpha"
+    assert_output --partial "2) Beta"
+    # Only 2 numbered options plus Cancel
+    refute_output --partial "3)"
+}
+
+@test "menu: option count matches arguments when default_choice is empty" {
+    run bash -c 'echo "1" | wt_show_menu "Pick:" "" "A" "B" "C"'
+
+    assert_output --partial "1) A"
+    assert_output --partial "2) B"
+    assert_output --partial "3) C"
+    refute_output --partial "4)"
+}
+
+@test "menu: option count matches arguments when default_choice is numeric" {
+    run bash -c 'echo "1" | wt_show_menu "Pick:" 1 "A" "B" "C"'
+
+    assert_output --partial "1) A"
+    assert_output --partial "2) B"
+    assert_output --partial "3) C"
+    refute_output --partial "4)"
+}
+
 @test "stash: hash is stable across concurrent stash operations" {
     echo "first stash" > first.txt
     local hash1
