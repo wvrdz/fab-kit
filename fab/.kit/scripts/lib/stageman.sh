@@ -130,6 +130,42 @@ get_confidence() {
   echo "score:$(yq '.confidence.score // "5.0"' "$status_file")"
 }
 
+# get_progress_line <status_file> — Single-line visual pipeline progress
+# Iterates get_progress_map: done stages joined by " → ", active + " ⏳",
+# failed + " ✗", pending omitted. All done appends " ✓". All pending = empty.
+get_progress_line() {
+  local status_file="$1"
+  local parts=()
+  local has_active=false has_pending=false
+
+  while IFS=: read -r stage state; do
+    case "$state" in
+      done)    parts+=("$stage") ;;
+      active)  parts+=("$stage ⏳"); has_active=true ;;
+      failed)  parts+=("$stage ✗") ;;
+      pending) has_pending=true ;;
+    esac
+  done <<< "$(get_progress_map "$status_file")"
+
+  if [ ${#parts[@]} -eq 0 ]; then
+    return 0
+  fi
+
+  local line=""
+  for ((i = 0; i < ${#parts[@]}; i++)); do
+    if [ $i -gt 0 ]; then
+      line+=" → "
+    fi
+    line+="${parts[$i]}"
+  done
+
+  if [ "$has_active" = "false" ] && [ "$has_pending" = "false" ]; then
+    line+=" ✓"
+  fi
+
+  echo "$line"
+}
+
 # _apply_metrics_side_effect <tmpfile> <stage> <state> [driver]
 # Internal helper: apply stage_metrics side-effects for a state change.
 # Operates on tmpfile (caller handles atomicity).
@@ -696,6 +732,7 @@ SUBCOMMANDS:
   Progression:
     current-stage <file>               Detect active stage from .status.yaml
     display-stage <file>               Display stage (where you are) as stage:state
+    progress-line <file>               Single-line visual progress (done → active ⏳)
 
   Validation:
     validate-status-file <file>        Validate .status.yaml against schema
@@ -782,6 +819,17 @@ case "${1:-}" in
       exit 1
     fi
     get_display_stage "$2"
+    ;;
+  progress-line)
+    if [ $# -ne 2 ]; then
+      echo "Usage: stageman.sh progress-line <file>" >&2
+      exit 1
+    fi
+    if [ ! -f "$2" ]; then
+      echo "ERROR: Status file not found: $2" >&2
+      exit 1
+    fi
+    get_progress_line "$2"
     ;;
 
   # ── Validation ─────────────────────────────────────────────────────────

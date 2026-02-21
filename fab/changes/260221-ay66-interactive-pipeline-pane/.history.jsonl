@@ -1,1 +1,6 @@
 {"ts":"2026-02-21T15:17:37+05:30","event":"command","cmd":"fab-new","args":"Replace pipeline right pane from tail -f log viewer to interactive Claude session"}
+{"ts":"2026-02-21T15:30:05+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-21T15:32:27+05:30","event":"confidence","score":3.1,"delta":"+3.1","trigger":"calc-score"}
+{"ts":"2026-02-21T15:42:05+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-21T15:50:47+05:30","event":"review","result":"failed","rework":"fix-code"}
+{"ts":"2026-02-21T15:53:48+05:30","event":"review","result":"passed"}

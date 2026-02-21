@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# fab/.kit/scripts/pipeline/dispatch.sh — Dispatch a single change through the fab pipeline
+# fab/.kit/scripts/pipeline/dispatch.sh — Dispatch a single change into an interactive pane
 #
-# Usage: dispatch.sh <manifest-id> <fs-change-id> <parent-branch> <manifest-path>
+# Usage: dispatch.sh <manifest-id> <fs-change-id> <parent-branch> <manifest-path> [last-pane-id]
 #
 # Creates a worktree, provisions artifacts, validates prerequisites,
-# runs fab-ff via claude -p, ships (commit/push/PR), and writes the
-# terminal stage back to the manifest.
+# launches fab-ff in an interactive Claude session (tmux pane), and returns
+# the pane ID. Does NOT poll or wait — run.sh handles polling and shipping.
 #
 # Exit codes:
-#   0  — change completed (done or failed written to manifest)
+#   0  — pane created (stdout: worktree path + pane ID)
 #   1  — infrastructure failure (caller should abort)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,9 +26,9 @@ CONFIG_FILE="${FAB_DIR}/project/config.yaml"
 
 usage() {
   cat <<'EOF'
-Usage: dispatch.sh <manifest-id> <fs-change-id> <parent-branch> <manifest-path>
+Usage: dispatch.sh <manifest-id> <fs-change-id> <parent-branch> <manifest-path> [last-pane-id]
 
-Dispatches a single change through the fab pipeline in an isolated worktree.
+Dispatches a single change into an interactive Claude pane.
 
 Arguments:
   manifest-id     Original change ID as written in the manifest (for manifest writes)
@@ -36,11 +36,12 @@ Arguments:
   parent-branch   Branch to base the worktree on (manifest's base for roots,
                   parent change's branch for dependents)
   manifest-path   Path to the pipeline manifest YAML file
+  last-pane-id    Pane ID of the previous dispatch (empty for first dispatch)
 
-The script creates a worktree, runs fab-ff, ships the result, and writes
-the terminal stage (done/failed/invalid) to the manifest.
+Outputs worktree path and pane ID on stdout (two lines).
+Does NOT poll or wait — run.sh handles that.
 
-Exit code 0 = change processed (check manifest for stage).
+Exit code 0 = pane created.
 Exit code 1 = infrastructure failure (caller should abort).
 EOF
 }
@@ -54,6 +55,7 @@ MANIFEST_ID="$1"
 CHANGE_ID="$2"
 PARENT_BRANCH="$3"
 MANIFEST="$4"
+LAST_PANE_ID="${5:-}"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -74,6 +76,12 @@ write_stage() {
 
 log() {
   echo "[pipeline] $*"
+}
+
+# check_pane_alive <pane_id> — verify tmux pane still exists
+check_pane_alive() {
+  local pane_id="$1"
+  tmux list-panes -a -F '#{pane_id}' 2>/dev/null | grep -qx "$pane_id"
 }
 
 # ---------------------------------------------------------------------------
@@ -179,72 +187,40 @@ validate_prerequisites() {
 }
 
 # ---------------------------------------------------------------------------
-# Pipeline Execution
+# Pipeline Execution — Interactive Pane
 # ---------------------------------------------------------------------------
 
 run_pipeline() {
   local wt_path="$1"
 
-  # Activate the change
-  if ! (cd "$wt_path" && claude -p --dangerously-skip-permissions "/fab-switch $CHANGE_ID --no-branch-change"); then
+  # Activate the change (stays as claude -p — trivial, no context benefit)
+  # Redirect stdout to /dev/null to prevent leaking into pane ID capture
+  if ! (cd "$wt_path" && claude -p --dangerously-skip-permissions "/fab-switch $CHANGE_ID --no-branch-change" >/dev/null); then
     log "Failed: $CHANGE_ID — fab-switch failed"
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    return 0  # not infra failure — change-level failure
+    return 2
   fi
 
-  # Run fab-ff — capture exit code, then check stage unconditionally
-  local fab_ff_exit=0
-  if ! (cd "$wt_path" && claude -p --dangerously-skip-permissions "/fab-ff"); then
-    fab_ff_exit=1
+  # Launch fab-ff in an interactive Claude session in a tmux pane
+  local pane_id
+  if [[ -z "$LAST_PANE_ID" ]]; then
+    # First dispatch — horizontal split from orchestrator pane
+    pane_id=$(tmux split-window -h -d -P -F '#{pane_id}' -c "$wt_path" \
+      "claude --dangerously-skip-permissions '/fab-ff'")
+  else
+    # Subsequent dispatch — vertical split stacked below previous session
+    pane_id=$(tmux split-window -v -t "$LAST_PANE_ID" -d -P -F '#{pane_id}' -c "$wt_path" \
+      "claude --dangerously-skip-permissions '/fab-ff'")
   fi
 
-  # Determine actual stage reached via stageman (regardless of fab-ff exit code)
-  local status_file="$wt_path/fab/changes/$CHANGE_ID/.status.yaml"
-  if [[ ! -f "$status_file" ]]; then
-    log "Failed: $CHANGE_ID — .status.yaml not found after pipeline"
+  if [[ -z "$pane_id" ]]; then
+    log "Failed: $CHANGE_ID — tmux split-window failed"
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    return 0
+    return 2
   fi
 
-  local wt_stageman="$wt_path/fab/.kit/scripts/lib/stageman.sh"
-  if [[ ! -f "$wt_stageman" ]]; then
-    log "Failed: $CHANGE_ID — infrastructure failure: stageman.sh not found at $wt_stageman"
-    exit 1
-  fi
-
-  local display_stage
-  display_stage=$(bash "$wt_stageman" display-stage "$status_file" 2>/dev/null) || display_stage="unknown"
-
-  if [[ "$fab_ff_exit" -ne 0 ]]; then
-    log "Failed: $CHANGE_ID — fab-ff failed at $display_stage"
-    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    return 0
-  fi
-
-  if [[ "$display_stage" != "hydrate:done" ]]; then
-    log "Failed: $CHANGE_ID — fab-ff exited 0 but stage is $display_stage (expected hydrate:done)"
-    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    return 0
-  fi
-
-  return 0
-}
-
-# ---------------------------------------------------------------------------
-# Shipping
-# ---------------------------------------------------------------------------
-
-ship() {
-  local wt_path="$1"
-  local target_branch="$2"
-
-  if ! (cd "$wt_path" && claude -p --dangerously-skip-permissions \
-    "Commit all changes and create a PR targeting '$target_branch'. Include a summary of what this change does based on the spec."); then
-    log "Failed: $CHANGE_ID — shipping failed"
-    write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
-    return 0
-  fi
-
+  # Output pane ID — run.sh captures this
+  echo "$pane_id"
   return 0
 }
 
@@ -259,7 +235,7 @@ main() {
     echo "Error: worktree creation failed for $CHANGE_ID" >&2
     exit 1
   }
-  log "Dispatching: $CHANGE_ID (worktree: $wt_path)"
+  log "Dispatching: $CHANGE_ID (worktree: $wt_path)" >&2
 
   # Provision artifacts — infrastructure failure if source missing
   provision_artifacts "$wt_path" || {
@@ -272,20 +248,13 @@ main() {
     return 0
   fi
 
-  # Run pipeline — writes failed on failure, not infra error
-  run_pipeline "$wt_path"
+  # Launch interactive pane — returns pane ID on stdout
+  local pane_id
+  pane_id=$(run_pipeline "$wt_path") || return 0
 
-  # Ship if pipeline succeeded (check manifest for current stage)
-  local current_stage
-  current_stage=$(yq -r "(.changes[] | select(.id == \"$MANIFEST_ID\")).stage // \"\"" "$MANIFEST")
-  if [[ -z "$current_stage" || "$current_stage" == "null" ]]; then
-    # Pipeline succeeded, ship it
-    ship "$wt_path" "$PARENT_BRANCH"
-
-    # Write done
-    write_stage "$MANIFEST_ID" "done" "$MANIFEST"
-    log "Completed: $CHANGE_ID — done"
-  fi
+  # Output: worktree path + pane ID (two lines, captured by run.sh)
+  echo "$wt_path"
+  echo "$pane_id"
 }
 
 main
