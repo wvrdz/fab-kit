@@ -28,7 +28,7 @@ The `stage` field is written by the orchestrator. Valid values: `intake`, `spec`
 2. Validates: schema, circular deps, single-dep constraint, reference integrity
 3. Identifies dispatchable changes (deps all `done`, self not terminal)
 4. Dispatches first dispatchable in list order (serial, deterministic)
-5. If nothing dispatchable: sleeps 10 seconds (configurable via `PIPELINE_POLL_INTERVAL`), re-reads
+5. If nothing dispatchable: sleeps 30 seconds (configurable via `PIPELINE_POLL_INTERVAL`), re-reads. Uses `\r` in-place line update (no scrolling).
 
 **Stage classification for resumability**:
 - Terminal (`done`, `failed`, `invalid`) — skip permanently
@@ -62,11 +62,11 @@ Worktrees are left in place after dispatch (success or failure) for manual inspe
 
 | Script | Location | Purpose |
 |--------|----------|---------|
-| `fab-pipeline.sh` | `fab/.kit/scripts/fab-pipeline.sh` | User-facing entry point (listing, matching, delegation) |
+| `batch-fab-pipeline.sh` | `fab/.kit/scripts/batch-fab-pipeline.sh` | User-facing entry point (listing, matching, delegation) |
 | `run.sh` | `fab/.kit/scripts/pipeline/run.sh` | Main orchestrator loop |
 | `dispatch.sh` | `fab/.kit/scripts/pipeline/dispatch.sh` | Per-change dispatch |
 
-### fab-pipeline.sh
+### batch-fab-pipeline.sh
 
 User-facing entry point on PATH. Owns all UX: no-args/`--list` lists available pipelines from `fab/pipelines/*.yaml` (excluding `example.yaml`), `-h`/`--help` prints usage, positional arguments use case-insensitive substring matching against manifest basenames. Arguments with `/` or ending `.yaml` bypass matching. Delegates to `pipeline/run.sh` via `exec` with arg passthrough.
 
@@ -113,5 +113,5 @@ User-facing entry point on PATH. Owns all UX: no-args/`--list` lists available p
 
 | Change | Date | Summary |
 |--------|------|---------|
-| 260221-i0z6-move-env-packages-add-fab-pipeline | 2026-02-21 | Added `fab-pipeline.sh` user-facing entry point with listing, partial name matching, help, and `exec` delegation. Added changeman resolve for manifest change IDs in `run.sh`. Added `--worktree-name` to `wt-create` call in `dispatch.sh`. Replaced raw yq hydrate check with stageman `display-stage` in `dispatch.sh`. |
+| 260221-i0z6-move-env-packages-add-fab-pipeline | 2026-02-21 | Added `batch-fab-pipeline.sh` user-facing entry point with listing, partial name matching, help, and `exec` delegation. Added changeman resolve for manifest change IDs in `run.sh`. Added `--worktree-name` to `wt-create` call in `dispatch.sh`. Replaced raw yq hydrate check with stageman `display-stage` in `dispatch.sh`. |
 | 260221-wy0e-pipeline-orchestrator | 2026-02-21 | Initial implementation — serial orchestrator with run.sh + dispatch.sh, YAML manifest format, wt-create integration, Claude CLI execution, stacked PRs, SIGINT handling, example scaffold |

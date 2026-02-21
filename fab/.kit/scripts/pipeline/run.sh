@@ -17,7 +17,7 @@ FAB_DIR="$(dirname "$KIT_DIR")"
 CONFIG_FILE="${FAB_DIR}/project/config.yaml"
 DISPATCH="$SCRIPT_DIR/dispatch.sh"
 CHANGEMAN="$KIT_DIR/scripts/lib/changeman.sh"
-POLL_INTERVAL="${PIPELINE_POLL_INTERVAL:-10}"
+POLL_INTERVAL="${PIPELINE_POLL_INTERVAL:-30}"
 
 # ---------------------------------------------------------------------------
 # Usage
@@ -36,7 +36,7 @@ Arguments:
   manifest-path   Path to the pipeline manifest YAML file
 
 Environment:
-  PIPELINE_POLL_INTERVAL   Seconds between idle polls (default: 10)
+  PIPELINE_POLL_INTERVAL   Seconds between idle polls (default: 30)
 
 Example:
   fab/.kit/scripts/pipeline/run.sh fab/pipelines/my-feature.yaml
@@ -406,6 +406,7 @@ main() {
     local next_id
     if next_id=$(find_next_dispatchable "$MANIFEST"); then
       CURRENT_DISPATCH="$next_id"
+      printf "\n"  # clear in-place waiting line before dispatch output
 
       # Resolve manifest ID to full change folder name via changeman
       local resolved_id
@@ -450,7 +451,9 @@ main() {
       invalid_count=$(yq '[.changes[] | select(.stage == "invalid")] | length' "$MANIFEST")
       pending_count=$((total - completed_count - failed_count - invalid_count))
 
-      log "Waiting for new entries... ($completed_count completed, $pending_count pending)"
+      # In-place update: overwrite the same line each poll cycle
+      printf "\r[pipeline] Waiting… %s done, %s pending — polling every %ss  " \
+        "$completed_count" "$pending_count" "$POLL_INTERVAL"
       sleep "$POLL_INTERVAL"
     fi
   done

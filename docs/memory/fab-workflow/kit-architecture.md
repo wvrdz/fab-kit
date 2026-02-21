@@ -72,7 +72,7 @@ fab/.kit/
     ├── batch-fab-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
     ├── batch-fab-switch-change.sh   # Batch switch to changes via tmux + Claude
     ├── fab-help.sh         # Print help overview
-    ├── fab-pipeline.sh     # Entry point for the pipeline orchestrator (listing, matching, delegation)
+    ├── batch-fab-pipeline.sh  # Entry point for the pipeline orchestrator (listing, matching, delegation)
     ├── fab-sync.sh         # Single entry point — thin orchestrator iterating sync/*.sh then fab/sync/*.sh
     ├── fab-upgrade.sh      # Update .kit/ from GitHub Releases
     ├── pipeline/           # Pipeline orchestrator internals
@@ -136,7 +136,7 @@ Change Manager — CLI-only utility for change lifecycle operations. Supports `n
 
 All subcommands print results to stdout; errors to stderr. Designed CLI-first for eventual Rust rewrite parity with stageman.
 
-#### `fab-pipeline.sh`
+#### `batch-fab-pipeline.sh`
 
 User-facing entry point for the pipeline orchestrator. Owns all UX — argument parsing, help, listing, name resolution — and delegates to `pipeline/run.sh` via `exec` for the actual orchestration loop. When invoked with no arguments or `--list`, lists available pipeline manifests from `fab/pipelines/*.yaml` (excluding `example.yaml`). Supports `-h`/`--help` for usage. Positional arguments are resolved via case-insensitive substring matching against manifest basenames (sans `.yaml`); exact match wins, single partial match resolves, ambiguous or no match errors. Arguments containing `/` or ending with `.yaml` bypass matching and pass through to `run.sh` unchanged. Additional arguments after the manifest are forwarded via `"$@"`.
 
@@ -322,7 +322,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
-| 260221-i0z6-move-env-packages-add-fab-pipeline | 2026-02-21 | Moved `env-packages.sh` from `scripts/` to `scripts/lib/` (off PATH). Updated `KIT_DIR` resolution (two levels up). Updated source references in `scaffold/fragment-.envrc` and `src/packages/rc-init.sh`. Added `fab-pipeline.sh` entry point to `scripts/` with listing, partial name matching, and `exec` delegation. Added `pipeline/` directory to tree listing. Added `lib/env-packages.sh` description section. |
+| 260221-i0z6-move-env-packages-add-fab-pipeline | 2026-02-21 | Moved `env-packages.sh` from `scripts/` to `scripts/lib/` (off PATH). Updated `KIT_DIR` resolution (two levels up). Updated source references in `scaffold/fragment-.envrc` and `src/packages/rc-init.sh`. Added `batch-fab-pipeline.sh` entry point to `scripts/` with listing, partial name matching, and `exec` delegation. Added `pipeline/` directory to tree listing. Added `lib/env-packages.sh` description section. |
 | 260219-wq0e-move-5cs-to-project-folder | 2026-02-19 | Moved project identity files (5 Cs + VERSION) from `fab/` root into `fab/project/` subdirectory. Updated `fab/` directory tree (top-level now: `.kit/`, `project/`, `changes/`, `sync/`, `backlog.md`, `current`). Updated scaffold overlay tree (`fab/.kit/scaffold/fab/project/`). Updated all shell script path references (`preflight.sh`, `changeman.sh`, `fab-upgrade.sh`, `batch-fab-switch-change.sh`, `2-sync-workspace.sh`). Updated section comment in `2-sync-workspace.sh` (`fab/project/VERSION`). |
 | 260218-5isu-fix-docs-consistency-drift | 2026-02-18 | Removed deleted `model-tiers.yaml` from directory tree; added missing `fab-fff.md` after `fab-ff.md` in skills listing |
 | 260218-09fa-scaffold-overlay-tree | 2026-02-18 | Restructured `scaffold/` from flat directory to repo-root overlay tree. Files now mirror destination paths; 3 merge files use `fragment-` prefix (`.envrc`, `.gitignore`, `settings.local.json`), 8 others use copy-if-absent. Replaced 6 bespoke sections (2, 3, 4, 7, 8, 9) in `2-sync-workspace.sh` with generic tree-walk dispatching on `fragment-` prefix and file extension. Extracted `line_ensure_merge` and `json_merge_permissions` helper functions (absorbing legacy `.envrc` symlink migration). Updated `fab-setup.md`: 7 scaffold path references, template detection for `config.yaml`/`constitution.md` (placeholder check instead of existence check). Updated `0.7.0-to-0.8.0.md` scaffold path. Renumbered sync script sections (1, 1b, 2, 3, 3b, 4). Added "Scaffold Overlay Tree" design decision. |

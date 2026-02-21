@@ -76,8 +76,6 @@ changes:
 
     # - id: 260221-c9p4-sessions
     #   depends_on: [260221-a7k2-user-model]
-
-    stage: invalid
 #
 # B and C both depend on A. The orchestrator dispatches them in list order
 # (B first, then C) since v1 is serial.

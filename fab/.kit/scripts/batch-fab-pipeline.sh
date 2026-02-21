@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# fab-pipeline.sh — Entry point for the pipeline orchestrator
+# batch-fab-pipeline.sh — Entry point for the pipeline orchestrator
 #
-# Usage: fab-pipeline.sh [<manifest>] [--list] [-h|--help]
+# Usage: batch-fab-pipeline.sh [<manifest>] [--list] [-h|--help]
 #
 # If the argument contains no path separator and no .yaml extension,
 # resolves it as fab/pipelines/{name}.yaml via partial name matching.
@@ -19,7 +19,7 @@ PIPELINES_DIR="$REPO_ROOT/fab/pipelines"
 
 usage() {
   cat <<'EOF'
-Usage: fab-pipeline.sh [<manifest>] [--list] [-h|--help]
+Usage: batch-fab-pipeline.sh [<manifest>] [--list] [-h|--help]
 
 Pipeline orchestrator — dispatches fab changes in dependency order.
 
@@ -30,9 +30,9 @@ Arguments:
   -h, --help    Show this help message
 
 Examples:
-  fab-pipeline.sh my-feature          →  fab/pipelines/my-feature.yaml
-  fab-pipeline.sh feat                →  partial match against fab/pipelines/*.yaml
-  fab-pipeline.sh ./custom/path.yaml  →  passed through to run.sh unchanged
+  batch-fab-pipeline.sh my-feature          →  fab/pipelines/my-feature.yaml
+  batch-fab-pipeline.sh feat                →  partial match against fab/pipelines/*.yaml
+  batch-fab-pipeline.sh ./custom/path.yaml  →  passed through to run.sh unchanged
 EOF
 }
 
