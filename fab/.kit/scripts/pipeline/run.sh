@@ -357,7 +357,7 @@ print_summary() {
   fi
 
   # List worktree paths
-  if [[ "${#WORKTREE_PATHS[@]:-0}" -gt 0 ]]; then
+  if [[ "${!WORKTREE_PATHS[*]:-}" ]]; then
     echo ""
     log "Worktrees:"
     for id in "${!WORKTREE_PATHS[@]}"; do

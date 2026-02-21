@@ -89,7 +89,7 @@ create_worktree() {
   # Reuse existing worktree if present (resuming a previous run)
   source "$KIT_DIR/packages/wt/lib/wt-common.sh"
   if wt_path=$(wt_get_worktree_path_by_name "$CHANGE_ID"); then
-    log "Reusing existing worktree: $wt_path"
+    log "Reusing existing worktree: $wt_path" >&2
     echo "$wt_path"
     return 0
   fi
