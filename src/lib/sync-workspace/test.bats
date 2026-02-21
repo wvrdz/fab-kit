@@ -78,7 +78,7 @@ Status skill content.
 MD
 
   # Create a partial (should be skipped)
-  cat > "$KIT/skills/_context.md" <<'MD'
+  cat > "$KIT/skills/_preamble.md" <<'MD'
 # Shared Context
 This is a partial — should not be deployed as a skill.
 MD
@@ -239,11 +239,11 @@ YAML
   [ ! -L "$REPO_ROOT/.agents/skills/fab-continue/SKILL.md" ]
 }
 
-@test "skips _context.md partial (not deployed as skill)" {
+@test "skips _preamble.md partial (not deployed as skill)" {
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ ! -e "$REPO_ROOT/.claude/skills/_context" ]
-  [ ! -e "$REPO_ROOT/.claude/skills/_context.md" ]
+  [ ! -e "$REPO_ROOT/.claude/skills/_preamble" ]
+  [ ! -e "$REPO_ROOT/.claude/skills/_preamble.md" ]
 }
 
 # ── Model-Tier Templating ──────────────────────────────────────────

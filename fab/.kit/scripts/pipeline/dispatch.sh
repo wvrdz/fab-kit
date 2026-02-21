@@ -138,7 +138,7 @@ provision_artifacts() {
   fi
 
   mkdir -p "$target_dir"
-  cp -r "$source_dir/." "$target_dir/"
+  cp -ru "$source_dir/." "$target_dir/"
   log "Synced artifacts: fab/changes/$CHANGE_ID → worktree"
 }
 

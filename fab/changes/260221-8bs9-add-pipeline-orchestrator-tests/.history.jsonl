@@ -1,0 +1,3 @@
+{"ts":"2026-02-21T17:37:19+05:30","event":"command","cmd":"fab-new","args":"Add BATS test suite for pipeline orchestrator scripts (run.sh, dispatch.sh)"}
+{"ts":"2026-02-21T17:40:29+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-21T17:41:56+05:30","event":"confidence","score":4.4,"delta":"+4.4","trigger":"calc-score"}
