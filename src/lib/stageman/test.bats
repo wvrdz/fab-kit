@@ -698,6 +698,100 @@ EOF
   rm -rf "$fab_root/$test_subdir"
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Progress Line
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "progress-line: all pending returns empty" {
+  cat > "$TEST_DIR/all-pending.yaml" <<EOF
+progress:
+  intake: pending
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+EOF
+  run "$STAGEMAN" progress-line "$TEST_DIR/all-pending.yaml"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "progress-line: first stage active" {
+  cat > "$TEST_DIR/first-active.yaml" <<EOF
+progress:
+  intake: active
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+EOF
+  run "$STAGEMAN" progress-line "$TEST_DIR/first-active.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake ⏳" ]
+}
+
+@test "progress-line: mid-pipeline" {
+  cat > "$TEST_DIR/mid-pipeline.yaml" <<EOF
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: active
+  review: pending
+  hydrate: pending
+EOF
+  run "$STAGEMAN" progress-line "$TEST_DIR/mid-pipeline.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake → spec → tasks → apply ⏳" ]
+}
+
+@test "progress-line: failed stage" {
+  cat > "$TEST_DIR/failed.yaml" <<EOF
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: failed
+  hydrate: pending
+EOF
+  run "$STAGEMAN" progress-line "$TEST_DIR/failed.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake → spec → tasks → apply → review ✗" ]
+}
+
+@test "progress-line: all done" {
+  cat > "$TEST_DIR/all-done.yaml" <<EOF
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+EOF
+  run "$STAGEMAN" progress-line "$TEST_DIR/all-done.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake → spec → tasks → apply → review → hydrate ✓" ]
+}
+
+@test "progress-line: single done rest pending" {
+  cat > "$TEST_DIR/single-done.yaml" <<EOF
+progress:
+  intake: done
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+EOF
+  run "$STAGEMAN" progress-line "$TEST_DIR/single-done.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake" ]
+}
+
 @test "history file accumulates events" {
   local history_dir="$TEST_DIR/history"
   mkdir -p "$history_dir"

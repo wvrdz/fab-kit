@@ -60,9 +60,15 @@ fi
 # ---------------------------------------------------------------------------
 
 declare -A WORKTREE_PATHS  # change-id → worktree path
+declare -A PANE_IDS        # change-id → tmux pane ID
 CURRENT_DISPATCH=""        # change-id being dispatched (for SIGINT summary)
-LOG_PANE_ID=""             # tmux pane running tail -f (for cleanup)
+LAST_PANE_ID=""            # last created pane (for stacking)
 LOG_FILE=""                # dispatch output log file path
+STAGEMAN="$KIT_DIR/scripts/lib/stageman.sh"
+
+# Configurable timeouts (seconds)
+PIPELINE_FF_TIMEOUT="${PIPELINE_FF_TIMEOUT:-1800}"   # 30 minutes
+PIPELINE_SHIP_TIMEOUT="${PIPELINE_SHIP_TIMEOUT:-300}" # 5 minutes
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -70,6 +76,11 @@ LOG_FILE=""                # dispatch output log file path
 
 log() {
   echo "[pipeline] $*"
+}
+
+write_stage() {
+  local id="$1" stage="$2" manifest="$3"
+  yq -i "(.changes[] | select(.id == \"$id\")).stage = \"$stage\"" "$manifest"
 }
 
 # ---------------------------------------------------------------------------
@@ -292,6 +303,111 @@ get_parent_branch() {
 }
 
 # ---------------------------------------------------------------------------
+# Polling Loop
+# ---------------------------------------------------------------------------
+
+# check_pane_alive <pane_id> — verify tmux pane still exists
+# Mirrors dispatch.sh's helper for use in the polling loop.
+check_pane_alive() {
+  local pane_id="$1"
+  tmux list-panes -a -F '#{pane_id}' 2>/dev/null | grep -qx "$pane_id"
+}
+
+# poll_change <manifest-id> <resolved-id> <pane-id> <wt-path> <status-file>
+# State machine: polling_fab_ff → shipping → done
+#                      ↓            ↓
+#                    failed       failed
+poll_change() {
+  local manifest_id="$1"
+  local resolved_id="$2"
+  local pane_id="$3"
+  local wt_path="$4"
+  local status_file="$5"
+
+  local state="polling_fab_ff"
+  local start_time=$SECONDS
+  local ship_start_time=0
+  local poll_interval=5
+
+  while true; do
+    sleep "$poll_interval"
+
+    local elapsed=$((SECONDS - start_time))
+    local mins=$((elapsed / 60))
+    local secs=$((elapsed % 60))
+
+    # Check pane alive
+    if ! check_pane_alive "$pane_id"; then
+      printf "\n"
+      log "Failed: $resolved_id — interactive pane died unexpectedly"
+      write_stage "$manifest_id" "failed" "$MANIFEST"
+      return 0
+    fi
+
+    # Render progress
+    local progress_line=""
+    if [[ -f "$status_file" ]]; then
+      progress_line=$(bash "$STAGEMAN" progress-line "$status_file" 2>/dev/null) || progress_line=""
+    fi
+    printf "\r[pipeline] %s: %s (%dm %02ds)  " "$resolved_id" "$progress_line" "$mins" "$secs"
+
+    case "$state" in
+      polling_fab_ff)
+        # Check for timeout
+        if [[ "$elapsed" -ge "$PIPELINE_FF_TIMEOUT" ]]; then
+          printf "\n"
+          log "Failed: $resolved_id — fab-ff timeout (${PIPELINE_FF_TIMEOUT}s)"
+          write_stage "$manifest_id" "failed" "$MANIFEST"
+          return 0
+        fi
+
+        if [[ -f "$status_file" ]]; then
+          # Check progress-map for terminal states
+          local progress_map
+          progress_map=$(bash "$STAGEMAN" progress-map "$status_file" 2>/dev/null) || progress_map=""
+
+          # Check for hydrate:done (fab-ff complete)
+          if echo "$progress_map" | grep -q "^hydrate:done$"; then
+            printf "\n"
+            log "fab-ff complete: $resolved_id — sending /changes:ship pr"
+            tmux send-keys -t "$pane_id" "/changes:ship pr" Enter
+            state="shipping"
+            ship_start_time=$SECONDS
+          # Check for any failed stage
+          elif echo "$progress_map" | grep -q ":failed$"; then
+            local failed_stage
+            failed_stage=$(echo "$progress_map" | grep ":failed$" | head -1)
+            printf "\n"
+            log "Failed: $resolved_id — $failed_stage"
+            write_stage "$manifest_id" "failed" "$MANIFEST"
+            return 0
+          fi
+        fi
+        ;;
+
+      shipping)
+        # Check for ship timeout
+        local ship_elapsed=$((SECONDS - ship_start_time))
+        if [[ "$ship_elapsed" -ge "$PIPELINE_SHIP_TIMEOUT" ]]; then
+          printf "\n"
+          log "Failed: $resolved_id — ship timeout (${PIPELINE_SHIP_TIMEOUT}s)"
+          write_stage "$manifest_id" "failed" "$MANIFEST"
+          return 0
+        fi
+
+        # Check for PR creation via gh pr view
+        if (cd "$wt_path" && gh pr view --json state 2>/dev/null | grep -q '"state"'); then
+          printf "\n"
+          log "Done: $resolved_id — PR created"
+          write_stage "$manifest_id" "done" "$MANIFEST"
+          return 0
+        fi
+        ;;
+    esac
+  done
+}
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
@@ -375,10 +491,10 @@ print_summary() {
 on_sigint() {
   echo ""
   log "Caught SIGINT — shutting down..."
-  # Close the log tail pane if we created one
-  if [[ -n "$LOG_PANE_ID" ]]; then
-    tmux kill-pane -t "$LOG_PANE_ID" 2>/dev/null || true
-  fi
+  # Kill all tracked interactive panes
+  for id in "${!PANE_IDS[@]}"; do
+    tmux kill-pane -t "${PANE_IDS[$id]}" 2>/dev/null || true
+  done
   print_summary "$MANIFEST"
   exit 130
 }
@@ -400,13 +516,6 @@ main() {
   log "Starting pipeline: $MANIFEST"
   log "Poll interval: ${POLL_INTERVAL}s"
   log "Log file: $LOG_FILE"
-
-  # Open a tmux split pane for live log tailing (if inside tmux)
-  if [[ -n "${TMUX:-}" ]]; then
-    LOG_PANE_ID=$(tmux split-window -h -d -P -F '#{pane_id}' \
-      "tail -f '$LOG_FILE'")
-    log "Log pane: $LOG_PANE_ID"
-  fi
   echo ""
 
   # Initial validation
@@ -447,12 +556,10 @@ main() {
       printf '\n═══ Dispatching: %s at %s ═══\n\n' \
         "$resolved_id" "$(date '+%H:%M:%S')" >> "$LOG_FILE"
 
-      # Dispatch — run in background so SIGINT can interrupt `wait`
-      local dispatch_exit=0 dispatch_pid
-      bash "$DISPATCH" "$next_id" "$resolved_id" "$parent_branch" "$MANIFEST" \
-        >> "$LOG_FILE" 2>&1 &
-      dispatch_pid=$!
-      wait "$dispatch_pid" || dispatch_exit=$?
+      # Dispatch — captures stdout (worktree path + pane ID)
+      local dispatch_output dispatch_exit=0
+      dispatch_output=$(bash "$DISPATCH" "$next_id" "$resolved_id" "$parent_branch" "$MANIFEST" "$LAST_PANE_ID" \
+        2>> "$LOG_FILE") || dispatch_exit=$?
 
       if [[ "$dispatch_exit" -eq 1 ]]; then
         log "Infrastructure failure during dispatch of $next_id — aborting (see $LOG_FILE)"
@@ -460,22 +567,30 @@ main() {
         exit 1
       fi
 
-      # Report result in orchestrator pane
-      local result_stage
-      result_stage=$(get_stage "$MANIFEST" "$next_id")
-      if [[ "$result_stage" == "done" ]]; then
-        log "Done: $resolved_id"
-      elif [[ "$result_stage" == "failed" || "$result_stage" == "invalid" ]]; then
-        log "Failed: $resolved_id ($result_stage — see log pane)"
+      # Parse dispatch output: worktree path (line 1), pane ID (line 2)
+      local wt_path pane_id
+      wt_path=$(echo "$dispatch_output" | sed -n '1p')
+      pane_id=$(echo "$dispatch_output" | sed -n '2p')
+
+      if [[ -n "$wt_path" ]]; then
+        WORKTREE_PATHS["$next_id"]="$wt_path"
       fi
 
-      # Record worktree path (read from dispatch log)
-      local wt_line
-      wt_line=$(grep '\[pipeline\] Dispatching:.*worktree:' "$LOG_FILE" | tail -1 || true)
-      if [[ -n "$wt_line" ]]; then
-        local wt_path
-        wt_path=$(echo "$wt_line" | sed 's/.*worktree: \(.*\))/\1/')
-        WORKTREE_PATHS["$next_id"]="$wt_path"
+      if [[ -n "$pane_id" ]]; then
+        PANE_IDS["$next_id"]="$pane_id"
+        LAST_PANE_ID="$pane_id"
+        log "Dispatched: $resolved_id (pane: $pane_id)"
+
+        # Poll for completion
+        local status_file="$wt_path/fab/changes/$resolved_id/.status.yaml"
+        poll_change "$next_id" "$resolved_id" "$pane_id" "$wt_path" "$status_file"
+      else
+        # No pane ID — dispatch handled failure internally (wrote to manifest)
+        local result_stage
+        result_stage=$(get_stage "$MANIFEST" "$next_id")
+        if [[ "$result_stage" == "failed" || "$result_stage" == "invalid" ]]; then
+          log "Failed: $resolved_id ($result_stage)"
+        fi
       fi
 
       CURRENT_DISPATCH=""
