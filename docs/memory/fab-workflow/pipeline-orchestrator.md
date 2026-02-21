@@ -102,7 +102,7 @@ User-facing entry point on PATH. Owns all UX: no-args/`--list` lists available p
 
 ### Shipping
 
-After `hydrate:done` is detected, `run.sh` waits for Claude to finish its turn output before sending the ship command. The delay (`PIPELINE_SHIP_DELAY`, default 8s) prevents the Enter keystroke from being swallowed while Claude is still outputting its summary. The ship command is sent as two separate `tmux send-keys` calls — text first, 0.5s gap, then Enter — to prevent keystroke buffering issues. Both calls include `2>/dev/null` with error handling (graceful failure if the pane dies during the delay window). The session retains full fab-ff conversation context, producing contextual commit messages and PR descriptions. Ship completion is detected by polling `gh pr view` from the worktree.
+After `hydrate:done` is detected, `run.sh` waits for Claude to finish its turn output before sending the ship command. The delay (`PIPELINE_SHIP_DELAY`, default 8s) prevents the Enter keystroke from being swallowed while Claude is still outputting its summary. The ship command is sent as two separate `tmux send-keys` calls — text first, 0.5s gap, then Enter — to prevent keystroke buffering issues. Both calls include `2>/dev/null` with error handling so that if the pane has died by the time a `send-keys` call runs, it fails gracefully; if the pane dies during the fixed delay, that failure is only discovered when sending begins. The session retains full fab-ff conversation context, producing contextual commit messages and PR descriptions. Ship completion is detected by polling `gh pr view` from the worktree.
 
 ### Pane Lifecycle
 
