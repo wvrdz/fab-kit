@@ -314,9 +314,9 @@ check_pane_alive() {
 }
 
 # poll_change <manifest-id> <resolved-id> <pane-id> <wt-path> <status-file>
-# State machine: polling_fab_ff → shipping → polling_ship → done
-#                      ↓                          ↓
-#                    failed                     failed
+# State machine: polling_fab_ff → shipping → done
+#                      ↓            ↓
+#                    failed       failed
 poll_change() {
   local manifest_id="$1"
   local resolved_id="$2"
@@ -338,6 +338,7 @@ poll_change() {
 
     # Check pane alive
     if ! check_pane_alive "$pane_id"; then
+      printf "\n"
       log "Failed: $resolved_id — interactive pane died unexpectedly"
       write_stage "$manifest_id" "failed" "$MANIFEST"
       return 0
@@ -354,6 +355,7 @@ poll_change() {
       polling_fab_ff)
         # Check for timeout
         if [[ "$elapsed" -ge "$PIPELINE_FF_TIMEOUT" ]]; then
+          printf "\n"
           log "Failed: $resolved_id — fab-ff timeout (${PIPELINE_FF_TIMEOUT}s)"
           write_stage "$manifest_id" "failed" "$MANIFEST"
           return 0
