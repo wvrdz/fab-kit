@@ -514,7 +514,7 @@ main() {
   : > "$LOG_FILE"  # truncate
 
   log "Starting pipeline: $MANIFEST"
-  log "Poll interval: ${POLL_INTERVAL}s"
+  log "Manifest poll interval: ${POLL_INTERVAL}s"
   log "Log file: $LOG_FILE"
   echo ""
   local waiting_shown=false
