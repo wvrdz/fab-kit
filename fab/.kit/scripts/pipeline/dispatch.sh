@@ -75,7 +75,7 @@ write_stage() {
 }
 
 log() {
-  echo "[pipeline] $*"
+  echo "$*"
 }
 
 # check_pane_alive <pane_id> — verify tmux pane still exists
@@ -130,17 +130,16 @@ create_worktree() {
 provision_artifacts() {
   local wt_path="$1"
   local target_dir="$wt_path/fab/changes/$CHANGE_ID"
+  local source_dir="$FAB_DIR/changes/$CHANGE_ID"
 
-  if [[ ! -d "$target_dir" ]]; then
-    local source_dir="$FAB_DIR/changes/$CHANGE_ID"
-    if [[ ! -d "$source_dir" ]]; then
-      echo "Error: source change folder not found at $source_dir" >&2
-      return 1
-    fi
-    mkdir -p "$(dirname "$target_dir")"
-    cp -r "$source_dir" "$target_dir"
-    log "Copied artifacts: fab/changes/$CHANGE_ID → worktree"
+  if [[ ! -d "$source_dir" ]]; then
+    echo "Error: source change folder not found at $source_dir" >&2
+    return 1
   fi
+
+  mkdir -p "$target_dir"
+  cp -r "$source_dir/." "$target_dir/"
+  log "Synced artifacts: fab/changes/$CHANGE_ID → worktree"
 }
 
 # ---------------------------------------------------------------------------
