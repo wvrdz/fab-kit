@@ -52,7 +52,8 @@ declare -A skill_to_group=(
 )
 
 declare -A batch_to_group=(
-  [batch-fab-pipeline]="Batch Operations"
+  [batch-pipeline]="Batch Operations"
+  [batch-pipeline-series]="Batch Operations"
   [batch-fab-switch-change]="Batch Operations"
   [batch-fab-archive-change]="Batch Operations"
   [batch-fab-new-backlog]="Batch Operations"

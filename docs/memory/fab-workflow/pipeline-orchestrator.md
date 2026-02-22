@@ -4,9 +4,9 @@
 
 ## Overview
 
-The pipeline orchestrator automates multi-change execution in dependency order. It reads a YAML manifest (`fab/pipelines/*.yaml`), resolves the dependency chain, and dispatches each change into an isolated worktree where `fab-ff` runs the full pipeline (tasks → apply → review → hydrate). The manifest is a live contract — the human adds entries while the orchestrator processes earlier ones.
+The pipeline orchestrator automates multi-change execution in dependency order. It reads a YAML manifest (`fab/pipelines/*.yaml`), resolves the dependency chain, and dispatches each change into an isolated worktree where `fab-ff` runs the full pipeline (tasks → apply → review → hydrate).
 
-V1 is serial (one change at a time). The orchestrator runs indefinitely until killed with Ctrl+C.
+V1 is serial (one change at a time). By default, the orchestrator exits when all changes reach a terminal state (`done`, `failed`, `invalid`). Set `watch: true` in the manifest for infinite-loop mode (live editing — the human adds entries while the orchestrator processes earlier ones).
 
 ## Requirements
 
@@ -14,6 +14,7 @@ V1 is serial (one change at a time). The orchestrator runs indefinitely until ki
 
 Pipeline manifests are YAML files in `fab/pipelines/` with:
 - `base` — branch that root nodes branch from (typically `main`)
+- `watch` — optional boolean. `true` for infinite-loop mode (live editing), `false` or absent for finite mode (exit when all terminal). Default: `false`
 - `changes[]` — list of entries, each with `id`, `depends_on`, and optional `stage`
 
 The `stage` field is written by the orchestrator. Valid values: `intake`, `spec`, `tasks`, `apply`, `review`, `hydrate` (intermediate), `done`, `failed`, `invalid` (terminal).
@@ -22,14 +23,14 @@ The `stage` field is written by the orchestrator. Valid values: `intake`, `spec`
 
 ### Orchestrator Core (run.sh)
 
-`run.sh` accepts a manifest path and runs an infinite dispatch loop:
+`run.sh` accepts a manifest path and runs a dispatch loop (finite by default, infinite with `watch: true`):
 
 1. Re-reads the manifest from disk (live editing support)
 2. Validates: schema, circular deps, single-dep constraint, reference integrity
 3. Identifies dispatchable changes (deps all `done`, self not terminal)
 4. Dispatches first dispatchable in list order (serial, deterministic)
 5. After dispatch returns pane ID, enters a **unified polling loop** per change (5-second interval)
-6. If nothing dispatchable: sleeps 30 seconds (configurable via `PIPELINE_POLL_INTERVAL`), re-reads. Uses `\r` in-place line update (no scrolling).
+6. If nothing dispatchable: checks for finite exit (if `watch` is not `true` and all changes are terminal, prints summary and exits 0). Otherwise sleeps 30 seconds (configurable via `PIPELINE_POLL_INTERVAL`), re-reads. Uses `\r` in-place line update (no scrolling).
 
 **Unified polling loop** (`poll_change()`): Monitors the interactive Claude session via `.status.yaml` polling and pane-alive checks. State machine:
 - `polling_fab_ff` → detects `hydrate:done` (triggers ship)
@@ -53,7 +54,7 @@ Output: in-place progress updates per change.
 
 `dispatch.sh` handles a single change — creates pane, sends commands, confirms switch, then returns:
 
-1. **Worktree creation** — branch name is `{branch_prefix}{change-id}`. Root nodes: `wt-create --non-interactive --worktree-open skip <change-branch>`. Dependent nodes: `git branch <change-branch> origin/<parent-branch>` first, then `wt-create`.
+1. **Worktree creation** — branch name is `{branch_prefix}{change-id}`. Root nodes: `wt-create --non-interactive --worktree-open skip <change-branch>`. Dependent nodes: `git branch <change-branch> <parent-branch>` from local branch ref first, then `wt-create`.
 2. **Artifact provisioning** — copies `fab/changes/<id>/` from source repo to worktree if not present
 3. **Prerequisite validation** — intake.md, spec.md, confidence gate. Writes `invalid` on failure.
 4. **Interactive pane creation** — starts a bare `claude --dangerously-skip-permissions` session in a tmux split pane (no initial command). First dispatch: horizontal split (`-h`); subsequent: vertical split stacked below previous (`-v -t $LAST_PANE_ID`). The pane appears immediately, giving the user visual feedback.
@@ -76,13 +77,18 @@ Worktrees and interactive panes are left in place after dispatch for manual insp
 
 | Script | Location | Purpose |
 |--------|----------|---------|
-| `batch-fab-pipeline.sh` | `fab/.kit/scripts/batch-fab-pipeline.sh` | User-facing entry point (listing, matching, delegation) |
+| `batch-pipeline.sh` | `fab/.kit/scripts/batch-pipeline.sh` | User-facing entry point (listing, matching, delegation) |
+| `batch-pipeline-series.sh` | `fab/.kit/scripts/batch-pipeline-series.sh` | Sequential chain shorthand (generates manifest, delegates) |
 | `run.sh` | `fab/.kit/scripts/pipeline/run.sh` | Main orchestrator loop |
 | `dispatch.sh` | `fab/.kit/scripts/pipeline/dispatch.sh` | Per-change dispatch |
 
-### batch-fab-pipeline.sh
+### batch-pipeline.sh
 
 User-facing entry point on PATH. Owns all UX: no-args/`--list` lists available pipelines from `fab/pipelines/*.yaml` (excluding `example.yaml`), `-h`/`--help` prints usage, positional arguments use case-insensitive substring matching against manifest basenames. Arguments with `/` or ending `.yaml` bypass matching. Delegates to `pipeline/run.sh` via `exec` with arg passthrough.
+
+### batch-pipeline-series.sh
+
+Shorthand for running a sequential chain of changes. Accepts change IDs as positional arguments and an optional `--base <branch>` flag (defaults to current branch). Generates a temporary manifest at `fab/pipelines/.series-{epoch}.yaml` with a linear dependency chain (first change depends on `[]`, each subsequent depends on its predecessor). No `watch` field (finite mode by default). Delegates to `pipeline/run.sh` via `exec`. The generated manifest is not cleaned up — left for debugging. Requires at least 2 change arguments.
 
 ### Change ID Resolution
 
@@ -115,10 +121,10 @@ Each dispatched change gets its own tmux split pane (stacked vertically in the r
 **Why**: Avoids concurrent worktree management, manifest race conditions, and interleaved output. Parallel is a documented stretch goal.
 **Rejected**: Background processes with PID tracking.
 
-### Infinite Loop with SIGINT Exit
-**Decision**: run.sh runs indefinitely, polling for new manifest entries.
-**Why**: Supports the live-contract model — the human stays ahead, adding entries at their pace. The orchestrator is a daemon-like process, not a batch job.
-**Rejected**: Exit when all changes done (prevents the human from adding more entries).
+### Finite Exit as Default
+**Decision**: run.sh exits when all changes are terminal by default. `watch: true` in the manifest opts into infinite-loop mode for live editing.
+**Why**: Most pipeline runs have a known, finite set of changes. The infinite loop is only needed for the live-editing workflow. Making finite the default reduces ceremony for the common case and enables `batch-pipeline-series.sh` to work naturally without special flags.
+**Rejected**: `--finite` CLI flag (control belongs in the manifest, not the CLI). Previous default was infinite loop, which required Ctrl+C for normal completion.
 
 ### All-Interactive Model: Bare Pane + Send-Keys
 **Decision**: A bare interactive Claude session is created first, then fab-switch and fab-ff are both sent via `tmux send-keys`. Shipping is pushed to the same session.
@@ -140,6 +146,11 @@ Each dispatched change gets its own tmux split pane (stacked vertically in the r
 **Why**: Multi-parent dependencies create a branch topology problem — D depending on B and C can't branch from both. Resolution requires manual merge.
 **Rejected**: Branching from last-completed parent (loses other parent's code).
 
+### Local Branch Refs for Dependent Nodes
+**Decision**: `dispatch.sh` branches dependent nodes from local `refs/heads/` instead of `origin/`.
+**Why**: Git branches are shared across all worktrees of the same repo. The parent branch exists locally after its worktree was created. Using `origin/` assumed a push had completed, which was an implementation coincidence — the push happens during `/git-pr` but branch resolution happens earlier.
+**Rejected**: `origin/` with fetch-first — adds network dependency and latency for no benefit when the branch is already local.
+
 ### Infrastructure Failures Abort
 **Decision**: wt-create/claude/git failures abort the orchestrator entirely.
 **Why**: Infrastructure failures indicate a broken environment. Continuing would likely fail on subsequent changes.
@@ -151,13 +162,13 @@ BATS test suite at `src/scripts/pipeline/test.bats` covers pure-logic functions 
 
 ### Coverage
 
-**run.sh functions**: `validate_manifest` (7 scenarios: valid, missing base, empty changes, missing id, missing depends_on, dangling reference, multi-dependency), `detect_cycles` (4 scenarios: linear chain, direct cycle, indirect cycle, independent nodes), `is_terminal` (all stage values), `is_dispatchable` (4 scenarios), `find_next_dispatchable` (5 scenarios), `get_parent_branch` (root and dependent nodes).
+**run.sh functions**: `validate_manifest` (8 scenarios: valid, missing base, empty changes, missing id, missing depends_on, dangling reference, multi-dependency, watch field), `detect_cycles` (4 scenarios: linear chain, direct cycle, indirect cycle, independent nodes), `is_terminal` (all stage values), `is_dispatchable` (4 scenarios), `find_next_dispatchable` (5 scenarios), `get_parent_branch` (root and dependent nodes), `all_terminal` (5 scenarios: all done, all failed, mixed terminal, one pending, one intermediate).
 
 **dispatch.sh functions**: `provision_artifacts` (3 scenarios: first provision, re-provision stale, missing source), `validate_prerequisites` (3 scenarios: missing intake, missing spec, passing gate).
 
 ### Not Covered (deferred)
 
-`poll_change()` state machine, `main()` loops in both scripts, `run_pipeline()`, `create_worktree()`, `batch-fab-pipeline.sh`. These require complex infrastructure mocking (tmux, Claude CLI, wt-create, sleep loops).
+`poll_change()` state machine, `main()` loops in both scripts, `run_pipeline()`, `create_worktree()`, `batch-pipeline.sh`, `batch-pipeline-series.sh`. These require complex infrastructure mocking (tmux, Claude CLI, wt-create, sleep loops).
 
 ### Test Patterns
 
@@ -170,6 +181,7 @@ BATS test suite at `src/scripts/pipeline/test.bats` covers pure-logic functions 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260222-bcfy-batch-pipeline-series-rename | 2026-02-22 | Renamed `batch-fab-pipeline.sh` → `batch-pipeline.sh`. Added `watch` manifest field and finite-exit default to `run.sh` (exits when all terminal; `watch: true` for infinite loop). Fixed `dispatch.sh` to use local branch refs instead of `origin/`. Added `batch-pipeline-series.sh` (sequential chain shorthand — generates temp manifest, delegates to run.sh). Added `.gitignore` pattern for generated series manifests. Added `all_terminal` function to run.sh. Test suite: 38→44 tests. |
 | 260222-n811-absorb-ship-command | 2026-02-22 | Replaced external `/changes:ship pr` (prompt-pantry) with native `/git-pr` skill. Updated `run.sh` ship command and log message. Added `git-pr` to `fab-help.sh` Completion group. |
 | 260221-8bs9-add-pipeline-orchestrator-tests | 2026-02-21 | Added BATS test suite (38 tests) for run.sh and dispatch.sh pure-logic functions. Added source guards to both scripts for testability. Moved `trap on_sigint INT` inside `main()` to prevent side effects when sourced. |
 | 260221-6ljc-fix-pipeline-ship-timing | 2026-02-21 | Added `PIPELINE_SHIP_DELAY` (default 8s) wait after `hydrate:done` before sending ship command. Split `tmux send-keys` into text + Enter with 0.5s gap. Added `2>/dev/null` error handling on send-keys calls for graceful pane-death during delay. |

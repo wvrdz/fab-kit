@@ -1,0 +1,36 @@
+name: 260222-bcfy-batch-pipeline-series-rename
+created: 2026-02-22T18:39:55+05:30
+created_by: sahil-weaver
+change_type: feature
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 31
+  total: 31
+confidence:
+  certain: 6
+  confident: 3
+  tentative: 0
+  unresolved: 0
+  score: 4.1
+  fuzzy: true
+  dimensions:
+    signal: 85.0
+    reversibility: 88.9
+    competence: 88.9
+    disambiguation: 88.9
+stage_metrics:
+  intake: {started_at: "2026-02-22T18:39:55+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-22T18:41:09+05:30"}
+  spec: {started_at: "2026-02-22T19:34:47+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-22T19:36:36+05:30"}
+  tasks: {started_at: "2026-02-22T19:36:36+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-22T19:38:29+05:30"}
+  apply: {started_at: "2026-02-22T19:38:29+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-22T19:45:13+05:30"}
+  review: {started_at: "2026-02-22T19:45:13+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-22T19:48:56+05:30"}
+  hydrate: {started_at: "2026-02-22T19:48:56+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-22T19:49:05+05:30"}
+last_updated: "2026-02-22T19:49:05+05:30"

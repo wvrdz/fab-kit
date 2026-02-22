@@ -528,6 +528,117 @@ YAML
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
+# all_terminal
+# ═══════════════════════════════════════════════════════════════════════════
+
+@test "all_terminal: all done returns 0" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: main
+changes:
+  - id: change-a
+    depends_on: []
+    stage: done
+  - id: change-b
+    depends_on: [change-a]
+    stage: done
+YAML
+  )
+  run all_terminal "$m"
+  [ "$status" -eq 0 ]
+}
+
+@test "all_terminal: all failed returns 0" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: main
+changes:
+  - id: change-a
+    depends_on: []
+    stage: failed
+  - id: change-b
+    depends_on: [change-a]
+    stage: failed
+YAML
+  )
+  run all_terminal "$m"
+  [ "$status" -eq 0 ]
+}
+
+@test "all_terminal: mixed terminal (done + failed + invalid) returns 0" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: main
+changes:
+  - id: change-a
+    depends_on: []
+    stage: done
+  - id: change-b
+    depends_on: []
+    stage: failed
+  - id: change-c
+    depends_on: []
+    stage: invalid
+YAML
+  )
+  run all_terminal "$m"
+  [ "$status" -eq 0 ]
+}
+
+@test "all_terminal: one pending returns 1" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: main
+changes:
+  - id: change-a
+    depends_on: []
+    stage: done
+  - id: change-b
+    depends_on: [change-a]
+YAML
+  )
+  run all_terminal "$m"
+  [ "$status" -eq 1 ]
+}
+
+@test "all_terminal: one intermediate returns 1" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: main
+changes:
+  - id: change-a
+    depends_on: []
+    stage: done
+  - id: change-b
+    depends_on: [change-a]
+    stage: apply
+YAML
+  )
+  run all_terminal "$m"
+  [ "$status" -eq 1 ]
+}
+
+@test "validate_manifest: manifest with watch field passes" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: main
+watch: true
+changes:
+  - id: change-a
+    depends_on: []
+YAML
+  )
+  run validate_manifest "$m"
+  [ "$status" -eq 0 ]
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
 # dispatch.sh: provision_artifacts
 # ═══════════════════════════════════════════════════════════════════════════
 

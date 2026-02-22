@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ---
-# name: batch-fab-pipeline
+# name: batch-pipeline
 # description: "Run a pipeline manifest — dispatches fab changes in dependency order"
 # ---
 set -euo pipefail
 
-# batch-fab-pipeline.sh — Entry point for the pipeline orchestrator
+# batch-pipeline.sh — Entry point for the pipeline orchestrator
 #
-# Usage: batch-fab-pipeline.sh [<manifest>] [--list] [-h|--help]
+# Usage: batch-pipeline.sh [<manifest>] [--list] [-h|--help]
 #
 # If the argument contains no path separator and no .yaml extension,
 # resolves it as fab/pipelines/{name}.yaml via partial name matching.
@@ -23,7 +23,7 @@ PIPELINES_DIR="$REPO_ROOT/fab/pipelines"
 
 usage() {
   cat <<'EOF'
-Usage: batch-fab-pipeline.sh [<manifest>] [--list] [-h|--help]
+Usage: batch-pipeline.sh [<manifest>] [--list] [-h|--help]
 
 Pipeline orchestrator — dispatches fab changes in dependency order.
 
@@ -34,9 +34,9 @@ Arguments:
   -h, --help    Show this help message
 
 Examples:
-  batch-fab-pipeline.sh my-feature          →  fab/pipelines/my-feature.yaml
-  batch-fab-pipeline.sh feat                →  partial match against fab/pipelines/*.yaml
-  batch-fab-pipeline.sh ./custom/path.yaml  →  passed through to run.sh unchanged
+  batch-pipeline.sh my-feature          →  fab/pipelines/my-feature.yaml
+  batch-pipeline.sh feat                →  partial match against fab/pipelines/*.yaml
+  batch-pipeline.sh ./custom/path.yaml  →  passed through to run.sh unchanged
 EOF
 }
 

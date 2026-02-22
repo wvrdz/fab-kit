@@ -99,14 +99,14 @@ create_worktree() {
   fi
 
   # For dependent nodes (PARENT_BRANCH is another change's branch, not base),
-  # create the change branch from the parent's pushed branch
+  # create the change branch from the parent's local branch
   if ! git show-ref --verify --quiet "refs/heads/$CHANGE_BRANCH" 2>/dev/null; then
-    # Branch doesn't exist locally — create it
-    if git ls-remote --exit-code --heads origin "$PARENT_BRANCH" &>/dev/null; then
-      # Parent exists on remote — branch from it (dependent node)
-      git branch "$CHANGE_BRANCH" "origin/$PARENT_BRANCH" >/dev/null 2>&1
+    # Branch doesn't exist locally — create it from parent
+    if git show-ref --verify --quiet "refs/heads/$PARENT_BRANCH" 2>/dev/null; then
+      # Parent exists locally — branch from it (dependent node)
+      git branch "$CHANGE_BRANCH" "$PARENT_BRANCH" >/dev/null 2>&1
     fi
-    # If parent not on remote, wt-create will create from HEAD (root node)
+    # If parent not local, wt-create will create from HEAD (root node)
   fi
 
   wt_path=$(wt-create --non-interactive --worktree-open skip --worktree-name "$CHANGE_ID" "$CHANGE_BRANCH" | tail -1)
