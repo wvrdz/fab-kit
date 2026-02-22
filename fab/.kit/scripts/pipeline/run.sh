@@ -6,8 +6,8 @@ set -euo pipefail
 # Usage: run.sh <manifest-path>
 #
 # Reads a YAML pipeline manifest and dispatches changes in dependency order.
-# Runs indefinitely until killed with Ctrl+C (SIGINT). The human adds entries
-# to the manifest while the orchestrator processes earlier ones.
+# By default, exits when all changes are terminal (done/failed/invalid).
+# Set watch: true in the manifest for infinite-loop mode (live editing).
 #
 # Requires: yq, wt-create, claude CLI
 
@@ -29,8 +29,8 @@ Usage: run.sh <manifest-path>
 
 Pipeline orchestrator — dispatches fab changes in dependency order.
 
-Reads the manifest on every iteration. The human can add new entries
-while the orchestrator runs. Runs until Ctrl+C.
+Reads the manifest on every iteration. Exits when all changes are
+terminal. Set watch: true in manifest for infinite loop mode.
 
 Arguments:
   manifest-path   Path to the pipeline manifest YAML file
@@ -262,6 +262,21 @@ find_next_dispatchable() {
     fi
   done
   return 1
+}
+
+all_terminal() {
+  local manifest="$1"
+  local count i id stage
+  count=$(yq '.changes | length' "$manifest")
+
+  for ((i = 0; i < count; i++)); do
+    id=$(yq -r ".changes[$i].id" "$manifest")
+    stage=$(get_stage "$manifest" "$id")
+    if ! is_terminal "$stage"; then
+      return 1
+    fi
+  done
+  return 0
 }
 
 get_parent_branch() {
@@ -589,7 +604,18 @@ main() {
 
       CURRENT_DISPATCH=""
     else
-      # Nothing to dispatch — show detailed status for idle message
+      # Nothing to dispatch — check for finite exit
+      local watch
+      watch=$(yq -r '.watch // false' "$MANIFEST")
+
+      if [[ "$watch" != "true" ]] && all_terminal "$MANIFEST"; then
+        if $waiting_shown; then printf "\n"; fi
+        log "All changes terminal — exiting."
+        print_summary "$MANIFEST"
+        exit 0
+      fi
+
+      # Show detailed status for idle message
       local total completed_count failed_count invalid_count pending_count
       total=$(yq '.changes | length' "$MANIFEST")
       completed_count=$(yq '[.changes[] | select(.stage == "done")] | length' "$MANIFEST")

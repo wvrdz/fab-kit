@@ -73,7 +73,8 @@ fab/.kit/
     ├── batch-fab-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
     ├── batch-fab-switch-change.sh   # Batch switch to changes via tmux + Claude
     ├── fab-help.sh         # Print help overview
-    ├── batch-fab-pipeline.sh  # Entry point for the pipeline orchestrator (listing, matching, delegation)
+    ├── batch-pipeline.sh      # Entry point for the pipeline orchestrator (listing, matching, delegation)
+    ├── batch-pipeline-series.sh # Sequential chain shorthand (generates manifest, delegates to orchestrator)
     ├── fab-sync.sh         # Single entry point — thin orchestrator iterating sync/*.sh then fab/sync/*.sh
     ├── fab-upgrade.sh      # Update .kit/ from GitHub Releases
     ├── pipeline/           # Pipeline orchestrator internals
@@ -137,9 +138,13 @@ Change Manager — CLI-only utility for change lifecycle operations. Supports `n
 
 All subcommands print results to stdout; errors to stderr. Designed CLI-first for eventual Rust rewrite parity with stageman.
 
-#### `batch-fab-pipeline.sh`
+#### `batch-pipeline.sh`
 
 User-facing entry point for the pipeline orchestrator. Owns all UX — argument parsing, help, listing, name resolution — and delegates to `pipeline/run.sh` via `exec` for the actual orchestration loop. When invoked with no arguments or `--list`, lists available pipeline manifests from `fab/pipelines/*.yaml` (excluding `example.yaml`). Supports `-h`/`--help` for usage. Positional arguments are resolved via case-insensitive substring matching against manifest basenames (sans `.yaml`); exact match wins, single partial match resolves, ambiguous or no match errors. Arguments containing `/` or ending with `.yaml` bypass matching and pass through to `run.sh` unchanged. Additional arguments after the manifest are forwarded via `"$@"`.
+
+#### `batch-pipeline-series.sh`
+
+Shorthand for running a sequential chain of changes. Accepts change IDs as positional arguments (minimum 2) and an optional `--base <branch>` flag (defaults to current branch via `git branch --show-current`). Generates a temporary manifest at `fab/pipelines/.series-{epoch}.yaml` with a linear dependency chain — first change has `depends_on: []`, each subsequent depends on its predecessor. No `watch` field (finite mode by default). Delegates to `pipeline/run.sh` via `exec`. The generated manifest is not cleaned up (git-ignored via `fab/pipelines/.series-*.yaml` pattern).
 
 #### `fab-help.sh`
 
@@ -163,7 +168,7 @@ Packages `fab/.kit/` into `kit.tar.gz`, bumps VERSION (accepts `[patch|minor|maj
 
 #### Batch Scripts
 
-Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern. Each creates tmux tabs with Claude Code sessions running a specific skill, one per target entity. Each batch script includes a `# ---` shell-comment frontmatter block with `name` and `description` fields, enabling automatic discovery by `fab-help.sh`.
+Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern (except pipeline scripts which use `batch-pipeline*`). Each creates tmux tabs with Claude Code sessions running a specific skill, one per target entity. Each batch script includes a `# ---` shell-comment frontmatter block with `name` and `description` fields, enabling automatic discovery by `fab-help.sh`.
 
 - **`batch-fab-new-backlog.sh`** — Per backlog ID: creates a worktree, opens a tmux tab, runs `/fab-new <description>`. Supports `--list` (show pending), `--all` (all pending), and direct ID arguments.
 - **`batch-fab-switch-change.sh`** — Per change name/ID: creates a worktree with the expected branch, opens a tmux tab, runs `/fab-switch <change> --no-branch-change`. Supports `--list`, `--all`, substring matching.
@@ -323,6 +328,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260222-bcfy-batch-pipeline-series-rename | 2026-02-22 | Renamed `batch-fab-pipeline.sh` → `batch-pipeline.sh` in directory tree and section description. Added `batch-pipeline-series.sh` entry point and description. Updated batch scripts naming pattern note. Updated `batch_to_group` mapping in `fab-help.sh` description. |
 | 260222-s90r-add-shipped-tracking | 2026-02-22 | Added `shipped` tracking to fab pipeline. Extended `stageman.sh` with `ship` (append PR URL, idempotent, exact-match dedup) and `is-shipped` (exit-code query) subcommands (14→16 CLI subcommands). Added `shipped: []` to `status.yaml` template. Added `shipped` documentation section to `workflow.yaml` schema. Updated `/git-pr` skill to call `stageman.sh ship` after PR creation with graceful degradation when no active change. Updated `_preamble.md` state table: hydrate row now routes to `/git-pr` as default, `/fab-archive` as alternative. Updated `changeman.sh` `default_command` for hydrate. Test suite: 53→71 tests. |
 | 260222-n811-absorb-ship-command | 2026-02-22 | Added `git-pr.md` skill to skills directory listing. Added `git-pr` to `fab-help.sh` Completion group mapping. Native `/git-pr` replaces external `changes:ship` dependency for pipeline shipping. |
 | 260221-5tj7-rename-context-to-preamble | 2026-02-21 | Renamed `_context.md` → `_preamble.md` in skills directory tree listing. Updated `2-sync-workspace.sh` comment referencing excluded skill file. |
