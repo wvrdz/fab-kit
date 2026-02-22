@@ -149,7 +149,7 @@ default_command() {
     tasks)   echo "/fab-continue" ;;
     apply)   echo "/fab-continue" ;;
     review)  echo "/fab-continue" ;;
-    hydrate) echo "/fab-archive" ;;
+    hydrate) echo "/git-pr" ;;
     *)       echo "/fab-status" ;;
   esac
 }

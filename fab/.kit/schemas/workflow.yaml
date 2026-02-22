@@ -190,6 +190,15 @@ validation:
   terminal_states:
     rule: "done/skipped stages can only transition back to active via explicit reset"
 
+# shipped — PR URL tracking (side-band, not a pipeline stage).
+# Managed exclusively by `stageman.sh ship` (append) and `stageman.sh is-shipped` (query).
+# Not part of the stage/state progression — exists alongside the progress map.
+shipped:
+  type: "string[]"
+  description: "PR URLs associated with this change. Append-only list of bare URL strings."
+  initial_value: "[]"
+  managed_by: "stageman.sh ship"
+
 # metadata — Schema versioning and compatibility.
 metadata:
   version: "1.0.0"

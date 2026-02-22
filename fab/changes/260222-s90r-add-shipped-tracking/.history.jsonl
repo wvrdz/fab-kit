@@ -1,0 +1,6 @@
+{"ts":"2026-02-22T18:38:21+05:30","event":"command","cmd":"fab-new","args":"Add shipped tracking to fab pipeline — extend stageman with ship/is-shipped subcommands, update git-pr to record PR URLs"}
+{"ts":"2026-02-22T18:47:28+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-22T18:48:38+05:30","event":"confidence","score":4.1,"delta":"+4.1","trigger":"calc-score"}
+{"ts":"2026-02-22T18:49:37+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-22T18:57:08+05:30","event":"review","result":"failed","rework":"fix-code"}
+{"ts":"2026-02-22T19:00:13+05:30","event":"review","result":"passed"}
