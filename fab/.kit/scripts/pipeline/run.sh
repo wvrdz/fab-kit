@@ -351,12 +351,12 @@ poll_change() {
       return 0
     fi
 
-    # Render progress
+    # Render progress (clear full line to prevent wrap artifacts)
     local progress_line=""
     if [[ -f "$status_file" ]]; then
       progress_line=$(bash "$STAGEMAN" progress-line "$status_file" 2>/dev/null) || progress_line=""
     fi
-    printf "\r%s: %s (%dm %02ds)  " "$resolved_id" "$progress_line" "$mins" "$secs"
+    printf "\r\033[2K%s: %s (%dm %02ds)" "$resolved_id" "$progress_line" "$mins" "$secs"
 
     case "$state" in
       polling_fab_ff)
@@ -403,10 +403,10 @@ poll_change() {
           return 0
         fi
 
-        # Check for PR creation via gh pr view
-        if (cd "$wt_path" && gh pr view --json state 2>/dev/null | grep -q '"state"'); then
+        # Check for shipped entries in .status.yaml
+        if bash "$STAGEMAN" is-shipped "$status_file" 2>/dev/null; then
           printf "\n"
-          log "Done: $resolved_id — PR created"
+          log "Done: $resolved_id — shipped"
           write_stage "$manifest_id" "done" "$MANIFEST"
           return 0
         fi
@@ -625,7 +625,7 @@ main() {
 
       # In-place update: overwrite the same line each poll cycle
       waiting_shown=true
-      printf "\rWaiting… %s done, %s pending — polling every %ss  " \
+      printf "\r\033[2KWaiting… %s done, %s pending — polling every %ss" \
         "$completed_count" "$pending_count" "$POLL_INTERVAL"
       sleep "$POLL_INTERVAL"
     fi
