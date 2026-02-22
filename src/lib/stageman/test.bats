@@ -792,6 +792,104 @@ EOF
   [ "$output" = "intake" ]
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Shipped Tracking
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "ship: appends URL to empty shipped array" {
+  make_write_fixture
+  yq -i '.shipped = []' "$TEST_DIR/write-status.yaml"
+  run "$STAGEMAN" ship "$TEST_DIR/write-status.yaml" "https://github.com/org/repo/pull/42"
+  [ "$status" -eq 0 ]
+  local result
+  result=$(yq '.shipped[0]' "$TEST_DIR/write-status.yaml")
+  [ "$result" = "https://github.com/org/repo/pull/42" ]
+}
+
+@test "ship: appends second URL" {
+  make_write_fixture
+  yq -i '.shipped = ["https://github.com/org/repo/pull/42"]' "$TEST_DIR/write-status.yaml"
+  "$STAGEMAN" ship "$TEST_DIR/write-status.yaml" "https://github.com/org/repo/pull/43"
+  local count
+  count=$(yq '.shipped | length' "$TEST_DIR/write-status.yaml")
+  [ "$count" = "2" ]
+  local second
+  second=$(yq '.shipped[1]' "$TEST_DIR/write-status.yaml")
+  [ "$second" = "https://github.com/org/repo/pull/43" ]
+}
+
+@test "ship: deduplicates existing URL" {
+  make_write_fixture
+  yq -i '.shipped = ["https://github.com/org/repo/pull/42"]' "$TEST_DIR/write-status.yaml"
+  run "$STAGEMAN" ship "$TEST_DIR/write-status.yaml" "https://github.com/org/repo/pull/42"
+  [ "$status" -eq 0 ]
+  local count
+  count=$(yq '.shipped | length' "$TEST_DIR/write-status.yaml")
+  [ "$count" = "1" ]
+}
+
+@test "ship: does not treat substring as duplicate" {
+  make_write_fixture
+  yq -i '.shipped = ["https://github.com/org/repo/pull/42"]' "$TEST_DIR/write-status.yaml"
+  "$STAGEMAN" ship "$TEST_DIR/write-status.yaml" "https://github.com/org/repo/pull/4"
+  local count
+  count=$(yq '.shipped | length' "$TEST_DIR/write-status.yaml")
+  [ "$count" = "2" ]
+}
+
+@test "ship: creates shipped key when missing" {
+  make_write_fixture
+  run "$STAGEMAN" ship "$TEST_DIR/write-status.yaml" "https://github.com/org/repo/pull/99"
+  [ "$status" -eq 0 ]
+  local result
+  result=$(yq '.shipped[0]' "$TEST_DIR/write-status.yaml")
+  [ "$result" = "https://github.com/org/repo/pull/99" ]
+}
+
+@test "ship: refreshes last_updated" {
+  make_write_fixture
+  yq -i '.shipped = []' "$TEST_DIR/write-status.yaml"
+  "$STAGEMAN" ship "$TEST_DIR/write-status.yaml" "https://github.com/org/repo/pull/42"
+  local ts
+  ts=$(yq '.last_updated' "$TEST_DIR/write-status.yaml")
+  [[ "$ts" != "2026-01-01T00:00:00+00:00" ]]
+}
+
+@test "ship: rejects nonexistent file" {
+  run "$STAGEMAN" ship "/nonexistent/path/.status.yaml" "https://example.com"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Status file not found"* ]]
+}
+
+@test "is-shipped: returns 0 when shipped has entries" {
+  make_write_fixture
+  yq -i '.shipped = ["https://github.com/org/repo/pull/42"]' "$TEST_DIR/write-status.yaml"
+  run "$STAGEMAN" is-shipped "$TEST_DIR/write-status.yaml"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "is-shipped: returns 1 when shipped is empty" {
+  make_write_fixture
+  yq -i '.shipped = []' "$TEST_DIR/write-status.yaml"
+  run "$STAGEMAN" is-shipped "$TEST_DIR/write-status.yaml"
+  [ "$status" -ne 0 ]
+  [ -z "$output" ]
+}
+
+@test "is-shipped: returns 1 when shipped key missing" {
+  make_write_fixture
+  run "$STAGEMAN" is-shipped "$TEST_DIR/write-status.yaml"
+  [ "$status" -ne 0 ]
+  [ -z "$output" ]
+}
+
+@test "is-shipped: rejects nonexistent file" {
+  run "$STAGEMAN" is-shipped "/nonexistent/path/.status.yaml"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Status file not found"* ]]
+}
+
 @test "history file accumulates events" {
   local history_dir="$TEST_DIR/history"
   mkdir -p "$history_dir"

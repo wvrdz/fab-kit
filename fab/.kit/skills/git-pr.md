@@ -55,7 +55,7 @@ Run each step in order, skipping steps that aren't needed.
 
 Nothing to do.
 ```
-STOP here.
+Before stopping, attempt to record the existing PR URL per Step 4 (silently, no errors). Then STOP.
 
 **Otherwise**, print the header and execute:
 
@@ -97,7 +97,18 @@ Print: `  ✓ pr     — <PR URL>`
 
 **If PR already exists** (from Step 1), just print: `  ✓ pr     — <existing PR URL> (existing)`
 
-### Step 4: Report
+### Step 4: Record Shipped
+
+After the PR URL is known (from step 3c or from the existing PR in step 1), attempt to record it in the active change's `.status.yaml`:
+
+1. Resolve the active change: `fab/.kit/scripts/lib/changeman.sh resolve 2>/dev/null`
+2. If resolution succeeds (exit 0), derive the status file path: `fab/changes/{name}/.status.yaml`
+3. Call: `fab/.kit/scripts/lib/stageman.sh ship <status_file> <pr_url>`
+4. If resolution fails (exit non-zero) or `changeman.sh` is not found, skip silently — do not print any error or warning
+
+This step MUST NOT block or fail the PR workflow. Any error from changeman or stageman is silently ignored.
+
+### Step 5: Report
 
 Print:
 ```

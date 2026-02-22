@@ -592,6 +592,65 @@ set_confidence_block_fuzzy() {
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Shipped Tracking
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ship_url <status_file> <url>
+# Append a PR URL to the shipped array in .status.yaml.
+# Creates the shipped key if missing. Skips silently if URL already exists (idempotent).
+# Uses atomic write pattern (temp file → mv). Updates last_updated.
+# Returns 0 on success, 1 on validation failure.
+ship_url() {
+  local status_file="$1"
+  local url="$2"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+
+  # Check for exact duplicate (one URL per line via yq, grep -xF for exact match)
+  if yq '.shipped // [] | .[]' "$status_file" | grep -qxF "$url"; then
+    # URL already present — refresh last_updated only
+    local now
+    now=$(date -Iseconds)
+    local tmpfile
+    tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+    cp "$status_file" "$tmpfile"
+    yq -i ".last_updated = \"${now}\"" "$tmpfile"
+    mv "$tmpfile" "$status_file"
+    return 0
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".shipped += [\"${url}\"] | .last_updated = \"${now}\"" "$tmpfile"
+
+  mv "$tmpfile" "$status_file"
+}
+
+# is_shipped <status_file>
+# Query whether the change has been shipped (shipped array has >= 1 entry).
+# Exit 0 if shipped, exit 1 otherwise. No stdout output.
+# Treats missing shipped key as empty (exit 1).
+is_shipped() {
+  local status_file="$1"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+
+  local count
+  count=$(yq '(.shipped // []) | length' "$status_file")
+  [ "$count" -gt 0 ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Validation
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -728,6 +787,7 @@ SUBCOMMANDS:
     progress-map <file>                Extract stage:state pairs (one per line)
     checklist <file>                   Extract checklist fields (key:value lines)
     confidence <file>                  Extract confidence fields (key:value lines)
+    is-shipped <file>                  Check if change has been shipped (exit 0/1)
 
   Progression:
     current-stage <file>               Detect active stage from .status.yaml
@@ -743,6 +803,7 @@ SUBCOMMANDS:
     set-checklist <file> <field> <value>        Update checklist field
     set-confidence <file> <certain> <confident> <tentative> <unresolved> <score>
     set-confidence-fuzzy <file> <certain> <confident> <tentative> <unresolved> <score> <mean_s> <mean_r> <mean_a> <mean_d>
+    ship <file> <url>                  Append PR URL to shipped array (idempotent)
 
   History:
     log-command <change_dir> <cmd> [args]              Log a command invocation
@@ -876,6 +937,20 @@ case "${1:-}" in
       exit 1
     fi
     set_confidence_block_fuzzy "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}"
+    ;;
+  ship)
+    if [ $# -ne 3 ]; then
+      echo "Usage: stageman.sh ship <file> <url>" >&2
+      exit 1
+    fi
+    ship_url "$2" "$3"
+    ;;
+  is-shipped)
+    if [ $# -ne 2 ]; then
+      echo "Usage: stageman.sh is-shipped <file>" >&2
+      exit 1
+    fi
+    is_shipped "$2"
     ;;
 
   # ── History Commands ───────────────────────────────────────────────────

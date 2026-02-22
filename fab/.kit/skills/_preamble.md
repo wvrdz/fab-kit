@@ -94,7 +94,7 @@ Every skill MUST end its output with a `Next:` line derived from the State Table
 | apply | /fab-continue | /fab-continue |
 | review (pass) | /fab-continue | /fab-continue |
 | review (fail) | *(rework menu)* | — |
-| hydrate | /fab-archive | /fab-archive |
+| hydrate | /git-pr, /fab-archive | /git-pr |
 
 **State derivation**:
 - **(none)**: `fab/project/config.yaml` does not exist

@@ -1,0 +1,36 @@
+name: 260222-s90r-add-shipped-tracking
+created: 2026-02-22T18:38:21+05:30
+created_by: sahil-weaver
+change_type: feature
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 29
+  total: 29
+confidence:
+  certain: 5
+  confident: 3
+  tentative: 0
+  unresolved: 0
+  score: 4.1
+  fuzzy: true
+  dimensions:
+    signal: 82.5
+    reversibility: 90.0
+    competence: 83.8
+    disambiguation: 87.5
+stage_metrics:
+  intake: {started_at: "2026-02-22T18:38:21+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-22T18:48:39+05:30"}
+  spec: {started_at: "2026-02-22T18:48:39+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-22T18:50:29+05:30"}
+  tasks: {started_at: "2026-02-22T18:50:29+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-22T18:50:35+05:30"}
+  apply: {started_at: "2026-02-22T18:57:08+05:30", driver: fab-ff, iterations: 2, completed_at: "2026-02-22T18:58:01+05:30"}
+  review: {started_at: "2026-02-22T18:58:01+05:30", driver: fab-ff, iterations: 2, completed_at: "2026-02-22T19:00:13+05:30"}
+  hydrate: {started_at: "2026-02-22T19:00:13+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-22T19:01:24+05:30"}
+last_updated: "2026-02-22T19:01:24+05:30"

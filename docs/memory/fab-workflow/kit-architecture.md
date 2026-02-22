@@ -41,7 +41,7 @@ fab/.kit/
 │   ├── spec.md
 │   ├── tasks.md
 │   ├── checklist.md
-│   └── status.yaml         # .status.yaml template (includes stage_metrics: {})
+│   └── status.yaml         # .status.yaml template (includes stage_metrics: {}, shipped: [])
 ├── scaffold/               # Overlay tree — paths mirror repo root destinations
 │   ├── fragment-.envrc     # .envrc required entries (line-ensuring merge)
 │   ├── fragment-.gitignore # .gitignore entries (line-ensuring merge)
@@ -112,15 +112,15 @@ The scaffold tree-walk (section 2) generically processes all files under `scaffo
 
 #### `lib/stageman.sh`
 
-Stage Manager — CLI-only utility for workflow schema queries, `.status.yaml` accessors, and write operations. **Requires `yq` v4** (Mike Farah Go binary) on PATH; emits an error with install URL and exits if missing. All consumers invoke via subprocess (`$STAGEMAN <subcommand>`), not via `source`. Provides 14 CLI subcommands organized by category:
+Stage Manager — CLI-only utility for workflow schema queries, `.status.yaml` accessors, and write operations. **Requires `yq` v4** (Mike Farah Go binary) on PATH; emits an error with install URL and exits if missing. All consumers invoke via subprocess (`$STAGEMAN <subcommand>`), not via `source`. Provides 16 CLI subcommands organized by category:
 
-- **Schema/accessor subcommands**: `all-stages` (awk-based), `progress-map`, `checklist`, `confidence`, `current-stage`, `validate-status-file` (yq-based)
-- **Write subcommands** (yq-based): `set-state` (single stage mutation, accepts optional `driver` param — required for `active`), `transition` (atomic two-write forward transition with adjacency enforcement, accepts required `driver` param), `set-checklist` (individual checklist field update), `set-confidence` (full confidence block replacement), `set-confidence-fuzzy` (confidence block with SRAD dimension means). All write subcommands validate inputs before writing, use temp-file-then-mv (cp + yq -i + mv) for atomicity, and refresh `last_updated`. `set-state` and `transition` automatically apply stage_metrics side-effects via `_apply_metrics_side_effect` (active: create entry with started_at/driver/iterations, done: set completed_at, pending: delete entry, failed: no-op)
+- **Schema/accessor subcommands**: `all-stages` (awk-based), `progress-map`, `checklist`, `confidence`, `current-stage`, `is-shipped`, `validate-status-file` (yq-based)
+- **Write subcommands** (yq-based): `set-state` (single stage mutation, accepts optional `driver` param — required for `active`), `transition` (atomic two-write forward transition with adjacency enforcement, accepts required `driver` param), `set-checklist` (individual checklist field update), `set-confidence` (full confidence block replacement), `set-confidence-fuzzy` (confidence block with SRAD dimension means), `ship` (append PR URL to `shipped` array — idempotent, exact-match dedup via `grep -qxF`). All write subcommands validate inputs before writing, use temp-file-then-mv (cp + yq -i + mv) for atomicity, and refresh `last_updated`. `set-state` and `transition` automatically apply stage_metrics side-effects via `_apply_metrics_side_effect` (active: create entry with started_at/driver/iterations, done: set completed_at, pending: delete entry, failed: no-op)
 - **History subcommands**: `log-command` (append command event to `.history.jsonl`), `log-confidence` (append confidence event with score/delta/trigger), `log-review` (append review event with result and optional rework reason). Each creates `.history.jsonl` on first event
 
-Internal helper functions (`validate_state`, `validate_stage`, `get_allowed_states`, `validate_stage_state`, `get_next_stage`, `get_all_states`) are retained as implementation details used by write/validation functions but are not exposed via CLI.
+Internal helper functions (`validate_state`, `validate_stage`, `get_allowed_states`, `validate_stage_state`, `get_next_stage`, `get_all_states`, `ship_url`, `is_shipped`) are retained as implementation details used by write/validation functions but are not exposed via CLI.
 
-Accessor subcommands use a line-oriented output pattern (`key:value` per line) — consumers parse with `while IFS=: read -r key val`. Lives in `scripts/lib/` to indicate it is internal plumbing. The comprehensive test suite (`src/lib/stageman/test.bats`, 53 tests) serves as a contract test for any future reimplementation (e.g., Rust binary).
+Accessor subcommands use a line-oriented output pattern (`key:value` per line) — consumers parse with `while IFS=: read -r key val`. Lives in `scripts/lib/` to indicate it is internal plumbing. The comprehensive test suite (`src/lib/stageman/test.bats`, 71 tests) serves as a contract test for any future reimplementation (e.g., Rust binary).
 
 #### `lib/calc-score.sh`
 
@@ -323,6 +323,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260222-s90r-add-shipped-tracking | 2026-02-22 | Added `shipped` tracking to fab pipeline. Extended `stageman.sh` with `ship` (append PR URL, idempotent, exact-match dedup) and `is-shipped` (exit-code query) subcommands (14→16 CLI subcommands). Added `shipped: []` to `status.yaml` template. Added `shipped` documentation section to `workflow.yaml` schema. Updated `/git-pr` skill to call `stageman.sh ship` after PR creation with graceful degradation when no active change. Updated `_preamble.md` state table: hydrate row now routes to `/git-pr` as default, `/fab-archive` as alternative. Updated `changeman.sh` `default_command` for hydrate. Test suite: 53→71 tests. |
 | 260222-n811-absorb-ship-command | 2026-02-22 | Added `git-pr.md` skill to skills directory listing. Added `git-pr` to `fab-help.sh` Completion group mapping. Native `/git-pr` replaces external `changes:ship` dependency for pipeline shipping. |
 | 260221-5tj7-rename-context-to-preamble | 2026-02-21 | Renamed `_context.md` → `_preamble.md` in skills directory tree listing. Updated `2-sync-workspace.sh` comment referencing excluded skill file. |
 | 260221-alng-batch-script-frontmatter | 2026-02-21 | Added `shell_frontmatter_field()` to `lib/frontmatter.sh` for parsing `# ---` delimited shell-comment frontmatter. Added `# ---` frontmatter blocks (name, description) to all 3 batch scripts, replacing old comment headers. Added batch script scan loop to `fab-help.sh` — globs `batch-*.sh`, extracts frontmatter via `shell_frontmatter_field`, renders under "Batch Operations" group with centralized `batch_to_group` mapping and no `/` prefix. Updated tree comment for `frontmatter.sh`. |
