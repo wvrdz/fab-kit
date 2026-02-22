@@ -363,8 +363,8 @@ poll_change() {
             printf "\n"
             log "fab-ff complete: $resolved_id — waiting for Claude to finish turn..."
             sleep "$PIPELINE_SHIP_DELAY"
-            log "Sending /changes:ship pr"
-            tmux send-keys -t "$pane_id" "/changes:ship pr" 2>/dev/null || {
+            log "Sending /git-pr"
+            tmux send-keys -t "$pane_id" "/git-pr" 2>/dev/null || {
               printf "\n"
               log "Failed: $resolved_id — tmux send-keys failed for ship command"
               write_stage "$manifest_id" "failed" "$MANIFEST"

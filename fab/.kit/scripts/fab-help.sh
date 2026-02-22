@@ -42,6 +42,7 @@ declare -A skill_to_group=(
   [fab-fff]="Planning"
   [fab-clarify]="Planning"
   [fab-archive]="Completion"
+  [git-pr]="Completion"
   [docs-hydrate-specs]="Maintenance"
   [docs-reorg-specs]="Maintenance"
   [docs-reorg-memory]="Maintenance"

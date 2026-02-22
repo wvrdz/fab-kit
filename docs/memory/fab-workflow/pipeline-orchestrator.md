@@ -33,7 +33,7 @@ The `stage` field is written by the orchestrator. Valid values: `intake`, `spec`
 
 **Unified polling loop** (`poll_change()`): Monitors the interactive Claude session via `.status.yaml` polling and pane-alive checks. State machine:
 - `polling_fab_ff` → detects `hydrate:done` (triggers ship)
-- `shipping` → pushes `/changes:ship pr` via `tmux send-keys`, polls `gh pr view` for PR creation
+- `shipping` → pushes `/git-pr` via `tmux send-keys`, polls `gh pr view` for PR creation
 - Terminal states: `done` (PR detected) or `failed` (timeout, pane death)
 
 **Progress rendering**: Each poll iteration calls `stageman.sh progress-line` and renders in-place: `<id>: <progress> (<elapsed>)`.
@@ -102,7 +102,7 @@ User-facing entry point on PATH. Owns all UX: no-args/`--list` lists available p
 
 ### Shipping
 
-After `hydrate:done` is detected, `run.sh` waits for Claude to finish its turn output before sending the ship command. The delay (`PIPELINE_SHIP_DELAY`, default 8s) prevents the Enter keystroke from being swallowed while Claude is still outputting its summary. The ship command is sent as two separate `tmux send-keys` calls — text first, 0.5s gap, then Enter — to prevent keystroke buffering issues. Both calls include `2>/dev/null` with error handling so that if the pane has died by the time a `send-keys` call runs, it fails gracefully; if the pane dies during the fixed delay, that failure is only discovered when sending begins. The session retains full fab-ff conversation context, producing contextual commit messages and PR descriptions. Ship completion is detected by polling `gh pr view` from the worktree.
+After `hydrate:done` is detected, `run.sh` waits for Claude to finish its turn output before sending the ship command. The delay (`PIPELINE_SHIP_DELAY`, default 8s) prevents the Enter keystroke from being swallowed while Claude is still outputting its summary. The ship command (`/git-pr`) is sent as two separate `tmux send-keys` calls — text first, 0.5s gap, then Enter — to prevent keystroke buffering issues. Both calls include `2>/dev/null` with error handling so that if the pane has died by the time a `send-keys` call runs, it fails gracefully; if the pane dies during the fixed delay, that failure is only discovered when sending begins. The `/git-pr` skill autonomously commits, pushes, and creates a GitHub PR — it is a native fab-kit skill (defined in `fab/.kit/skills/git-pr.md`) that eliminates the previous dependency on the external `prompt-pantry` `changes:ship` command. Ship completion is detected by polling `gh pr view` from the worktree.
 
 ### Pane Lifecycle
 
@@ -170,6 +170,7 @@ BATS test suite at `src/scripts/pipeline/test.bats` covers pure-logic functions 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260222-n811-absorb-ship-command | 2026-02-22 | Replaced external `/changes:ship pr` (prompt-pantry) with native `/git-pr` skill. Updated `run.sh` ship command and log message. Added `git-pr` to `fab-help.sh` Completion group. |
 | 260221-8bs9-add-pipeline-orchestrator-tests | 2026-02-21 | Added BATS test suite (38 tests) for run.sh and dispatch.sh pure-logic functions. Added source guards to both scripts for testability. Moved `trap on_sigint INT` inside `main()` to prevent side effects when sourced. |
 | 260221-6ljc-fix-pipeline-ship-timing | 2026-02-21 | Added `PIPELINE_SHIP_DELAY` (default 8s) wait after `hydrate:done` before sending ship command. Split `tmux send-keys` into text + Enter with 0.5s gap. Added `2>/dev/null` error handling on send-keys calls for graceful pane-death during delay. |
 | 260221-h1l8-fix-orchestrator-false-fail-on-review | 2026-02-21 | Removed `:failed` catch-all from `poll_change()` — `review:failed` is a normal intermediate state in fab-ff's rework loop, not a terminal condition. Removed stale `[pipeline]` prefix from progress printf. |
