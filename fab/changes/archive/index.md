@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260222-n811-absorb-ship-command** — Absorbed the external `changes:ship` command into a new `/git-pr` skill that autonomously commits, pushes, and creates a GitHub PR, eliminating the prompt-pantry dependency from the pipeline orchestrator.
 - **260221-h1l8-fix-orchestrator-false-fail-on-review** — Removed the `:failed` catch-all from poll_change() so `review:failed` no longer kills the pipeline dispatch, allowing fab-ff's auto-rework loop to complete normally.
 - **260221-8bs9-add-pipeline-orchestrator-tests** — Added BATS test suites for pipeline orchestrator scripts (run.sh, dispatch.sh) covering manifest validation, cycle detection, dispatch ordering, poll state machine, and provision logic with PATH-override stubs.
 - **260221-6ljc-fix-pipeline-ship-timing** — Added an 8-second delay and split send-keys pattern before sending `/changes:ship pr` to the tmux pane, preventing Enter from being swallowed while Claude finishes its turn output.
