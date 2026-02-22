@@ -198,6 +198,9 @@ run_pipeline() {
       "claude --dangerously-skip-permissions")
   fi
 
+  # Rebalance: orchestrator stays left, dispatch panes split evenly on right
+  tmux select-layout main-vertical 2>/dev/null || true
+
   if [[ -z "$pane_id" ]]; then
     log "Failed: $CHANGE_ID — tmux split-window failed (infrastructure)"
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
