@@ -1,5 +1,8 @@
 # Archive Index
 
+- **260222-s90r-add-shipped-tracking** — Added shipped tracking to the fab pipeline via a side-band `shipped` array in .status.yaml, with stageman ship/is-shipped subcommands and git-pr integration to record PR URLs after creation.
+- **260222-bcfy-batch-pipeline-series-rename** — Renamed batch-fab-pipeline to batch-pipeline, added batch-pipeline-series.sh for inline sequential change chains, switched dispatch.sh to local branch refs, and made finite-exit the default run mode.
+- **260222-6ldg-wt-create-reuse-flag** — Added --reuse flag to wt-create that returns the existing worktree path instead of erroring on name collision, enabling idempotent worktree creation for batch scripts and pipeline dispatch.
 - **260222-n811-absorb-ship-command** — Absorbed the external `changes:ship` command into a new `/git-pr` skill that autonomously commits, pushes, and creates a GitHub PR, eliminating the prompt-pantry dependency from the pipeline orchestrator.
 - **260221-h1l8-fix-orchestrator-false-fail-on-review** — Removed the `:failed` catch-all from poll_change() so `review:failed` no longer kills the pipeline dispatch, allowing fab-ff's auto-rework loop to complete normally.
 - **260221-8bs9-add-pipeline-orchestrator-tests** — Added BATS test suites for pipeline orchestrator scripts (run.sh, dispatch.sh) covering manifest validation, cycle detection, dispatch ordering, poll state machine, and provision logic with PATH-override stubs.
