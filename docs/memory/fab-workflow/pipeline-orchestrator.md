@@ -13,7 +13,7 @@ V1 is serial (one change at a time). By default, the orchestrator exits when all
 ### Manifest Format
 
 Pipeline manifests are YAML files in `fab/pipelines/` with:
-- `base` — branch that root nodes branch from (typically `main`)
+- `base` — branch that root nodes branch from. Optional — defaults to the current branch if omitted, with `main` as the last-resort fallback (e.g., detached HEAD). When resolved, the value is written back to the manifest for downstream consistency.
 - `watch` — optional boolean. `true` for infinite-loop mode (live editing), `false` or absent for finite mode (exit when all terminal). Default: `false`
 - `changes[]` — list of entries, each with `id`, `depends_on`, and optional `stage`
 
@@ -88,7 +88,7 @@ User-facing entry point on PATH. Owns all UX: no-args/`--list` lists available p
 
 ### batch-pipeline-series.sh
 
-Shorthand for running a sequential chain of changes. Accepts change IDs as positional arguments and an optional `--base <branch>` flag (defaults to current branch). Generates a temporary manifest at `fab/pipelines/.series-{epoch}.yaml` with a linear dependency chain (first change depends on `[]`, each subsequent depends on its predecessor). No `watch` field (finite mode by default). Delegates to `pipeline/run.sh` via `exec`. The generated manifest is not cleaned up — left for debugging. Requires at least 2 change arguments.
+Shorthand for running a sequential chain of changes. Accepts one or more change IDs as positional arguments and an optional `--base <branch>` flag (defaults to current branch). Generates a temporary manifest at `fab/pipelines/.series-{epoch}.yaml` with a linear dependency chain (first change depends on `[]`, each subsequent depends on its predecessor). No `watch` field (finite mode by default). Delegates to `pipeline/run.sh` via `exec`. The generated manifest is not cleaned up — left for debugging.
 
 ### Change ID Resolution
 
@@ -183,6 +183,7 @@ BATS test suite at `src/scripts/pipeline/test.bats` covers pure-logic functions 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260223-xiuk-batch-pipeline-single-change-and-base-branch | 2026-02-23 | `batch-pipeline-series.sh` now accepts a single change argument (minimum lowered from 2 to 1). `run.sh` `validate_manifest()` treats `base` as optional — resolves to current branch via `git branch --show-current` with `main` fallback, writes resolved value back to manifest. Fixed detached HEAD fallback in both scripts (explicit empty-check replaces `\|\|` pattern). Scaffold `example.yaml` synced with main copy. Test suite: 44→46 tests. |
 | 260222-trdc-git-pr-shipped-sentinel-and-status-commit | 2026-02-22 | Ship completion detection now uses `.shipped` sentinel file (gitignored, written by `/git-pr` after all git ops) instead of `stageman is-shipped` polling. Eliminates TOCTOU race where `.status.yaml` update was visible before commit+push completed. `/git-pr` now performs a second commit+push of `.status.yaml` before writing the sentinel. |
 | 260222-6ldg-wt-create-reuse-flag | 2026-02-22 | Added `--reuse` flag to `wt-create` — returns existing worktree path on name collision instead of erroring. `dispatch.sh` now passes `--reuse` (removed bespoke `wt_get_worktree_path_by_name` pre-check and `wt-common.sh` source import). `batch-fab-switch-change.sh` also passes `--reuse` for idempotent re-runs. |
 | 260222-bcfy-batch-pipeline-series-rename | 2026-02-22 | Renamed `batch-fab-pipeline.sh` → `batch-pipeline.sh`. Added `watch` manifest field and finite-exit default to `run.sh` (exits when all terminal; `watch: true` for infinite loop). Fixed `dispatch.sh` to use local branch refs instead of `origin/`. Added `batch-pipeline-series.sh` (sequential chain shorthand — generates temp manifest, delegates to run.sh). Added `.gitignore` pattern for generated series manifests. Added `all_terminal` function to run.sh. Test suite: 38→44 tests. |

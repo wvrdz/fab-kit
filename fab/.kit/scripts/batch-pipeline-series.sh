@@ -7,7 +7,7 @@ set -euo pipefail
 
 # batch-pipeline-series.sh — Run changes in a simple sequential chain
 #
-# Usage: batch-pipeline-series <change1> <change2> [...] [--base <branch>]
+# Usage: batch-pipeline-series <change> [<change>...] [--base <branch>]
 #
 # Generates a temporary manifest with a linear dependency chain
 # (change1 → change2 → change3) and delegates to pipeline/run.sh.
@@ -22,7 +22,7 @@ PIPELINES_DIR="$REPO_ROOT/fab/pipelines"
 
 usage() {
   cat <<'EOF'
-Usage: batch-pipeline-series <change1> <change2> [...] [--base <branch>]
+Usage: batch-pipeline-series <change> [<change>...] [--base <branch>]
 
 Run changes in a simple sequential chain (A → B → C).
 
@@ -30,11 +30,12 @@ Generates a temporary manifest with linear dependencies and delegates
 to the pipeline orchestrator. Exits when all changes complete (finite mode).
 
 Arguments:
-  <change>      Change name or ID (at least 2 required)
+  <change>      Change name or ID (one or more)
   --base <br>   Base branch for the first change (default: current branch)
   -h, --help    Show this help message
 
 Examples:
+  batch-pipeline-series 260222-a7k2-user-model
   batch-pipeline-series 260222-a7k2-user-model 260222-b3m1-auth
   batch-pipeline-series change-a change-b change-c --base main
 EOF
@@ -73,16 +74,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Validate minimum 2 changes
-if [[ ${#changes[@]} -lt 2 ]]; then
-  echo "Error: at least 2 changes required (got ${#changes[@]})" >&2
+# Validate minimum 1 change
+if [[ ${#changes[@]} -lt 1 ]]; then
+  echo "Error: at least 1 change required" >&2
   usage >&2
   exit 1
 fi
 
 # Default base to current branch
 if [[ -z "$base_branch" ]]; then
-  base_branch=$(git branch --show-current 2>/dev/null) || base_branch="main"
+  base_branch=$(git branch --show-current 2>/dev/null || true)
+  if [[ -z "$base_branch" ]]; then
+    base_branch="main"
+  fi
 fi
 
 # ---------------------------------------------------------------------------

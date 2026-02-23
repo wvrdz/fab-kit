@@ -82,12 +82,16 @@ write_stage() {
 validate_manifest() {
   local manifest="$1"
 
-  # Check base field exists
+  # Resolve base field — default to current branch if missing/empty
   local base
   base=$(yq -r '.base // ""' "$manifest")
   if [[ -z "$base" || "$base" == "null" ]]; then
-    echo "Error: manifest missing 'base' field" >&2
-    return 1
+    base=$(git branch --show-current 2>/dev/null || true)
+    if [[ -z "$base" ]]; then
+      base="main"
+    fi
+    # Write the resolved base back so get_parent_branch() reads it consistently
+    yq -i ".base = \"$base\"" "$manifest"
   fi
 
   # Check changes list exists
