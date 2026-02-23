@@ -1,5 +1,2 @@
-- [x] [v5jb] 2026-02-18: Add code-review.md
-- [x] [qcqx] 2026-02-18: Improve worktree commands using https://github.com/johnlindquist/worktree-cli
-- [x] [xc2q] 2026-02-18: Make wt commands work on the current branch instead of main always
-- [x] [n811] 2026-02-22: Reduce external dependency - abosrt changes:ship command into fabkit. Need suggestion for names
-- [x] [idei] 2026-02-22: Need faster way of running parallel or serial changes - something like a batch-fab-parallel.sh [change1] [change2].... Needs discussion
+- [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
+- [ ] [v34t] 2026-02-23: A timeline or user journey mermaid diagram showing which commands are typed in the main repo vs the worktree

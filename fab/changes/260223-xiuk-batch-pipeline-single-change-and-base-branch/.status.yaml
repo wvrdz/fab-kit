@@ -1,0 +1,34 @@
+name: 260223-xiuk-batch-pipeline-single-change-and-base-branch
+created: 2026-02-23T16:21:59+05:30
+created_by: sahil-weaver
+change_type: feature
+progress:
+  intake: done
+  spec: done
+  tasks: active
+  apply: pending
+  review: pending
+  hydrate: pending
+checklist:
+  generated: false
+  path: checklist.md
+  completed: 0
+  total: 0
+confidence:
+  certain: 4
+  confident: 3
+  tentative: 0
+  unresolved: 0
+  score: 4.1
+  fuzzy: true
+  dimensions:
+    signal: 82.1
+    reversibility: 90.7
+    competence: 87.9
+    disambiguation: 87.1
+stage_metrics:
+  intake: {started_at: "2026-02-23T16:21:59+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-23T16:22:59+05:30"}
+  spec: {started_at: "2026-02-23T16:23:22+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-23T16:24:37+05:30"}
+  tasks: {started_at: "2026-02-23T16:24:37+05:30", driver: fab-continue, iterations: 1}
+shipped: []
+last_updated: "2026-02-23T16:24:37+05:30"
