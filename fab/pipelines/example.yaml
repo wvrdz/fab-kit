@@ -55,6 +55,14 @@
 # Terminal stages are never re-dispatched. Intermediate stages are
 # re-dispatched on orchestrator restart (idempotent resume).
 #
+# ─── Base branch ──────────────────────────────────────────────────────────
+#
+# base — Branch that root nodes (depends_on: []) branch from.
+# Optional. Defaults to the current branch if omitted, with "main"
+# as the last-resort fallback (e.g., detached HEAD).
+#
+# base: main
+#
 # ─── Example: Linear chain (A → B → C) ─────────────────────────────────────
 #
 # base: main

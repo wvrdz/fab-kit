@@ -22,6 +22,18 @@ exit 1
 STUB
   chmod +x "$TEST_DIR/bin/changeman.sh"
 
+  # Stub git — default: return a known branch name
+  cat > "$TEST_DIR/bin/git" <<'STUB'
+#!/usr/bin/env bash
+if [[ "$1" == "branch" && "$2" == "--show-current" ]]; then
+  echo "test-current-branch"
+  exit 0
+fi
+# Pass through to real git for other commands
+exec /usr/bin/git "$@"
+STUB
+  chmod +x "$TEST_DIR/bin/git"
+
   # Stub calc-score.sh — default: gate passes
   cat > "$TEST_DIR/bin/calc-score.sh" <<'STUB'
 #!/usr/bin/env bash
@@ -92,7 +104,7 @@ YAML
   [ "$status" -eq 0 ]
 }
 
-@test "validate_manifest: missing base field fails" {
+@test "validate_manifest: missing base field resolves to current branch" {
   source_run
   local m
   m=$(make_manifest <<'YAML'
@@ -102,8 +114,55 @@ changes:
 YAML
   )
   run validate_manifest "$m"
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"missing 'base' field"* ]]
+  [ "$status" -eq 0 ]
+  # Base should be written back to manifest
+  local resolved_base
+  resolved_base=$(yq -r '.base' "$m")
+  [ "$resolved_base" = "test-current-branch" ]
+}
+
+@test "validate_manifest: empty base field resolves to current branch" {
+  source_run
+  local m
+  m=$(make_manifest <<'YAML'
+base: ""
+changes:
+  - id: change-a
+    depends_on: []
+YAML
+  )
+  run validate_manifest "$m"
+  [ "$status" -eq 0 ]
+  local resolved_base
+  resolved_base=$(yq -r '.base' "$m")
+  [ "$resolved_base" = "test-current-branch" ]
+}
+
+@test "validate_manifest: detached HEAD falls back to main" {
+  source_run
+  # Override git stub to simulate detached HEAD (exits 0, empty output)
+  cat > "$TEST_DIR/bin/git" <<'STUB'
+#!/usr/bin/env bash
+if [[ "$1" == "branch" && "$2" == "--show-current" ]]; then
+  echo ""
+  exit 0
+fi
+exec /usr/bin/git "$@"
+STUB
+  chmod +x "$TEST_DIR/bin/git"
+
+  local m
+  m=$(make_manifest <<'YAML'
+changes:
+  - id: change-a
+    depends_on: []
+YAML
+  )
+  run validate_manifest "$m"
+  [ "$status" -eq 0 ]
+  local resolved_base
+  resolved_base=$(yq -r '.base' "$m")
+  [ "$resolved_base" = "main" ]
 }
 
 @test "validate_manifest: empty changes array fails" {

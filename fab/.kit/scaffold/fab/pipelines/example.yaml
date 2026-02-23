@@ -5,13 +5,20 @@
 #
 # ─── How it works ───────────────────────────────────────────────────────────
 #
-# The orchestrator reads this file on every loop iteration. You can add new
-# entries while the orchestrator is running — it will discover and dispatch
-# them when their dependencies are met. This is the "live contract": you
-# stay ahead, the orchestrator catches up.
+# By default, the orchestrator exits when all changes reach a terminal
+# state (done/failed/invalid). For live-editing mode — where you add new
+# entries while the orchestrator runs — set watch: true.
 #
-# The orchestrator only writes to the `stage` field. Your `id` and
-# `depends_on` fields are never modified.
+# The orchestrator only writes to the `stage` field. Your `id`,
+# `depends_on`, and `watch` fields are never modified.
+#
+# ─── Watch mode ───────────────────────────────────────────────────────────
+#
+# watch: true    Infinite loop — polls for new entries, never exits
+# watch: false   (default) Finite — exits when all changes are terminal
+#
+# Omit `watch` for one-shot runs. Add `watch: true` when you want the
+# live-contract model: you stay ahead, the orchestrator catches up.
 #
 # ─── Prerequisites ──────────────────────────────────────────────────────────
 #
@@ -48,9 +55,18 @@
 # Terminal stages are never re-dispatched. Intermediate stages are
 # re-dispatched on orchestrator restart (idempotent resume).
 #
+# ─── Base branch ──────────────────────────────────────────────────────────
+#
+# base — Branch that root nodes (depends_on: []) branch from.
+# Optional. Defaults to the current branch if omitted, with "main"
+# as the last-resort fallback (e.g., detached HEAD).
+#
+# base: main
+#
 # ─── Example: Linear chain (A → B → C) ─────────────────────────────────────
 #
 # base: main
+# watch: true        ← add this for live-editing mode
 #
 # changes:
 #   - id: 260221-a7k2-user-model
