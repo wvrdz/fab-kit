@@ -1,10 +1,10 @@
 ---
 name: fab-switch
-description: "Switch the active change to a different one. Lists available changes when called with no argument. Handles branch integration."
+description: "Switch the active change to a different one. Lists available changes when called with no argument."
 model_tier: fast
 ---
 
-# /fab-switch [change-name] [--blank] [--branch <name>] [--no-branch-change]
+# /fab-switch [change-name] [--blank]
 
 > Read `fab/.kit/skills/_preamble.md` first. Only after that Read completes, proceed with any Bash calls.
 
@@ -13,9 +13,7 @@ model_tier: fast
 ## Arguments
 
 - **`<change-name>`** *(optional)* — full or partial name of the change to switch to. Supports full folder names, partial slug matches, or any substring. Case-insensitive.
-- **`--blank`** — deactivate the current change by deleting `fab/current`. Can combine with `--branch` to also switch branches. Mutually exclusive with `<change-name>` (if both given, prefer `--blank`).
-- **`--branch <name>`** — explicit branch name. Creates if new, checks out if existing. Skips interactive branch prompt.
-- **`--no-branch-change`** — skip all branch integration.
+- **`--blank`** — deactivate the current change by deleting `fab/current`. Mutually exclusive with `<change-name>` (if both given, prefer `--blank`).
 
 If no argument (and no `--blank`): list all active changes and ask user to pick.
 
@@ -23,7 +21,7 @@ If no argument (and no `--blank`): list all active changes and ask user to pick.
 
 ## Context Loading
 
-Loads `fab/project/config.yaml` (for `git.enabled`, `git.branch_prefix`) and matched change's `.status.yaml`. Name resolution and switch logic are delegated to `fab/.kit/scripts/lib/changeman.sh`. Does NOT load constitution, memory, or specs.
+Loads `fab/project/config.yaml` (for `git.enabled` — used only for the hint line) and matched change's `.status.yaml`. Name resolution and switch logic are delegated to `fab/.kit/scripts/lib/changeman.sh`. Does NOT load constitution, memory, or specs.
 
 ---
 
@@ -43,7 +41,7 @@ Delegate to `changeman.sh switch` via a single Bash call:
 bash fab/.kit/scripts/lib/changeman.sh switch "<change-name>"
 ```
 
-If changeman exits 0: display the stdout output (contains name, stage, branch, next command).
+If changeman exits 0: display the stdout output (contains name, stage, next command).
 
 If changeman exits 1 and stderr contains "Multiple changes match": parse the comma-separated folder names from stderr, list them with stages as numbered options, ask user to pick. After selection, run `changeman.sh switch "<selected>"`.
 
@@ -51,49 +49,44 @@ If changeman exits 1 and stderr contains "No change matches": list all available
 
 ### Deactivation Flow (`--blank`)
 
-Run `changeman.sh switch --blank`. If `--branch` also provided: attempt checkout after deactivation (deactivation succeeds regardless of checkout result). Display changeman's stdout output.
+Run `changeman.sh switch --blank`. Display changeman's stdout output.
 
 ### Switch Flow
 
 `changeman.sh switch` handles the full flow internally:
 1. Resolves the change name
 2. Writes `fab/current`
-3. Performs git branch integration (respecting `config.yaml`)
-4. Outputs structured summary with stage and next command
+3. Outputs structured summary with stage and next command
 
 The skill displays changeman's stdout directly.
 
----
+### Hint Line
 
-## Branch Integration
+After displaying changeman's output, if `git.enabled` is `true` in `fab/project/config.yaml`, append:
 
-**Skip entirely if**: `--no-branch-change`, or `git.enabled` is `false`, or not inside a git repo.
+```
+Tip: run /git-branch to create or switch to the matching branch
+```
 
-**If `--branch <name>` provided**: Use name directly. Check out if exists, `git checkout -b` if not. Skip interactive prompt.
-
-**If no `--branch`** (interactive):
-
-- **On `main`/`master`**: Auto-create `{branch_prefix}{change-name}` — no prompt (Certain grade per SRAD: high R, A, D).
-- **On `wt/*` branch**: Prompt with options: **Create new branch** (default), **Adopt this branch**, **Skip**.
-- **On feature branch**: Prompt with options: **Adopt this branch** (default), **Create new branch**, **Skip**.
+Omit the hint when `git.enabled` is `false`, config is missing, or the operation was `--blank`.
 
 ---
 
 ## Output
 
-Output is passthrough from `changeman.sh switch`. Canonical format:
+Canonical format (from `changeman.sh switch` + skill hint):
 
 ```
 fab/current → {name}
 
 Stage:  {display_stage} ({N}/6) — {state}
-Branch: {name} (created|checked out)
 Next:   {routing_stage} (via {default_command})
+Tip: run /git-branch to create or switch to the matching branch
 ```
 
 Where `{display_stage}` is "where you are" (last active or last done stage) and `{routing_stage}` is "what's next" (what `/fab-continue` will produce). The `{state}` qualifier is `done`, `active`, or `pending`. When all stages are done, `Next:` shows only `/fab-archive`.
 
-Branch line omitted if git disabled or not in a repo. Deactivation shows `No active change.`. Already-blank shows `No active change (already blank).`
+Tip line omitted if git disabled or config missing. Deactivation shows `No active change.`. Already-blank shows `No active change (already blank).`
 
 ---
 
@@ -104,8 +97,7 @@ Branch line omitted if git disabled or not in a repo. Deactivation shows `No act
 | No changes exist | "No active changes found. Run /fab-new." |
 | Matched folder missing `.status.yaml` | Switch anyway, warn: "Warning: .status.yaml not found — change may be corrupted." |
 | `fab/changes/` doesn't exist | "fab/changes/ not found. Run /fab-setup." |
-| `fab/project/config.yaml` not found | Skip branch integration |
-| Git branch creation/checkout fails | Report error, continue without branch change. Switch still completes. |
+| `fab/project/config.yaml` not found | Skip hint line |
 
 ---
 
@@ -117,5 +109,5 @@ Branch line omitted if git disabled or not in a repo. Deactivation shows `No act
 | Idempotent? | Yes |
 | Modifies `fab/current`? | Yes (writes name, or deletes with `--blank`) |
 | Modifies `.status.yaml`? | No |
-| Modifies git state? | Yes — may create/checkout branch |
-| Requires config/constitution? | Config only (`git.enabled`, `git.branch_prefix`) |
+| Modifies git state? | No |
+| Requires config/constitution? | Config only (for hint line) |

@@ -1,0 +1,37 @@
+name: 260224-vx4k-decouple-git-from-fab-switch
+created: 2026-02-24T16:55:18+05:30
+created_by: sahil-weaver
+change_type: feature
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 30
+  total: 30
+confidence:
+  certain: 8
+  confident: 3
+  tentative: 0
+  unresolved: 0
+  score: 4.1
+  fuzzy: true
+  dimensions:
+    signal: 87.3
+    reversibility: 85.0
+    competence: 89.5
+    disambiguation: 88.2
+stage_metrics:
+  intake: {started_at: "2026-02-24T16:55:18+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-24T17:01:14+05:30"}
+  spec: {started_at: "2026-02-24T17:01:14+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-24T17:08:13+05:30"}
+  tasks: {started_at: "2026-02-24T17:08:13+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-24T17:11:11+05:30"}
+  apply: {started_at: "2026-02-24T17:11:11+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-24T17:15:19+05:30"}
+  review: {started_at: "2026-02-24T17:15:19+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-24T17:29:24+05:30"}
+  hydrate: {started_at: "2026-02-24T17:29:24+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-24T20:55:24+05:30"}
+shipped: []
+last_updated: "2026-02-24T20:55:24+05:30"

@@ -108,19 +108,20 @@ After hydrate completes, the change folder remains in `fab/changes/`. To move it
 
 ### Git Integration (Optional)
 
-Fab works without git. Change folders are the unit of identity, not branches — the same change can be worked on across multiple branches, worktrees, or even repos. Git branch integration is handled exclusively by `/fab-switch`. Fab never couples its state to git state — no `branch:` field is stored in `.status.yaml`.
+Fab works without git. Change folders are the unit of identity, not branches — the same change can be worked on across multiple branches, worktrees, or even repos. Fab never couples its state to git state — no `branch:` field is stored in `.status.yaml`.
 
 **Why decoupled**: A developer might work on the same change across multiple worktrees, a change might span multiple branches, or a change might move between branches after a rebase. Storing a static `branch:` field would go stale; instead, `/fab-status` uses `git branch --show-current` for live display.
 
+**Branch management** is handled by the standalone `/git-branch` command — separate from change activation. `/fab-switch` only writes `fab/current` and never executes git commands.
+
 | Option | When to use | What happens |
 |--------|-------------|--------------|
-| **Create branch** | On `main`/`master` when switching to a change | Auto-creates branch named `{prefix}{change-name}` |
-| **Adopt current branch** | Already on a feature branch | No git operation (already on the branch) |
+| **Create branch** | On `main`/`master` (auto via `/git-branch`) | Creates branch named `{prefix}{change-name}` |
+| **Adopt current branch** | Already on a feature branch | No git operation — acknowledge the current branch |
 | **Create new** | On a `wt/*` or feature branch, user chooses | Creates new branch from current HEAD |
 | **Skip** | Non-git, git disabled, or manual control | No branch operation |
-| **`--branch <name>`** | Explicit branch name | Creates if new, checks out if existing |
 
-Branch integration is handled by `/fab-switch` and displayed live by `/fab-status` via `git branch --show-current`. Fab never commits, pushes, merges, or deletes branches — that remains the user's responsibility.
+`/fab-switch` suggests `/git-branch` when `git.enabled` is true. `/fab-status` displays the current branch via `git branch --show-current`. `/git-pr` nudges when the current branch doesn't match the active change. Fab never commits, pushes, merges, or deletes branches — that remains the user's responsibility (or `/git-pr`'s for shipping).
 
 ### Restoring an Archived Change
 
@@ -157,22 +158,35 @@ There is no `/fab-abandon` skill — this is a manual operation. To preserve con
 
 The skill uses `lib/preflight.sh` for data retrieval (including `display_stage` and `display_state` fields), then formats the output. The "Stage:" line shows the display stage (where you are) with a state qualifier (e.g., `Stage: intake (1/6) — done`). The "Next:" line shows the routing stage with the default command (e.g., `Next: spec (via /fab-continue)`). It reads `fab/project/config.yaml` for `git.enabled` and uses `git branch --show-current` for live branch display.
 
-### `/fab-switch [change-name] [--blank] [--branch <name>]`
+### `/fab-switch [change-name] [--blank]`
 
-`/fab-switch` changes the active change and handles git branch integration. It reads `fab/project/config.yaml` for `git.enabled` and `git.branch_prefix`.
+`/fab-switch` changes the active change pointer. It does not perform git operations — branch management is handled by the separate `/git-branch` command.
 
 **Switching to a change:**
 1. Match `change-name` against `fab/changes/` (supports partial/slug match)
 2. **Ambiguous match** — if multiple changes match, list them and ask the user to pick. Never guess
 3. **No match** — list available changes and ask
 4. Write the full change name to `fab/current`
-5. **Branch integration** (if `git.enabled`): auto-create on main/master, prompt on feature/wt branches, or use `--branch <name>` for explicit branch
-6. Display the switched change's status summary (two-line format: `Stage: {display_stage} ({N}/6) — {state}` + `Next: {routing_stage} (via {default_command})`)
+5. Display the switched change's status summary (two-line format: `Stage: {display_stage} ({N}/6) — {state}` + `Next: {routing_stage} (via {default_command})`)
+6. If `git.enabled` is true, append a hint: `Tip: run /git-branch to create or switch to the matching branch`
 
 **Deactivating (`--blank`):**
 1. Delete `fab/current` — deactivates the current change. Idempotent (no error if already blank)
-2. No git operations unless `--branch` is also provided (e.g., `--blank --branch main` to deactivate and checkout main)
-3. If combined with `--branch` and the checkout fails (worktree conflict, missing branch), the deactivation still succeeds — only the branch change is skipped
+
+### `/git-branch [change-name]`
+
+`/git-branch` creates or checks out a git branch matching the active (or specified) change. Standalone command — does not modify fab state (`fab/current`, `.status.yaml`).
+
+**Behavior:**
+1. Read `config.yaml` for `git.enabled` and `git.branch_prefix`
+2. If `git.enabled` is false → report and stop
+3. Resolve change name (from argument or `fab/current`)
+4. Derive branch name: `{branch_prefix}{change-name}`
+5. Context-dependent action:
+   - **On `main`/`master`** → auto-create branch
+   - **On other branch** → prompt: create new, adopt current, or skip
+   - **Already on target** → no-op ("already active")
+6. Report result
 
 ## Migration Note (Old-Format `.status.yaml`)
 
@@ -204,11 +218,11 @@ Skills will tolerate old-format files — the preflight script infers `intake: d
 **Rejected**: Free-form state strings — inconsistent across skills, harder to parse programmatically.
 *Source*: doc/fab-spec/TEMPLATES.md
 
-### Branch Integration in `/fab-switch`, Not `/fab-new`
-**Decision**: Git branch integration is consolidated in `/fab-switch`, not `/fab-new`. `/fab-new` never activates changes — no write to `fab/current`, no branch integration. The user activates via `/fab-switch` after creation. The `branch:` field was removed from `.status.yaml`; `/fab-status` uses `git branch --show-current` for live display.
-**Why**: Consolidating in `/fab-switch` (the "I'm committing to work on this" moment) gives a single, consistent branch integration path. Not auto-switching reduces disruption when capturing change ideas. The `branch:` field in `.status.yaml` was purely ceremonial — no skill used it for logic, and it went stale on manual branch switches.
-**Rejected**: Keeping branch in `/fab-new` — couples two concerns. Storing branch in `.status.yaml` — goes stale, no skill needs it. Auto-switching by default — disruptive when batching ideas.
-*Introduced by*: 260208-q8v3-branch-to-switch; *Updated*: 260216-7ltw-DEV-1038 (removed `--switch` flag entirely)
+### Branch Management in `/git-branch`, Not `/fab-switch`
+**Decision**: Git branch operations are handled by the standalone `/git-branch` command, not `/fab-switch`. `/fab-switch` only writes `fab/current` — it performs zero git operations. `/fab-new` never activates changes. The `branch:` field was removed from `.status.yaml`; `/fab-status` uses `git branch --show-current` for live display.
+**Why**: Change activation (pointing `fab/current`) and git branch management are independent concerns. Coupling them in `/fab-switch` required `--no-branch-change` as an escape hatch (used by `dispatch.sh` for worktree-based pipelines), added interactive friction for users who just wanted to switch the active pointer, and forced every feature touching change activation to consider git side effects. Separating them lets each command do one thing well.
+**Rejected**: Keeping branch in `/fab-switch` — couples two concerns, requires negative flags. Shell script instead of command — loses conversational invocability in Claude sessions. Silent ignore of old flags — defers cleanup, adds dead-flag debt.
+*Introduced by*: 260208-q8v3-branch-to-switch; *Updated*: 260216-7ltw-DEV-1038 (removed `--switch` flag); *Updated*: 260224-vx4k-decouple-git-from-fab-switch (extracted to standalone `/git-branch`)
 
 ### Single Source of Truth: Progress Map with `active` Marker
 **Decision**: Remove the `stage:` field from `.status.yaml`. The current stage is determined by a three-tier fallback: (1) first `active` entry, (2) first `pending` after last `done`, (3) `hydrate` if all done. State vocabulary: `pending`, `active`, `done`, `failed`.
@@ -238,6 +252,7 @@ Skills will tolerate old-format files — the preflight script infers `intake: d
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260224-vx4k-decouple-git-from-fab-switch | 2026-02-24 | Decoupled git branch operations from `/fab-switch`. `/fab-switch` now only writes `fab/current` — no git commands, no `--branch`/`--no-branch-change` flags. New `/git-branch` command handles branch create/checkout with context-dependent prompts. `/fab-switch` shows `/git-branch` hint when `git.enabled` is true. `/git-pr` enhanced with branch mismatch nudge (Step 1b) and `/git-branch` suggestion in main branch guard. `dispatch.sh` updated to remove `--no-branch-change` from send-keys. Updated "Branch Integration" design decision. |
 | 260218-95xn-split-stage-display-from-routing | 2026-02-18 | Split stage display from routing: added `get_display_stage` to stageman.sh (returns "where you are" vs `get_current_stage` for "what's next"). Preflight emits `display_stage`/`display_state` fields. `/fab-switch` and `/fab-status` now show two-line format: `Stage: {display_stage} — {state}` + `Next: {routing_stage} (via {command})`. |
 | 260216-7ltw-DEV-1038-standardize-state-keyed-suggestions | 2026-02-16 | Removed `--switch` flag from `/fab-new` — change is never activated by `/fab-new`. Updated `fab/current` lifecycle, git integration, and Branch Integration design decision. All suggestion derivation now from canonical state table in `_preamble.md`. |
 | 260216-u6d5-DEV-1039-add-changeman-rename | 2026-02-16 | Added rename capability: `changeman.sh rename` atomically renames slug, updates `.status.yaml` name, conditionally updates `fab/current`. Added "Renaming a Change" section. Updated naming convention note (prefix immutable, slug changeable). Updated "Name Stable Across Lifecycle" design decision. |

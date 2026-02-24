@@ -502,6 +502,34 @@ The applying agent triages review comments by priority — not all comments need
 
 ---
 
+## `/git-branch [change-name]`
+
+**Purpose**: Create or check out a git branch matching the active (or specified) change. Standalone git command — does not modify fab state.
+
+**Example**:
+```
+/git-branch
+→ "Branch: 260224-vx4k-decouple-git-from-fab-switch (created)"
+```
+
+**Behavior**:
+1. Read `config.yaml` for `git.enabled` and `git.branch_prefix`
+2. If `git.enabled` is `false` → report and stop
+3. Resolve change name (from argument or `fab/current`)
+4. Derive branch name: `{branch_prefix}{change-name}`
+5. Context-dependent action:
+   - **On `main`/`master`** → auto-create branch
+   - **On other branch** → prompt: create new, adopt current, or skip
+   - **Already on target** → no-op
+6. Report result
+
+**Key properties**:
+- Does not modify `fab/current` or `.status.yaml`
+- Idempotent — checking out an already-active branch is a no-op
+- Respects `git.enabled` gate
+
+---
+
 ## `/fab-status`
 
 **Purpose**: Show current change state at a glance.
