@@ -58,7 +58,7 @@ Output: in-place progress updates per change.
 2. **Artifact provisioning** — copies `fab/changes/<id>/` from source repo to worktree if not present
 3. **Prerequisite validation** — intake.md, spec.md, confidence gate. Writes `invalid` on failure.
 4. **Interactive pane creation** — starts a bare `claude --dangerously-skip-permissions` session in a tmux split pane (no initial command). First dispatch: horizontal split (`-h`); subsequent: vertical split stacked below previous (`-v -t $LAST_PANE_ID`). The pane appears immediately, giving the user visual feedback.
-5. **fab-switch via send-keys** — after a startup delay (`CLAUDE_STARTUP_DELAY`, default 3s), sends `/fab-switch $CHANGE_ID --no-branch-change` to the pane via `tmux send-keys` (text, 0.5s gap, Enter).
+5. **fab-switch via send-keys** — after a startup delay (`CLAUDE_STARTUP_DELAY`, default 3s), sends `/fab-switch $CHANGE_ID` to the pane via `tmux send-keys` (text, 0.5s gap, Enter). `/fab-switch` is git-free — branch setup is handled by `create_worktree()` before the pane is created.
 6. **fab/current polling** — polls `$wt_path/fab/current` until it matches `$CHANGE_ID` (interval: `SWITCH_POLL_INTERVAL` 2s, timeout: `SWITCH_POLL_TIMEOUT` 60s). Checks pane alive each iteration. Timeout or pane death marks the change `failed` in the manifest.
 7. **fab-ff via send-keys** — after a post-switch delay (`POST_SWITCH_DELAY`, default 5s), sends `/fab-ff` to the pane via `tmux send-keys` (text, 0.5s gap, Enter).
 8. **Output** — two stdout lines: worktree path + pane ID. `run.sh` captures both.

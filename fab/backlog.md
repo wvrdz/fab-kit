@@ -3,4 +3,4 @@
 - [ ] [vx4k] 2026-02-24: Separate out git from fab commands. Right now fab switch is very deeply coupled with branch change. Try to see if we can separate it out.
 - [ ] [7k6b] 2026-02-24: git-pr should generate better summary for the PR. If possible reference the intake.md of the change for which we are submitting the PR.
 - [ ] [v40o] 2026-02-24: Remove the wt/ prefix from the branch created by wt-create
-- [ ] [w5ne] 2026-02-24: How do current comamnds resolve the change? they dont read fab/current directly. (or at least should not) . They call a changmen arguemnt and that does it for them. We need to update this fn with 'guessing' abiliy of the current change (if there is only one active change in the change folder. Then upgrade git-branch to use this
+- [ ] [w5ne] 2026-02-24: How do current commands resolve the change? They don't read fab/current directly (or at least should not). They call a changeman argument and that does it for them. We need to update this fn with 'guessing' ability of the current change (if there is only one active change in the change folder). Then upgrade git-branch to use this

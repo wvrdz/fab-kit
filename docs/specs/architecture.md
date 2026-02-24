@@ -112,7 +112,7 @@ Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern. Each cre
 | Script | Purpose | Creates per entity |
 |--------|---------|--------------------|
 | `batch-fab-new-backlog.sh` | Create changes from backlog items | Worktree + tmux tab running `/fab-new <description>` |
-| `batch-fab-switch-change.sh` | Switch to existing changes | Worktree + tmux tab running `/fab-switch <change> --no-branch-change` |
+| `batch-fab-switch-change.sh` | Switch to existing changes | Worktree + tmux tab running `/fab-switch <change>` |
 | `batch-fab-archive-change.sh` | Archive completed changes (`hydrate:done`) | Worktree + tmux tab running `/fab-archive <change>` |
 
 All three support `--list` (show targets), `--all` (process all), and direct ID/name arguments with substring matching.

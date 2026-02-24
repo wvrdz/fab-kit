@@ -43,13 +43,13 @@ bash fab/.kit/scripts/lib/changeman.sh switch "<change-name>"
 
 If changeman exits 0: display the stdout output (contains name, stage, next command).
 
-If changeman exits 1 and stderr contains "Multiple changes match": parse the comma-separated folder names from stderr, list them with stages as numbered options, ask user to pick. After selection, run `changeman.sh switch "<selected>"`.
+If changeman exits 1 and stderr contains "Multiple changes match": parse the comma-separated folder names from stderr, list them with stages as numbered options, ask user to pick. After selection, run `bash fab/.kit/scripts/lib/changeman.sh switch "<selected>"`.
 
 If changeman exits 1 and stderr contains "No change matches": list all available changes, inform user.
 
 ### Deactivation Flow (`--blank`)
 
-Run `changeman.sh switch --blank`. Display changeman's stdout output.
+Run `bash fab/.kit/scripts/lib/changeman.sh switch --blank`. Display changeman's stdout output.
 
 ### Switch Flow
 
