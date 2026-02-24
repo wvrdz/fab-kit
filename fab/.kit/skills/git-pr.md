@@ -30,9 +30,33 @@ Determine:
 - **has_unpushed** — whether there are commits ahead of upstream (or no upstream at all)
 - **has_pr** — whether a PR already exists
 
+### Step 1b: Branch Mismatch Nudge
+
+If there is an active change (resolve via `fab/.kit/scripts/lib/changeman.sh resolve 2>/dev/null`), compare the current branch against the expected branch name. Read `git.branch_prefix` from `fab/project/config.yaml` (default `""`). The expected name is `{branch_prefix}{change_name}`.
+
+A match is: (1) exact string equality between current branch and expected name, or (2) the change name appears as a substring of the current branch.
+
+If there is **no match** and the current branch is **not** `main`/`master`, show a non-blocking nudge before proceeding:
+
+```
+Note: branch '{current_branch}' doesn't match active change '{change_name}'.
+Run /git-branch to switch, or continue if this is intentional.
+```
+
+Then proceed to Step 2 normally. If resolution fails or there is no active change, skip this step silently.
+
 ### Step 2: Branch Guard
 
-If the current branch is `main` or `master`, STOP immediately:
+If the current branch is `main` or `master`, STOP immediately.
+
+If there is an active change (from Step 1b), enhance the message:
+
+```
+Cannot create PR from main/master branch.
+Tip: run /git-branch to switch to the change's branch first.
+```
+
+If there is no active change:
 
 ```
 Cannot create PR from main/master branch.

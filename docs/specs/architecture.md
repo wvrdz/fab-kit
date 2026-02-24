@@ -112,7 +112,7 @@ Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern. Each cre
 | Script | Purpose | Creates per entity |
 |--------|---------|--------------------|
 | `batch-fab-new-backlog.sh` | Create changes from backlog items | Worktree + tmux tab running `/fab-new <description>` |
-| `batch-fab-switch-change.sh` | Switch to existing changes | Worktree + tmux tab running `/fab-switch <change> --no-branch-change` |
+| `batch-fab-switch-change.sh` | Switch to existing changes | Worktree + tmux tab running `/fab-switch <change>` |
 | `batch-fab-archive-change.sh` | Archive completed changes (`hydrate:done`) | Worktree + tmux tab running `/fab-archive <change>` |
 
 All three support `--list` (show targets), `--all` (process all), and direct ID/name arguments with substring matching.
@@ -336,15 +336,15 @@ Fab stays out of this. No branch information is stored in `.status.yaml` — `/f
 
 ### How It Works
 
-`/fab-switch` handles branch integration when activating a change. It detects the current git branch and offers options based on context:
+`/git-branch` is the standalone command for branch management. It creates or checks out a branch matching the active (or specified) change. `/fab-switch` only writes `fab/current` — it does not touch git.
 
 | Option | When to use | What happens |
 |--------|-------------|--------------|
-| **Create branch** | On `main`/`master` (auto) or `wt/*` (prompted) | Creates branch named after the change folder (e.g., `260115-a7k2-add-oauth`) |
-| **Adopt current branch** | Already on a feature branch | Checks out the current branch — no rename |
+| **Create branch** | On `main`/`master` (auto) or `wt/*` (prompted) | `/git-branch` creates branch named after the change folder (e.g., `260115-a7k2-add-oauth`) |
+| **Adopt current branch** | Already on a feature branch | No git operation — acknowledge the current branch |
 | **Skip** | Non-git repo, or user prefers manual control | No branch operation |
 
-`/fab-new` delegates branch integration to `/fab-switch` — it does not handle branches directly. `/fab-status` displays the current branch via `git branch --show-current`. That's the full extent of git integration — Fab never commits, pushes, merges, or deletes branches.
+`/fab-switch` suggests `/git-branch` when `git.enabled` is true. `/fab-new` does not handle branches. `/fab-status` displays the current branch via `git branch --show-current`. `/git-pr` nudges when the current branch doesn't match the active change. Fab never commits, pushes, merges, or deletes branches — that remains the user's responsibility (or `/git-pr`'s for shipping).
 
 ### Branch Naming
 

@@ -189,48 +189,7 @@ cmd_switch() {
   # 2. Write fab/current
   printf '%s' "$resolved" > "$FAB_ROOT/current"
 
-  # 3. Read config for git settings
-  local git_enabled=true
-  local branch_prefix=""
-  local config_file="$FAB_ROOT/project/config.yaml"
-  if [ -f "$config_file" ] && command -v yq >/dev/null 2>&1; then
-    local val
-    val=$(yq '.git.enabled // "true"' "$config_file" 2>/dev/null) && git_enabled="$val"
-    val=$(yq '.git.branch_prefix // ""' "$config_file" 2>/dev/null) && branch_prefix="$val"
-  elif [ -f "$config_file" ]; then
-    echo "Warning: config.yaml exists but yq is not installed; skipping git integration." >&2
-    git_enabled=false
-  fi
-
-  # 4. Git branch integration
-  local branch_status=""
-  local branch_name="${branch_prefix}${resolved}"
-  local in_git_repo=false
-
-  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    in_git_repo=true
-  fi
-
-  if [ "$git_enabled" = "true" ] && [ "$in_git_repo" = true ]; then
-    local git_err
-    if git show-ref --verify --quiet "refs/heads/$branch_name" 2>/dev/null; then
-      if git_err=$(git checkout "$branch_name" 2>&1); then
-        branch_status="checked out"
-      else
-        branch_status="checkout failed"
-        echo "Warning: git checkout '$branch_name' failed: $git_err" >&2
-      fi
-    else
-      if git_err=$(git checkout -b "$branch_name" 2>&1); then
-        branch_status="created"
-      else
-        branch_status="creation failed"
-        echo "Warning: git checkout -b '$branch_name' failed: $git_err" >&2
-      fi
-    fi
-  fi
-
-  # 5. Derive display stage and routing stage
+  # 3. Derive display stage and routing stage
   local display_stage="unknown" display_state="pending" routing_stage="unknown"
   local status_file="$FAB_ROOT/changes/$resolved/.status.yaml"
   if [ -f "$status_file" ]; then
@@ -244,13 +203,10 @@ cmd_switch() {
   local dnum
   dnum=$(stage_number "$display_stage")
 
-  # 6. Output summary
+  # 4. Output summary
   echo "fab/current → $resolved"
   echo ""
   echo "Stage:  $display_stage ($dnum/6) — $display_state"
-  if [ -n "$branch_status" ]; then
-    echo "Branch: $branch_name ($branch_status)"
-  fi
   local cmd
   cmd=$(default_command "$routing_stage")
   if [ "$routing_stage" = "hydrate" ] && [ "$display_stage" = "hydrate" ] && [ "$display_state" = "done" ]; then
@@ -475,7 +431,7 @@ SUBCOMMANDS:
   new      Create a new change directory with initialized .status.yaml
   rename   Rename an existing change folder's slug (preserves date-ID prefix)
   resolve  Resolve a change name from override or fab/current
-  switch   Switch the active change (resolve + write pointer + git branch)
+  switch   Switch the active change (resolve + write pointer)
 
 FLAGS (for new):
   --slug <slug>            Required. Folder name suffix (e.g., "add-oauth" or "DEV-988-add-oauth")

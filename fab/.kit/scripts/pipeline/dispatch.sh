@@ -214,7 +214,7 @@ run_pipeline() {
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
     return 0
   fi
-  tmux send-keys -t "$pane_id" "/fab-switch $CHANGE_ID --no-branch-change" 2>/dev/null || {
+  tmux send-keys -t "$pane_id" "/fab-switch $CHANGE_ID" 2>/dev/null || {
     log "Failed: $CHANGE_ID — tmux send-keys failed for fab-switch"
     write_stage "$MANIFEST_ID" "failed" "$MANIFEST"
     return 0

@@ -128,7 +128,7 @@ for change in "${changes[@]}"; do
   # Escape single quotes for the nested shell: ' → '\''
   safe="${match//"'"/"'\''"}"
 
-  # Call fab-switch with --no-branch-change since the branch is already set up
+  # Call fab-switch (branch is already set up by the worktree)
   tmux new-window -n "${match}" -c "$wt_path" \
-    "claude --dangerously-skip-permissions '/fab-switch ${safe} --no-branch-change'"
+    "claude --dangerously-skip-permissions '/fab-switch ${safe}'"
 done

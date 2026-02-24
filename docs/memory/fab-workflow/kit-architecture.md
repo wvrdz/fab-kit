@@ -176,7 +176,7 @@ Packages `fab/.kit/` into `kit.tar.gz`, bumps VERSION (accepts `[patch|minor|maj
 Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern (except pipeline scripts which use `batch-pipeline*`). Each creates tmux tabs with Claude Code sessions running a specific skill, one per target entity. Each batch script includes a `# ---` shell-comment frontmatter block with `name` and `description` fields, enabling automatic discovery by `fab-help.sh`.
 
 - **`batch-fab-new-backlog.sh`** — Per backlog ID: creates a worktree, opens a tmux tab, runs `/fab-new <description>`. Supports `--list` (show pending), `--all` (all pending), and direct ID arguments.
-- **`batch-fab-switch-change.sh`** — Per change name/ID: creates a worktree with the expected branch, opens a tmux tab, runs `/fab-switch <change> --no-branch-change`. Supports `--list`, `--all`, substring matching.
+- **`batch-fab-switch-change.sh`** — Per change name/ID: creates a worktree with the expected branch, opens a tmux tab, runs `/fab-switch <change>`. Supports `--list`, `--all`, substring matching.
 - **`batch-fab-archive-change.sh`** — Per completed change (`hydrate:done`): creates a worktree, opens a tmux tab, runs `/fab-archive <change>`. Filters by reading `.status.yaml` for `hydrate: done`. Supports `--list`, `--all`, substring matching.
 
 ### Agent Integration via Symlinks
