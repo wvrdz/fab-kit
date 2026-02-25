@@ -12,6 +12,35 @@ Autonomously ship local changes to a GitHub PR. No questions, no prompts — jus
 
 ## Behavior
 
+### Step 0: Resolve PR Type
+
+Determine the PR type before gathering state. The type controls the PR title prefix and body template.
+
+**Valid types**: `feat`, `fix`, `refactor`, `docs`, `test`, `ci`, `chore`
+
+**Resolution chain** (evaluated in order, first match wins):
+
+1. **Explicit argument**: If the user invoked `/git-pr {type}` where `{type}` is one of the 7 valid types (case-insensitive), normalize to lowercase and use it. If the argument is not a valid type, ignore it and fall through to step 2.
+
+2. **Infer from fab change intake**: Run `fab/.kit/scripts/lib/changeman.sh resolve 2>/dev/null`. If resolution fails or `changeman.sh` is not found, fall through to step 3. If resolution succeeds and `fab/changes/{name}/intake.md` exists, read the intake content and pattern-match (case-insensitive). Keyword lists are evaluated in order — first match wins:
+   - Contains any of: "fix", "bug", "broken", "regression" → type = `fix`
+   - Contains any of: "refactor", "restructure", "consolidate", "split", "rename" → type = `refactor`
+   - Otherwise → type = `feat`
+
+3. **Infer from diff**: Collect changed file paths by running each command and taking the first non-empty result: (a) `git diff --name-only HEAD`, (b) `git diff --name-only --cached`, (c) `git diff --name-only @{u}..HEAD` (only if upstream exists). This covers uncommitted, staged, and committed-but-unpushed changes.
+
+   If **no files** are returned (empty diff — clean working tree and no unpushed commits), default to `chore`.
+
+   Otherwise, analyze the changed file paths:
+   - All files in `.github/` or CI config files → type = `ci`
+   - All files in `docs/` or non-code `.md` files → type = `docs`
+   - All files in test directories or test files → type = `test`
+   - Otherwise → type = `chore`
+
+Store the resolved `type` (always lowercase) and the resolution source (`explicit`, `intake`, `diff`) for use in Step 3c.
+
+This step MUST NOT ask questions or present options. If resolution is ambiguous, default to `chore`.
+
 ### Step 1: Gather State
 
 Run these commands to understand the current situation:
@@ -110,29 +139,59 @@ Print: `  ✓ push   — origin/<branch>`
 
 1. Verify `gh` is available: `command -v gh`
    - If missing → print `gh CLI not found — cannot create PR` and STOP
-2. Attempt intake-aware PR creation:
-   1. Resolve active change: `fab/.kit/scripts/lib/changeman.sh resolve 2>/dev/null`
-   2. **If resolution succeeds** and `fab/changes/{name}/intake.md` exists:
-      - Read `intake.md`
-      - Derive PR title from the first `# ` heading, stripping `Intake: ` prefix if present
-      - Generate PR body:
-        ```
-        ## Summary
-        {1-3 sentences derived from intake's ## Why section}
 
-        ## Changes
-        {bulleted list of subsection headings from intake's ## What Changes section}
+2. **Derive PR title**: Compute `{pr_title}` as `{type}: {title}` where:
+   - **Fab-linked** (type is `feat`, `fix`, or `refactor` AND intake exists): `{title}` = first `# ` heading from `intake.md`, stripping `Intake: ` prefix if present
+   - **Lightweight** (type is `docs`, `test`, `ci`, or `chore`, OR no intake): `{title}` = commit message subject line from `git log -1 --format=%s`
 
-        ## Context
-        - [Intake](fab/changes/{name}/intake.md)
-        - [Spec](fab/changes/{name}/spec.md)   ← only if spec.md exists
-        ```
-      - Create PR: `gh pr create --title "<title>" --body "<body>"`
-   3. **If resolution fails** or `intake.md` doesn't exist:
-      - Fall back to: `gh pr create --fill`
-   4. This resolution MUST NOT block the PR workflow — any error falls back to `--fill` silently
-3. If PR creation fails → report the error and STOP
-4. Get the PR URL: `gh pr view --json url -q '.url'`
+   The `{pr_title}` variable (already prefixed) is used as-is in step 4's `gh pr create --title`.
+
+3. **Generate PR body** using the template tier matching the resolved type:
+
+   **Tier 1 — Fab-Linked** (type is `feat`, `fix`, or `refactor` AND `changeman.sh resolve` succeeds AND `intake.md` exists):
+
+   First, construct blob URLs:
+   - `{owner_repo}` = `gh repo view --json nameWithOwner -q '.nameWithOwner'`
+   - `{branch}` = `git branch --show-current`
+   - Intake URL = `https://github.com/{owner_repo}/blob/{branch}/fab/changes/{name}/intake.md`
+   - Spec URL = `https://github.com/{owner_repo}/blob/{branch}/fab/changes/{name}/spec.md` (only if `spec.md` exists)
+
+   Then generate the body:
+   ```
+   ## Summary
+   {1-3 sentences derived from intake's ## Why section}
+
+   ## Changes
+   {bulleted list of subsection headings from intake's ## What Changes section}
+
+   ## Context
+   | | |
+   |---|---|
+   | Type | {type} |
+   | Change | `{change_name}` |
+   | [Intake]({intake_url}) | [Spec]({spec_url}) |
+   ```
+
+   If `spec.md` does not exist, still emit a two-column row with the Spec cell empty: `| [Intake]({intake_url}) | |`.
+
+   **Tier 2 — Lightweight** (type is `docs`, `test`, `ci`, or `chore`, OR no fab change, OR intake missing):
+
+   ```
+   ## Summary
+   {1-3 sentences auto-generated from commit messages or git diff --stat}
+
+   ## Context
+   | | |
+   |---|---|
+   | Type | {type} |
+
+   No design artifacts — housekeeping change.
+   ```
+
+4. Create PR: `gh pr create --title "{pr_title}" --body "<body>"` (where `{pr_title}` is the already-prefixed title from step 2)
+   - If PR creation fails → report the error and STOP
+   - Fall back to `gh pr create --fill` if body generation fails for any reason (silent fallback)
+5. Get the PR URL: `gh pr view --json url -q '.url'`
 
 Print: `  ✓ pr     — <PR URL>`
 
@@ -189,3 +248,19 @@ Shipped.
 - Skip steps that are already done (no uncommitted → skip commit, PR exists → skip create)
 - Always operate on CWD — no repo detection
 - No merge support — stop at PR creation
+
+---
+
+## PR Type Reference
+
+| Type | Description | Fab Pipeline? | Template Tier |
+|------|-------------|---------------|---------------|
+| `feat` | New feature or capability | Yes | 1 (fab-linked) |
+| `fix` | Bug fix | Yes | 1 (fab-linked) |
+| `refactor` | Restructure without behavior change | Yes | 1 (fab-linked) |
+| `docs` | Documentation-only changes | No | 2 (lightweight) |
+| `test` | Adding/fixing tests only | No | 2 (lightweight) |
+| `ci` | CI/CD and build system changes | No | 2 (lightweight) |
+| `chore` | Maintenance, cleanup, housekeeping | No | 2 (lightweight) |
+
+Derived from [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), consolidated: `style` → `refactor`, `perf` → `feat`/`refactor`, `build` → `ci`.

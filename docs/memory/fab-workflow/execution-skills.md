@@ -10,6 +10,8 @@ Execution behavior (apply, review, hydrate) is accessed via `/fab-continue`, whi
 
 **Pipeline invocation**: Both `/fab-fff` and `/fab-ff` use the same execution behavior internally as part of their pipeline runs. All three pipeline skills (`/fab-continue`, `/fab-ff`, `/fab-fff`) dispatch review to a sub-agent in a separate execution context, producing structured findings with three-tier priority (must-fix / should-fix / nice-to-have). `/fab-continue` preserves manual rework on failure; `/fab-ff` auto-loops between apply and review (up to 3 cycles) with interactive fallback on exhaustion; `/fab-fff` uses autonomous rework with bounded retry (3-cycle cap, escalation after 2 consecutive fix-code failures, bail on exhaustion). Both `/fab-ff` and `/fab-fff` accept an optional `[change-name]` argument.
 
+**PR type system**: `/git-pr` supports 7 PR types (feat, fix, refactor, docs, test, ci, chore) derived from Conventional Commits. Types are resolved via a three-step chain: explicit argument → infer from fab change intake → infer from diff. The type controls the PR title prefix (`{type}: {title}`) and template tier: Tier 1 (fab-linked: feat/fix/refactor) shows intake/spec blob URLs; Tier 2 (lightweight: docs/test/ci/chore) shows "No design artifacts — housekeeping change." Blob URLs use `https://github.com/{owner}/{repo}/blob/{branch}/...` to resolve against the feature branch instead of main.
+
 ## Requirements
 
 ### Apply Behavior (via `/fab-continue`)
@@ -230,6 +232,12 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 **Rejected**: Always clear — would lose active change context when archiving a different change. Never clear — would leave stale pointer after archiving the active change.
 *Introduced by*: 260213-jc0u-split-archive-hydrate
 
+### Two-Tier PR Templates with Type Resolution
+**Decision**: `/git-pr` resolves PR type via a three-step chain (explicit argument → intake inference → diff inference) and uses two template tiers: Tier 1 (fab-linked) for feat/fix/refactor with intake/spec blob URLs; Tier 2 (lightweight) for docs/test/ci/chore with explicit "no design artifacts" note. PR titles always get a conventional-commits prefix.
+**Why**: Lightweight changes (chores, CI tweaks, doc fixes) don't warrant a full fab change folder. Blob URLs fix broken relative links (which resolved against main where change files don't exist). Type prefix signals to reviewers what to expect before opening the PR.
+**Rejected**: Single template with optional links (broken links, no reviewer signal), branch prefix convention for type (branch names are change names, not type-encoded), prompting for type (breaks /git-pr's "no questions" contract).
+*Introduced by*: 260225-54vl-smart-git-pr-category-taxonomy
+
 ### Execution Stage Reset Preserves Task Checkboxes
 **Decision**: `/fab-continue apply` re-runs apply behavior starting from the first unchecked task. It does NOT uncheck all tasks.
 **Why**: Task checkboxes reflect actual implementation progress. Silently unchecking them would discard valid work. Review rework (Option 1: "Fix code") handles targeted unchecking with `<!-- rework: reason -->` annotations.
@@ -246,6 +254,7 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260225-54vl-smart-git-pr-category-taxonomy | 2026-02-25 | `/git-pr` gains PR type system: 7 types (feat, fix, refactor, docs, test, ci, chore) from Conventional Commits. New Step 0 resolves type via three-step chain (explicit arg → intake keyword inference → diff path inference). Step 3c rewritten with two-tier templates: Tier 1 (fab-linked) shows summary/changes/context with blob URL links; Tier 2 (lightweight) shows auto-generated summary with "no design artifacts" note. PR titles prefixed with `{type}: `. Blob URLs resolve against feature branch instead of main, fixing broken relative links. PR Type Reference table added. |
 | 260224-1jkh-smart-resolve-and-pr-summary | 2026-02-25 | `changeman.sh resolve` gains single-change guessing fallback when `fab/current` is missing/empty (enumerate valid change folders, return if exactly one). `/git-pr` Step 3c enhanced with intake-aware PR generation: resolves active change, reads `intake.md`, derives PR title from H1 (strips `Intake: ` prefix), generates body with Summary/Changes/Context sections and links to intake + optional spec. Falls back to `gh pr create --fill` when resolution fails or no intake exists. |
 | 260224-vx4k-decouple-git-from-fab-switch | 2026-02-24 | `/git-pr` enhanced with Step 1b (branch mismatch nudge — non-blocking note when current branch doesn't match active change, using prefix-stripped comparison) and enhanced Step 2 branch guard (suggests `/git-branch` when on main with active change). New `/git-branch` command documented in change-lifecycle.md. |
 | 260222-trdc-git-pr-shipped-sentinel-and-status-commit | 2026-02-22 | `/git-pr` now performs a second commit+push after recording shipped URL to `.status.yaml` (Step 4b), then writes a `.shipped` sentinel file as its final action (Step 4c). Step 4b guards for "nothing to commit" via `git diff --cached --quiet`. The "already shipped" early-exit path now includes Steps 4–4c. Sentinel is gitignored, written unconditionally. Pipeline orchestrator (`run.sh`) polls sentinel existence instead of `stageman is-shipped`. |

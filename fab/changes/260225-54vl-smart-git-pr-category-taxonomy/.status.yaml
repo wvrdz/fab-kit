@@ -1,0 +1,38 @@
+name: 260225-54vl-smart-git-pr-category-taxonomy
+created: 2026-02-25T14:39:19+05:30
+created_by: sahil-weaver
+change_type: feature
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 22
+  total: 22
+confidence:
+  certain: 6
+  confident: 3
+  tentative: 0
+  unresolved: 0
+  score: 4.1
+  fuzzy: true
+  dimensions:
+    signal: 85.6
+    reversibility: 84.4
+    competence: 84.4
+    disambiguation: 88.9
+stage_metrics:
+  intake: {started_at: "2026-02-25T14:39:19+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-25T14:40:24+05:30"}
+  spec: {started_at: "2026-02-25T14:40:24+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-25T14:41:57+05:30"}
+  tasks: {started_at: "2026-02-25T14:41:57+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-25T15:08:12+05:30"}
+  apply: {started_at: "2026-02-25T15:08:13+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-25T15:09:46+05:30"}
+  review: {started_at: "2026-02-25T15:09:46+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-25T15:11:39+05:30"}
+  hydrate: {started_at: "2026-02-25T15:11:39+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-25T15:12:23+05:30"}
+shipped:
+  - https://github.com/wvrdz/fab-kit/pull/156
+last_updated: "2026-02-25T15:14:46+05:30"

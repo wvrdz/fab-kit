@@ -352,6 +352,26 @@ When Fab creates a branch, it uses the change folder name directly: `260115-a7k2
 
 When adopting an existing branch (e.g., `feature/dev-907-oauth` from Linear, or an exploratory worktree branch), Fab stores whatever name it finds — no rename.
 
+### PR Types
+
+`/git-pr` categorizes every PR using a 7-type taxonomy derived from [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), consolidated for practical use:
+
+| Type | Description | Fab Pipeline? | PR Template |
+|------|-------------|---------------|-------------|
+| `feat` | New feature or capability | Yes | Tier 1 — intake/spec links |
+| `fix` | Bug fix | Yes | Tier 1 — intake/spec links |
+| `refactor` | Restructure without behavior change | Yes | Tier 1 — intake/spec links |
+| `docs` | Documentation-only changes | No | Tier 2 — lightweight |
+| `test` | Adding/fixing tests only | No | Tier 2 — lightweight |
+| `ci` | CI/CD and build system changes | No | Tier 2 — lightweight |
+| `chore` | Maintenance, cleanup, housekeeping | No | Tier 2 — lightweight |
+
+**Consolidation from Conventional Commits**: `style` merged into `refactor` (formatting is restructuring), `perf` merged into `feat` or `refactor` (performance changes are capability or internal restructuring), `build` merged into `ci` (build config and CI config are the same concern).
+
+**Two tiers**: Tier 1 (fab-linked) PRs include Summary, Changes, and Context sections with working links to `intake.md` and `spec.md`. Tier 2 (lightweight) PRs include an auto-generated summary and explicitly note "No design artifacts — housekeeping change." This signals to reviewers what level of scrutiny to apply.
+
+**Type resolution**: `/git-pr` resolves the type via a three-step chain: (1) explicit argument (`/git-pr chore`), (2) infer from intake content if a fab change exists, (3) infer from diff file paths when no fab change exists. The type appears as a conventional-commits prefix in the PR title: `feat: Smart change resolution`.
+
 ### `.gitignore` Guidance
 
 Add to your project's `.gitignore`:
