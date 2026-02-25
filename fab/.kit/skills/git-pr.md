@@ -165,7 +165,7 @@ Print: `  ✓ push   — origin/<branch>`
    {bulleted list of subsection headings from intake's ## What Changes section}
 
    ## Context
-   | | |
+   | Field | Detail |
    |---|---|
    | Type | {type} |
    | Change | `{change_name}` |
@@ -181,7 +181,7 @@ Print: `  ✓ push   — origin/<branch>`
    {1-3 sentences auto-generated from commit messages or git diff --stat}
 
    ## Context
-   | | |
+   | Field | Detail |
    |---|---|
    | Type | {type} |
 
