@@ -40,11 +40,14 @@ All components MUST be lowercase EXCEPT `{ISSUE}` which stays uppercase (`[A-Z]+
 - **Cleared** by `/fab-archive` — file is deleted after archiving the active change (no active change). Only cleared when the archived change is the one `fab/current` points to
 - **Optionally written** by `/fab-archive restore --switch` — written with the restored change name when `--switch` flag is used
 
-**Resolution pattern** (used by all skills):
-```
-active=$(cat fab/current)
-# then access: fab/changes/$active/.status.yaml, fab/changes/$active/intake.md, etc.
-```
+**Resolution pattern** (used by all skills via `changeman.sh resolve`):
+1. If `fab/current` exists and is non-empty, return its content (primary path)
+2. If `fab/current` is missing or empty, attempt single-change guessing:
+   - Enumerate non-archive folders in `fab/changes/` that contain a valid `.status.yaml`
+   - Exactly 1 candidate → return it, emit `(resolved from single active change)` to stderr
+   - 0 candidates → exit 1 with `No active change.`
+   - 2+ candidates → exit 1 with `No active change (multiple changes exist — use /fab-switch).`
+3. Guessing is transparent to callers — `preflight.sh`, `/git-branch`, and `/git-pr` all call `changeman.sh resolve` and benefit automatically
 
 `fab/current` SHOULD be added to `.gitignore` since it is local working state (each developer has their own active change).
 
