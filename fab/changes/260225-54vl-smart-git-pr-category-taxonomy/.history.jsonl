@@ -1,0 +1,4 @@
+{"ts":"2026-02-25T14:39:19+05:30","event":"command","cmd":"fab-new","args":"Make git-pr smarter with PR category taxonomy and two-tier template system"}
+{"ts":"2026-02-25T14:41:52+05:30","event":"confidence","score":4.1,"delta":"+4.1","trigger":"calc-score"}
+{"ts":"2026-02-25T15:06:52+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-25T15:11:39+05:30","event":"review","result":"passed"}
