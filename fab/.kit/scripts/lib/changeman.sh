@@ -112,19 +112,40 @@ cmd_resolve() {
   else
     # --- Default mode: read fab/current ---
     local current_file="$FAB_ROOT/current"
-    if [ ! -f "$current_file" ]; then
-      echo "No active change." >&2
-      return 1
+    local name=""
+    if [ -f "$current_file" ]; then
+      name=$(tr -d '[:space:]' < "$current_file")
     fi
 
-    local name
-    name=$(tr -d '[:space:]' < "$current_file")
-    if [ -z "$name" ]; then
-      echo "No active change." >&2
-      return 1
+    if [ -n "$name" ]; then
+      echo "$name"
+      return 0
     fi
 
-    echo "$name"
+    # fab/current missing or empty — attempt single-change guess
+    local changes_dir="$FAB_ROOT/changes"
+    local candidates=()
+    if [ -d "$changes_dir" ]; then
+      local d base
+      for d in "$changes_dir"/*/; do
+        [ -d "$d" ] || continue
+        base="$(basename "$d")"
+        [ "$base" = "archive" ] && continue
+        [ -f "$d/.status.yaml" ] || continue
+        candidates+=("$base")
+      done
+    fi
+
+    if [ ${#candidates[@]} -eq 1 ]; then
+      echo "(resolved from single active change)" >&2
+      echo "${candidates[0]}"
+    elif [ ${#candidates[@]} -eq 0 ]; then
+      echo "No active change." >&2
+      return 1
+    else
+      echo "No active change (multiple changes exist — use /fab-switch)." >&2
+      return 1
+    fi
   fi
 }
 

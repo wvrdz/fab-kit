@@ -1,1 +1,5 @@
 {"ts":"2026-02-24T22:12:21+05:30","event":"command","cmd":"fab-new","args":"Two workflow improvements: (1) changeman resolve guesses active change when fab/current missing, (2) git-pr generates better PR summaries from intake.md"}
+{"ts":"2026-02-24T22:19:51+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-02-24T22:21:19+05:30","event":"confidence","score":4.4,"delta":"+4.4","trigger":"calc-score"}
+{"ts":"2026-02-25T07:43:09+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-02-25T07:50:06+05:30","event":"review","result":"passed"}
