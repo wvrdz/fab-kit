@@ -6,27 +6,47 @@ set -euo pipefail
 # Checks all required tools are installed and properly configured.
 # Accumulates all failures before reporting. Exit code = failure count.
 #
+# Usage: fab/.kit/scripts/fab-doctor.sh [--porcelain]
+#
+# --porcelain   Quiet mode: only print errors, suppress passes/hints/summary.
+#               Useful for scripted callers (e.g., worktree creation).
+#
 # Run standalone: fab/.kit/scripts/fab-doctor.sh
 # Also called by: sync/1-prerequisites.sh (exec delegate), /fab-setup (early gate)
+
+porcelain=false
+if [[ "${1:-}" == "--porcelain" ]]; then
+  porcelain=true
+fi
 
 failures=0
 total=7
 
-echo "fab-doctor: checking prerequisites..."
+if [[ "$porcelain" == false ]]; then
+  echo "fab-doctor: checking prerequisites..."
+fi
 
 # ── Helper ──────────────────────────────────────────────────────────
 
 pass() {
-  echo "  ✓ $1"
+  if [[ "$porcelain" == false ]]; then
+    echo "  ✓ $1"
+  fi
 }
 
 fail() {
-  echo "  ✗ $1"
+  if [[ "$porcelain" == true ]]; then
+    echo "$1"
+  else
+    echo "  ✗ $1"
+  fi
   ((failures++)) || true
 }
 
 hint() {
-  echo "    $1"
+  if [[ "$porcelain" == false ]]; then
+    echo "    $1"
+  fi
 }
 
 # ── 1. git ──────────────────────────────────────────────────────────
@@ -141,15 +161,17 @@ fi
 
 # ── Summary ─────────────────────────────────────────────────────────
 
-passed=$((total - failures))
-echo ""
-if [ "$failures" -eq 0 ]; then
-  echo "$passed/$total checks passed."
-else
-  if [ "$failures" -eq 1 ]; then
-    echo "$passed/$total checks passed. $failures issue found."
+if [[ "$porcelain" == false ]]; then
+  passed=$((total - failures))
+  echo ""
+  if [ "$failures" -eq 0 ]; then
+    echo "$passed/$total checks passed."
   else
-    echo "$passed/$total checks passed. $failures issues found."
+    if [ "$failures" -eq 1 ]; then
+      echo "$passed/$total checks passed. $failures issue found."
+    else
+      echo "$passed/$total checks passed. $failures issues found."
+    fi
   fi
 fi
 
