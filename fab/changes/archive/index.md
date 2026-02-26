@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260226-jq7a-slim-config-decouple-naming** — Slimmed config.yaml by removing git and naming sections, renamed rules to stage_directives, added issue_id to status.yaml template to decouple tracker IDs from folder names, created docs/specs/naming.md as canonical naming reference, and added a 0.10.0-to-0.20.0 migration.
 - **260225-jwa3-git-branch-standalone-fallback** — Added a fallback path to `/git-branch` so that when the argument doesn't match an existing fab change, the literal string is used as a standalone branch name, supporting the "hack first, formalize later" workflow.
 - **260225-54vl-smart-git-pr-category-taxonomy** — Added a 7-type PR category taxonomy (feat/fix/refactor/docs/test/ci/chore) to git-pr with three-step type resolution, two-tier PR templates (fab-linked vs lightweight), conventional-commits title prefixes, and fixed broken artifact links using GitHub blob URLs.
 - **260224-v40o-wt-drop-prefix-and-dotworktrees** — Dropped the `wt/` branch prefix from exploratory worktrees and switched the worktree home directory from `<repo>-worktrees` to `<repo>.worktrees` (GitLens convention).

@@ -7,4 +7,4 @@
 - [x] [v9fb] 2026-02-25: Add a porcelain mode to fab-doctor.sh, that can be used during worktree creation - that only prints errors
 - [x] [jwa3] 2026-02-25: git-pr should be able to create a branch, given that I pass an arugment to it, even though the arugment doesn't match an existing change
 - [x] [54vl] 2026-02-25: Make git-pr smarter. There is a category of changes that does not Really require whole fab change folder to come in these are mostly Chores or housekeeping tasks.
-- [ ] [vilz] 2026-02-26: From the config.yaml remove the git section. Also add a migration for this. Reduce the verbosity of the config.yaml file.
+- [x] [vilz] 2026-02-26: From the config.yaml remove the git section. Also add a migration for this. Reduce the verbosity of the config.yaml file.
