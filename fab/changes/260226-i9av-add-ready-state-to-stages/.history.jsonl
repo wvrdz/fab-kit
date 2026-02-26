@@ -1,1 +1,2 @@
 {"ts":"2026-02-26T18:20:57+05:30","event":"command","cmd":"fab-new","args":"Add ready state to stage lifecycle: pending → active → ready → done"}
+{"ts":"2026-02-26T19:01:15+05:30","event":"command","cmd":"fab-clarify"}
