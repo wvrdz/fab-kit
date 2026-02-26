@@ -38,7 +38,7 @@ Load per `_preamble.md` Sections 1-3 (config, constitution, intake, memory index
 
 ## Behavior
 
-> **Note**: All `.status.yaml` transitions in this skill use `fab/.kit/scripts/lib/stageman.sh` CLI commands (`transition`, `set-state`, `set-checklist`) rather than direct file edits. All `transition` calls pass `fab-ff` as the driver. All `set-state` calls pass `fab-ff` when setting state to `active`.
+> **Note**: All `.status.yaml` mutations in this skill use `fab/.kit/scripts/lib/stageman.sh` event commands (`start`, `advance`, `finish`, `reset`, `fail`, `set-checklist`) rather than direct file edits. The driver argument is optional, but this skill always passes `fab-ff`.
 
 ### Resumability
 
@@ -48,7 +48,7 @@ Check `progress` from preflight. Skip stages already `done`. If `hydrate: done`,
 
 *(Skip if `progress.spec` is `done`.)*
 
-Follow **Spec Generation Procedure** (`_generation.md`). No frontloaded questions. Update `.status.yaml` via `fab/.kit/scripts/lib/stageman.sh transition <file> intake spec fab-ff`.
+Follow **Spec Generation Procedure** (`_generation.md`). No frontloaded questions. Update `.status.yaml` via `fab/.kit/scripts/lib/stageman.sh finish <change_dir> intake fab-ff`.
 
 **Spec gate**: After spec generation, run `fab/.kit/scripts/lib/calc-score.sh --check-gate <change_dir>`. If the gate fails → **STOP**: `Confidence is {score} of 5.0 (need > {threshold} for {change_type}). Run /fab-clarify to resolve, then retry /fab-ff.`
 
@@ -70,7 +70,7 @@ Follow **Checklist Generation Procedure** (`_generation.md`).
 
 ### Step 4: Update `.status.yaml` (Planning Complete)
 
-Run `fab/.kit/scripts/lib/stageman.sh transition <file> tasks apply fab-ff`. Then set checklist fields via `fab/.kit/scripts/lib/stageman.sh set-checklist <file> generated true`, `fab/.kit/scripts/lib/stageman.sh set-checklist <file> total <count>`, `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed 0`.
+Run `fab/.kit/scripts/lib/stageman.sh finish <change_dir> tasks fab-ff`. Then set checklist fields via `fab/.kit/scripts/lib/stageman.sh set-checklist <change_dir> generated true`, `fab/.kit/scripts/lib/stageman.sh set-checklist <change_dir> total <count>`, `fab/.kit/scripts/lib/stageman.sh set-checklist <change_dir> completed 0`.
 
 ### Step 5: Implementation
 
@@ -80,7 +80,7 @@ Execute apply behavior per `/fab-continue` — parse unchecked tasks, execute in
 
 **If task fails**: STOP with `Task {ID} failed: {reason}. Investigate and re-run /fab-ff.`
 
-On success: run `fab/.kit/scripts/lib/stageman.sh transition <file> apply review fab-ff`.
+On success: run `fab/.kit/scripts/lib/stageman.sh finish <change_dir> apply fab-ff`.
 
 ### Step 6: Review
 
@@ -88,9 +88,9 @@ On success: run `fab/.kit/scripts/lib/stageman.sh transition <file> apply review
 
 Dispatch review to a **sub-agent** per `/fab-continue` Review Behavior — the sub-agent runs in a separate execution context, performs all validation checks, and returns structured findings with three-tier priority (must-fix / should-fix / nice-to-have).
 
-**Pass**: run `fab/.kit/scripts/lib/stageman.sh transition <file> review hydrate fab-ff`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"`. Proceed to Step 6.
+**Pass**: run `fab/.kit/scripts/lib/stageman.sh finish <change_dir> review fab-ff`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"`. Proceed to Step 7.
 
-**Fail**: Auto-rework loop with bounded retry, then interactive fallback. Run `fab/.kit/scripts/lib/stageman.sh set-state <file> review failed` then `fab/.kit/scripts/lib/stageman.sh set-state <file> apply active fab-ff`.
+**Fail**: Auto-rework loop with bounded retry, then interactive fallback. Run `fab/.kit/scripts/lib/stageman.sh fail <change_dir> review` then `fab/.kit/scripts/lib/stageman.sh start <change_dir> apply fab-ff`.
 
 #### Auto-Rework Loop (up to 3 cycles)
 
@@ -123,7 +123,7 @@ The user can run `/fab-continue` for interactive rework, or `/fab-clarify` to de
 
 *(Skip if `progress.hydrate` is `done`.)*
 
-Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/stageman.sh set-state <file> hydrate done`.
+Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/stageman.sh finish <change_dir> hydrate fab-ff`.
 
 ---
 

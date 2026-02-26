@@ -392,7 +392,7 @@ cmd_new() {
       "$template" > "$status_file"
 
   # Stageman integration
-  "$STAGEMAN" set-state "$status_file" intake active fab-new
+  "$STAGEMAN" start "$status_file" intake fab-new
 
   if [ -n "$log_args" ]; then
     "$STAGEMAN" log-command "$changes_dir/$folder_name" "fab-new" "$log_args"

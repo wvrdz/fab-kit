@@ -8,7 +8,8 @@
 #   stageman.sh --help               Show usage
 #   stageman.sh all-stages           List all stage IDs
 #   stageman.sh progress-map <file>  Extract stage:state pairs
-#   stageman.sh set-state <file> <stage> <state> [driver]
+#   stageman.sh start <change> <stage> [driver]
+#   stageman.sh finish <change> <stage> [driver]
 
 set -euo pipefail
 
@@ -27,6 +28,83 @@ if ! command -v yq &>/dev/null; then
   echo "ERROR: yq (v4) is required but not found. Install: https://github.com/mikefarah/yq" >&2
   exit 1
 fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Change Argument Resolution
+# ─────────────────────────────────────────────────────────────────────────────
+
+# resolve_change_arg <arg> — Resolve a change argument to a .status.yaml path.
+# If <arg> is an existing file, use it directly.
+# Otherwise, resolve via changeman.sh and append /.status.yaml.
+# Returns the resolved path on stdout. Exits 1 on resolution failure.
+CHANGEMAN="$STAGEMAN_DIR/changeman.sh"
+
+resolve_change_arg() {
+  local arg="$1"
+
+  if [ -f "$arg" ]; then
+    echo "$arg"
+    return 0
+  fi
+
+  # If the argument looks like a file path (contains / or ends with .yaml),
+  # treat it as a path that should exist — don't try changeman resolution.
+  if [[ "$arg" == */* ]] || [[ "$arg" == *.yaml ]]; then
+    echo "ERROR: Status file not found: $arg" >&2
+    return 1
+  fi
+
+  # Try changeman resolution for change identifiers
+  local resolved
+  if ! resolved=$("$CHANGEMAN" resolve "$arg" 2>&1); then
+    echo "ERROR: Cannot resolve change '$arg': $resolved" >&2
+    return 1
+  fi
+
+  # Derive repo root from stageman location
+  local repo_root
+  repo_root="$(cd "$STAGEMAN_DIR/../../.." && pwd)"
+  local status_file="$repo_root/fab/changes/${resolved}/.status.yaml"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Resolved status file not found: $status_file" >&2
+    return 1
+  fi
+
+  echo "$status_file"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Transition Lookup
+# ─────────────────────────────────────────────────────────────────────────────
+
+# lookup_transition <event> <stage> <current_state> — Look up transition rule.
+# Checks stage-specific override first, falls back to default.
+# Prints the target state on stdout. Exits 1 if no matching transition.
+lookup_transition() {
+  local event="$1"
+  local stage="$2"
+  local current_state="$3"
+
+  # Check for stage-specific override section first, then default
+  local sections="$stage default"
+  for section in $sections; do
+    local result
+    result=$(yq "
+      .transitions.${section} // [] |
+      map(select(.event == \"${event}\" and (.from | contains([\"${current_state}\"])))) |
+      .[0].to // \"\"
+    " "$WORKFLOW_SCHEMA")
+
+    if [ -n "$result" ] && [ "$result" != "" ] && [ "$result" != "null" ]; then
+      echo "$result"
+      return 0
+    fi
+  done
+
+  echo "ERROR: Cannot ${event} stage '${stage}' — current state is '${current_state}', no valid transition" >&2
+  return 1
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # State Queries
@@ -310,125 +388,6 @@ get_next_stage() {
 # Write Functions
 # ─────────────────────────────────────────────────────────────────────────────
 
-# set_stage_state <status_file> <stage> <state> [driver]
-# Set a single stage's progress value in .status.yaml.
-# driver is required when state is "active", ignored otherwise.
-# Validates inputs, writes atomically (temp-file-then-mv), updates last_updated.
-# Applies stage_metrics side-effects via _apply_metrics_side_effect.
-# Returns 0 on success, 1 on validation failure (diagnostic to stderr).
-set_stage_state() {
-  local status_file="$1"
-  local stage="$2"
-  local state="$3"
-  local driver="${4:-}"
-
-  if [ ! -f "$status_file" ]; then
-    echo "ERROR: Status file not found: $status_file" >&2
-    return 1
-  fi
-
-  if ! validate_stage "$stage"; then
-    echo "ERROR: Invalid stage '$stage'" >&2
-    return 1
-  fi
-
-  if ! validate_stage_state "$stage" "$state"; then
-    echo "ERROR: State '$state' not allowed for stage '$stage'" >&2
-    return 1
-  fi
-
-  if [ "$state" = "active" ] && [ -z "$driver" ]; then
-    echo "ERROR: driver required when setting state to 'active'" >&2
-    return 1
-  fi
-
-  local now
-  now=$(date -Iseconds)
-  local tmpfile
-  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
-
-  cp "$status_file" "$tmpfile"
-  yq -i ".progress.${stage} = \"${state}\" | .last_updated = \"${now}\"" "$tmpfile"
-
-  # Apply stage_metrics side-effects
-  _apply_metrics_side_effect "$tmpfile" "$stage" "$state" "$driver"
-
-  mv "$tmpfile" "$status_file"
-}
-
-# transition_stages <status_file> <from_stage> <to_stage> [driver]
-# Two-write transition: set from_stage to done and to_stage to active atomically.
-# driver is required (applied to to_stage's active side-effect).
-# Validates adjacency and that from_stage is currently active.
-# Applies stage_metrics side-effects for both stages.
-# Returns 0 on success, 1 on validation failure.
-transition_stages() {
-  local status_file="$1"
-  local from_stage="$2"
-  local to_stage="$3"
-  local driver="${4:-}"
-
-  if [ ! -f "$status_file" ]; then
-    echo "ERROR: Status file not found: $status_file" >&2
-    return 1
-  fi
-
-  if ! validate_stage "$from_stage"; then
-    echo "ERROR: Invalid stage '$from_stage'" >&2
-    return 1
-  fi
-
-  if ! validate_stage "$to_stage"; then
-    echo "ERROR: Invalid stage '$to_stage'" >&2
-    return 1
-  fi
-
-  if ! validate_stage_state "$from_stage" "done"; then
-    echo "ERROR: State 'done' not allowed for stage '$from_stage'" >&2
-    return 1
-  fi
-
-  if ! validate_stage_state "$to_stage" "active"; then
-    echo "ERROR: State 'active' not allowed for stage '$to_stage'" >&2
-    return 1
-  fi
-
-  if [ -z "$driver" ]; then
-    echo "ERROR: driver required for transition" >&2
-    return 1
-  fi
-
-  # Verify from_stage is currently active
-  local current_state
-  current_state=$(yq ".progress.${from_stage}" "$status_file")
-  if [ "$current_state" != "active" ]; then
-    echo "ERROR: Stage '$from_stage' is '$current_state', expected 'active'" >&2
-    return 1
-  fi
-
-  # Verify adjacency
-  local expected_next
-  expected_next=$(get_next_stage "$from_stage") || true
-  if [ "$expected_next" != "$to_stage" ]; then
-    echo "ERROR: '$to_stage' is not adjacent to '$from_stage' (expected '$expected_next')" >&2
-    return 1
-  fi
-
-  local now
-  now=$(date -Iseconds)
-  local tmpfile
-  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
-
-  cp "$status_file" "$tmpfile"
-  yq -i ".progress.${from_stage} = \"done\" | .progress.${to_stage} = \"active\" | .last_updated = \"${now}\"" "$tmpfile"
-
-  # Apply stage_metrics side-effects: from→done, to→active
-  _apply_metrics_side_effect "$tmpfile" "$from_stage" "done"
-  _apply_metrics_side_effect "$tmpfile" "$to_stage" "active" "$driver"
-
-  mv "$tmpfile" "$status_file"
-}
-
 # set_change_type <status_file> <type>
 # Set the change_type field in .status.yaml.
 # Validates type is one of the 7 canonical types. Writes atomically, updates last_updated.
@@ -634,6 +593,213 @@ set_confidence_block_fuzzy() {
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Event Functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+# event_start <status_file> <stage> [driver]
+# {pending,failed} → active. Validates via lookup_transition.
+event_start() {
+  local status_file="$1"
+  local stage="$2"
+  local driver="${3:-}"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+  if ! validate_stage "$stage"; then
+    echo "ERROR: Invalid stage '$stage'" >&2
+    return 1
+  fi
+
+  local current_state
+  current_state=$(yq ".progress.${stage} // \"pending\"" "$status_file")
+
+  local target_state
+  if ! target_state=$(lookup_transition "start" "$stage" "$current_state"); then
+    return 1
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".progress.${stage} = \"${target_state}\" | .last_updated = \"${now}\"" "$tmpfile"
+  _apply_metrics_side_effect "$tmpfile" "$stage" "$target_state" "$driver"
+
+  mv "$tmpfile" "$status_file"
+}
+
+# event_advance <status_file> <stage> [driver]
+# active → ready. No metrics side-effect.
+event_advance() {
+  local status_file="$1"
+  local stage="$2"
+  local driver="${3:-}"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+  if ! validate_stage "$stage"; then
+    echo "ERROR: Invalid stage '$stage'" >&2
+    return 1
+  fi
+
+  local current_state
+  current_state=$(yq ".progress.${stage} // \"pending\"" "$status_file")
+
+  local target_state
+  if ! target_state=$(lookup_transition "advance" "$stage" "$current_state"); then
+    return 1
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".progress.${stage} = \"${target_state}\" | .last_updated = \"${now}\"" "$tmpfile"
+  # advance: no metrics side-effect (preserve existing from active phase)
+
+  mv "$tmpfile" "$status_file"
+}
+
+# event_finish <status_file> <stage> [driver]
+# {active,ready} → done. Side-effect: if next stage is pending, activate it.
+event_finish() {
+  local status_file="$1"
+  local stage="$2"
+  local driver="${3:-}"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+  if ! validate_stage "$stage"; then
+    echo "ERROR: Invalid stage '$stage'" >&2
+    return 1
+  fi
+
+  local current_state
+  current_state=$(yq ".progress.${stage} // \"pending\"" "$status_file")
+
+  local target_state
+  if ! target_state=$(lookup_transition "finish" "$stage" "$current_state"); then
+    return 1
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".progress.${stage} = \"${target_state}\" | .last_updated = \"${now}\"" "$tmpfile"
+  _apply_metrics_side_effect "$tmpfile" "$stage" "$target_state"
+
+  # Side-effect: activate next pending stage
+  local next_stage
+  if next_stage=$(get_next_stage "$stage"); then
+    local next_state
+    next_state=$(yq ".progress.${next_stage} // \"pending\"" "$tmpfile")
+    if [ "$next_state" = "pending" ]; then
+      yq -i ".progress.${next_stage} = \"active\"" "$tmpfile"
+      _apply_metrics_side_effect "$tmpfile" "$next_stage" "active" "$driver"
+    fi
+  fi
+
+  mv "$tmpfile" "$status_file"
+}
+
+# event_reset <status_file> <stage> [driver]
+# {done,ready} → active. Cascade: all downstream stages → pending.
+event_reset() {
+  local status_file="$1"
+  local stage="$2"
+  local driver="${3:-}"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+  if ! validate_stage "$stage"; then
+    echo "ERROR: Invalid stage '$stage'" >&2
+    return 1
+  fi
+
+  local current_state
+  current_state=$(yq ".progress.${stage} // \"pending\"" "$status_file")
+
+  local target_state
+  if ! target_state=$(lookup_transition "reset" "$stage" "$current_state"); then
+    return 1
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".progress.${stage} = \"${target_state}\" | .last_updated = \"${now}\"" "$tmpfile"
+  _apply_metrics_side_effect "$tmpfile" "$stage" "$target_state" "$driver"
+
+  # Cascade: set all downstream stages to pending, remove their metrics
+  local found_target=false
+  for s in $(get_all_stages); do
+    if [ "$found_target" = "true" ]; then
+      yq -i ".progress.${s} = \"pending\"" "$tmpfile"
+      _apply_metrics_side_effect "$tmpfile" "$s" "pending"
+    fi
+    if [ "$s" = "$stage" ]; then
+      found_target=true
+    fi
+  done
+
+  mv "$tmpfile" "$status_file"
+}
+
+# event_fail <status_file> <stage> [driver]
+# active → failed. Review stage only. No metrics side-effect.
+event_fail() {
+  local status_file="$1"
+  local stage="$2"
+  local driver="${3:-}"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+  if ! validate_stage "$stage"; then
+    echo "ERROR: Invalid stage '$stage'" >&2
+    return 1
+  fi
+
+  local current_state
+  current_state=$(yq ".progress.${stage} // \"pending\"" "$status_file")
+
+  local target_state
+  if ! target_state=$(lookup_transition "fail" "$stage" "$current_state"); then
+    return 1
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".progress.${stage} = \"${target_state}\" | .last_updated = \"${now}\"" "$tmpfile"
+  # fail: no metrics side-effect (preserve timing data)
+
+  mv "$tmpfile" "$status_file"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Shipped Tracking
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -826,27 +992,32 @@ SUBCOMMANDS:
     all-stages                         List all stages in order
 
   .status.yaml accessors:
-    progress-map <file>                Extract stage:state pairs (one per line)
-    checklist <file>                   Extract checklist fields (key:value lines)
-    confidence <file>                  Extract confidence fields (key:value lines)
-    is-shipped <file>                  Check if change has been shipped (exit 0/1)
+    progress-map <change>              Extract stage:state pairs (one per line)
+    checklist <change>                 Extract checklist fields (key:value lines)
+    confidence <change>                Extract confidence fields (key:value lines)
+    is-shipped <change>                Check if change has been shipped (exit 0/1)
 
   Progression:
-    current-stage <file>               Detect active stage from .status.yaml
-    display-stage <file>               Display stage (where you are) as stage:state
-    progress-line <file>               Single-line visual progress (done → active ⏳)
+    current-stage <change>             Detect active stage from .status.yaml
+    display-stage <change>             Display stage (where you are) as stage:state
+    progress-line <change>             Single-line visual progress (done → active ⏳)
 
   Validation:
-    validate-status-file <file>        Validate .status.yaml against schema
+    validate-status-file <change>      Validate .status.yaml against schema
+
+  Event commands:
+    start <change> <stage> [driver]            {pending,failed} → active
+    advance <change> <stage> [driver]          active → ready
+    finish <change> <stage> [driver]           {active,ready} → done (+next)
+    reset <change> <stage> [driver]            {done,ready} → active (+cascade)
+    fail <change> <stage> [driver]             active → failed (review only)
 
   Write commands:
-    set-state <file> <stage> <state> [driver]   Set a stage's state
-    transition <file> <from> <to> [driver]      Two-write forward transition
-    set-change-type <file> <type>              Set change_type (feat/fix/refactor/docs/test/ci/chore)
-    set-checklist <file> <field> <value>        Update checklist field
-    set-confidence <file> <certain> <confident> <tentative> <unresolved> <score>
-    set-confidence-fuzzy <file> <certain> <confident> <tentative> <unresolved> <score> <mean_s> <mean_r> <mean_a> <mean_d>
-    ship <file> <url>                  Append PR URL to shipped array (idempotent)
+    set-change-type <change> <type>            Set change_type (feat/fix/refactor/docs/test/ci/chore)
+    set-checklist <change> <field> <value>      Update checklist field
+    set-confidence <change> <certain> <confident> <tentative> <unresolved> <score>
+    set-confidence-fuzzy <change> <certain> <confident> <tentative> <unresolved> <score> <mean_s> <mean_r> <mean_a> <mean_d>
+    ship <change> <url>                Append PR URL to shipped array (idempotent)
 
   History:
     log-command <change_dir> <cmd> [args]              Log a command invocation
@@ -856,8 +1027,8 @@ SUBCOMMANDS:
 EXAMPLES:
   stageman.sh all-stages
   stageman.sh progress-map .status.yaml
-  stageman.sh set-state .status.yaml spec done fab-continue
-  stageman.sh transition .status.yaml spec tasks fab-continue
+  stageman.sh start 6boq spec fab-continue
+  stageman.sh finish 6boq spec fab-continue
 
 SEE ALSO:
   src/lib/stageman/SPEC-stageman.md - API reference
@@ -885,122 +1056,155 @@ case "${1:-}" in
   # ── .status.yaml Accessors ─────────────────────────────────────────────
   progress-map)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh progress-map <file>" >&2
+      echo "Usage: stageman.sh progress-map <change>" >&2
       exit 1
     fi
-    get_progress_map "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    get_progress_map "$_resolved_file"
     ;;
   checklist)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh checklist <file>" >&2
+      echo "Usage: stageman.sh checklist <change>" >&2
       exit 1
     fi
-    get_checklist "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    get_checklist "$_resolved_file"
     ;;
   confidence)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh confidence <file>" >&2
+      echo "Usage: stageman.sh confidence <change>" >&2
       exit 1
     fi
-    get_confidence "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    get_confidence "$_resolved_file"
     ;;
 
   # ── Progression ────────────────────────────────────────────────────────
   current-stage)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh current-stage <file>" >&2
+      echo "Usage: stageman.sh current-stage <change>" >&2
       exit 1
     fi
-    get_current_stage "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    get_current_stage "$_resolved_file"
     ;;
   display-stage)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh display-stage <file>" >&2
+      echo "Usage: stageman.sh display-stage <change>" >&2
       exit 1
     fi
-    if [ ! -f "$2" ]; then
-      echo "ERROR: Status file not found: $2" >&2
-      exit 1
-    fi
-    get_display_stage "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    get_display_stage "$_resolved_file"
     ;;
   progress-line)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh progress-line <file>" >&2
+      echo "Usage: stageman.sh progress-line <change>" >&2
       exit 1
     fi
-    if [ ! -f "$2" ]; then
-      echo "ERROR: Status file not found: $2" >&2
-      exit 1
-    fi
-    get_progress_line "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    get_progress_line "$_resolved_file"
     ;;
 
   # ── Validation ─────────────────────────────────────────────────────────
   validate-status-file)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh validate-status-file <file>" >&2
+      echo "Usage: stageman.sh validate-status-file <change>" >&2
       exit 1
     fi
-    validate_status_file "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    validate_status_file "$_resolved_file"
+    ;;
+
+  # ── Event Commands ────────────────────────────────────────────────────
+  start)
+    if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+      echo "Usage: stageman.sh start <change> <stage> [driver]" >&2
+      exit 1
+    fi
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    event_start "$_resolved_file" "$3" "${4:-}"
+    ;;
+  advance)
+    if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+      echo "Usage: stageman.sh advance <change> <stage> [driver]" >&2
+      exit 1
+    fi
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    event_advance "$_resolved_file" "$3" "${4:-}"
+    ;;
+  finish)
+    if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+      echo "Usage: stageman.sh finish <change> <stage> [driver]" >&2
+      exit 1
+    fi
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    event_finish "$_resolved_file" "$3" "${4:-}"
+    ;;
+  reset)
+    if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+      echo "Usage: stageman.sh reset <change> <stage> [driver]" >&2
+      exit 1
+    fi
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    event_reset "$_resolved_file" "$3" "${4:-}"
+    ;;
+  fail)
+    if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+      echo "Usage: stageman.sh fail <change> <stage> [driver]" >&2
+      exit 1
+    fi
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    event_fail "$_resolved_file" "$3" "${4:-}"
     ;;
 
   # ── Write Commands ─────────────────────────────────────────────────────
-  set-state)
-    if [ $# -lt 4 ] || [ $# -gt 5 ]; then
-      echo "Usage: stageman.sh set-state <file> <stage> <state> [driver]" >&2
-      exit 1
-    fi
-    set_stage_state "$2" "$3" "$4" "${5:-}"
-    ;;
-  transition)
-    if [ $# -lt 4 ] || [ $# -gt 5 ]; then
-      echo "Usage: stageman.sh transition <file> <from-stage> <to-stage> [driver]" >&2
-      exit 1
-    fi
-    transition_stages "$2" "$3" "$4" "${5:-}"
-    ;;
   set-change-type)
     if [ $# -ne 3 ]; then
-      echo "Usage: stageman.sh set-change-type <file> <type>" >&2
+      echo "Usage: stageman.sh set-change-type <change> <type>" >&2
       exit 1
     fi
-    set_change_type "$2" "$3"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    set_change_type "$_resolved_file" "$3"
     ;;
   set-checklist)
     if [ $# -ne 4 ]; then
-      echo "Usage: stageman.sh set-checklist <file> <field> <value>" >&2
+      echo "Usage: stageman.sh set-checklist <change> <field> <value>" >&2
       exit 1
     fi
-    set_checklist_field "$2" "$3" "$4"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    set_checklist_field "$_resolved_file" "$3" "$4"
     ;;
   set-confidence)
     if [ $# -ne 7 ]; then
-      echo "Usage: stageman.sh set-confidence <file> <certain> <confident> <tentative> <unresolved> <score>" >&2
+      echo "Usage: stageman.sh set-confidence <change> <certain> <confident> <tentative> <unresolved> <score>" >&2
       exit 1
     fi
-    set_confidence_block "$2" "$3" "$4" "$5" "$6" "$7"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    set_confidence_block "$_resolved_file" "$3" "$4" "$5" "$6" "$7"
     ;;
   set-confidence-fuzzy)
     if [ $# -ne 11 ]; then
-      echo "Usage: stageman.sh set-confidence-fuzzy <file> <certain> <confident> <tentative> <unresolved> <score> <mean_s> <mean_r> <mean_a> <mean_d>" >&2
+      echo "Usage: stageman.sh set-confidence-fuzzy <change> <certain> <confident> <tentative> <unresolved> <score> <mean_s> <mean_r> <mean_a> <mean_d>" >&2
       exit 1
     fi
-    set_confidence_block_fuzzy "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    set_confidence_block_fuzzy "$_resolved_file" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}"
     ;;
   ship)
     if [ $# -ne 3 ]; then
-      echo "Usage: stageman.sh ship <file> <url>" >&2
+      echo "Usage: stageman.sh ship <change> <url>" >&2
       exit 1
     fi
-    ship_url "$2" "$3"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    ship_url "$_resolved_file" "$3"
     ;;
   is-shipped)
     if [ $# -ne 2 ]; then
-      echo "Usage: stageman.sh is-shipped <file>" >&2
+      echo "Usage: stageman.sh is-shipped <change>" >&2
       exit 1
     fi
-    is_shipped "$2"
+    _resolved_file=$(resolve_change_arg "$2") || exit 1
+    is_shipped "$_resolved_file"
     ;;
 
   # ── History Commands ───────────────────────────────────────────────────

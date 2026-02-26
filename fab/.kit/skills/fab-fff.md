@@ -37,7 +37,7 @@ Load per `_preamble.md` Sections 1-3 (config, constitution, intake, memory index
 
 ## Behavior
 
-> **Note**: All `.status.yaml` transitions in this skill use `fab/.kit/scripts/lib/stageman.sh` CLI commands (`transition`, `set-state`, `set-checklist`) rather than direct file edits. All `transition` calls pass `fab-fff` as the driver. All `set-state` calls pass `fab-fff` when setting state to `active`.
+> **Note**: All `.status.yaml` mutations in this skill use `fab/.kit/scripts/lib/stageman.sh` event commands (`start`, `advance`, `finish`, `reset`, `fail`, `set-checklist`) rather than direct file edits. Driver is optional in the CLI but this skill always passes `fab-fff`.
 
 ### Resumability
 
@@ -56,7 +56,7 @@ At most one Q&A round.
 
 *(Skip if `progress.spec` is `done`.)*
 
-Follow **Spec Generation Procedure** (`_generation.md`). Incorporate answers from Step 1 — no `[NEEDS CLARIFICATION]` markers. Update `.status.yaml` via `fab/.kit/scripts/lib/stageman.sh set-state <file> spec done`.
+Follow **Spec Generation Procedure** (`_generation.md`). Incorporate answers from Step 1 — no `[NEEDS CLARIFICATION]` markers. Update `.status.yaml` via `fab/.kit/scripts/lib/stageman.sh finish <change> spec fab-fff`.
 
 **Auto-Clarify**: Invoke `/fab-clarify` with `[AUTO-MODE]` prefix. If `blocking: 0` → continue. If `blocking > 0` → **BAIL**: report issues, suggest `/fab-clarify` then `/fab-fff`.
 
@@ -72,7 +72,7 @@ Follow **Checklist Generation Procedure** (`_generation.md`).
 
 ### Step 5: Update `.status.yaml` (Planning Complete)
 
-Run `fab/.kit/scripts/lib/stageman.sh transition <file> tasks apply fab-fff`. Then set checklist fields via `fab/.kit/scripts/lib/stageman.sh set-checklist <file> generated true`, `fab/.kit/scripts/lib/stageman.sh set-checklist <file> total <count>`, `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed 0`.
+Run `fab/.kit/scripts/lib/stageman.sh finish <change> tasks fab-fff`. Then set checklist fields via `fab/.kit/scripts/lib/stageman.sh set-checklist <change> generated true`, `fab/.kit/scripts/lib/stageman.sh set-checklist <change> total <count>`, `fab/.kit/scripts/lib/stageman.sh set-checklist <change> completed 0`.
 
 ### Step 6: Implementation
 
@@ -82,7 +82,7 @@ Execute apply behavior per `/fab-continue` — parse unchecked tasks, execute in
 
 **If task fails**: STOP with `Task {ID} failed: {reason}. Investigate and re-run /fab-fff.`
 
-On success: run `fab/.kit/scripts/lib/stageman.sh transition <file> apply review fab-fff`.
+On success: run `fab/.kit/scripts/lib/stageman.sh finish <change> apply fab-fff`.
 
 ### Step 7: Review
 
@@ -90,9 +90,9 @@ On success: run `fab/.kit/scripts/lib/stageman.sh transition <file> apply review
 
 Dispatch review to a **sub-agent** per `/fab-continue` Review Behavior — the sub-agent runs in a separate execution context, performs all validation checks, and returns structured findings with three-tier priority (must-fix / should-fix / nice-to-have).
 
-**Pass**: run `fab/.kit/scripts/lib/stageman.sh transition <file> review hydrate fab-fff`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"`. Proceed to Step 8.
+**Pass**: run `fab/.kit/scripts/lib/stageman.sh finish <change> review fab-fff`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"`. Proceed to Step 8.
 
-**Fail**: Autonomous rework with bounded retry. Run `fab/.kit/scripts/lib/stageman.sh set-state <file> review failed` then `fab/.kit/scripts/lib/stageman.sh set-state <file> apply active fab-fff`. The agent triages the sub-agent's prioritized findings and autonomously selects the rework path — no user interaction. Must-fix items are always addressed; should-fix items when clear and low-effort; nice-to-have items may be skipped.
+**Fail**: Autonomous rework with bounded retry. Run `fab/.kit/scripts/lib/stageman.sh fail <change> review` then `fab/.kit/scripts/lib/stageman.sh start <change> apply fab-fff`. The agent triages the sub-agent's prioritized findings and autonomously selects the rework path — no user interaction. Must-fix items are always addressed; should-fix items when clear and low-effort; nice-to-have items may be skipped.
 
 **Decision heuristics** (applied to prioritized findings):
 - **Must-fix: test failures, spec mismatches, checklist violations** → "Fix code" — uncheck affected tasks with `<!-- rework: reason -->`, re-run apply, then spawn a **fresh sub-agent** for re-review
@@ -117,7 +117,7 @@ Run /fab-continue for manual rework options.
 
 *(Skip if `progress.hydrate` is `done`.)*
 
-Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/stageman.sh set-state <file> hydrate done`.
+Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/stageman.sh finish <change> hydrate fab-fff`.
 
 ---
 

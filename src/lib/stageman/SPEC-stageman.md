@@ -19,9 +19,9 @@ STAGEMAN="path/to/stageman.sh"
 "$STAGEMAN" progress-map .status.yaml  # Extract stage:state pairs
 "$STAGEMAN" current-stage .status.yaml # Detect active stage
 
-# Write subcommands
-"$STAGEMAN" set-state .status.yaml spec done fab-continue
-"$STAGEMAN" transition .status.yaml spec tasks fab-continue
+# Event subcommands
+"$STAGEMAN" start 6boq spec fab-continue
+"$STAGEMAN" finish 6boq spec fab-continue
 
 # Flags
 "$STAGEMAN" --help      # Show usage and subcommand reference
@@ -55,12 +55,20 @@ STAGEMAN="path/to/stageman.sh"
 |------------|-------|--------|------|
 | `validate-status-file <file>` | .status.yaml path | errors to stderr | 0 valid, 1 invalid |
 
+### Event Commands
+
+| Subcommand | Input | Output | Exit |
+|------------|-------|--------|------|
+| `start <change> <stage> [driver]` | change ID/path, stage, optional driver | — | 0 ok, 1 invalid |
+| `advance <change> <stage> [driver]` | change ID/path, stage, optional driver | — | 0 ok, 1 invalid |
+| `finish <change> <stage> [driver]` | change ID/path, stage, optional driver | — | 0 ok, 1 invalid |
+| `reset <change> <stage> [driver]` | change ID/path, stage, optional driver | — | 0 ok, 1 invalid |
+| `fail <change> <stage> [driver]` | change ID/path, stage, optional driver | — | 0 ok, 1 invalid |
+
 ### Write Commands
 
 | Subcommand | Input | Output | Exit |
 |------------|-------|--------|------|
-| `set-state <file> <stage> <state> [driver]` | path, stage, state, optional driver | — | 0 |
-| `transition <file> <from> <to> [driver]` | path, stages, optional driver | — | 0 |
 | `set-checklist <file> <field> <value>` | path, field name, value | — | 0 |
 | `set-confidence <file> <c> <cf> <t> <u> <score>` | path, grade counts, score | — | 0 |
 | `set-confidence-fuzzy <file> <c> <cf> <t> <u> <score> <s> <r> <a> <d>` | path, grade counts, score, dimension means | — | 0 |
@@ -83,7 +91,7 @@ STAGEMAN="path/to/stageman.sh"
 ## Testing
 
 ```bash
-# Full test suite (53 tests)
+# Full test suite (115 tests)
 bats src/lib/stageman/test.bats
 
 # Quick smoke test
@@ -91,6 +99,17 @@ src/lib/stageman/test-simple.sh
 ```
 
 ## Changelog
+
+### 4.0.0 (2026-02-26)
+
+- Replaced `set-state` and `transition` with 5 event commands: `start`, `advance`, `finish`, `reset`, `fail`
+- All event commands accept change identifiers (4-char ID, partial slug, full name) or raw file paths via `resolve_change_arg`
+- `finish` atomically activates next pending stage; `reset` cascades downstream stages to pending
+- `fail` restricted to review stage only
+- Driver parameter optional on all event commands
+- Transitions defined by event-keyed format in workflow.yaml (replaces from→to with condition)
+- Non-event commands also accept change identifiers via universal resolution
+- Test suite expanded from 53 to 115 tests (all event-based)
 
 ### 3.0.0 (2026-02-16)
 
