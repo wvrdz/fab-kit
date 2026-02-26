@@ -1,0 +1,39 @@
+name: 260226-koj1-version-staleness-warning
+created: 2026-02-26T17:27:50+05:30
+created_by: sahil-weaver
+change_type: feature
+issue_id: null
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 19
+  total: 19
+confidence:
+  certain: 8
+  confident: 4
+  tentative: 0
+  unresolved: 0
+  score: 3.8
+  fuzzy: true
+  dimensions:
+    signal: 85.8
+    reversibility: 87.9
+    competence: 90.4
+    disambiguation: 89.2
+stage_metrics:
+  intake: {started_at: "2026-02-26T17:27:50+05:30", driver: fab-new, iterations: 1, completed_at: "2026-02-26T17:35:56+05:30"}
+  spec: {started_at: "2026-02-26T17:35:56+05:30", driver: fab-continue, iterations: 1, completed_at: "2026-02-26T17:45:43+05:30"}
+  tasks: {started_at: "2026-02-26T17:45:43+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-26T17:45:43+05:30"}
+  apply: {started_at: "2026-02-26T17:52:34+05:30", driver: fab-ff, iterations: 2, completed_at: "2026-02-26T17:53:50+05:30"}
+  review: {started_at: "2026-02-26T17:53:50+05:30", driver: fab-ff, iterations: 2, completed_at: "2026-02-26T17:53:56+05:30"}
+  hydrate: {started_at: "2026-02-26T17:53:56+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-02-26T17:56:09+05:30"}
+shipped:
+  - https://github.com/wvrdz/fab-kit/pull/160
+last_updated: "2026-02-26T18:09:00+05:30"

@@ -1,4 +1,5 @@
 fab/current
+fab/.kit-sync-version
 # fab/backlog.md
 fab/pipelines/.series-*.yaml
 fab/changes/**/.shipped

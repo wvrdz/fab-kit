@@ -155,22 +155,36 @@ if [ ! -f "$fab_dir/changes/archive/.gitkeep" ]; then
   touch "$fab_dir/changes/archive/.gitkeep"
 fi
 
-# ── 1b. fab/project/VERSION ───────────────────────────────────────────
+# ── 1b. fab/.kit-migration-version ────────────────────────────────────
 # Track the local project's kit version. New projects get the engine version;
 # existing projects (have config.yaml) get the base version 0.1.0 so
 # `/fab-setup migrations` runs all needed migrations.
+migration_version_file="$fab_dir/.kit-migration-version"
+
+# Backward compat: migrate old fab/project/VERSION to new location
 if [ -f "$fab_dir/project/VERSION" ]; then
-  echo "fab/project/VERSION: OK ($(cat "$fab_dir/project/VERSION"))"
+  old_ver=$(cat "$fab_dir/project/VERSION" | tr -d '[:space:]')
+  if [ -f "$migration_version_file" ]; then
+    # Both exist — new file takes precedence, remove old
+    rm "$fab_dir/project/VERSION"
+    echo "Cleaned: stale fab/project/VERSION (migrated to fab/.kit-migration-version)"
+  else
+    # Old exists, new doesn't — migrate
+    mv "$fab_dir/project/VERSION" "$migration_version_file"
+    echo "Migrated: fab/project/VERSION → fab/.kit-migration-version ($old_ver)"
+  fi
+fi
+
+if [ -f "$migration_version_file" ]; then
+  echo "fab/.kit-migration-version: OK ($(cat "$migration_version_file"))"
 elif [ -f "$fab_dir/project/config.yaml" ]; then
   # Existing project: set base version so `/fab-setup migrations` applies migrations
-  mkdir -p "$fab_dir/project"
-  echo "0.1.0" > "$fab_dir/project/VERSION"
-  echo "Created: fab/project/VERSION (0.1.0 — existing project, run \`/fab-setup migrations\` to migrate)"
+  echo "0.1.0" > "$migration_version_file"
+  echo "Created: fab/.kit-migration-version (0.1.0 — existing project, run \`/fab-setup migrations\` to migrate)"
 else
   # New project: match engine version
-  mkdir -p "$fab_dir/project"
-  cp "$kit_dir/VERSION" "$fab_dir/project/VERSION"
-  echo "Created: fab/project/VERSION ($version)"
+  cp "$kit_dir/VERSION" "$migration_version_file"
+  echo "Created: fab/.kit-migration-version ($version)"
 fi
 
 # ── 2. Scaffold tree-walk ─────────────────────────────────────────
@@ -446,6 +460,23 @@ if [ -d "$claude_agents_dir" ]; then
   if [ "$stale_agents" -gt 0 ]; then
     echo "Cleaned: $stale_agents stale agent files from .claude/agents/"
   fi
+fi
+
+# ── 5. Sync version stamp ────────────────────────────────────────────
+# Record the kit version that was last synced. Preflight compares this
+# against fab/.kit/VERSION to detect stale skill deployments.
+sync_version_file="$fab_dir/.kit-sync-version"
+if [ -f "$sync_version_file" ]; then
+  old_sync_ver=$(cat "$sync_version_file" | tr -d '[:space:]')
+  if [ "$old_sync_ver" = "$version" ]; then
+    echo "fab/.kit-sync-version: OK ($version)"
+  else
+    printf '%s\n' "$version" > "$sync_version_file"
+    echo "Updated: fab/.kit-sync-version ($old_sync_ver → $version)"
+  fi
+else
+  printf '%s\n' "$version" > "$sync_version_file"
+  echo "Created: fab/.kit-sync-version ($version)"
 fi
 
 echo "Done."
