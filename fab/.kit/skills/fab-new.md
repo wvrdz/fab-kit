@@ -36,7 +36,7 @@ Detect input type (check in order):
 
 ### Step 1: Generate Slug
 
-Generate a 2-6 word slug (lowercase, hyphen-joined, no articles/prepositions) from the description. If a Linear issue ID was parsed in Step 0, prefix the slug with it: e.g., `DEV-988-add-oauth`. Without a Linear ID: just the slug, e.g., `add-oauth`. This slug is passed to `changeman.sh` as the `--slug` value.
+Generate a 2-6 word slug (lowercase, hyphen-joined, no articles/prepositions) from the description. The slug SHALL NOT include the Linear issue ID — it contains only the descriptive portion (e.g., `add-oauth`). This slug is passed to `changeman.sh` as the `--slug` value.
 
 ### Step 2: Gap Analysis
 
@@ -45,11 +45,14 @@ Check for existing mechanisms or scope concerns covering the idea. If covered: p
 ### Step 3: Create Change
 
 Run `lib/changeman.sh new` with appropriate flags:
-- `--slug <slug>` — the slug from Step 1 (includes issue ID prefix if applicable)
+- `--slug <slug>` — the slug from Step 1 (descriptive only, no issue ID)
 - `--change-id <4char>` — only if a backlog ID was detected in Step 0 (the 4-char backlog ID becomes the change ID)
 - `--log-args <description>` — the original description text
 
 Capture the folder name from stdout. The script handles date generation, random ID generation (if no `--change-id`), collision detection, directory creation, `created_by` detection, `.status.yaml` initialization, and `stageman.sh` integration.
+
+If a Linear ticket was detected in Step 0, write the issue ID to `.status.yaml`:
+`yq -i '.issue_id = "DEV-988"' fab/changes/{name}/.status.yaml` (using the actual detected ID).
 
 ### Step 4: Conversation Context Mining
 
