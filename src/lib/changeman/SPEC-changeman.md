@@ -60,7 +60,7 @@ CHANGEMAN="path/to/changeman.sh"
 6. Creates directory via `mkdir` (not `-p` — parent guaranteed by sync-workspace.sh)
 7. Detects `created_by`: `gh api user` → `git config user.name` → `"unknown"`
 8. Initializes `.status.yaml` from template via `sed`
-9. Calls `stageman set-state <file> intake active fab-new`
+9. Calls `stageman start <file> intake fab-new`
 10. Optionally calls `stageman log-command` if `--log-args` provided
 
 **Collision detection:**

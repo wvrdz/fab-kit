@@ -37,23 +37,23 @@ Both may be provided in any order. Stage names are treated as reset targets; all
 
 ### Step 1: Determine Current Stage
 
-Dispatch on preflight's derived `stage` and `display_state`. If progress is `pending`, set to `active` before dispatching.
+Dispatch on preflight's derived `stage` and `display_state`. If progress is `pending`, run `fab/.kit/scripts/lib/stageman.sh start <change> <stage> fab-continue` before dispatching.
 
 **State-based dispatch**: The `display_state` field distinguishes two actions per stage:
-- **`active`** → Generate the stage's artifact, then set stage to `ready`
-- **`ready`** → Advance to the next stage (set current to `done`, next to `active`)
+- **`active`** → Generate the stage's artifact, then run `advance` to move stage to `ready`
+- **`ready`** → Run `finish` to complete the stage (`done`) and auto-activate the next
 
 | Derived stage | State | Action |
 |---------------|-------|--------|
-| `intake` | `active` | `intake.md` exists from `/fab-new` — set `intake: ready` |
-| `intake` | `ready` | Advance: `intake: done`, `spec: active` |
-| `spec` | `active` | Generate `spec.md` → set `spec: ready` |
-| `spec` | `ready` | Advance: `spec: done`, `tasks: active` |
-| `tasks` | `active` | Generate `tasks.md` + checklist → set `tasks: ready` |
-| `tasks` | `ready` | Advance: `tasks: done`, `apply: active` |
-| `apply` | `active`/`ready` | Execute apply → on completion `apply: done`, `review: active` |
-| `review` | `active`/`ready` | Execute review → pass: `review: done`, `hydrate: active`. Fail: `review: failed`, `apply: active` |
-| `hydrate` | `active`/`ready` | Execute hydrate → `hydrate: done` |
+| `intake` | `active` | `intake.md` exists from `/fab-new` — run `advance <change> intake` |
+| `intake` | `ready` | Finish: run `finish <change> intake fab-continue` (auto-activates spec) |
+| `spec` | `active` | Generate `spec.md` → run `advance <change> spec` |
+| `spec` | `ready` | Finish: run `finish <change> spec fab-continue` (auto-activates tasks) |
+| `tasks` | `active` | Generate `tasks.md` + checklist → run `advance <change> tasks` |
+| `tasks` | `ready` | Finish: run `finish <change> tasks fab-continue` (auto-activates apply) |
+| `apply` | `active`/`ready` | Execute apply → on completion run `finish <change> apply fab-continue` (auto-activates review) |
+| `review` | `active`/`ready` | Execute review → pass: run `finish <change> review fab-continue` (auto-activates hydrate). Fail: run `fail <change> review` then `start <change> apply fab-continue` |
+| `hydrate` | `active`/`ready` | Execute hydrate → run `finish <change> hydrate fab-continue` |
 | all `done` | — | Block: "Change is complete." |
 
 **Single-dispatch rule**: Execute exactly ONE action per invocation — either generate (active → ready) OR advance (ready → done + next → active). The user runs `/fab-continue` again to proceed. Do NOT loop back to re-evaluate the new current stage.
@@ -78,9 +78,13 @@ Load per `_preamble.md` layers. Stage-specific additions: planning stages load i
 
 ### Step 4: Update `.status.yaml`
 
-Two-write transition via CLI: `fab/.kit/scripts/lib/stageman.sh transition <file> <completed-stage> <next-stage> fab-continue`. This atomically sets `{completed}` → `done`, `{next}` → `active`, refreshes `last_updated`, and updates `stage_metrics`.
+Use event commands via CLI to update `.status.yaml`. The `finish` command handles the two-write transition atomically: `fab/.kit/scripts/lib/stageman.sh finish <change> <completed-stage> fab-continue`. This sets `{completed}` → `done`, auto-activates the next pending stage, refreshes `last_updated`, and updates `stage_metrics`.
 
-For single-state changes, use: `fab/.kit/scripts/lib/stageman.sh set-state <file> <stage> <state> [fab-continue]` (driver required when state is `active`).
+For other state changes, use the appropriate event command (driver is always optional):
+- `fab/.kit/scripts/lib/stageman.sh start <change> <stage> fab-continue` — pending/failed → active
+- `fab/.kit/scripts/lib/stageman.sh advance <change> <stage>` — active → ready
+- `fab/.kit/scripts/lib/stageman.sh fail <change> <stage>` — active → failed (review only)
+- `fab/.kit/scripts/lib/stageman.sh reset <change> <stage> fab-continue` — done/ready → active (cascades downstream to pending)
 
 ### Step 5: Output
 
@@ -93,7 +97,7 @@ Display summary. Include Assumptions summary for planning stages. End with `Next
 ### Preconditions
 
 - `tasks.md` MUST exist
-- If stage is `tasks`: run `fab/.kit/scripts/lib/stageman.sh transition <file> tasks apply fab-continue` before starting
+- If stage is `tasks`: run `fab/.kit/scripts/lib/stageman.sh finish <change> tasks fab-continue` before starting (auto-activates apply)
 
 ### Pattern Extraction
 
@@ -113,7 +117,7 @@ If `fab/project/code-quality.md` exists, load its `## Principles` as additional 
 ### Task Execution
 
 1. Parse tasks: `- [ ]` = remaining, `- [x]` = skip
-2. If all checked: run `fab/.kit/scripts/lib/stageman.sh transition <file> apply review fab-continue`. Stop.
+2. If all checked: run `fab/.kit/scripts/lib/stageman.sh finish <change> apply fab-continue` (auto-activates review). Stop.
 3. Execute in phase order; within phases, non-`[P]` sequential, `[P]` parallelizable. Respect Execution Order constraints.
 4. For each unchecked task:
    1. Read source files relevant to this task
@@ -123,7 +127,7 @@ If `fab/project/code-quality.md` exists, load its `## Principles` as additional 
    5. Write tests per `fab/project/code-quality.md` test strategy (default: `test-alongside`)
    6. Run tests, fix failures
    7. Mark `[x]` immediately
-5. On completion: run `fab/.kit/scripts/lib/stageman.sh transition <file> apply review fab-continue`.
+5. On completion: run `fab/.kit/scripts/lib/stageman.sh finish <change> apply fab-continue` (auto-activates review).
 
 ### Resumability
 
@@ -179,9 +183,9 @@ Each finding includes: severity tier, description, and file:line reference where
 
 ### Verdict
 
-**Pass**: Run `fab/.kit/scripts/lib/stageman.sh transition <file> review hydrate fab-continue`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"`. Update checklist via `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed <N>`. Output report + `Next: {per state table}`.
+**Pass**: Run `fab/.kit/scripts/lib/stageman.sh finish <change> review fab-continue` (auto-activates hydrate). Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "passed"`. Update checklist via `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed <N>`. Output report + `Next: {per state table}`.
 
-**Fail** (manual rework — `/fab-continue` only): Run `fab/.kit/scripts/lib/stageman.sh set-state <file> review failed` then `fab/.kit/scripts/lib/stageman.sh set-state <file> apply active fab-continue`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "failed" "<rework-option>"` after user selects rework. Update checklist via `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed <N>`. Present findings with priority annotations, then offer rework options:
+**Fail** (manual rework — `/fab-continue` only): Run `fab/.kit/scripts/lib/stageman.sh fail <change> review` then `fab/.kit/scripts/lib/stageman.sh start <change> apply fab-continue`. Run `fab/.kit/scripts/lib/stageman.sh log-review <change_dir> "failed" "<rework-option>"` after user selects rework. Update checklist via `fab/.kit/scripts/lib/stageman.sh set-checklist <file> completed <N>`. Present findings with priority annotations, then offer rework options:
 
 | Option | When | Action |
 |--------|------|--------|
@@ -205,7 +209,7 @@ The applying agent triages review comments by priority — not all comments need
 1. Final validation: all tasks and checklist `[x]`
 2. Concurrent change check: warn on overlap with other changes referencing same memory paths
 3. Hydrate `docs/memory/`: create new files/domains, update existing (Requirements, Design Decisions, Changelog), update indexes
-4. Run `fab/.kit/scripts/lib/stageman.sh set-state <file> hydrate done`
+4. Run `fab/.kit/scripts/lib/stageman.sh finish <change> hydrate fab-continue`
 5. **Pattern capture** *(optional)*: If the change introduced non-obvious implementation patterns that future changes should follow (e.g., a new error handling approach, a reusable abstraction), note them in the relevant memory file's Design Decisions section with the change name for traceability. Skip for implementations that follow existing patterns without introducing new ones
 
 ---
@@ -214,10 +218,10 @@ The applying agent triages review comments by priority — not all comments need
 
 1. **Validate**: Must be one of the 6 stage names
 2. **Load context** for the target stage
-3. **Reset `.status.yaml`**: Use `fab/.kit/scripts/lib/stageman.sh set-state <file> <stage> <state> [driver]` for each stage — target → `active` (with driver `fab-continue`), all after → `pending`, all before → preserved
+3. **Reset `.status.yaml`**: Run `fab/.kit/scripts/lib/stageman.sh reset <change> <stage> fab-continue`. This atomically sets the target stage → `active` and cascades all downstream stages → `pending`. Stages before the target are preserved.
 4. **Execute**: Planning stages regenerate artifact. Execution stages re-run (task checkboxes NOT reset).
-5. **Invalidate downstream** (planning resets only): intake reset → all downstream pending; spec reset → tasks pending; tasks reset → reset all `[x]` → `[ ]`, regenerate checklist
-6. **Post-execution**: Planning resets set target to `done` but do NOT advance next to `active` (prevents auto-advancing into stale content). Execution resets use normal transitions.
+5. **Invalidate downstream** (planning resets only): intake reset → all downstream pending; spec reset → tasks pending; tasks reset → reset all `[x]` → `[ ]`, regenerate checklist. The `reset` command handles the status cascading automatically.
+6. **Post-execution**: Planning resets set target to `done` but do NOT advance next to `active` (prevents auto-advancing into stale content). Use `fab/.kit/scripts/lib/stageman.sh advance <change> <stage>` then manually finish without auto-activate. Execution resets use normal `finish` commands.
 
 ---
 

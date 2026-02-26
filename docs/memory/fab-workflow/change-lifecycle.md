@@ -55,7 +55,7 @@ Every change folder SHALL contain a `.status.yaml` manifest with these fields:
 - `progress` — map of all stages to their state. The stage marked `active` is the current stage (single source of truth for where the change is). There is no separate `stage:` field — current stage is derived from the `active` entry in the progress map.
 - `checklist` — generation status, path (default: `checklist.md` at change root), completion counts
 - `confidence` — SRAD confidence scoring: `certain`, `confident`, `tentative`, `unresolved` counts and derived `score` (0.0-5.0). Initialized to 0.0 (no assessed confidence). Computed by `lib/calc-score.sh` from `spec.md` Assumptions table only (not intake.md — intake assumptions are state transfer, not scored). Invoked at spec stage by `/fab-continue` and by `/fab-clarify`. Also computed from `intake.md` via `calc-score.sh --stage intake` for `/fab-ff`'s intake gate (fixed threshold 3.0). Used as a spec gate by `/fab-ff` (dynamic per-type thresholds via `calc-score.sh --check-gate`). Displayed as `{score} of 5.0` to make the scale self-documenting
-- `stage_metrics` — per-stage operational data map. Each stage that has been activated gets an entry with flow-style YAML: `{started_at, driver, iterations, completed_at}`. Automatically managed by `set_stage_state` and `transition_stages` via `_apply_metrics_side_effect`. On activation (`active`): creates entry with `started_at`, `driver`, `iterations` (incremented, not reset — tracks rework cycles). On completion (`done`): sets `completed_at`. On ready (`ready`): no-op (preserves existing metrics from active phase). On reset (`pending`): removes entry entirely. On failure (`failed`): no-op (preserves timing data). Initialized as empty `stage_metrics: {}` in the template
+- `stage_metrics` — per-stage operational data map. Each stage that has been activated gets an entry with flow-style YAML: `{started_at, driver, iterations, completed_at}`. Automatically managed by event commands (`start`, `advance`, `finish`, `reset`, `fail`) via `_apply_metrics_side_effect`. On `start` (`active`): creates entry with `started_at`, `driver`, `iterations` (incremented, not reset — tracks rework cycles). On `finish` (`done`): sets `completed_at`. On `advance` (`ready`): no-op (preserves existing metrics from active phase). On `reset` (`pending`): removes entry entirely. On `fail` (`failed`): no-op (preserves timing data). Initialized as empty `stage_metrics: {}` in the template
 - `last_updated` — refreshed on every status change. All `.status.yaml` mutations SHOULD go through `lib/stageman.sh` write functions (or CLI commands), which handle validation and `last_updated` refresh automatically
 
 **State vocabulary** (all progress fields draw from this fixed set):
@@ -68,11 +68,24 @@ Every change folder SHALL contain a `.status.yaml` manifest with these fields:
 | `done` | Completed successfully, advanced past | All stages |
 | `failed` | Completed with failures requiring rework | review |
 
+**State transition table (event-driven)**:
+
+| From State | Event   | To State        | Review Only? |
+|------------|---------|-----------------|--------------|
+| pending    | start   | active          | no           |
+| failed     | start   | active          | YES          |
+| active     | advance | ready           | no           |
+| active     | finish  | done (+next)    | no           |
+| ready      | finish  | done (+next)    | no           |
+| ready      | reset   | active (+cascade) | no         |
+| done       | reset   | active (+cascade) | no         |
+| active     | fail    | failed          | YES          |
+
 **Deriving current stage (routing)**: Use a three-tier fallback: (1) find the first stage with `active` or `ready` state, (2) if no active/ready entry, find the first `pending` stage after the last `done` stage, (3) if all stages are `done`, return `hydrate`. The second tier handles the post-reset state where the target stage was marked `done` but the next stage was left `pending`. Zero or one stage SHALL be `active` at any time (`ready` is not counted). Used by `/fab-continue` for dispatch and preflight's `stage` field. Skills distinguish `active` (generate) from `ready` (advance) via `display_state`.
 
 **Deriving display stage**: A separate derivation for user-facing display: (1) first `active` stage, (2) first `ready` stage, (3) last `done` stage, (4) first stage with `pending` if nothing started. Returns both the stage name and its state. Used by `/fab-status` and `/fab-switch` for the "Stage:" line, and by preflight's `display_stage`/`display_state` fields. The distinction ensures users see "where you are" (display stage) separately from "what's next" (routing stage).
 
-**Two-write transitions**: Moving from one stage to the next (in normal forward flow) requires two writes: (1) set the current stage to `done`, (2) set the next stage to `active`. Both writes MUST happen atomically in a single `.status.yaml` update. Use `lib/stageman.sh transition <file> <from> <to> <driver>` for forward transitions (validates adjacency and that from_stage is active; `driver` is required — identifies which skill triggered the transition). **Exception**: Reset flow sets only the target stage to `done` — downstream stages remain `pending` (no auto-advance). Use `lib/stageman.sh set-state <file> <stage> <state> [driver]` for individual state changes in reset flows (`driver` is required when setting to `active`).
+**Two-write transitions**: Moving from one stage to the next (in normal forward flow) requires two writes: (1) set the current stage to `done`, (2) set the next stage to `active`. Both writes MUST happen atomically in a single `.status.yaml` update. Use `lib/stageman.sh finish <file> <stage> <driver>` for forward transitions — `finish` atomically marks the current stage `done` and activates the next pending stage. **Exception**: Reset flow cascades downstream stages to `pending`. Use `lib/stageman.sh reset <file> <stage> <driver>` to reset a stage to `active` and cascade all downstream stages to `pending`. Other event commands: `start` (pending/failed → active), `advance` (active → ready), `fail` (active → failed, review only). The `driver` parameter is optional but skills always pass it.
 
 **Review failure backward movement**: When `/fab-continue` review behavior identifies issues requiring rework, it sets `review: failed` and moves the appropriate earlier stage back to `active` (e.g., `spec: active`). Stages between the target and review are reset to `pending`.
 
@@ -260,6 +273,7 @@ Skills will tolerate old-format files — the preflight script infers `intake: d
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260226-6boq-event-driven-stageman | 2026-02-26 | Replaced `set-state`/`transition` API with 5 event commands: `start`, `advance`, `finish`, `reset`, `fail`. Added state transition table. Updated two-write transitions to reference `finish` (atomic done+next) and `reset` (cascade downstream). Updated `stage_metrics` to reference event commands. Driver parameter now optional (skills always pass it). |
 | 260226-3g6f-git-branch-non-interactive-rename | 2026-02-26 | `/git-branch` non-interactive: replaced 3-option menu (Create/Adopt/Skip) with deterministic upstream-tracking logic. Local-only branches renamed via `git branch -m`; branches with upstream get new branch via `git checkout -b`. Removed "Adopt" concept entirely. New report verbs: `renamed from {old}`, `created, leaving {old} intact`. |
 | 260226-i9av-add-ready-state-to-stages | 2026-02-26 | Added `ready` state to lifecycle: `pending → active → ready → done`. Removed unused `skipped` state. Updated state vocabulary (5 states), routing (active or ready), display (ready as tier 2), stage_metrics (ready is no-op). Updated "Fixed State Vocabulary" and "Single Source of Truth" design decisions. |
 | 260226-w4fw-add-changeman-list-subcommand | 2026-02-26 | Added `changeman.sh list [--archive]` subcommand — enumerates changes with stage and state via `stageman.sh display-stage`. Outputs `name:display_stage:display_state` per line. Handles missing `.status.yaml` gracefully. Updated help text. Added "Listing Changes" section. |

@@ -110,10 +110,10 @@ teardown() {
   grep -q "Test description" "$STAGEMAN_LOG"
 }
 
-@test "new calls stageman set-state intake active fab-new" {
+@test "new calls stageman start intake fab-new" {
   run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" new --slug my-change
   [ "$status" -eq 0 ]
-  grep -q "set-state.*intake active fab-new" "$STAGEMAN_LOG"
+  grep -q "start.*intake fab-new" "$STAGEMAN_LOG"
 }
 
 @test "new detects created_by from git config fallback" {

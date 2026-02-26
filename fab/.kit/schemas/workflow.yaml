@@ -108,48 +108,49 @@ stages:
     allowed_states: [pending, active, ready, done]
     commands: [fab-continue]
 
-# transitions — Valid state transitions for each stage.
-# Format: from_state -> to_state with conditions.
-# All stages follow the same transition rules unless overridden.
+# transitions — Valid state transitions for each stage, keyed by event.
+# Each entry: event name, valid from-states, resulting to-state.
+# Stage-specific overrides (e.g., review) extend the default set.
+# Side-effects: finish activates next pending stage; reset cascades downstream to pending.
 transitions:
   default:
-    - from: pending
-      to: [active]
-      condition: "Prerequisites met"
+    - event: start
+      from: [pending]
+      to: active
 
-    - from: active
-      to: [ready, done]
-      condition: "Stage work completed or advanced"
+    - event: advance
+      from: [active]
+      to: ready
 
-    - from: ready
-      to: [done]
-      condition: "Stage advanced to next"
+    - event: finish
+      from: [active, ready]
+      to: done
 
-    - from: done
-      to: [active]
-      condition: "Reset/rework requested (fab-continue with stage arg)"
+    - event: reset
+      from: [done, ready]
+      to: active
 
-  # Stage-specific overrides
+  # Stage-specific overrides (review adds fail event and start-from-failed)
   review:
-    - from: pending
-      to: [active]
-      condition: "Prerequisites met"
+    - event: start
+      from: [pending, failed]
+      to: active
 
-    - from: active
-      to: [ready, done, failed]
-      condition: "Validation passed, ready, or failed"
+    - event: advance
+      from: [active]
+      to: ready
 
-    - from: ready
-      to: [done]
-      condition: "Stage advanced to next"
+    - event: finish
+      from: [active, ready]
+      to: done
 
-    - from: failed
-      to: [active]
-      condition: "Fixes applied, re-review requested"
+    - event: reset
+      from: [done, ready]
+      to: active
 
-    - from: done
-      to: [active]
-      condition: "Reset/rework requested"
+    - event: fail
+      from: [active]
+      to: failed
 
 # progression — Stage advancement rules.
 # Defines how to determine current stage and next stage.
