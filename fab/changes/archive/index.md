@@ -1,5 +1,7 @@
 # Archive Index
 
+- **260225-jwa3-git-branch-standalone-fallback** — Added a fallback path to `/git-branch` so that when the argument doesn't match an existing fab change, the literal string is used as a standalone branch name, supporting the "hack first, formalize later" workflow.
+- **260225-54vl-smart-git-pr-category-taxonomy** — Added a 7-type PR category taxonomy (feat/fix/refactor/docs/test/ci/chore) to git-pr with three-step type resolution, two-tier PR templates (fab-linked vs lightweight), conventional-commits title prefixes, and fixed broken artifact links using GitHub blob URLs.
 - **260224-v40o-wt-drop-prefix-and-dotworktrees** — Dropped the `wt/` branch prefix from exploratory worktrees and switched the worktree home directory from `<repo>-worktrees` to `<repo>.worktrees` (GitLens convention).
 - **260224-1jkh-smart-resolve-and-pr-summary** — Added single-change guessing to changeman resolve (auto-resolves when exactly one active change exists) and made git-pr generate intake-aware PR descriptions with summary and artifact links.
 - **260224-vx4k-decouple-git-from-fab-switch** — Decoupled git branch operations from fab-switch into a standalone /git-branch command; fab-switch now only writes fab/current with no git side effects, and the --no-branch-change flag was removed.
