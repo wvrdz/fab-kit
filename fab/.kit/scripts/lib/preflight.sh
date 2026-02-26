@@ -14,6 +14,20 @@ if [ ! -f "$fab_root/project/config.yaml" ] || [ ! -f "$fab_root/project/constit
   exit 1
 fi
 
+# 1b. Sync staleness check (non-blocking — warning only)
+if [ -f "$fab_root/.kit/VERSION" ]; then
+  _kit_ver=$(cat "$fab_root/.kit/VERSION" | tr -d '[:space:]')
+  _sync_ver_file="$fab_root/.kit-sync-version"
+  if [ -f "$_sync_ver_file" ]; then
+    _sync_ver=$(cat "$_sync_ver_file" | tr -d '[:space:]')
+    if [ "$_kit_ver" != "$_sync_ver" ]; then
+      echo "⚠ Skills out of sync — run fab-sync.sh to refresh (engine $_kit_ver, last synced $_sync_ver)" >&2
+    fi
+  else
+    echo "⚠ Skills may be out of sync — run fab-sync.sh to refresh" >&2
+  fi
+fi
+
 # 2. Resolve change name — from $1 override or fab/current
 override="${1:-}"
 

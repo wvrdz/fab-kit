@@ -1,5 +1,6 @@
 # Fab Specific
 fab/current
+fab/.kit-sync-version
 fab/pipelines/.series-*.yaml
 fab/changes/**/.shipped
 

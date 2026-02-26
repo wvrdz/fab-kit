@@ -41,12 +41,21 @@ The existing `cp -r` distribution method SHALL continue to work. The bootstrap o
 - Update to a newer version — replaces `.kit/` contents, displays version change (e.g., "0.1.0 → 0.2.0"), re-runs `fab-sync.sh`, checks for version drift and prints `/fab-setup migrations` reminder if needed, preserves all files outside `.kit/`
 - Already up to date — informs user, no files modified
 - No network access — exits non-zero with error message, existing `.kit/` unchanged
-- `fab/project/VERSION` missing after upgrade — prints guidance to run `/fab-setup` then `/fab-setup migrations`
-- `fab/project/VERSION` behind new engine version — prints reminder to run `/fab-setup migrations` to apply migrations
+- `fab/.kit-migration-version` missing after upgrade — prints guidance to run `/fab-setup` then `/fab-setup migrations`
+- `fab/.kit-migration-version` behind new engine version — prints reminder to run `/fab-setup migrations` to apply migrations
 
 #### Update Preserves Project Files
 
-`fab-upgrade.sh` MUST NOT modify any files outside of `fab/.kit/`. Preserved: `fab/project/config.yaml`, `fab/project/constitution.md`, `fab/project/VERSION`, `docs/memory/`, `docs/specs/`, `fab/changes/`, `fab/current`.
+`fab-upgrade.sh` MUST NOT modify any files outside of `fab/.kit/`. Preserved: `fab/project/config.yaml`, `fab/project/constitution.md`, `fab/.kit-migration-version`, `fab/.kit-sync-version`, `docs/memory/`, `docs/specs/`, `fab/changes/`, `fab/current`.
+
+### Sync Staleness Detection
+
+`fab-sync.sh` writes `fab/.kit-sync-version` after skill deployment — a gitignored stamp file containing the `fab/.kit/VERSION` value at sync time. `lib/preflight.sh` compares this stamp against the current kit VERSION and emits a non-blocking stderr warning when they differ:
+
+- `⚠ Skills out of sync — run fab-sync.sh to refresh (engine X, last synced Y)` — when stamp is behind
+- `⚠ Skills may be out of sync — run fab-sync.sh to refresh` — when stamp is missing
+
+This detects stale local skill deployments when a developer pulls new `fab/.kit/` source via git but hasn't re-run `fab-sync.sh` (since `.claude/`, `.agents/`, `.opencode/` are gitignored and not updated by git pull).
 
 #### gh CLI as Primary Download Tool
 
@@ -103,6 +112,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260226-koj1-version-staleness-warning | 2026-02-26 | Added sync staleness detection (`fab/.kit-sync-version` stamp, preflight stderr warning). Renamed `fab/project/VERSION` → `fab/.kit-migration-version`. Updated preserved files list in upgrade section. |
 | 260224-v40o-wt-drop-prefix-and-dotworktrees | 2026-02-25 | wt package: dropped `wt/` branch prefix from exploratory worktrees (branch = worktree name directly). Switched worktree home directory from `<repo>-worktrees` to `<repo>.worktrees` (GitLens convention). Updated `wt-create` help text. No migration for existing worktrees. |
 | 260221-i0z6-move-env-packages-add-fab-pipeline | 2026-02-21 | `env-packages.sh` moved from `scripts/` to `scripts/lib/` — now sourced from `fab/.kit/scripts/lib/env-packages.sh` in both `scaffold/fragment-.envrc` and `src/packages/rc-init.sh` |
 | 260219-d2y2-copy-template-skills-drop-agents | 2026-02-19 | Updated references from symlinks to copies for Claude Code skills. Renamed "Symlink Repair After Update" to "Skill Deployment Repair After Update". Updated bootstrap and upgrade descriptions to reflect copy-with-template deployment |

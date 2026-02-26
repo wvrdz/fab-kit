@@ -134,14 +134,14 @@ teardown() {
 
 # ── VERSION File Logic ──────────────────────────────────────────────
 
-@test "new project gets engine version in fab/project/VERSION" {
+@test "new project gets engine version in fab/.kit-migration-version" {
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ -f "$REPO_ROOT/fab/project/VERSION" ]
-  [ "$(cat "$REPO_ROOT/fab/project/VERSION")" = "1.2.3" ]
+  [ -f "$REPO_ROOT/fab/.kit-migration-version" ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-migration-version")" = "1.2.3" ]
 }
 
-@test "existing project without VERSION gets 0.1.0" {
+@test "existing project without migration version gets 0.1.0" {
   # Create config.yaml to indicate existing project
   mkdir -p "$REPO_ROOT/fab/project"
   cat > "$REPO_ROOT/fab/project/config.yaml" <<'YAML'
@@ -150,15 +150,63 @@ project:
 YAML
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ "$(cat "$REPO_ROOT/fab/project/VERSION")" = "0.1.0" ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-migration-version")" = "0.1.0" ]
 }
 
-@test "existing fab/project/VERSION is preserved" {
-  mkdir -p "$REPO_ROOT/fab/project"
-  echo "0.5.0" > "$REPO_ROOT/fab/project/VERSION"
+@test "existing fab/.kit-migration-version is preserved" {
+  echo "0.5.0" > "$REPO_ROOT/fab/.kit-migration-version"
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -eq 0 ]
-  [ "$(cat "$REPO_ROOT/fab/project/VERSION")" = "0.5.0" ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-migration-version")" = "0.5.0" ]
+}
+
+# ── Backward-Compat Migration ─────────────────────────────────────
+
+@test "old fab/project/VERSION migrates to fab/.kit-migration-version" {
+  mkdir -p "$REPO_ROOT/fab/project"
+  echo "0.15.0" > "$REPO_ROOT/fab/project/VERSION"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-migration-version")" = "0.15.0" ]
+  [ ! -f "$REPO_ROOT/fab/project/VERSION" ]
+  [[ "$output" == *"Migrated: fab/project/VERSION"* ]]
+}
+
+@test "both VERSION files: old deleted, new preserved" {
+  mkdir -p "$REPO_ROOT/fab/project"
+  echo "0.15.0" > "$REPO_ROOT/fab/project/VERSION"
+  echo "0.18.0" > "$REPO_ROOT/fab/.kit-migration-version"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-migration-version")" = "0.18.0" ]
+  [ ! -f "$REPO_ROOT/fab/project/VERSION" ]
+  [[ "$output" == *"Cleaned: stale fab/project/VERSION"* ]]
+}
+
+# ── Sync Version Stamp ─────────────────────────────────────────────
+
+@test "fresh sync creates fab/.kit-sync-version" {
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ -f "$REPO_ROOT/fab/.kit-sync-version" ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-sync-version")" = "1.2.3" ]
+  [[ "$output" == *"Created: fab/.kit-sync-version (1.2.3)"* ]]
+}
+
+@test "re-run sync on same version produces OK" {
+  echo "1.2.3" > "$REPO_ROOT/fab/.kit-sync-version"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-sync-version")" = "1.2.3" ]
+  [[ "$output" == *"fab/.kit-sync-version: OK (1.2.3)"* ]]
+}
+
+@test "sync after kit upgrade updates stamp" {
+  echo "1.1.0" > "$REPO_ROOT/fab/.kit-sync-version"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$REPO_ROOT/fab/.kit-sync-version")" = "1.2.3" ]
+  [[ "$output" == *"Updated: fab/.kit-sync-version (1.1.0 → 1.2.3)"* ]]
 }
 
 # ── .envrc File ─────────────────────────────────────────────────────

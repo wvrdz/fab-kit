@@ -1,6 +1,6 @@
 # Workspace Sync (2-sync-workspace)
 
-Structural bootstrap script that syncs kit assets into the workspace. Creates directories, skill symlinks, agent files, skeleton docs, `.envrc`, `fab/project/VERSION`, and `.gitignore` entries. Cleans up stale artifacts from deleted skills. Idempotent — safe to re-run.
+Structural bootstrap script that syncs kit assets into the workspace. Creates directories, skill copies/symlinks, skeleton docs, `.envrc`, `fab/.kit-migration-version`, `fab/.kit-sync-version`, and `.gitignore` entries. Cleans up stale artifacts from deleted skills. Idempotent — safe to re-run.
 
 ## Sources of Truth
 
@@ -30,10 +30,11 @@ No arguments. No flags. The script resolves paths relative to its own location.
 
 Creates `fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/` (with `mkdir -p`). Creates `fab/changes/.gitkeep` and `fab/changes/archive/.gitkeep`. Skips existing directories and files.
 
-### 2. fab/project/VERSION
+### 2. fab/.kit-migration-version
 
+- **Backward compat**: if old `fab/project/VERSION` exists, migrates it to `fab/.kit-migration-version` (one-time rename)
 - **New project** (no `fab/project/config.yaml`): copies `fab/.kit/VERSION` value
-- **Existing project** (has `config.yaml`, no `fab/project/VERSION`): writes `0.1.0`
+- **Existing project** (has `config.yaml`, no `fab/.kit-migration-version`): writes `0.1.0`
 - **Already exists**: preserves existing file
 
 ### 3. .envrc Management

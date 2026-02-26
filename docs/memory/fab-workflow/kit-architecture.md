@@ -252,17 +252,18 @@ Step 1 is a shell script. Steps 2-4 are skill-driven.
 Two VERSION files track the relationship between the installed engine and the project's file format:
 
 - **`fab/.kit/VERSION`** (engine version) — ships inside `.kit/`, replaced on each `fab-upgrade.sh` run. Enables version display, update comparison, and migration targeting.
-- **`fab/project/VERSION`** (local project version) — lives outside `.kit/`, NOT replaced on upgrades. Tracks the version the project's `config.yaml`, `.status.yaml`, and conventions were written for. Created by `sync/2-sync-workspace.sh`.
+- **`fab/.kit-migration-version`** (local project version) — lives outside `.kit/`, NOT replaced on upgrades. Tracks the version the project's `config.yaml`, `.status.yaml`, and conventions were written for. Created by `sync/2-sync-workspace.sh`. Renamed from `fab/project/VERSION`.
+- **`fab/.kit-sync-version`** (sync stamp) — lives outside `.kit/`, gitignored (per-developer local state). Records the `fab/.kit/VERSION` value at the time `fab-sync.sh` last ran. Used by `lib/preflight.sh` to detect stale skill deployments.
 
-Both contain a bare semver string (`MAJOR.MINOR.PATCH`). See [migrations.md](migrations.md) for the full migration system.
+All contain a bare semver string (`MAJOR.MINOR.PATCH`). See [migrations.md](migrations.md) for the full migration system.
 
 ### Updating `.kit/`
 
-Run `fab/.kit/scripts/fab-upgrade.sh` to update to the latest release. The script downloads `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/`, and re-runs `fab-sync.sh` to repair directories and agents. After the upgrade, if `fab/project/VERSION` is behind the new engine version, the script prints a reminder to run `/fab-setup migrations` to apply migrations. Requires the `gh` CLI.
+Run `fab/.kit/scripts/fab-upgrade.sh` to update to the latest release. The script downloads `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/`, and re-runs `fab-sync.sh` to repair directories and agents. After the upgrade, if `fab/.kit-migration-version` is behind the new engine version, the script prints a reminder to run `/fab-setup migrations` to apply migrations. Requires the `gh` CLI.
 
 Symlinks in `.claude/skills/`, `.opencode/commands/`, and `.agents/skills/` automatically resolve to the new files after the update.
 
-**Preserved** (lives outside `.kit/`): `config.yaml`, `constitution.md`, `docs/memory/`, `docs/specs/`, `changes/`, `current`, `VERSION`
+**Preserved** (lives outside `.kit/`): `config.yaml`, `constitution.md`, `docs/memory/`, `docs/specs/`, `changes/`, `current`, `.kit-migration-version`, `.kit-sync-version`
 **Replaced** (lives inside `.kit/`): `templates/`, `skills/`, `scripts/`, `sync/`, `migrations/`, `packages/`, `VERSION`
 
 ### Portability
@@ -345,6 +346,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260226-koj1-version-staleness-warning | 2026-02-26 | Added `fab/.kit-sync-version` (gitignored sync stamp) and `fab/.kit-migration-version` (renamed from `fab/project/VERSION`) to version tracking section. Updated preserved/replaced file lists. Added sync stamp to directory overview. |
 | 260223-sr3u-add-fab-doctor | 2026-02-23 | Added `fab-doctor.sh` standalone prerequisite checker (7 tools: git, bash, yq v4+, jq, gh, bats, direnv+hook). Rewrote `sync/1-prerequisites.sh` as thin `exec` delegate to doctor. Updated `fab-upgrade.sh` output: "Update complete" prints first, `⚠` migration warning prints last (or omitted when no drift). Added Phase 0 doctor gate to `fab-setup.md` (bare bootstrap only). Added `fab-doctor.sh` to directory tree, scripts section, and lib/ design decision user-facing scripts list. |
 | 260222-s101-wt-create-stderr-wt-list-flags | 2026-02-22 | wt-create and wt-pr `--non-interactive` now redirects human messages to stderr (porcelain output: only path on stdout). Removed `\| tail -1` from 3 batch callers. Added `--path <name>` (single worktree path lookup), `--json` (JSON array with dirty/unpushed fields), and status column (`*` dirty, `↑N` unpushed) to wt-list. Added mutual exclusivity check for `--path`/`--json`. Added "Non-Interactive Porcelain Output Contract" design decision. |
 | 260222-bcfy-batch-pipeline-series-rename | 2026-02-22 | Renamed `batch-fab-pipeline.sh` → `batch-pipeline.sh` in directory tree and section description. Added `batch-pipeline-series.sh` entry point and description. Updated batch scripts naming pattern note. Updated `batch_to_group` mapping in `fab-help.sh` description. |

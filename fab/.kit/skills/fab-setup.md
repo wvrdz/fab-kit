@@ -98,18 +98,18 @@ If missing, create `docs/specs/` directory and copy `fab/.kit/scaffold/docs/spec
 
 If exists: skip.
 
-#### 1e. `fab/project/VERSION`
+#### 1e. `fab/.kit-migration-version`
 
-Handled by `fab-sync.sh` (step 1f). The scaffold script creates `fab/project/VERSION` with version logic based on project state:
+Handled by `fab-sync.sh` (step 1f). The scaffold script creates `fab/.kit-migration-version` with version logic based on project state:
 
 - **New project** (no `fab/project/config.yaml`): copies `fab/.kit/VERSION` value (engine version)
-- **Existing project** (has `fab/project/config.yaml`, no `fab/project/VERSION`): writes `0.1.0` (base version, run `/fab-setup migrations` to migrate)
-- **Already exists**: preserves existing `fab/project/VERSION` — no overwrite
+- **Existing project** (has `fab/project/config.yaml`, no `fab/.kit-migration-version`): writes `0.1.0` (base version, run `/fab-setup migrations` to migrate)
+- **Already exists**: preserves existing `fab/.kit-migration-version` — no overwrite
 
 On bootstrap output:
-- New project: `Created: fab/project/VERSION ({engine_version})`
-- Existing project: `Created: fab/project/VERSION (0.1.0 — existing project, run "/fab-setup migrations" to migrate)`
-- Re-run: `fab/project/VERSION` reported as part of scaffold output (no modification)
+- New project: `Created: fab/.kit-migration-version ({engine_version})`
+- Existing project: `Created: fab/.kit-migration-version (0.1.0 — existing project, run "/fab-setup migrations" to migrate)`
+- Re-run: `fab/.kit-migration-version` reported as part of scaffold output (no modification)
 
 #### 1f. `fab/changes/`
 
@@ -118,7 +118,7 @@ If exists: ensure `fab/changes/archive/` exists, then skip.
 
 #### 1g. `.claude/skills/` Symlinks
 
-Run `fab/.kit/scripts/fab-sync.sh` to create or repair all skill symlinks, directories, and `fab/project/VERSION`. The script discovers skills by globbing `fab/.kit/skills/fab-*.md` and creates:
+Run `fab/.kit/scripts/fab-sync.sh` to create or repair all skill symlinks, directories, and `fab/.kit-migration-version`. The script discovers skills by globbing `fab/.kit/skills/fab-*.md` and creates:
 
 ```
 .claude/skills/fab-{name}/SKILL.md → ../../../fab/.kit/skills/fab-{name}.md
@@ -147,7 +147,7 @@ Created: fab/project/constitution.md
 Created: fab/project/context.md
 Created: fab/project/code-quality.md
 Created: fab/project/code-review.md
-Created: fab/project/VERSION ({version})
+Created: fab/.kit-migration-version ({version})
 Created: docs/memory/index.md
 Created: docs/specs/index.md
 Created: fab/changes/
@@ -315,13 +315,13 @@ Show `Created fab/project/constitution.md (version 1.0.0) with {N} principles.` 
 
 ## Migrations Behavior
 
-Compare `fab/project/VERSION` (local project version) to `fab/.kit/VERSION` (engine version), discover applicable migration files in `fab/.kit/migrations/`, and apply them sequentially. Each migration is a markdown instruction file — the skill reads it and executes the steps as an LLM agent.
+Compare `fab/.kit-migration-version` (local project version) to `fab/.kit/VERSION` (engine version), discover applicable migration files in `fab/.kit/migrations/`, and apply them sequentially. Each migration is a markdown instruction file — the skill reads it and executes the steps as an LLM agent.
 
 When `[file]` is provided, read and apply that specific migration file directly, bypassing version range discovery.
 
 ### Migrations Context Loading
 
-1. Read `fab/project/VERSION` and `fab/.kit/VERSION`
+1. Read `fab/.kit-migration-version` and `fab/.kit/VERSION`
 2. Read `fab/project/config.yaml` (Always Load layer — MUST exist). Skip Change Context.
 3. Scan `fab/.kit/migrations/` for migration files
 
@@ -329,14 +329,14 @@ When `[file]` is provided, read and apply that specific migration file directly,
 
 Before attempting any migration, verify:
 
-1. **`fab/project/VERSION` exists** — if not: STOP with `fab/project/VERSION not found. Run fab-sync.sh to create it.`
+1. **`fab/.kit-migration-version` exists** — if not: STOP with `fab/.kit-migration-version not found. Run fab-sync.sh to create it.`
 2. **`fab/.kit/VERSION` exists** — if not: STOP with `fab/.kit/VERSION not found — kit may be corrupted.`
 3. **`fab/project/config.yaml` exists** — if not: STOP with `fab/project/config.yaml not found. Run /fab-setup to create it.`
 4. Read both version strings and parse as `MAJOR.MINOR.PATCH` integers
 
 ### Migrations Step 1: Compare Versions
 
-- Read `fab/project/VERSION` -> `current`
+- Read `fab/.kit-migration-version` -> `current`
 - Read `fab/.kit/VERSION` -> `target`
 - If `current` >= `target`: report and stop (see scenarios below)
 
@@ -354,11 +354,11 @@ Execute the migration discovery algorithm:
 1. Find the first migration where `FROM <= current < TO`
 2. **If found**: apply it (see [Applying a Migration](#applying-a-migration)), set `current = TO`, repeat from (1)
 3. **If not found but a migration exists with `FROM > current`**: skip to that FROM — log: `No migration needed for {current} -> {FROM}, skipping.` — repeat from (1)
-4. **If not found and no later migrations exist**: set `fab/project/VERSION` to engine version, done
+4. **If not found and no later migrations exist**: set `fab/.kit-migration-version` to engine version, done
 
 ### Migrations Step 4: Finalize
 
-- Write `fab/project/VERSION` with the engine version (should already match after migrations)
+- Write `fab/.kit-migration-version` with the engine version (should already match after migrations)
 - Output completion summary
 
 ---
@@ -371,7 +371,7 @@ For each migration file:
 2. **Execute Pre-check** section: verify each condition. If any fails -> STOP, report which pre-check failed, do NOT proceed
 3. **Execute Changes** section: apply each change in order. Read referenced files, make modifications, write results
 4. **Execute Verification** section: validate each condition. If any fails -> STOP, report which verification step failed
-5. **Update version**: write `TO` to `fab/project/VERSION`
+5. **Update version**: write `TO` to `fab/.kit-migration-version`
 
 ---
 
@@ -386,13 +386,13 @@ Migrations found: {N}
 
 [1/{N}] Applying {FROM} -> {TO}...
 {migration output}
--> fab/project/VERSION updated to {TO}
+-> fab/.kit-migration-version updated to {TO}
 
 [2/{N}] Applying {FROM} -> {TO}...
 {migration output}
--> fab/project/VERSION updated to {TO}
+-> fab/.kit-migration-version updated to {TO}
 
-All migrations complete. fab/project/VERSION: {original} -> {final}
+All migrations complete. fab/.kit-migration-version: {original} -> {final}
 ```
 
 ### Migration with Gap Skip
@@ -406,9 +406,9 @@ No migration needed for {current} -> {FROM}, skipping.
 
 [1/{N}] Applying {FROM} -> {TO}...
 {migration output}
--> fab/project/VERSION updated to {TO}
+-> fab/.kit-migration-version updated to {TO}
 
-All migrations complete. fab/project/VERSION: {original} -> {final}
+All migrations complete. fab/.kit-migration-version: {original} -> {final}
 ```
 
 ### Versions Already Equal
@@ -420,7 +420,7 @@ Already up to date ({version}).
 ### Local Version Ahead
 
 ```
-Local version (fab/project/VERSION) is ahead of engine version (fab/.kit/VERSION): {local} > {engine}.
+Local version (fab/.kit-migration-version) is ahead of engine version (fab/.kit/VERSION): {local} > {engine}.
 This is unexpected — check your fab/.kit/ installation.
 ```
 
@@ -429,7 +429,7 @@ This is unexpected — check your fab/.kit/ installation.
 ```
 Local version:  {current}
 Engine version: {target}
-No migrations found. fab/project/VERSION updated to {target}.
+No migrations found. fab/.kit-migration-version updated to {target}.
 ```
 
 ### Overlapping Ranges
@@ -444,7 +444,7 @@ Overlapping migration ranges detected: {file1} and {file2}. Fix the migrations d
 [{N}/{total}] Applying {FROM} -> {TO}...
 {partial output}
 FAIL: Migration failed at {Pre-check|Changes|Verification} step: {description}
-fab/project/VERSION remains at {current_version}.
+fab/.kit-migration-version remains at {current_version}.
 Fix the issue and re-run /fab-setup migrations to continue from {current_version}.
 ```
 
@@ -470,7 +470,7 @@ All paths are safe to re-run. Structural artifacts are created once (skipped on 
 | Idempotent? | Yes |
 | Modifies `fab/project/config.yaml`? | Yes (bootstrap creates, config subcommand updates, migrations may modify) |
 | Modifies `fab/project/constitution.md`? | Yes (bootstrap creates, constitution subcommand updates, migrations may modify) |
-| Modifies `fab/project/VERSION`? | Yes (migrations) |
+| Modifies `fab/.kit-migration-version`? | Yes (migrations) |
 | Modifies `fab/.kit/`? | No — migrations only touch project-level files |
 | Requires active change? | No |
 

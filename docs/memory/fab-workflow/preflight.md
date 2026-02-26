@@ -34,12 +34,13 @@ Agents consume this output by running the script via Bash and parsing the stdout
 The script validates in this order, stopping at the first failure:
 
 1. `fab/project/config.yaml` and `fab/project/constitution.md` exist (project initialized)
+1b. Sync staleness check (non-blocking) — compares `fab/.kit/VERSION` against `fab/.kit-sync-version`; emits stderr warning if mismatched or missing, but does NOT exit or alter stdout
 2. Change name resolves (via `lib/changeman.sh resolve` — from `$1` override or `fab/current`)
 3. Change directory `fab/changes/{name}/` exists
 4. `.status.yaml` exists within the change directory
 5. `.status.yaml` passes schema validation via `validate_status_file()` from `lib/stageman.sh` (catches invalid states, missing stages, multiple active stages)
 
-Each failure exits with code 1 and prints a diagnostic message to stderr.
+Each failure exits with code 1 and prints a diagnostic message to stderr. The staleness check (1b) is the exception — it is advisory only and never blocks execution.
 
 ### Accessor-Based Architecture
 
@@ -97,6 +98,7 @@ Skills exempt from preflight: `init`, `switch`, `status`, `hydrate`, `help`, `ne
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260226-koj1-version-staleness-warning | 2026-02-26 | Added sync staleness check (step 1b) — non-blocking stderr warning when `fab/.kit-sync-version` mismatches `fab/.kit/VERSION`. Runs after init check, before change resolution. |
 | 260218-95xn-split-stage-display-from-routing | 2026-02-18 | Added `display_stage` and `display_state` fields to YAML output via `$STAGEMAN display-stage`. Documented routing vs display stage distinction in Structured YAML Output and Accessor-Based Architecture sections. |
 | 260216-oinh-DEV-1045-fold-resolve-into-changeman | 2026-02-17 | Replaced `source resolve-change.sh` / `$RESOLVED_CHANGE_NAME` with `$CHANGEMAN resolve` CLI subprocess call. Updated all references from resolve-change.sh to changeman.sh resolve. Rewrote "Shared Change Resolution Library" → "Change Resolution via changeman CLI" design decision. Updated No External Dependencies section. |
 | 260216-jmy4-DEV-1044-switch-shell-name-resolution | 2026-02-16 | Updated Shared Change Resolution Library decision: `/fab-switch` now sources `resolve-change.sh` for name resolution in its Argument Flow (previously only `preflight.sh` and `fab-status.sh` sourced it) |
