@@ -46,8 +46,8 @@ flowchart TD
     %% Post-pipeline housekeeping
     H -->|"/fab-archive"| AR[archive]
 
-    %% Shortcuts (full pipeline, from spec onward)
-    S -->|"/fab-ff
+    %% Shortcuts (full pipeline from intake onward)
+    B -->|"/fab-ff
     (confidence-gated, auto-rework loop)"| H
     B -->|"/fab-fff
     (full pipeline, autonomous rework)"| H
@@ -154,8 +154,8 @@ flowchart TD
     NEW --> SWITCH
     SWITCH --> CONT_S
 
-    %% Shortcut alternatives
-    CONT_S -.-> FF
+    %% Shortcut alternatives (both start from intake)
+    SWITCH -.-> FF
     SWITCH -.-> FFF
     FF --> HYD
     FFF --> HYD
@@ -189,7 +189,7 @@ flowchart TD
 
 ## 4. Change State Diagram
 
-The complete state machine showing how a change progresses through all stages. Each stage can be in one of four states: `pending`, `active`, `done`, or `failed` (review only). The diagram shows normal forward flow, shortcuts, rework paths, and the commands that cause each transition.
+The complete state machine showing how a change progresses through all stages. Each stage can be in one of five states: `pending`, `active`, `ready`, `done`, or `failed` (review only). The diagram shows normal forward flow, shortcuts, rework paths, and the commands that cause each transition.
 
 ```mermaid
 stateDiagram-v2
@@ -200,7 +200,7 @@ stateDiagram-v2
     intake --> spec: /fab-continue
 
     spec --> tasks: /fab-continue
-    spec --> hydrate: /fab-ff (confidence-gated, auto-rework loop)
+    intake --> hydrate: /fab-ff (confidence-gated, auto-rework loop)
     intake --> hydrate: /fab-fff (full pipeline, autonomous rework)
 
     tasks --> apply: /fab-continue
