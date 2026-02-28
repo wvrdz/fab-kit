@@ -8,10 +8,11 @@
 
 ## What workflow.yaml Defines
 
-1. **States** — All valid progress values (`pending`, `active`, `ready`, `done`, `failed`)
+1. **States** — All valid progress values (`pending`, `active`, `ready`, `done`, `failed`, `skipped`)
    - Each state has: ID, display symbol, description, terminal flag
    - `ready` means "stage work product exists, eligible for advancement or clarification" (non-terminal)
-   - Terminal states (`done`) cannot transition without explicit reset
+   - `skipped` means "stage intentionally bypassed" (terminal, symbol `⏭`). Allowed for all stages except intake
+   - Terminal states (`done`, `skipped`) cannot transition without explicit reset
 
 2. **Stages** — The workflow pipeline in execution order
    - Each stage has: ID, name, artifact, description, requirements, initial state, allowed states, commands
@@ -20,12 +21,14 @@
 3. **Transitions** — Valid state changes for each stage, event-keyed (event, from, to)
    - Default rules apply to all stages
    - Stage-specific overrides (e.g., `review` allows `fail` event)
-   - Each transition is triggered by an event command (`start`, `advance`, `finish`, `reset`, `fail`)
+   - Each transition is triggered by an event command (`start`, `advance`, `finish`, `reset`, `fail`, `skip`)
+   - `skip` event: `pending → skipped` with forward cascade (all downstream pending → skipped). No auto-activate
+   - `reset` accepts `skipped` as a source state (`skipped → active` with downstream cascade to `pending`)
 
 4. **Progression** — How to navigate the workflow
-   - Current stage detection: first `active` or `ready` stage, or `hydrate` if all done
-   - Next stage calculation: first `pending` stage with satisfied dependencies
-   - Completion check: `hydrate` is `done`
+   - Current stage detection: first `active` or `ready` stage, or first `pending` after last `done`/`skipped`, or `hydrate` if all done/skipped
+   - Next stage calculation: first `pending` stage with satisfied dependencies (prerequisites `done` or `skipped`)
+   - Completion check: `hydrate` is `done` or `skipped`
 
 5. **Validation** — Rules for `.status.yaml` correctness
    - Exactly 0-1 active stages
@@ -62,7 +65,7 @@ For the complete API reference, see `src/lib/statusman/README.md`.
 ## Future Enhancements
 
 1. **Custom workflows** — Allow `fab/project/config.yaml` to override or extend `workflow.yaml`
-2. **Conditional stages** — Skip stages based on change attributes (e.g., docs-only changes skip `apply`)
+2. **~~Conditional stages~~** — *(Partially addressed)* The `skipped` state and `skip` event now enable explicit stage bypassing via `statusman.sh skip`. Skill-level orchestration (automatic skip based on change attributes) remains a future enhancement
 3. **Parallel stages** — Multiple stages active simultaneously for different artifacts
 4. **Stage hooks** — Run scripts before/after stage transitions
 5. **State metadata** — Attach timestamps, user info, or exit codes to state transitions
@@ -76,4 +79,5 @@ For the complete API reference, see `src/lib/statusman/README.md`.
 | 260213-jc0u-split-archive-hydrate | 2026-02-13 | Updated progression references: terminal stage from `archive` to `hydrate` |
 | 260226-6boq-event-driven-statusman | 2026-02-26 | Transitions are now event-keyed (event, from, to) instead of from→to with conditions. Five event commands: `start`, `advance`, `finish`, `reset`, `fail`. |
 | 260226-i9av-add-ready-state-to-stages | 2026-02-26 | Added `ready` state (artifact exists, eligible for advancement). Removed unused `skipped` state. Updated transitions (`active→ready`, `ready→done`), progression (current stage includes `ready`), and validation (terminal states: `done` only). |
+| 260228-wyhd-add-skipped-stage-state | 2026-02-28 | Added `skipped` state (`⏭`, terminal) and `skip` event (`pending → skipped` with forward cascade). Updated `reset` to accept `skipped → active`. Updated progression rules to treat `skipped` alongside `done`. Allowed for all stages except intake. Six event commands: `start`, `advance`, `finish`, `reset`, `fail`, `skip`. |
 | 260212-4tw0-migrate-scripts-statusman | 2026-02-12 | Moved from `fab/.kit/schemas/README.md`, trimmed statusman API duplication |

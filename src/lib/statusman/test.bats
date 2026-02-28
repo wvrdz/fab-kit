@@ -1417,7 +1417,7 @@ EOF
   [ "$output" = "spec:ready" ]
 }
 
-@test "advance: produces ready state in file" {
+@test "advance: produces ready state in file (ready-state)" {
   make_write_fixture
   "$STATUSMAN" advance "$TEST_DIR/write-status.yaml" "apply"
   local result
@@ -1438,4 +1438,288 @@ EOF
   completed=$(yq '.stage_metrics.review.completed_at' "$TEST_DIR/write-status.yaml")
   [ "$started_after" = "$started_before" ]
   [ "$completed" = "null" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Event: skip — pending → skipped (+forward cascade)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Helper: fixture with intake done, all others pending
+make_skip_fixture() {
+  cat > "$TEST_DIR/skip-status.yaml" <<EOF
+name: test-skip
+progress:
+  intake: done
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+stage_metrics: {}
+last_updated: 2026-01-01T00:00:00+00:00
+EOF
+}
+
+@test "skip: pending -> skipped succeeds" {
+  make_skip_fixture
+  run "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  [ "$status" -eq 0 ]
+  local result
+  result=$(yq '.progress.spec' "$TEST_DIR/skip-status.yaml")
+  [ "$result" = "skipped" ]
+}
+
+@test "skip: forward cascade sets all downstream pending to skipped" {
+  make_skip_fixture
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  [ "$(yq '.progress.tasks' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+  [ "$(yq '.progress.apply' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+  [ "$(yq '.progress.review' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+  [ "$(yq '.progress.hydrate' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+}
+
+@test "skip: does not change upstream stages" {
+  make_skip_fixture
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  [ "$(yq '.progress.intake' "$TEST_DIR/skip-status.yaml")" = "done" ]
+}
+
+@test "skip: cascade only affects pending downstream" {
+  # tasks is done, apply is pending — skip apply, tasks should stay done
+  cat > "$TEST_DIR/skip-status.yaml" <<EOF
+name: test-skip
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: pending
+  review: pending
+  hydrate: pending
+stage_metrics: {}
+last_updated: 2026-01-01T00:00:00+00:00
+EOF
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "apply"
+  [ "$(yq '.progress.tasks' "$TEST_DIR/skip-status.yaml")" = "done" ]
+  [ "$(yq '.progress.apply' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+  [ "$(yq '.progress.review' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+  [ "$(yq '.progress.hydrate' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+}
+
+@test "skip: rejects active stage" {
+  make_write_fixture
+  local before
+  before=$(cat "$TEST_DIR/write-status.yaml")
+  run "$STATUSMAN" skip "$TEST_DIR/write-status.yaml" "apply"
+  [ "$status" -ne 0 ]
+  local after
+  after=$(cat "$TEST_DIR/write-status.yaml")
+  [ "$before" = "$after" ]
+}
+
+@test "skip: rejects done stage" {
+  make_write_fixture
+  local before
+  before=$(cat "$TEST_DIR/write-status.yaml")
+  run "$STATUSMAN" skip "$TEST_DIR/write-status.yaml" "intake"
+  [ "$status" -ne 0 ]
+  local after
+  after=$(cat "$TEST_DIR/write-status.yaml")
+  [ "$before" = "$after" ]
+}
+
+@test "skip: rejects ready stage" {
+  make_write_fixture
+  "$STATUSMAN" advance "$TEST_DIR/write-status.yaml" "apply"
+  local before
+  before=$(cat "$TEST_DIR/write-status.yaml")
+  run "$STATUSMAN" skip "$TEST_DIR/write-status.yaml" "apply"
+  [ "$status" -ne 0 ]
+  local after
+  after=$(cat "$TEST_DIR/write-status.yaml")
+  [ "$before" = "$after" ]
+}
+
+@test "skip: rejects invalid stage" {
+  make_skip_fixture
+  run "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "bogus"
+  [ "$status" -ne 0 ]
+}
+
+@test "skip: rejects nonexistent file" {
+  run "$STATUSMAN" skip "/nonexistent/path/.status.yaml" "spec"
+  [ "$status" -ne 0 ]
+}
+
+@test "skip: refreshes last_updated" {
+  make_skip_fixture
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  local ts
+  ts=$(yq '.last_updated' "$TEST_DIR/skip-status.yaml")
+  [[ "$ts" != "2026-01-01T00:00:00+00:00" ]]
+}
+
+@test "skip: no auto-activate of next stage" {
+  # After skipping spec, tasks should be skipped (cascade), not active
+  make_skip_fixture
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  [ "$(yq '.progress.tasks' "$TEST_DIR/skip-status.yaml")" = "skipped" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Skipped: reset from skipped
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "reset: skipped -> active succeeds" {
+  make_skip_fixture
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  run "$STATUSMAN" reset "$TEST_DIR/skip-status.yaml" "spec" "fab-continue"
+  [ "$status" -eq 0 ]
+  [ "$(yq '.progress.spec' "$TEST_DIR/skip-status.yaml")" = "active" ]
+}
+
+@test "reset: from skipped cascades downstream to pending" {
+  make_skip_fixture
+  "$STATUSMAN" skip "$TEST_DIR/skip-status.yaml" "spec"
+  "$STATUSMAN" reset "$TEST_DIR/skip-status.yaml" "spec" "fab-continue"
+  [ "$(yq '.progress.tasks' "$TEST_DIR/skip-status.yaml")" = "pending" ]
+  [ "$(yq '.progress.apply' "$TEST_DIR/skip-status.yaml")" = "pending" ]
+  [ "$(yq '.progress.review' "$TEST_DIR/skip-status.yaml")" = "pending" ]
+  [ "$(yq '.progress.hydrate' "$TEST_DIR/skip-status.yaml")" = "pending" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Skipped: validation
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "validate-status-file: accepts skipped for non-intake stages" {
+  cat > "$TEST_DIR/skipped-valid.yaml" <<EOF
+progress:
+  intake: done
+  spec: skipped
+  tasks: skipped
+  apply: skipped
+  review: skipped
+  hydrate: skipped
+EOF
+  run "$STATUSMAN" validate-status-file "$TEST_DIR/skipped-valid.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "validate-status-file: rejects skipped for intake" {
+  cat > "$TEST_DIR/skipped-intake.yaml" <<EOF
+progress:
+  intake: skipped
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+EOF
+  run "$STATUSMAN" validate-status-file "$TEST_DIR/skipped-intake.yaml"
+  [ "$status" -ne 0 ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Skipped: progression queries
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "current-stage: skips over skipped stages to find first pending" {
+  cat > "$TEST_DIR/skip-progress.yaml" <<EOF
+progress:
+  intake: done
+  spec: skipped
+  tasks: skipped
+  apply: pending
+  review: pending
+  hydrate: pending
+EOF
+  run "$STATUSMAN" current-stage "$TEST_DIR/skip-progress.yaml"
+  [ "$output" = "apply" ]
+}
+
+@test "current-stage: all non-intake skipped returns hydrate" {
+  cat > "$TEST_DIR/all-skipped.yaml" <<EOF
+progress:
+  intake: done
+  spec: skipped
+  tasks: skipped
+  apply: skipped
+  review: skipped
+  hydrate: skipped
+EOF
+  run "$STATUSMAN" current-stage "$TEST_DIR/all-skipped.yaml"
+  [ "$output" = "hydrate" ]
+}
+
+@test "display-stage: shows skipped as last resolved" {
+  cat > "$TEST_DIR/display-skipped.yaml" <<EOF
+progress:
+  intake: done
+  spec: skipped
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+EOF
+  run "$STATUSMAN" display-stage "$TEST_DIR/display-skipped.yaml"
+  [ "$output" = "spec:skipped" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Skipped: progress-line
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "progress-line: skipped stages shown with symbol" {
+  cat > "$TEST_DIR/skipped-line.yaml" <<EOF
+progress:
+  intake: done
+  spec: skipped
+  tasks: done
+  apply: active
+  review: pending
+  hydrate: pending
+EOF
+  run "$STATUSMAN" progress-line "$TEST_DIR/skipped-line.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake → spec ⏭ → tasks → apply ⏳" ]
+}
+
+@test "progress-line: all non-intake skipped shows completion marker" {
+  cat > "$TEST_DIR/all-skipped-line.yaml" <<EOF
+progress:
+  intake: done
+  spec: skipped
+  tasks: skipped
+  apply: skipped
+  review: skipped
+  hydrate: skipped
+EOF
+  run "$STATUSMAN" progress-line "$TEST_DIR/all-skipped-line.yaml"
+  [ "$status" -eq 0 ]
+  [ "$output" = "intake → spec ⏭ → tasks ⏭ → apply ⏭ → review ⏭ → hydrate ⏭ ✓" ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Skipped: metrics
+# ─────────────────────────────────────────────────────────────────────────────
+
+@test "stage-metrics: skip deletes metrics for skipped stage" {
+  # Create a fixture where spec has metrics from a prior active phase, then was reset to pending
+  cat > "$TEST_DIR/skip-metrics.yaml" <<EOF
+name: test
+progress:
+  intake: done
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+stage_metrics:
+  spec: {started_at: "2026-01-01T00:00:00+00:00", driver: "d1", iterations: 1}
+last_updated: 2026-01-01T00:00:00+00:00
+EOF
+  "$STATUSMAN" skip "$TEST_DIR/skip-metrics.yaml" "spec"
+  local spec_metrics
+  spec_metrics=$(yq '.stage_metrics.spec' "$TEST_DIR/skip-metrics.yaml")
+  [ "$spec_metrics" = "null" ]
 }
