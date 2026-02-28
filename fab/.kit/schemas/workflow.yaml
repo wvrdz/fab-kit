@@ -34,6 +34,11 @@ states:
     description: "Stage attempted but failed validation (review only)"
     terminal: false
 
+  - id: skipped
+    symbol: "⏭"
+    description: "Stage intentionally bypassed"
+    terminal: true
+
 # stages — The complete workflow pipeline.
 # Stages execute in the order listed. Each stage defines:
 #   - id: Unique identifier (matches progress key in .status.yaml)
@@ -64,7 +69,7 @@ stages:
     requires: [intake]
     required: true
     initial_state: pending
-    allowed_states: [pending, active, ready, done]
+    allowed_states: [pending, active, ready, done, skipped]
     commands: [fab-continue, fab-clarify]
 
   - id: tasks
@@ -74,7 +79,7 @@ stages:
     requires: [spec]
     required: true
     initial_state: pending
-    allowed_states: [pending, active, ready, done]
+    allowed_states: [pending, active, ready, done, skipped]
     auto_checklist: true
     commands: [fab-continue, fab-ff, fab-clarify]
 
@@ -85,7 +90,7 @@ stages:
     requires: [tasks]
     required: true
     initial_state: pending
-    allowed_states: [pending, active, ready, done]
+    allowed_states: [pending, active, ready, done, skipped]
     commands: [fab-continue]
 
   - id: review
@@ -95,7 +100,7 @@ stages:
     requires: [apply]
     required: true
     initial_state: pending
-    allowed_states: [pending, active, ready, done, failed]
+    allowed_states: [pending, active, ready, done, failed, skipped]
     commands: [fab-continue]
 
   - id: hydrate
@@ -105,7 +110,7 @@ stages:
     requires: [review]
     required: true
     initial_state: pending
-    allowed_states: [pending, active, ready, done]
+    allowed_states: [pending, active, ready, done, skipped]
     commands: [fab-continue]
 
 # transitions — Valid state transitions for each stage, keyed by event.
@@ -127,8 +132,12 @@ transitions:
       to: done
 
     - event: reset
-      from: [done, ready]
+      from: [done, ready, skipped]
       to: active
+
+    - event: skip
+      from: [pending]
+      to: skipped
 
   # Stage-specific overrides (review adds fail event and start-from-failed)
   review:
@@ -145,7 +154,7 @@ transitions:
       to: done
 
     - event: reset
-      from: [done, ready]
+      from: [done, ready, skipped]
       to: active
 
     - event: fail
@@ -157,16 +166,16 @@ transitions:
 progression:
   # current_stage — How to identify which stage is currently active
   current_stage:
-    rule: "First stage with state=active or state=ready; if no active/ready, first pending stage after last done; if all done, hydrate"
+    rule: "First stage with state=active or state=ready; if no active/ready, first pending stage after last done or skipped; if all done/skipped, hydrate"
     fallback: hydrate
 
   # next_stage — How to determine which stage comes next
   next_stage:
-    rule: "First stage in sequence where requires[] are all done and state=pending"
+    rule: "First stage in sequence where requires[] are all done or skipped and state=pending"
 
   # completion — When is the entire workflow complete?
   completion:
-    rule: "hydrate stage has state=done"
+    rule: "hydrate stage has state=done or state=skipped"
 
 # stage_numbers — Display numbering for status output.
 # Maps stage ID to its position in the workflow (1-indexed).
@@ -192,7 +201,7 @@ validation:
 
   # Prerequisites must be satisfied before advancing
   prerequisites:
-    rule: "Cannot set stage to active if requires[] stages are not done"
+    rule: "Cannot set stage to active if requires[] stages are not done or skipped"
 
   # Terminal states cannot transition without explicit reset
   terminal_states:

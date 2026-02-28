@@ -210,6 +210,7 @@ get_progress_line() {
       active)  parts+=("$stage ⏳"); has_active=true ;;
       ready)   parts+=("$stage ◷") ;;
       failed)  parts+=("$stage ✗") ;;
+      skipped) parts+=("$stage ⏭") ;;
       pending) has_pending=true ;;
     esac
   done <<< "$(get_progress_map "$status_file")"
@@ -259,6 +260,9 @@ _apply_metrics_side_effect() {
     pending)
       yq -i "del(.stage_metrics.${stage})" "$tmpfile"
       ;;
+    skipped)
+      yq -i "del(.stage_metrics.${stage})" "$tmpfile"
+      ;;
     # ready: no metrics change (preserve existing metrics from active phase)
     # failed: no metrics change
   esac
@@ -285,9 +289,9 @@ get_current_stage() {
     fi
   done <<< "$progress_lines"
 
-  # Fallback: find first pending stage after last done
+  # Fallback: find first pending stage after last done or skipped
   while IFS=: read -r stage state; do
-    if [ "$state" = "done" ]; then
+    if [ "$state" = "done" ] || [ "$state" = "skipped" ]; then
       last_done="$stage"
     fi
   done <<< "$progress_lines"
@@ -335,15 +339,17 @@ get_display_stage() {
     fi
   done <<< "$progress_lines"
 
-  # Tier 3: last done stage
+  # Tier 3: last done or skipped stage
+  local last_done_state=""
   while IFS=: read -r stage state; do
-    if [ "$state" = "done" ]; then
+    if [ "$state" = "done" ] || [ "$state" = "skipped" ]; then
       last_done="$stage"
+      last_done_state="$state"
     fi
   done <<< "$progress_lines"
 
   if [ -n "$last_done" ]; then
-    echo "${last_done}:done"
+    echo "${last_done}:${last_done_state}"
     return 0
   fi
 
@@ -714,7 +720,7 @@ event_finish() {
 }
 
 # event_reset <status_file> <stage> [driver]
-# {done,ready} → active. Cascade: all downstream stages → pending.
+# {done,ready,skipped} → active. Cascade: all downstream stages → pending.
 event_reset() {
   local status_file="$1"
   local stage="$2"
@@ -752,6 +758,59 @@ event_reset() {
     if [ "$found_target" = "true" ]; then
       yq -i ".progress.${s} = \"pending\"" "$tmpfile"
       _apply_metrics_side_effect "$tmpfile" "$s" "pending"
+    fi
+    if [ "$s" = "$stage" ]; then
+      found_target=true
+    fi
+  done
+
+  mv "$tmpfile" "$status_file"
+}
+
+# event_skip <status_file> <stage> [driver]
+# pending → skipped. Forward cascade: all downstream pending stages → skipped.
+# No auto-activate of next stage. Metrics cleared (same as pending).
+event_skip() {
+  local status_file="$1"
+  local stage="$2"
+  local driver="${3:-}"
+
+  if [ ! -f "$status_file" ]; then
+    echo "ERROR: Status file not found: $status_file" >&2
+    return 1
+  fi
+  if ! validate_stage "$stage"; then
+    echo "ERROR: Invalid stage '$stage'" >&2
+    return 1
+  fi
+
+  local current_state
+  current_state=$(yq ".progress.${stage} // \"pending\"" "$status_file")
+
+  local target_state
+  if ! target_state=$(lookup_transition "skip" "$stage" "$current_state"); then
+    return 1
+  fi
+
+  local now
+  now=$(date -Iseconds)
+  local tmpfile
+  tmpfile=$(mktemp "$(dirname "$status_file")/.status.yaml.XXXXXX")
+
+  cp "$status_file" "$tmpfile"
+  yq -i ".progress.${stage} = \"${target_state}\" | .last_updated = \"${now}\"" "$tmpfile"
+  _apply_metrics_side_effect "$tmpfile" "$stage" "$target_state"
+
+  # Forward cascade: set all downstream pending stages to skipped
+  local found_target=false
+  for s in $(get_all_stages); do
+    if [ "$found_target" = "true" ]; then
+      local s_state
+      s_state=$(yq ".progress.${s} // \"pending\"" "$tmpfile")
+      if [ "$s_state" = "pending" ]; then
+        yq -i ".progress.${s} = \"skipped\"" "$tmpfile"
+        _apply_metrics_side_effect "$tmpfile" "$s" "skipped"
+      fi
     fi
     if [ "$s" = "$stage" ]; then
       found_target=true
@@ -963,7 +1022,8 @@ SUBCOMMANDS:
     start <change> <stage> [driver]            {pending,failed} → active
     advance <change> <stage> [driver]          active → ready
     finish <change> <stage> [driver]           {active,ready} → done (+next)
-    reset <change> <stage> [driver]            {done,ready} → active (+cascade)
+    reset <change> <stage> [driver]            {done,ready,skipped} → active (+cascade)
+    skip <change> <stage> [driver]            pending → skipped (+cascade)
     fail <change> <stage> [driver] [rework]    active → failed (review only)
 
   Write commands:
@@ -1099,6 +1159,14 @@ case "${1:-}" in
     fi
     _resolved_file=$(resolve_to_status "$2") || exit 1
     event_reset "$_resolved_file" "$3" "${4:-}"
+    ;;
+  skip)
+    if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+      echo "Usage: statusman.sh skip <change> <stage> [driver]" >&2
+      exit 1
+    fi
+    _resolved_file=$(resolve_to_status "$2") || exit 1
+    event_skip "$_resolved_file" "$3" "${4:-}"
     ;;
   fail)
     if [ $# -lt 3 ] || [ $# -gt 5 ]; then
