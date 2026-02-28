@@ -70,7 +70,7 @@ wt_path_lookup() {
 wt_list_json() {
     wt_get_repo_context
     local current_path
-    current_path=$(pwd)
+    current_path=$(pwd -P)
 
     local json_entries=()
 
@@ -117,7 +117,7 @@ wt_list_json() {
 wt_list_worktrees_formatted() {
     wt_get_repo_context
     local current_path
-    current_path=$(pwd)
+    current_path=$(pwd -P)
 
     echo "Worktrees for: ${WT_BOLD}$WT_REPO_NAME${WT_RESET}"
     echo "Location: $WT_WORKTREES_DIR"

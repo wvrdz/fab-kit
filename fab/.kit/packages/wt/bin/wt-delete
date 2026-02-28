@@ -36,7 +36,7 @@ wt_get_current_worktree_info() {
 wt_list_worktrees_formatted() {
     wt_get_repo_context
     local current_path
-    current_path=$(pwd)
+    current_path=$(pwd -P)
 
     echo "Worktrees:"
 

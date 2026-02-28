@@ -129,6 +129,7 @@ teardown() {
 }
 
 @test "wt-open: opens in Ghostty (ghostty_linux)" {
+    [[ "$(uname -s)" == "Darwin" ]] && skip "ghostty_linux is Linux-only"
     local wt_path
     wt_path=$(wt-create --non-interactive --worktree-name ghostty-test 2>/dev/null | tail -n 1)
 
@@ -138,6 +139,7 @@ teardown() {
 }
 
 @test "wt-open: opens in Nautilus (nautilus)" {
+    [[ "$(uname -s)" == "Darwin" ]] && skip "nautilus is Linux-only"
     local wt_path
     wt_path=$(wt-create --non-interactive --worktree-name nautilus-test 2>/dev/null | tail -n 1)
 
@@ -147,6 +149,7 @@ teardown() {
 }
 
 @test "wt-open: opens in Dolphin (dolphin)" {
+    [[ "$(uname -s)" == "Darwin" ]] && skip "dolphin is Linux-only"
     local wt_path
     wt_path=$(wt-create --non-interactive --worktree-name dolphin-test 2>/dev/null | tail -n 1)
 

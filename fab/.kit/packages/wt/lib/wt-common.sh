@@ -295,8 +295,8 @@ wt_get_repo_context() {
             "Navigate to a git repository and try again"
     }
 
-    # Convert to absolute path
-    git_common_dir=$(cd "$git_common_dir" && pwd)
+    # Convert to absolute, symlink-resolved path (ensures match with git worktree list output)
+    git_common_dir=$(cd "$git_common_dir" && pwd -P)
 
     # Derive main repo root by stripping /.git suffix
     WT_REPO_ROOT="${git_common_dir%/.git}"

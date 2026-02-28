@@ -126,7 +126,8 @@ provision_artifacts() {
   fi
 
   mkdir -p "$target_dir"
-  cp -ru "$source_dir/." "$target_dir/"
+  # rsync -a is portable (macOS cp lacks GNU -u flag)
+  rsync -a "$source_dir/" "$target_dir/"
   log "Synced artifacts: fab/changes/$CHANGE_ID → worktree"
 }
 

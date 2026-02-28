@@ -38,7 +38,8 @@ create_test_repo() {
         git push -q -u origin main 2>/dev/null || true
     ) >&2
 
-    echo "$test_dir"
+    # Resolve symlinks (macOS: /tmp → /private/tmp) to match git's canonical paths
+    echo "$(cd "$test_dir" && pwd -P)"
 }
 
 # Add a branch to the mock remote
