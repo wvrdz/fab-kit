@@ -6,28 +6,9 @@ test:
     just _test-parallel
     # just test-rust  # uncomment when Rust libs exist
 
-# Run test suites in parallel, fail if any fail
+# Run test suites in parallel with prefixed live output
 _test-parallel:
-    #!/usr/bin/env bash
-    set -uo pipefail
-    pids=()
-    logs=()
-    suites=(test-bash test-packages test-scripts)
-    for s in "${suites[@]}"; do
-        log=$(mktemp)
-        logs+=("$log")
-        just "$s" >"$log" 2>&1 &
-        pids+=($!)
-    done
-    failed=0
-    for i in "${!pids[@]}"; do
-        if ! wait "${pids[$i]}"; then
-            failed=1
-        fi
-        cat "${logs[$i]}"
-        rm -f "${logs[$i]}"
-    done
-    exit $failed
+    {{scripts}}/test-parallel.sh
 
 # Setup test dependencies
 test-setup:
