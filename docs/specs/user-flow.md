@@ -269,6 +269,7 @@ stateDiagram-v2
 
     active --> ready: advance
     active --> done: finish
+    active --> skipped: skip ²
     active --> failed: fail ¹
 
     failed --> active: start ¹
