@@ -44,7 +44,7 @@ EOF
 # resolve_change_dir <change> — get directory path via resolve.sh --dir
 resolve_change_dir() {
   local dir
-  dir=$("$RESOLVE" --dir "$1") || exit 1
+  dir=$("$RESOLVE" --dir "$1") || return 1
   # Trim trailing slash for consistent path joining
   echo "${dir%/}"
 }
@@ -58,7 +58,7 @@ case "${1:-}" in
       echo "Usage: logman.sh command <change> <cmd> [args]" >&2
       exit 1
     fi
-    change_dir=$(resolve_change_dir "$2")
+    change_dir=$(resolve_change_dir "$2") || exit 1
     cmd="$3"
     args="${4:-}"
     now=$(date -Iseconds)
@@ -76,7 +76,7 @@ case "${1:-}" in
       echo "Usage: logman.sh confidence <change> <score> <delta> <trigger>" >&2
       exit 1
     fi
-    change_dir=$(resolve_change_dir "$2")
+    change_dir=$(resolve_change_dir "$2") || exit 1
     score="$3"
     delta="$4"
     trigger="$5"
@@ -89,7 +89,7 @@ case "${1:-}" in
       echo "Usage: logman.sh review <change> <result> [rework]" >&2
       exit 1
     fi
-    change_dir=$(resolve_change_dir "$2")
+    change_dir=$(resolve_change_dir "$2") || exit 1
     result="$3"
     rework="${4:-}"
     now=$(date -Iseconds)

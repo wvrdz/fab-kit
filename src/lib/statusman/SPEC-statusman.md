@@ -132,6 +132,14 @@ src/lib/statusman/test-simple.sh
 - Migrated all callers: `preflight.sh`, `calc-score.sh`
 - Migrated test suites to CLI pattern (contract tests for future Rust rewrite)
 
+### 2.0.0 (2026-02-28)
+
+- Renamed from `stageman.sh` to `statusman.sh`
+- Removed `resolve_change_arg()` — resolution delegated to `resolve.sh`
+- Removed `log_command`, `log_confidence`, `log_review` — logging delegated to `logman.sh`
+- Added auto-log review outcomes: `finish review` calls `logman.sh review "passed"`, `fail review` calls `logman.sh review "failed" [rework]`
+- `fail` subcommand gains optional `[rework]` argument for review stage
+
 ### 1.1.0 (2026-02-14)
 
 - Added `.status.yaml` accessor functions: `get_progress_map`, `get_checklist`, `get_confidence`
@@ -139,7 +147,7 @@ src/lib/statusman/test-simple.sh
 
 ### 1.0.0 (2026-02-12)
 
-- Renamed from `workflow-lib.sh` to `statusman.sh`
+- Renamed from `workflow-lib.sh` to `stageman.sh` (later renamed to `statusman.sh` in 2.0.0)
 - Reversed directory structure: main file in `fab/.kit/scripts/lib/`, dev symlink in `src/lib/statusman/`
 - All state/stage query functions (20+)
 - Validation functions (`validate_status_file`, `validate_stage_state`)

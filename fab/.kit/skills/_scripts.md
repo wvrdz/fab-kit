@@ -20,7 +20,7 @@ All scripts accept a unified `<change>` argument, resolved by `resolve.sh` inter
 
 ## Script Architecture
 
-Five scripts with atomic responsibilities, plus `preflight.sh` as the entry point:
+Six scripts with atomic responsibilities (`preflight.sh` serves as the validation entry point):
 
 ```
 resolve.sh     ← universal resolver (no side effects)
