@@ -23,5 +23,6 @@ confidence:
   score: 0.0
 stage_metrics:
   intake: {started_at: "2026-02-28T05:36:15+05:30", driver: fab-new, iterations: 1}
-prs: []
-last_updated: "2026-02-28T05:36:48+05:30"
+prs:
+  - https://github.com/wvrdz/fab-kit/pull/178
+last_updated: "2026-02-28T05:39:02+05:30"
