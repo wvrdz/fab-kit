@@ -13,7 +13,7 @@ for pkg_tests in src/packages/*/tests; do
         total=$((total + 1))
         test_name="${suite}/$(basename "$t" .bats)"
         echo "── ${test_name} ──"
-        if bats "$t"; then
+        if bats --jobs 4 "$t"; then
             passed_suites+=("$test_name")
         else
             failed_suites+=("$test_name")
