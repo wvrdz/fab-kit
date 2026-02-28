@@ -769,7 +769,7 @@ event_reset() {
 
 # event_skip <status_file> <stage> [driver]
 # pending → skipped. Forward cascade: all downstream pending stages → skipped.
-# No auto-activate of next stage. No metrics side-effect for target.
+# No auto-activate of next stage. Metrics cleared (same as pending).
 event_skip() {
   local status_file="$1"
   local stage="$2"
