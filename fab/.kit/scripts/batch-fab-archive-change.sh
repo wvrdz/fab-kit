@@ -15,11 +15,11 @@ usage() {
   cat <<'EOF'
 Usage: batch-fab-archive-change <change> [<change>...]
 
-Archives multiple completed changes (hydrate:done) by running
+Archives multiple completed changes (hydrate done|skipped) by running
 /fab-archive for each one sequentially.
 
 Options:
-  --list    Show archivable changes (hydrate:done)
+  --list    Show archivable changes (hydrate done|skipped)
   --all     Archive all archivable changes
 
 Examples:
@@ -33,14 +33,14 @@ EOF
 # Helpers
 # ---------------------------------------------------------------------------
 
-is_hydrate_done() {
+is_archivable() {
   local status_file="$1"
   [[ -f "$status_file" ]] || return 1
-  grep -qE '^\s*hydrate:\s*done' "$status_file"
+  grep -qE '^\s*hydrate:\s*(done|skipped)' "$status_file"
 }
 
 list_archivable() {
-  echo "Archivable changes (hydrate:done):"
+  echo "Archivable changes (hydrate done|skipped):"
   echo ""
   local count=0
   for dir in "$CHANGES_DIR"/*/; do
@@ -48,7 +48,7 @@ list_archivable() {
     local name
     name=$(basename "$dir")
     [[ "$name" == "archive" ]] && continue
-    if is_hydrate_done "${dir}.status.yaml"; then
+    if is_archivable "${dir}.status.yaml"; then
       printf "  %s\n" "$name"
       count=$((count + 1))
     fi
@@ -64,7 +64,7 @@ all_archivable_names() {
     local name
     name=$(basename "$dir")
     [[ "$name" == "archive" ]] && continue
-    if is_hydrate_done "${dir}.status.yaml"; then
+    if is_archivable "${dir}.status.yaml"; then
       printf '%s\n' "$name"
     fi
   done
@@ -113,8 +113,8 @@ for change in "${changes[@]}"; do
   fi
 
   local_status="${CHANGES_DIR}/${match}/.status.yaml"
-  if ! is_hydrate_done "$local_status"; then
-    echo "Warning: '$match' not ready for archive (hydrate not done), skipping" >&2
+  if ! is_archivable "$local_status"; then
+    echo "Warning: '$match' not ready for archive (hydrate not done or skipped), skipping" >&2
     continue
   fi
 
