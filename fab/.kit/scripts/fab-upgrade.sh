@@ -3,7 +3,10 @@ set -euo pipefail
 
 # fab/.kit/scripts/fab-upgrade.sh — Update fab/.kit/ from GitHub Releases
 #
-# Downloads the latest kit.tar.gz, atomically replaces fab/.kit/, displays
+# Usage: fab-upgrade.sh [<tag>]
+#
+# Downloads kit.tar.gz from the specified release tag (e.g. v0.24.0) or the
+# latest release if no tag is given. Atomically replaces fab/.kit/, displays
 # the version change, and re-runs fab-sync.sh to repair directories and agents.
 #
 # Requires: gh CLI (https://cli.github.com/)
@@ -33,6 +36,7 @@ echo "Current version: $current_version"
 # ── Determine repo ───────────────────────────────────────────────────
 
 repo="wvrdz/fab-kit"
+tag="${1:-}"
 
 # ── Download ─────────────────────────────────────────────────────────
 
@@ -49,11 +53,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Downloading latest release from $repo..."
-
-if ! gh release download --repo "$repo" --pattern 'kit.tar.gz' --dir "$tmp_dir" 2>/dev/null; then
-  echo "ERROR: Failed to download kit.tar.gz from $repo. Check network and repo access."
-  exit 1
+if [ -n "$tag" ]; then
+  echo "Downloading release $tag from $repo..."
+  if ! gh release download "$tag" --repo "$repo" --pattern 'kit.tar.gz' --dir "$tmp_dir" 2>/dev/null; then
+    echo "ERROR: Failed to download kit.tar.gz for tag '$tag' from $repo."
+    echo "       Check that the tag exists: gh release view $tag --repo $repo"
+    exit 1
+  fi
+else
+  echo "Downloading latest release from $repo..."
+  if ! gh release download --repo "$repo" --pattern 'kit.tar.gz' --dir "$tmp_dir" 2>/dev/null; then
+    echo "ERROR: Failed to download kit.tar.gz from $repo. Check network and repo access."
+    exit 1
+  fi
 fi
 
 # ── Extract to temp ──────────────────────────────────────────────────
@@ -77,7 +89,11 @@ new_version=$(cat "$tmp_dir/.kit/VERSION" | tr -d '[:space:]')
 # ── Already up to date? ─────────────────────────────────────────────
 
 if [ "$current_version" = "$new_version" ]; then
-  echo "Already on the latest version ($current_version). No update needed."
+  if [ -n "$tag" ]; then
+    echo "Already on $tag ($current_version). No update needed."
+  else
+    echo "Already on the latest version ($current_version). No update needed."
+  fi
   exit 0
 fi
 

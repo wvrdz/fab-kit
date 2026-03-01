@@ -114,7 +114,8 @@ This generates `fab/project/config.yaml` and `fab/project/constitution.md` (your
 #### Updating from a previous version
 
 ```bash
-fab-upgrade.sh       # downloads latest kit, replaces fab/.kit/, auto-runs fab-sync.sh
+fab-upgrade.sh           # downloads latest kit, replaces fab/.kit/, auto-runs fab-sync.sh
+fab-upgrade.sh v0.24.0   # downloads a specific version instead of latest
 ```
 
 If the upgrade reports a version mismatch, run `/fab-setup migrations` in your AI agent to apply migrations. Safe to re-run.
