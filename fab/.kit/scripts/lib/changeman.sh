@@ -128,6 +128,14 @@ stage_number() {
   esac
 }
 
+# next_stage — map current stage to the next stage in the pipeline
+next_stage() {
+  case "$1" in
+    intake) echo "spec" ;; spec) echo "tasks" ;; tasks) echo "apply" ;;
+    apply) echo "review" ;; review) echo "hydrate" ;; hydrate) echo "" ;;
+  esac
+}
+
 # default_command — derive the default command for a routing stage
 default_command() {
   case "$1" in
@@ -194,12 +202,13 @@ cmd_switch() {
   echo "fab/current → $resolved"
   echo ""
   echo "Stage:  $display_stage ($dnum/6) — $display_state"
-  local cmd
+  local cmd nstage
   cmd=$(default_command "$routing_stage")
-  if [ "$routing_stage" = "hydrate" ] && [ "$display_stage" = "hydrate" ] && [ "$display_state" = "done" ]; then
-    echo "Next:   $cmd"
+  nstage=$(next_stage "$routing_stage")
+  if [ -n "$nstage" ]; then
+    echo "Next:   $nstage (via $cmd)"
   else
-    echo "Next:   $routing_stage (via $cmd)"
+    echo "Next:   $cmd"
   fi
 }
 
