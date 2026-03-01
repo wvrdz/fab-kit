@@ -1,13 +1,3 @@
 - [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
 - [ ] [v34t] 2026-02-23: A timeline or user journey mermaid diagram showing which commands are typed in the main repo vs the worktree
-- [x] [vx4k] 2026-02-24: Separate out git from fab commands. Right now fab switch is very deeply coupled with branch change. Try to see if we can separate it out.
-- [x] [7k6b] 2026-02-24: git-pr should generate better summary for the PR. If possible reference the intake.md of the change for which we are submitting the PR.
-- [x] [v40o] 2026-02-24: Remove the wt/ prefix from the branch created by wt-create
-- [x] [w5ne] 2026-02-24: How do current commands resolve the change? They don't read fab/current directly (or at least should not). They call a changeman argument and that does it for them. We need to update this fn with 'guessing' ability of the current change (if there is only one active change in the change folder). Then upgrade git-branch to use this
-- [x] [v9fb] 2026-02-25: Add a porcelain mode to fab-doctor.sh, that can be used during worktree creation - that only prints errors
-- [x] [jwa3] 2026-02-25: git-pr should be able to create a branch, given that I pass an arugment to it, even though the arugment doesn't match an existing change
-- [x] [54vl] 2026-02-25: Make git-pr smarter. There is a category of changes that does not Really require whole fab change folder to come in these are mostly Chores or housekeeping tasks.
-- [x] [vilz] 2026-02-26: From the config.yaml remove the git section. Also add a migration for this. Reduce the verbosity of the config.yaml file.
-- [x] [z6lh] 2026-02-26: Add a mechanism to warn users that they on an older version of the skills. Maybe add a VERSION to the skills folder?
-- [x] [v8hp] 2026-02-26: fab-switch causes a compacting of the conversation mid-conversation. My guess is this happens because of the model tier switch from a high context limit to a lower context limit. If it's causing such an issue, may be we should remove the model tier 'fast' from these commands.
-- [x] [8q33] 2026-02-27: Make the git-pr output show more fields from status.yaml - richer output for the code reviewer
+- [ ] [lc3m] 2026-03-01: Switch fab/.kit/LICENSE from PolyForm Internal Use to MIT. Reasoning: fab-kit is a process (prompts, markdown, shell scripts) — not protectable IP in the copyright sense. The US Copyright Office ruled prompts convey unprotectable ideas. PolyForm Internal Use blocks community contributions and ecosystem growth while providing only illusory control. MIT gives attribution (copyright notice preserved), maximum adoption, zero friction, and lets the community keep the tool evolving — the real moat is speed and opinionation, not licensing restrictions.

@@ -133,7 +133,8 @@ fi
 echo "Packaging kit.tar.gz..."
 
 # Create archive rooted at .kit/ so `tar xz -C fab/` produces fab/.kit/
-tar czf "$repo_root/kit.tar.gz" -C "$repo_root/fab" .kit
+# COPYFILE_DISABLE prevents macOS from including ._ (Apple Double) resource fork files
+COPYFILE_DISABLE=1 tar czf "$repo_root/kit.tar.gz" -C "$repo_root/fab" .kit
 
 echo "Created kit.tar.gz ($(wc -c < "$repo_root/kit.tar.gz") bytes)"
 
