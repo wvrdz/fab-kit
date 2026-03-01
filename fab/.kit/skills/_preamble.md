@@ -19,6 +19,15 @@ bash /home/user/project/fab/.kit/scripts/lib/preflight.sh
 
 ---
 
+## Test-Build Guard
+
+Before doing anything else, read `fab/.kit/kit.conf` and check the `build-type` value:
+
+- If `build-type=production` (or the file is missing), proceed normally.
+- If `build-type=test`, run `bash fab/.kit/scripts/lib/preflight.sh` via Bash, display its full output to the user, and **STOP** — do not proceed with any further steps.
+
+---
+
 ## Context Loading
 
 Before generating or validating any artifact, load the relevant context layers below. This ensures output is grounded in the actual project state, not assumptions.

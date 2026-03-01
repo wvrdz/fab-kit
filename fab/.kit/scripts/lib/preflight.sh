@@ -6,11 +6,10 @@ scripts_dir="$(cd "$(dirname "$0")/.." && pwd)"
 kit_dir="$fab_root/.kit"
 
 # --- Test-build guard ---
-# If fab/.kit/.test-build exists, this is a test-only build.
-# Allow usage only inside the fab-kit dev repo (has .fab-kit-dev at root).
-if [ -f "$kit_dir/.test-build" ]; then
-  repo_root="$(cd "$fab_root/.." && pwd)"
-  if [ ! -f "$repo_root/.fab-kit-dev" ]; then
+# kit.conf declares build-type. If "test", block usage and show warning.
+if [ -f "$kit_dir/kit.conf" ]; then
+  _build_type=$(grep -E '^build-type=' "$kit_dir/kit.conf" | cut -d= -f2 | tr -d '[:space:]')
+  if [ "$_build_type" = "test" ]; then
     cat >&2 <<'OOPS'
 
   ╔══════════════════════════════════════════════════╗
