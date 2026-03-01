@@ -2,7 +2,11 @@
 
 A structured development workflow for AI agents. You describe a change, AI plans it, implements it, reviews it, and saves what it learned into shared project memory. Each completed change builds shared context, so future changes start with better knowledge.
 
-Fab Kit is a 6-stage pipeline defined entirely in markdown prompts — no SDK, no vendor lock-in. The skills are plain prompts any AI agent can execute (Claude Code, Codex, Cursor, Windsurf). Copy it into your project and go.
+AI agents are getting better at writing code fast. The bottleneck is shifting to you: did you define the problem well enough? Fab-kit sits at that bottleneck — it forces structured thinking before implementation, gives you a legible signal of your own clarity, and grounds every session in your project's actual context.
+
+Fab Kit is a 6-stage pipeline defined entirely in markdown prompts — no SDK, no vendor lock-in. The skills are plain prompts any AI agent can execute (Claude Code, Codex, Cursor, Windsurf). Copy it into your project and go. It's plain markdown and shell, so it gets cheaper to run as agents improve, not more expensive.
+
+The more capable AI agents become, the wider the gap between what they can build and what humans can clearly articulate. Fab-kit sits in that gap — and it grows with it.
 
 > **[Try it now](#quick-start)** | **[Understand the concepts](#why-fab-kit)**
 
