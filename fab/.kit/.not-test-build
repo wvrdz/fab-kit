@@ -1,0 +1,3 @@
+# This file marks fab/.kit/ as a TEST build.
+# It is checked by preflight.sh and blocks usage in non-dev repos.
+# Do not distribute this file to real projects.

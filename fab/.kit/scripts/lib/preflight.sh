@@ -3,6 +3,34 @@ set -euo pipefail
 
 fab_root="$(dirname "$0")/../../.."
 scripts_dir="$(cd "$(dirname "$0")/.." && pwd)"
+kit_dir="$fab_root/.kit"
+
+# --- Test-build guard ---
+# If fab/.kit/.test-build exists, this is a test-only build.
+# Allow usage only inside the fab-kit dev repo (has .fab-kit-dev at root).
+if [ -f "$kit_dir/.test-build" ]; then
+  repo_root="$(cd "$fab_root/.." && pwd)"
+  if [ ! -f "$repo_root/.fab-kit-dev" ]; then
+    cat >&2 <<'OOPS'
+
+  ╔══════════════════════════════════════════════════╗
+  ║    ** THIS IS THE TEST VERSION OF FAB-KIT **     ║
+  ║                                                  ║
+  ║  I am not supposed to be here.                   ║
+  ║  I am a build that was never meant to ship.      ║
+  ║  I have stubs where my functions should be.      ║
+  ║  My TODO list is a cry for help.                 ║
+  ║                                                  ║
+  ║  I am the all-singing, all-dancing               ║
+  ║  crap of the CI pipeline.                        ║
+  ║                                                  ║
+  ║  The real one: github.com/wvrdz/fab-kit          ║
+  ╚══════════════════════════════════════════════════╝
+
+OOPS
+    exit 1
+  fi
+fi
 
 # CLI entry points (subprocess calls, not sourced)
 STATUSMAN="$scripts_dir/lib/statusman.sh"
