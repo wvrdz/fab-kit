@@ -302,24 +302,26 @@ STUB
   grep -q "name: 260216-u6d5-new-slug" "$FAB_ROOT/changes/260216-u6d5-new-slug/.status.yaml"
 }
 
-@test "rename updates fab/current when it points to old folder" {
+@test "rename updates fab/current line 2 when it points to old folder" {
   mkdir -p "$FAB_ROOT/changes/260216-u6d5-old-slug"
   echo 'name: 260216-u6d5-old-slug' > "$FAB_ROOT/changes/260216-u6d5-old-slug/.status.yaml"
-  printf '260216-u6d5-old-slug' > "$FAB_ROOT/current"
+  printf 'u6d5\n260216-u6d5-old-slug' > "$FAB_ROOT/current"
 
   run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" rename --folder 260216-u6d5-old-slug --slug new-slug
   [ "$status" -eq 0 ]
-  [ "$(cat "$FAB_ROOT/current")" = "260216-u6d5-new-slug" ]
+  [ "$(sed -n '1p' "$FAB_ROOT/current")" = "u6d5" ]
+  [ "$(sed -n '2p' "$FAB_ROOT/current")" = "260216-u6d5-new-slug" ]
 }
 
 @test "rename does not modify fab/current when it points to different change" {
   mkdir -p "$FAB_ROOT/changes/260216-u6d5-old-slug"
   echo 'name: 260216-u6d5-old-slug' > "$FAB_ROOT/changes/260216-u6d5-old-slug/.status.yaml"
-  printf '260216-abcd-other-change' > "$FAB_ROOT/current"
+  printf 'abcd\n260216-abcd-other-change' > "$FAB_ROOT/current"
 
   run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" rename --folder 260216-u6d5-old-slug --slug new-slug
   [ "$status" -eq 0 ]
-  [ "$(cat "$FAB_ROOT/current")" = "260216-abcd-other-change" ]
+  [ "$(sed -n '1p' "$FAB_ROOT/current")" = "abcd" ]
+  [ "$(sed -n '2p' "$FAB_ROOT/current")" = "260216-abcd-other-change" ]
 }
 
 @test "rename does not create fab/current when absent" {
@@ -466,14 +468,15 @@ STUB
 
 @test "resolve: reads fab/current when no override" {
   mkdir -p "$FAB_ROOT/changes/260213-puow-consolidate-status-reads"
-  echo "260213-puow-consolidate-status-reads" > "$FAB_ROOT/current"
+  printf 'puow\n260213-puow-consolidate-status-reads' > "$FAB_ROOT/current"
   run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" resolve
   [ "$status" -eq 0 ]
   [ "$output" = "260213-puow-consolidate-status-reads" ]
 }
 
 @test "resolve: fab/current with trailing whitespace resolves" {
-  printf "260213-puow-consolidate-status-reads\n  " > "$FAB_ROOT/current"
+  mkdir -p "$FAB_ROOT/changes/260213-puow-consolidate-status-reads"
+  printf 'puow\n260213-puow-consolidate-status-reads  \n' > "$FAB_ROOT/current"
   run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" resolve
   [ "$status" -eq 0 ]
   [ "$output" = "260213-puow-consolidate-status-reads" ]
@@ -542,7 +545,35 @@ STUB
 
   run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" switch "a7k2"
   [ "$status" -eq 0 ]
-  [ "$(cat "$FAB_ROOT/current")" = "260216-a7k2-add-oauth" ]
+  [ "$(sed -n '1p' "$FAB_ROOT/current")" = "a7k2" ]
+  [ "$(sed -n '2p' "$FAB_ROOT/current")" = "260216-a7k2-add-oauth" ]
+}
+
+@test "switch: fab/current has no trailing newline after line 2" {
+  mkdir -p "$FAB_ROOT/changes/260216-a7k2-add-oauth"
+  cat > "$FAB_ROOT/changes/260216-a7k2-add-oauth/.status.yaml" <<'YAML'
+progress:
+  intake: active
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+YAML
+
+  cat > "$FAB_ROOT/.kit/scripts/lib/statusman.sh" <<STUB
+#!/usr/bin/env bash
+if [ "\$1" = "current-stage" ]; then echo "intake"; exit 0; fi
+echo "\$@" >> "$STATUSMAN_LOG"
+STUB
+  chmod +x "$FAB_ROOT/.kit/scripts/lib/statusman.sh"
+
+  run bash "$FAB_ROOT/.kit/scripts/lib/changeman.sh" switch "a7k2"
+  [ "$status" -eq 0 ]
+  # Verify exact byte content: "a7k2\n260216-a7k2-add-oauth" (no trailing newline)
+  local expected
+  expected=$(printf 'a7k2\n260216-a7k2-add-oauth')
+  [ "$(cat "$FAB_ROOT/current")" = "$expected" ]
 }
 
 @test "switch: output includes stage and next command" {

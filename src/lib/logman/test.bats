@@ -89,7 +89,7 @@ teardown() {
 # ─────────────────────────────────────────────────────────────────────────────
 
 @test "command with cmd only resolves via fab/current" {
-  echo "$CHANGE_NAME" > "$FAB_ROOT/current"
+  printf 'a1b2\n%s' "$CHANGE_NAME" > "$FAB_ROOT/current"
 
   run bash "$LOGMAN" command "fab-discuss"
   [ "$status" -eq 0 ]
@@ -123,7 +123,7 @@ teardown() {
 }
 
 @test "command with cmd only and stale fab/current exits 0 silently" {
-  echo "nonexistent-stale-change" > "$FAB_ROOT/current"
+  printf 'xxxx\nnonexistent-stale-change' > "$FAB_ROOT/current"
 
   run bash "$LOGMAN" command "fab-switch"
   [ "$status" -eq 0 ]

@@ -24,19 +24,26 @@ All components MUST be lowercase. The name is unique by construction (date + ran
 
 ### Active Change Tracking (`fab/current`)
 
-`fab/current` is a plain text file containing the name of the active change folder. It removes the need to scan `changes/` or remember folder names.
+`fab/current` is a two-line plain text file tracking the active change. Line 1 is the 4-char change ID; line 2 is the full folder name. No trailing newline. This removes the need to scan `changes/` or remember folder names.
+
+```
+ye59
+260302-ye59-example-change
+```
+
+**Access pattern**: Only `resolve.sh` reads `fab/current` (for default-mode resolution). Only `changeman.sh` writes `fab/current` (via `switch` and `rename` subcommands). No skill or other script reads or writes the file directly — the format is an implementation detail encapsulated by these two scripts.
 
 **Lifecycle**:
-- **Created** by `/fab-switch` — written with the newly activated change folder name
-- **Updated** by `/fab-switch` — overwritten with the new change name
+- **Created** by `changeman.sh switch` (called by `/fab-switch`) — writes 4-char ID on line 1, full folder name on line 2
+- **Updated** by `changeman.sh switch` — overwritten with the new change's ID and folder name
+- **Updated** by `changeman.sh rename` — line 1 (ID) preserved, line 2 (folder name) updated to reflect the new slug
 - **Not modified** by `/fab-new` — `/fab-new` never writes to `fab/current`; the user activates via `/fab-switch` after creation
-- **Read** by every other skill — `/fab-continue`, `/fab-clarify`, `/fab-status` all resolve the active change via `current`
-- **Cleared** by `/fab-switch --blank` — file is deleted to deactivate the current change (no active change). Can be combined with `--branch` to also switch git branches (e.g., `--blank --branch main`)
-- **Cleared** by `/fab-archive` — file is deleted after archiving the active change (no active change). Only cleared when the archived change is the one `fab/current` points to
-- **Optionally written** by `/fab-archive restore --switch` — written with the restored change name when `--switch` flag is used
+- **Read** by `resolve.sh` — reads line 2 for folder name resolution. All other scripts and skills resolve the active change via `changeman.sh resolve` (which delegates to `resolve.sh`)
+- **Cleared** by `changeman.sh switch --blank` (called by `/fab-switch --blank` or `/fab-archive`) — file is deleted to deactivate the current change
+- **Optionally written** by `changeman.sh switch` (called by `/fab-archive restore --switch`) — written with the restored change when `--switch` flag is used
 
-**Resolution pattern** (used by all skills via `changeman.sh resolve`):
-1. If `fab/current` exists and is non-empty, return its content (primary path)
+**Resolution pattern** (used by all skills via `changeman.sh resolve` → `resolve.sh`):
+1. If `fab/current` exists, read line 2 (folder name) and return it (primary path)
 2. If `fab/current` is missing or empty, attempt single-change guessing:
    - Enumerate non-archive folders in `fab/changes/` that contain a valid `.status.yaml`
    - Exactly 1 candidate → return it, emit `(resolved from single active change)` to stderr
@@ -187,7 +194,7 @@ The skill uses `lib/preflight.sh` for data retrieval (including `display_stage` 
 1. Match `change-name` against `fab/changes/` (supports partial/slug match)
 2. **Ambiguous match** — if multiple changes match, list them and ask the user to pick. Never guess
 3. **No match** — list available changes and ask
-4. Write the full change name to `fab/current`
+4. Write `fab/current` via `changeman.sh switch` (two-line format: 4-char ID on line 1, full folder name on line 2)
 5. Display the switched change's status summary (two-line format: `Stage: {display_stage} ({N}/6) — {state}` + `Next: {routing_stage} (via {default_command})`)
 6. Append a hint: `Tip: run /git-branch to create or switch to the matching branch`
 
@@ -269,10 +276,17 @@ Skills will tolerate old-format files — the preflight script infers `intake: d
 **Rejected**: `/fab-abandon` skill — low-value automation for a rare, deliberate action.
 *Source*: doc/fab-spec/ARCHITECTURE.md
 
+### Centralized Pointer Format
+**Decision**: `fab/current` uses two-line plain text (4-char ID on line 1, full folder name on line 2). Only `resolve.sh` reads it; only `changeman.sh` writes it. Skills and other scripts delegate through these two scripts.
+**Why**: Encapsulates the file format as an implementation detail. Future format changes require updating only two scripts. Eliminates format knowledge leakage in `logman.sh` (direct read), `fab-discuss` (direct read), and `fab-archive` (direct read/write/delete). The two-line format provides zero-cost folder name reads (line 2) and short ID comparison (line 1) for `dispatch.sh` polling.
+**Rejected**: YAML (`yq` dependency on hot path). Single-ID-only (requires folder scan on every default-mode resolve). Backward compatibility layer (unnecessary — `fab/current` is transient gitignored state, rewritten on every switch).
+*Introduced by*: 260302-a8ay-centralize-current-pointer
+
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260302-a8ay-centralize-current-pointer | 2026-03-02 | `fab/current` changed from single-line (folder name) to two-line format (4-char ID on line 1, folder name on line 2). Centralized access: only `resolve.sh` reads, only `changeman.sh` writes. Removed direct reads from `logman.sh`, `fab-discuss`, `fab-archive`. `preflight.sh` emits `id:` field. `_preamble.md` §2 instructs agents to use `id` for script calls. `dispatch.sh` polls line 1 (4-char ID). Added "Centralized Pointer Format" design decision. |
 | 260227-ijql-streamline-planning-dispatch | 2026-02-27 | Planning stages use `ready` as default post-generation state. `/fab-new` leaves intake `ready`. Updated "Reset Flow Stops at Target Stage" design decision: target stage advances to `ready` (was `done`). |
 | 260227-gasp-consolidate-status-field-naming | 2026-02-27 | Renamed `issue_id` → `issues` (scalar to array) in `.status.yaml`. Issue IDs now stored via `statusman.sh add-issue`, not embedded in folder name. |
 | 260226-6boq-event-driven-statusman | 2026-02-26 | Replaced `set-state`/`transition` API with 5 event commands: `start`, `advance`, `finish`, `reset`, `fail`. Added state transition table. Updated two-write transitions to reference `finish` (atomic done+next) and `reset` (cascade downstream). Updated `stage_metrics` to reference event commands. Driver parameter now optional (skills always pass it). |

@@ -44,9 +44,13 @@ create_change() {
   echo "$status_content" > "$change_dir/.status.yaml"
 }
 
-# Helper: set the active change in fab/current
+# Helper: set the active change in fab/current (two-line format)
 set_current() {
-  echo "$1" > "$TEST_DIR/fab/current"
+  local name="$1"
+  # Extract 4-char ID from YYMMDD-XXXX-slug format; fallback to name for simple test names
+  local id
+  id=$(echo "$name" | cut -d'-' -f2)
+  printf '%s\n%s' "$id" "$name" > "$TEST_DIR/fab/current"
 }
 
 # Helper: run preflight with stderr→stdout combined
@@ -149,18 +153,18 @@ run_preflight_combined() {
   [[ "$output" == *"name: my-feature"* ]]
 }
 
-@test "handles whitespace in fab/current" {
-  create_change "trim-test" "progress:
+@test "handles whitespace in fab/current line 2" {
+  create_change "260228-t1r2-trim-test" "progress:
   intake: active
   spec: pending
   tasks: pending
   apply: pending
   review: pending
   hydrate: pending"
-  printf "trim-test  \n" > "$TEST_DIR/fab/current"
+  printf 't1r2\n260228-t1r2-trim-test  \n' > "$TEST_DIR/fab/current"
   run "$PREFLIGHT"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"name: trim-test"* ]]
+  [[ "$output" == *"name: 260228-t1r2-trim-test"* ]]
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -377,6 +381,35 @@ run_preflight_combined() {
   run "$PREFLIGHT"
   [ "$status" -eq 0 ]
   [[ "$output" == *"stage: hydrate"* ]]
+}
+
+@test "YAML output includes id field" {
+  create_change "260228-a1b2-test-feature" "progress:
+  intake: active
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending"
+  set_current "260228-a1b2-test-feature"
+  run "$PREFLIGHT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"id: a1b2"* ]]
+  [[ "$output" == *"name: 260228-a1b2-test-feature"* ]]
+}
+
+@test "id field matches 4-char portion of name" {
+  create_change "260302-x9y8-my-change" "progress:
+  intake: active
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending"
+  set_current "260302-x9y8-my-change"
+  run "$PREFLIGHT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"id: x9y8"* ]]
 }
 
 @test "review:failed accepted and falls back" {

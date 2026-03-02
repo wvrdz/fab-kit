@@ -1,1 +1,7 @@
 {"ts":"2026-03-02T16:09:26+05:30","event":"command","cmd":"fab-new","args":"Change fab/current to two-line format (ID + folder name), centralize all access through resolve.sh/changeman.sh"}
+{"ts":"2026-03-02T16:26:21+05:30","event":"command","cmd":"fab-switch"}
+{"ts":"2026-03-02T16:27:05+05:30","event":"command","cmd":"fab-continue"}
+{"ts":"2026-03-02T16:29:40+05:30","event":"confidence","score":4.4,"delta":"+4.4","trigger":"calc-score"}
+{"ts":"2026-03-02T16:32:09+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-03-02T16:46:04+05:30","event":"review","result":"failed"}
+{"ts":"2026-03-02T16:51:06+05:30","event":"review","result":"passed"}
