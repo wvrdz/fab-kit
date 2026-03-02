@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260302-c7is-fab-clarify-bulk-confirm** — Added bulk confirm mode to fab-clarify for efficiently upgrading Confident assumptions to Certain via a single conversational turn instead of per-item AskUserQuestion round-trips.
 - **260302-a8ay-centralize-current-pointer** — Changed fab/current to a two-line plain text format (4-char ID + folder name), centralized all reads through resolve.sh and writes through changeman.sh, and added an `id:` field to preflight YAML output for shorter agent script calls.
 - **260302-9fnn-extract-logman-from-preflight** — Extracted command logging from preflight.sh into direct logman.sh calls from skills, making the change argument optional with silent fallback, so all skills (including those exempt from preflight) can log invocations.
 - **260301-08pa-version-pinned-upgrade-and-release** — Added optional version tag argument to fab-upgrade.sh for pinned downloads and --no-latest flag to fab-release.sh for publishing backport releases without changing the "latest" pointer.
