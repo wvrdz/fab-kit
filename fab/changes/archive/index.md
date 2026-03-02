@@ -1,5 +1,7 @@
 # Archive Index
 
+- **260302-9fnn-extract-logman-from-preflight** — Extracted command logging from preflight.sh into direct logman.sh calls from skills, making the change argument optional with silent fallback, so all skills (including those exempt from preflight) can log invocations.
+- **260301-08pa-version-pinned-upgrade-and-release** — Added optional version tag argument to fab-upgrade.sh for pinned downloads and --no-latest flag to fab-release.sh for publishing backport releases without changing the "latest" pointer.
 - **260228-hqv5-update-specs-statusman-refs** — Updated 7 spec files to replace stale `stageman.sh` references with `statusman.sh`, aligning docs/specs/ with the script rename completed in PR #177.
 - **260228-wyhd-add-skipped-stage-state** — Added `skipped` as a terminal stage state with a `skip` event (`{pending,active}→skipped`), downstream cascade, and reset support, enabling intake-only changes and partial-pipeline workflows.
 - **260228-wqe2-bats-tests-resolve-logman** — Added comprehensive BATS test suites for `resolve.sh` and `logman.sh` to match the two-file convention (`test-simple.sh` + `test.bats`) used by all other kit script test directories.
