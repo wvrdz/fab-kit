@@ -212,13 +212,14 @@ When the user invokes `/fab-clarify` directly:
 1. Read `.status.yaml` to determine current stage
 2. Stage MUST be `intake`, `spec`, or `tasks`. Each stage scans its corresponding artifact(s) using per-artifact taxonomy. If `apply` or later, suggest `/fab-continue` instead
 3. Load current artifact + relevant context
-4. Perform a **stage-scoped taxonomy scan** for gaps, ambiguities, and `[NEEDS CLARIFICATION]` markers (categories vary by stage)
-5. Present structured questions **one at a time** (max 5 per invocation), each with a recommendation and options table or suggested answer
-6. **Immediately update the artifact** after each user answer (incremental, not batched)
-7. User may terminate early with "done"/"good"/"no more"
-8. Append audit trail under `## Clarifications > ### Session {date}` with `Q:` / `A:` entries
-9. Display coverage summary (Resolved / Clear / Deferred / Outstanding)
-10. Do NOT advance the stage
+4. **Bulk confirm check** (Step 1.5): Parse the `## Assumptions` table. If `confident >= 3` AND `confident > tentative + unresolved`, display all Confident assumptions as a numbered list for conversational bulk response (confirm/change/explain). After resolution, proceed to step 5. See [clarify.md](clarify.md) for full details.
+5. Perform a **stage-scoped taxonomy scan** for gaps, ambiguities, and `[NEEDS CLARIFICATION]` markers (categories vary by stage)
+6. Present structured questions **one at a time** (max 5 per invocation), each with a recommendation and options table or suggested answer
+7. **Immediately update the artifact** after each user answer (incremental, not batched)
+8. User may terminate early with "done"/"good"/"no more"
+9. Append audit trail under `## Clarifications > ### Session {date}` with `Q:` / `A:` entries
+10. Display coverage summary (Resolved / Clear / Deferred / Outstanding)
+11. Do NOT advance the stage
 
 #### Auto Mode (Internal fab-ff Call)
 
@@ -322,6 +323,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260302-c7is-fab-clarify-bulk-confirm | 2026-03-02 | Added bulk confirm mode (Step 1.5) to `/fab-clarify` suggest mode — detects Confident-dominant confidence drag, presents numbered list for conversational bulk confirmation. Updated suggest mode steps (now 11 steps, bulk confirm at step 4). Documented in `_preamble.md` Confidence Scoring section. |
 | 260227-ijql-streamline-planning-dispatch | 2026-02-27 | Consolidated planning dispatch: `/fab-new` leaves intake as `ready` (Step 9 added). `/fab-continue` finishes previous `ready` stage + generates next artifact + advances to `ready` in one invocation. Single-dispatch rule removed. Reset flow uses `advance` (not `finish`) to preserve `/fab-clarify` checkpoint. |
 | 260226-6boq-event-driven-statusman | 2026-02-26 | Replaced `set-state`/`transition` references with event commands (`start`, `advance`, `finish`, `reset`, `fail`). Driver parameter now optional (skills always pass it). Updated `changeman.sh` integration (`start intake fab-new`). |
 | 260226-i9av-add-ready-state-to-stages | 2026-02-26 | `/fab-continue` gains state-based dispatch: `active` → generate artifact, `ready` → advance to next stage. `/fab-ff` redefined: starts from intake (was: spec-only), 3 safety gates (intake indicative >= 3.0, spec per-type threshold, review 3-cycle stop). `/fab-fff` unchanged except contrast text. `/fab-clarify` accepts `ready` state. `_preamble.md` State Table adds `/fab-ff` to intake row, state derivation includes `ready`. Dual gate thresholds documented (intake fixed 3.0, spec dynamic per-type). |
