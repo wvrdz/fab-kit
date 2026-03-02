@@ -1,0 +1,39 @@
+name: 260303-4ojc-git-pr-copilot-fix
+created: 2026-03-03T01:33:32+05:30
+created_by: sahil-weaver
+change_type: feat
+issues: []
+progress:
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+checklist:
+  generated: true
+  path: checklist.md
+  completed: 26
+  total: 26
+confidence:
+  certain: 7
+  confident: 3
+  tentative: 0
+  unresolved: 0
+  score: 4.1
+  fuzzy: true
+  dimensions:
+    signal: 88.5
+    reversibility: 89.0
+    competence: 86.0
+    disambiguation: 88.5
+stage_metrics:
+  intake: {started_at: "2026-03-03T01:33:33+05:30", driver: fab-new, iterations: 1, completed_at: "2026-03-03T01:39:22+05:30"}
+  spec: {started_at: "2026-03-03T01:39:23+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-03T01:40:17+05:30"}
+  tasks: {started_at: "2026-03-03T01:40:17+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-03T01:40:17+05:30"}
+  apply: {started_at: "2026-03-03T01:40:17+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-03T01:42:24+05:30"}
+  review: {started_at: "2026-03-03T01:42:24+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-03T01:45:17+05:30"}
+  hydrate: {started_at: "2026-03-03T01:45:17+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-03T01:46:16+05:30"}
+prs:
+  - https://github.com/wvrdz/fab-kit/pull/192
+last_updated: 2026-03-03T02:06:57+05:30
