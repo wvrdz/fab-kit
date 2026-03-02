@@ -2,11 +2,11 @@
 
 A structured development workflow for AI agents. You describe a change, AI plans it, implements it, reviews it, and saves what it learned into shared project memory. Each completed change builds shared context, so future changes start with better knowledge.
 
-AI agents are getting better at writing code fast. The bottleneck is shifting to you: did you define the problem well enough? Fab-kit sits at that bottleneck - it forces structured thinking before implementation, gives you a legible signal of your own clarity, and grounds every session in your project's actual context.
+AI agents are getting better at writing code fast. The bottleneck is shifting to you: did you define the problem well enough? Fab Kit sits at that bottleneck - it forces structured thinking before implementation, gives you a legible signal of your own clarity, and grounds every session in your project's actual context.
 
 Fab Kit is a 6-stage pipeline defined entirely in markdown prompts - no SDK, no vendor lock-in. The skills are plain prompts any AI agent can execute (Claude Code, Codex, Cursor, Windsurf). Copy it into your project and go. It's plain markdown and shell, so it gets cheaper to run as agents improve, not more expensive.
 
-The more capable AI agents become, the wider the gap between what they can build and what humans can clearly articulate. Fab-kit sits in that gap - and it grows with it.
+The more capable AI agents become, the wider the gap between what they can build and what humans can clearly articulate. Fab Kit sits in that gap - and it grows with it.
 
 > **[Try it now](#quick-start)** | **[Understand the concepts](#why-fab-kit)**
 
@@ -74,7 +74,7 @@ brew install yq jq gh bats-core direnv parallel
 ```
 
 * After installing `gh`, authenticate with `gh auth login`.
-* After installing `direnv`, add the hook [to your shell](https://direnv.net/docs/hook.html)
+* After installing `direnv`, add the hook [to your shell](https://direnv.net/docs/hook.html).
 
 | Tool | Purpose |
 |------|---------|
@@ -343,8 +343,8 @@ This delegates to `fab/.kit/scripts/lib/env-packages.sh`, which puts all package
 After cloning, initialize shared test dependencies:
 
 ```bash
-bash test-setup    # clones bats submodules
-just test-packages             # run all package tests
+just test-setup         # clones bats submodules
+just test-packages      # run all package tests
 ```
 
 ## Learn More
