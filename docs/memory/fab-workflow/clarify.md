@@ -83,6 +83,32 @@ After each suggest-mode session, the skill SHALL recompute the confidence score 
 
 Auto mode SHALL return a structured result: `{resolved: N, blocking: N, non_blocking: N}`. If blocking issues exist, descriptions are included: `{..., blocking_issues: ["description"]}`. This result is consumed by `fab-ff` to decide whether to continue or bail.
 
+### Bulk Confirm (Confident Assumptions)
+
+When the confidence score is low primarily due to many Confident (not Tentative/Unresolved) assumptions, suggest mode SHALL offer a bulk confirm flow before the taxonomy scan (Step 1.5). This displays all Confident assumptions in a numbered list and lets the user confirm, change, or request explanation in a single conversational turn.
+
+#### Detection
+
+Bulk confirm triggers when BOTH conditions are met:
+- `confident >= 3` (enough to materially affect the score)
+- `confident > tentative + unresolved` (Confident is the dominant drag)
+
+When not triggered, the skill proceeds directly to the taxonomy scan.
+
+#### Flow
+
+1. Display all Confident assumptions using original `#` column from the Assumptions table, with Decision and Rationale. Do NOT use `AskUserQuestion` — the list is plain text, and the user's next conversational message is the response.
+2. Parse the response: confirm (`✓`/`ok`/`yes`/bare number), change (free text), explain (`?`), range (`{start}-{end}`), or all (`all ✓`). Case-insensitive for keywords.
+3. For explanation requests: provide a brief inline explanation, then re-prompt for only the unexplained items (one round max).
+4. Update the Assumptions table in place: confirmed/changed items → Certain, Rationale updated (e.g., `Clarified — user confirmed`), S dimension → 95 (R, A, D unchanged). Unmentioned items stay Confident.
+5. Append to Clarifications audit trail as `### Session {date} (bulk confirm)`.
+
+After bulk confirm completes, proceed to Step 2 (taxonomy scan) on the updated artifact.
+
+#### Auto Mode Exclusion
+
+Bulk confirm is Suggest Mode only. Auto Mode skips it — there is no user to confirm with.
+
 ### Non-Advancing Property
 
 The clarify skill SHALL never advance the stage in `.status.yaml`. It only updates the `last_updated` timestamp. The user explicitly advances via `/fab-continue`.
@@ -115,6 +141,12 @@ The skill SHALL only operate on planning stages (`intake`, `spec`, `tasks`). At 
 **Rejected**: Separate resolution tracking file — adds complexity, risks drift between the table and the tracker. Removing entries instead of reclassifying — loses the decision record.
 *Introduced by*: 260212-29xv-scoring-formula
 
+### Bulk Confirm over AskUserQuestion
+**Decision**: The bulk confirm flow uses plain text display + conversational message parsing instead of per-item `AskUserQuestion` tool calls.
+**Why**: The motivating session proved conversational bulk response is ~10x faster. `AskUserQuestion` forces per-item round-trips that defeat the purpose of bulk confirmation. `multiSelect: true` caps at 4 options per question and still requires structured tool-call interaction.
+**Rejected**: Per-item `AskUserQuestion` — too slow. Multi-select `AskUserQuestion` — capped at 4 options.
+*Introduced by*: 260302-c7is-fab-clarify-bulk-confirm
+
 ### Audit Trail in Artifact (Not Separate File)
 **Decision**: Append clarification history directly to the artifact under a `## Clarifications` section.
 **Why**: Keeps the audit trail with the artifact it describes. No separate files to track. Sessions accumulate naturally.
@@ -124,6 +156,7 @@ The skill SHALL only operate on planning stages (`intake`, `spec`, `tasks`). At 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260302-c7is-fab-clarify-bulk-confirm | 2026-03-02 | Added bulk confirm mode (Step 1.5) to suggest mode — detects when Confident assumptions dominate the confidence drag (`confident >= 3` AND `confident > tentative + unresolved`), displays numbered list for conversational bulk response, supports confirm/change/explain/range/all formats, one re-prompt round for explanations. Added to `_preamble.md` Confidence Scoring section. Auto Mode excluded. |
 | 260221-5tj7-rename-context-to-preamble | 2026-02-21 | Renamed shared skill preamble from `_context.md` to `_preamble.md`. Updated all references in dual-mode operation and design decisions sections. |
 | 260216-7ltw-DEV-1038-standardize-state-keyed-suggestions | 2026-02-16 | Extended stage guard to include `intake` as valid planning stage. Added intake taxonomy scan categories (scope boundaries, affected areas, blocking questions, impact, memory coverage). All `Next:` lines now derived from canonical state table in `_preamble.md`. |
 | 260215-v4n7-DEV-1025-rename-brief-to-intake | 2026-02-15 | Renamed `brief` stage/artifact to `intake` throughout — stage identifiers, artifact filenames, YAML keys, prose references |

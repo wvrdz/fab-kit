@@ -325,3 +325,11 @@ Confidence is computed by `fab/.kit/scripts/lib/calc-score.sh`, invoked by `/fab
 ### Template
 
 `fab/.kit/templates/status.yaml` includes the confidence block initialized to zero counts and score 0.0. Template defaults persist until `/fab-continue` generates the spec and invokes `fab/.kit/scripts/lib/calc-score.sh`.
+
+### Bulk Confirm (Confident Assumptions)
+
+When the confidence score is low primarily due to many Confident (not Tentative/Unresolved) assumptions, `/fab-clarify` offers a bulk confirm flow. This displays all Confident assumptions in a numbered list and lets the user confirm, change, or request explanation in a single conversational turn — typically 10x faster than individual question/answer cycles.
+
+Detection: triggered when `confident >= 3` and `confident > tentative + unresolved`.
+
+This flow runs as Step 1.5 in Suggest Mode, before the standard taxonomy scan (Step 2). Items confirmed are upgraded to Certain (Rationale: `Clarified — user confirmed`, S dimension → 95); items changed are updated and upgraded; items not mentioned remain Confident. Auto Mode does not trigger bulk confirm.
