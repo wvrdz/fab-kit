@@ -104,20 +104,28 @@ make_change() {
   [ "$output" = "260228-a1b2-test-change" ]
 }
 
-@test "no argument reads fab/current" {
+@test "no argument reads fab/current line 2" {
   make_change "260228-a1b2-test-change"
-  printf '260228-a1b2-test-change' > "$FAB_ROOT/current"
+  printf 'a1b2\n260228-a1b2-test-change' > "$FAB_ROOT/current"
   run bash "$RESOLVE" --folder
   [ "$status" -eq 0 ]
   [ "$output" = "260228-a1b2-test-change" ]
 }
 
-@test "fab/current with trailing whitespace" {
+@test "fab/current line 2 with trailing whitespace" {
   make_change "260228-a1b2-test-change"
-  printf '260228-a1b2-test-change\n  ' > "$FAB_ROOT/current"
+  printf 'a1b2\n260228-a1b2-test-change  \n' > "$FAB_ROOT/current"
   run bash "$RESOLVE" --folder
   [ "$status" -eq 0 ]
   [ "$output" = "260228-a1b2-test-change" ]
+}
+
+@test "fab/current two-line format: --id extracts from line 2 folder name" {
+  make_change "260228-a1b2-test-change"
+  printf 'a1b2\n260228-a1b2-test-change' > "$FAB_ROOT/current"
+  run bash "$RESOLVE" --id
+  [ "$status" -eq 0 ]
+  [ "$output" = "a1b2" ]
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

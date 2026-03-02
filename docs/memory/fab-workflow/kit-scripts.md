@@ -31,7 +31,7 @@ preflight.sh   ← uses changeman.sh resolve, statusman.sh for queries, logman.s
 
 Universal resolver called by every other script. Pure function — no file writes, no `.status.yaml` modifications, no logging.
 
-**Input forms**: 4-char change ID, folder name substring (case-insensitive), full folder name, or no argument (reads `fab/current`, single-change guess fallback).
+**Input forms**: 4-char change ID, folder name substring (case-insensitive), full folder name, or no argument (reads line 2 of `fab/current` for folder name, single-change guess fallback). `resolve.sh` is the sole reader of `fab/current` content — all other scripts and skills delegate through it or `changeman.sh resolve`.
 
 **Output flags** (mutually exclusive):
 - `--id` (default) — 4-char change ID
@@ -98,7 +98,7 @@ One JSON object per line, appended to `{change_dir}/.history.jsonl`.
 
 ### `logman.sh` Subcommands
 
-All resolve `<change>` via `resolve.sh --dir`:
+All resolve `<change>` via `resolve.sh --dir`. The `command` subcommand's no-change-arg path delegates to `resolve.sh` (reads `fab/current` internally) with a file-existence guard to skip the single-change guess fallback — best-effort logging only fires when an explicit active change pointer exists.
 
 - `logman.sh command <change> <cmd> [args]` — logs command invocation
 - `logman.sh confidence <change> <score> <delta> <trigger>` — logs confidence change
@@ -150,6 +150,10 @@ Each script has exactly one responsibility with no overlap:
 
 `resolve.sh` is the universal dependency (~180 lines including help text). Every other script calls it first. Embedding it in changeman would force every script to load 400+ lines for a ~95-line resolution function.
 
+### Centralized `fab/current` Access
+
+`resolve.sh` is the sole reader of `fab/current` content; `changeman.sh` is the sole writer. This was enforced by 260302-a8ay-centralize-current-pointer, which removed direct reads from `logman.sh` (replaced with `resolve.sh` delegation) and updated `fab-discuss`/`fab-archive` skills to use `resolve.sh`/`changeman.sh` instead of direct file operations.
+
 ---
 
-*Last updated: 2026-02-28*
+*Last updated: 2026-03-02*
