@@ -85,12 +85,15 @@ fab/.kit/
     │   ├── run.sh          # Main orchestrator loop
     │   └── dispatch.sh     # Per-change dispatch
     └── lib/                # Internal scripts (not user-facing)
+        ├── archiveman.sh       # Archive Manager — archive/restore lifecycle operations
         ├── calc-score.sh       # Confidence score computation
         ├── changeman.sh        # Change Manager — change lifecycle operations (new, rename, resolve, switch)
         ├── env-packages.sh     # Add all package bin/ dirs to PATH (sourced by .envrc and rc-init.sh)
         ├── frontmatter.sh      # Shared frontmatter parser — YAML (frontmatter_field) and shell-comment (shell_frontmatter_field)
+        ├── logman.sh           # History Logger — append-only .history.jsonl logging
         ├── preflight.sh        # Pre-flight validation (calls statusman + changeman CLI)
-        └── statusman.sh         # Stage Manager — schema query + .status.yaml accessors
+        ├── resolve.sh          # Change Resolver — pure query, no side effects
+        └── statusman.sh        # Stage Manager — schema query + .status.yaml accessors
 ```
 
 ### Shell Scripts
@@ -146,6 +149,16 @@ Change Manager — CLI-only utility for change lifecycle operations. Supports `n
 - **`switch <name> | --blank`** — Switches the active change. Composes: resolve name via internal `resolve` logic, write `fab/current`, derive stage via `$STATUSMAN current-stage`, output structured summary. `--blank` deactivates by deleting `fab/current`. Called by `/fab-switch`.
 
 All subcommands print results to stdout; errors to stderr. Designed CLI-first for eventual Rust rewrite parity with statusman.
+
+#### `lib/archiveman.sh`
+
+Archive Manager — CLI-only utility for archive/restore lifecycle operations. Supports `archive`, `restore`, and `list` subcommands. Uses `resolve.sh` for active change resolution (archive mode) and implements its own case-insensitive substring matching for archive folder resolution (restore mode). Delegates pointer operations to `changeman.sh` (`switch --blank` for archive, `switch <name>` for restore).
+
+- **`archive <change> --description "..."`** — Archives a change in one shot: deletes `.pr-done` if present, moves folder to `fab/changes/archive/`, creates/updates `fab/changes/archive/index.md` (prepends entry with `--description` text), backfills unindexed archived folders, clears `fab/current` if the change was active. Outputs structured YAML to stdout (`action`, `name`, `clean`, `move`, `index`, `pointer` fields). Called by `/fab-archive` (archive mode).
+- **`restore <change> [--switch]`** — Restores an archived change: moves folder back to `fab/changes/`, removes index entry, optionally activates via `changeman.sh switch`. Resolution uses internal `resolve_archive` function against `fab/changes/archive/` folder names. Outputs structured YAML to stdout. Called by `/fab-archive` (restore mode).
+- **`list`** — Lists archived folder names (one per line, excludes `index.md`). Returns exit 0 even for empty/missing archive.
+
+All subcommands print results to stdout; errors to stderr. Dev folder: `src/lib/archiveman/` (BATS test suite, 41 tests).
 
 #### `batch-pipeline.sh`
 
@@ -347,6 +360,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260303-hcq9-scriptify-fab-archive | 2026-03-04 | Added `archiveman.sh` to `scripts/lib/` — Archive Manager with `archive`, `restore`, and `list` subcommands. Slimmed `/fab-archive` skill to orchestrator (backlog matching only). Added `logman.sh` and `resolve.sh` to directory tree listing (were already documented in script sections but missing from the tree). Dev test suite: `src/lib/archiveman/test.bats` (41 tests). |
 | 260303-l6nk-gemini-cli-agent-aware-sync | 2026-03-04 | Added Gemini CLI as 4th agent target (`.gemini/skills/<name>/SKILL.md`, directory-based copies). Made agent skill deployment conditional — each agent's CLI checked via `command -v` before syncing; absent agents skipped with message, existing dot folders preserved. Added `FAB_AGENTS` env var override for testing/CI. Added `/.gemini` to gitignore scaffold. Updated "Agent Integration via Symlinks" → "Agent Skill Deployment" section and design decision. |
 | 260303-6b7c-update-underscore-skill-references | 2026-03-04 | Documented underscore file deployment in Agent Integration section — `2-sync-workspace.sh` now deploys all `*.md` files including `_preamble.md`, `_generation.md`, `_scripts.md` (with `user-invocable: false` frontmatter). Updated stale test assertion from "skips" to "deploys" underscore files. |
 | 260227-gasp-consolidate-status-field-naming | 2026-02-27 | Replaced `ship_url()`/`is_shipped()` with generic `_append_to_array`/`_get_array` helpers and 4 symmetric functions: `add_issue`/`get_issues`/`add_pr`/`get_prs`. CLI routes `ship`/`is-shipped` → `add-issue`/`get-issues`/`add-pr`/`get-prs`. Template fields `issue_id: null` → `issues: []`, `shipped: []` → `prs: []`. |
