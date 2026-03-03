@@ -282,7 +282,7 @@ create_archived() {
   run bash "$SCRIPT" restore "260303-hcq9-test-change" --switch
   [ "$status" -eq 0 ]
   [[ "$output" == *"pointer: switched"* ]]
-  grep -q "changeman-calls" "$TEST_DIR/changeman-calls.log" 2>/dev/null || true
+  [ -f "$CHANGEMAN_LOG" ]
   grep -qF "switch 260303-hcq9-test-change" "$CHANGEMAN_LOG"
 }
 

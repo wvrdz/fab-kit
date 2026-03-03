@@ -41,7 +41,7 @@ calc-score.sh  ← confidence scoring from Assumptions tables
 preflight.sh   ← validation entry point (calls all above)
 ```
 
-**Call graph**: `resolve.sh` is called by every other script except `archiveman.sh` (which uses it for archive mode and implements its own archive-folder resolution for restore mode). `archiveman.sh` delegates pointer operations to `changeman.sh` (`switch --blank`, `switch <name>`). `logman.sh` is called by `statusman.sh` (review auto-log), `calc-score.sh` (confidence log), `changeman.sh` (new/rename log), and skills (command log directly via `_preamble.md` §2 or per-skill instructions). Skills call `logman.sh command` directly for command invocation logging.
+**Call graph**: `resolve.sh` is called by every other script; `archiveman.sh` uses it for archive mode but implements its own archive-folder resolution for restore mode. `archiveman.sh` delegates pointer operations to `changeman.sh` (`switch --blank`, `switch <name>`). `logman.sh` is called by `statusman.sh` (review auto-log), `calc-score.sh` (confidence log), `changeman.sh` (new/rename log), and skills (command log directly via `_preamble.md` §2 or per-skill instructions). Skills call `logman.sh command` directly for command invocation logging.
 
 ---
 

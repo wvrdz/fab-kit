@@ -16,7 +16,7 @@
 
 `archiveman.sh` SHALL be created at `fab/.kit/scripts/lib/archiveman.sh` following the established kit script pattern (changeman, statusman, resolve, logman, calc-score).
 
-The script SHALL use `set -euo pipefail`, resolve `LIB_DIR` and `FAB_ROOT` using the same `readlink -f` pattern as other kit scripts, and source `resolve.sh` indirectly via `changeman.sh` for active change resolution.
+The script SHALL use `set -euo pipefail`, resolve `LIB_DIR` and `FAB_ROOT` using the same `readlink -f` pattern as other kit scripts, and invoke `resolve.sh` directly from `LIB_DIR` for active change resolution.
 
 #### Scenario: Script exists and is executable
 - **GIVEN** fab-kit is installed

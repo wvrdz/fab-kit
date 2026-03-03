@@ -148,6 +148,10 @@ cmd_archive() {
 
   # 2. Move: change folder → archive/
   mkdir -p "$archive_dir"
+  if [ -e "$archive_dir/$folder" ]; then
+    echo "ERROR: Archive destination already exists: $archive_dir/$folder" >&2
+    exit 1
+  fi
   mv "$change_dir" "$archive_dir/$folder"
   local move_status="moved"
 
@@ -161,8 +165,12 @@ cmd_archive() {
     index_status="updated"
   fi
 
+  # Normalize description to single line (strip newlines/tabs)
+  local normalized_desc
+  normalized_desc=$(printf '%s' "$description" | tr '\n\r\t' '   ' | sed 's/  */ /g; s/^ //; s/ $//')
+
   # Prepend new entry after the header (line 1 = header, line 2 = blank)
-  local new_entry="- **${folder}** — ${description}"
+  local new_entry="- **${folder}** — ${normalized_desc}"
   local tmp_file
   tmp_file=$(mktemp)
   # Keep header + blank line, insert new entry, then rest of file
