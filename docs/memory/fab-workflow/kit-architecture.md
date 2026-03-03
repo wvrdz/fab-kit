@@ -189,7 +189,7 @@ Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern (except p
 
 ### Agent Skill Deployment
 
-`sync/2-sync-workspace.sh` deploys skills to each agent using the `sync_agent_skills` function. Deployment is **conditional** — each agent's CLI command is checked via `command -v` before syncing. If an agent's CLI is not found in PATH, its sync is skipped with a message, and existing dot folders are preserved. When no agents are detected, a warning is printed but the script continues (exit 0). The `FAB_AGENTS` environment variable can override detection for testing and CI (space-separated list of agent names).
+`sync/2-sync-workspace.sh` deploys skills to each agent using the `sync_agent_skills` function. Deployment is **conditional** — by default, each agent's CLI command is checked via `command -v` before syncing. If an agent's CLI is not found in PATH, its sync is skipped with a message, and existing dot folders are preserved. When no agents are detected, a warning is printed but the script continues (exit 0). The `FAB_AGENTS` environment variable (space-separated list of CLI command names, e.g., `claude opencode gemini`) can override PATH detection for testing and CI — when set, only the listed agents are synced.
 
 All `*.md` files in `fab/.kit/skills/` are deployed, including underscore partials (`_preamble.md`, `_generation.md`, `_scripts.md`) which have `user-invocable: false` frontmatter to prevent direct invocation. The skill prompt files are agent-agnostic markdown; only the deployment locations and formats differ per agent:
 

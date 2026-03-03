@@ -362,7 +362,7 @@ clean_stale_skills() {
 
 # agent_available <command>
 #   Returns 0 if the given CLI command is available, 1 otherwise.
-#   When FAB_AGENTS is set (space-separated list), checks membership instead of PATH.
+#   When FAB_AGENTS is set (space-separated list of CLI command names), checks membership instead of PATH.
 #   This enables testing and CI overrides without PATH manipulation.
 if [ "${FAB_AGENTS+set}" = "set" ]; then
   agent_available() { [[ " $FAB_AGENTS " == *" $1 "* ]]; }
