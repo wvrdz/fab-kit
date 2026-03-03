@@ -5,7 +5,7 @@ description: "Switch the active change to a different one. Lists available chang
 
 # /fab-switch [change-name] [--blank]
 
-> Read `_preamble.md` first. Only after that Read completes, proceed with any Bash calls.
+> Read the `_preamble` skill first. Only after that Read completes, proceed with any Bash calls.
 
 ---
 
