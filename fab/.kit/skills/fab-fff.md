@@ -5,7 +5,7 @@ description: "Full pipeline — planning, implementation, sub-agent review, and 
 
 # /fab-fff [<change-name>]
 
-> Read and follow the instructions in `_preamble.md` before proceeding.
+> Read and follow the instructions in the `_preamble` skill before proceeding.
 
 ---
 
