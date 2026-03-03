@@ -187,28 +187,34 @@ Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern (except p
 - **`batch-fab-switch-change.sh`** — Per change name/ID: creates a worktree with the expected branch, opens a tmux tab, runs `/fab-switch <change>`. Supports `--list`, `--all`, substring matching.
 - **`batch-fab-archive-change.sh`** — Per completed change (`hydrate:done`): creates a worktree, opens a tmux tab, runs `/fab-archive <change>`. Filters by reading `.status.yaml` for `hydrate: done`. Supports `--list`, `--all`, substring matching.
 
-### Agent Integration via Symlinks
+### Agent Skill Deployment
 
-Agent-specific skill files SHALL be symlinks pointing into `fab/.kit/skills/`. This means updating `.kit/` automatically updates all agent integrations — no re-export step needed.
+`sync/2-sync-workspace.sh` deploys skills to each agent using the `sync_agent_skills` function. Deployment is **conditional** — each agent's CLI command is checked via `command -v` before syncing. If an agent's CLI is not found in PATH, its sync is skipped with a message, and existing dot folders are preserved. When no agents are detected, a warning is printed but the script continues (exit 0). The `FAB_AGENTS` environment variable can override detection for testing and CI (space-separated list of agent names).
 
-`sync/2-sync-workspace.sh` creates symlinks for all three supported agents unconditionally. All `*.md` files in `fab/.kit/skills/` are deployed, including underscore partials (`_preamble.md`, `_generation.md`, `_scripts.md`) which have `user-invocable: false` frontmatter to prevent direct invocation. The skill prompt files are agent-agnostic markdown; only the symlink locations and formats differ per agent.
+All `*.md` files in `fab/.kit/skills/` are deployed, including underscore partials (`_preamble.md`, `_generation.md`, `_scripts.md`) which have `user-invocable: false` frontmatter to prevent direct invocation. The skill prompt files are agent-agnostic markdown; only the deployment locations and formats differ per agent:
 
-**Claude Code** — directory-based skills:
+**Claude Code** (`claude`) — directory-based copies:
 ```
 .claude/skills/fab-new/
-└── SKILL.md → ../../../fab/.kit/skills/fab-new.md
+└── SKILL.md    (copy of fab/.kit/skills/fab-new.md)
 ```
 
-**OpenCode** — flat file commands:
+**OpenCode** (`opencode`) — flat file symlinks:
 ```
 .opencode/commands/
 └── fab-new.md → ../../fab/.kit/skills/fab-new.md
 ```
 
-**Codex** — directory-based skills:
+**Codex** (`codex`) — directory-based copies:
 ```
 .agents/skills/fab-new/
-└── SKILL.md → ../../../fab/.kit/skills/fab-new.md
+└── SKILL.md    (copy of fab/.kit/skills/fab-new.md)
+```
+
+**Gemini CLI** (`gemini`) — directory-based copies:
+```
+.gemini/skills/fab-new/
+└── SKILL.md    (copy of fab/.kit/skills/fab-new.md)
 ```
 
 ### Distribution & Bootstrapping
@@ -256,7 +262,7 @@ All contain a bare semver string (`MAJOR.MINOR.PATCH`). See [migrations.md](migr
 
 Run `fab/.kit/scripts/fab-upgrade.sh` to update to the latest release. The script downloads `kit.tar.gz` from GitHub Releases, atomically replaces `fab/.kit/`, and re-runs `fab-sync.sh` to repair directories and agents. After the upgrade, if `fab/.kit-migration-version` is behind the new engine version, the script prints a reminder to run `/fab-setup migrations` to apply migrations. Requires the `gh` CLI.
 
-Symlinks in `.claude/skills/`, `.opencode/commands/`, and `.agents/skills/` automatically resolve to the new files after the update.
+Skill deployments in `.claude/skills/`, `.opencode/commands/`, `.agents/skills/`, and `.gemini/skills/` are refreshed by `fab-sync.sh` after the update. OpenCode symlinks resolve automatically; copies for Claude Code, Codex, and Gemini are re-copied.
 
 **Preserved** (lives outside `.kit/`): `config.yaml`, `constitution.md`, `docs/memory/`, `docs/specs/`, `changes/`, `current`, `.kit-migration-version`, `.kit-sync-version`
 **Replaced** (lives inside `.kit/`): `templates/`, `skills/`, `scripts/`, `sync/`, `migrations/`, `packages/`, `VERSION`
@@ -285,11 +291,11 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 **Rejected**: CLI tool, npm package, or Python script — all introduce system dependencies.
 *Source*: doc/fab-spec/README.md, fab/project/constitution.md
 
-### Symlinks for Agent Integration
-**Decision**: Agent skill directories contain symlinks into `.kit/skills/`, not copies.
-**Why**: Updating `.kit/` automatically updates all agent integrations. No re-export or copy step needed. Single source of truth for skill definitions.
-**Rejected**: Copies of skill files per agent — stale copies after `.kit/` updates, maintenance burden.
-*Source*: doc/fab-spec/ARCHITECTURE.md
+### Agent Skill Deployment Strategy
+**Decision**: Agent skill directories are deployed via copies (Claude Code, Codex, Gemini CLI) or symlinks (OpenCode). Deployment is conditional on agent CLI availability in PATH via `command -v`.
+**Why**: Copies ensure each agent has a self-contained skill file regardless of symlink support. Conditional deployment avoids creating dot folders for agents the developer doesn't use, keeping workspaces clean. The `FAB_AGENTS` env var enables deterministic testing without PATH manipulation.
+**Rejected**: Unconditional deployment to all agents — creates workspace clutter for unused agents. Also rejected: symlinks for all agents — Claude Code and Codex don't reliably follow symlinks.
+*Source*: 260303-l6nk-gemini-cli-agent-aware-sync, 260219-d2y2-copy-template-skills-drop-agents
 
 ### lib/ Subfolder for Internal Scripts
 **Decision**: Internal scripts (`statusman.sh`, `changeman.sh`, `calc-score.sh`, `preflight.sh`) live in `fab/.kit/scripts/lib/` without underscore prefix. User-facing scripts (`fab-doctor.sh`, `fab-help.sh`, `fab-sync.sh`, `fab-upgrade.sh`, batch scripts) remain in the parent `scripts/` directory.
@@ -341,6 +347,7 @@ For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field s
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260303-l6nk-gemini-cli-agent-aware-sync | 2026-03-04 | Added Gemini CLI as 4th agent target (`.gemini/skills/<name>/SKILL.md`, directory-based copies). Made agent skill deployment conditional — each agent's CLI checked via `command -v` before syncing; absent agents skipped with message, existing dot folders preserved. Added `FAB_AGENTS` env var override for testing/CI. Added `/.gemini` to gitignore scaffold. Updated "Agent Integration via Symlinks" → "Agent Skill Deployment" section and design decision. |
 | 260303-6b7c-update-underscore-skill-references | 2026-03-04 | Documented underscore file deployment in Agent Integration section — `2-sync-workspace.sh` now deploys all `*.md` files including `_preamble.md`, `_generation.md`, `_scripts.md` (with `user-invocable: false` frontmatter). Updated stale test assertion from "skips" to "deploys" underscore files. |
 | 260227-gasp-consolidate-status-field-naming | 2026-02-27 | Replaced `ship_url()`/`is_shipped()` with generic `_append_to_array`/`_get_array` helpers and 4 symmetric functions: `add_issue`/`get_issues`/`add_pr`/`get_prs`. CLI routes `ship`/`is-shipped` → `add-issue`/`get-issues`/`add-pr`/`get-prs`. Template fields `issue_id: null` → `issues: []`, `shipped: []` → `prs: []`. |
 | 260226-85rg-drop-fast-model-tier | 2026-02-26 | Removed "Model Tier Agent Files (Dual Deployment)" section — the fast tier has been eliminated. All skills are now deployed as plain copies with no model templating. See `model-tiers.md` for full details. |

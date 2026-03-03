@@ -21,10 +21,10 @@ curl -sL https://github.com/{repo}/releases/latest/download/kit.tar.gz | tar xz 
 
 Where `{repo}` is the `repo` value from `fab/.kit/kit.conf` (e.g. `wvrdz/fab-kit`).
 
-After extraction, the user MUST run `fab/.kit/scripts/fab-sync.sh` to validate prerequisites (`yq`, `jq`, `gh`, `direnv`, `bats`), create directories (`changes/`, `memory/`, `specs/`), skeleton files (copied from `scaffold/memory-index.md` and `scaffold/specs-index.md`), deploy skills (copies with model templating for Claude Code, symlinks for OpenCode, copies for Codex), `.envrc` entries (from `scaffold/envrc`, line-ensuring), and `.gitignore` entries (from `scaffold/gitignore-entries`). The bootstrap only provides `.kit/` — no `config.yaml`, `constitution.md`, or other project files.
+After extraction, the user MUST run `fab/.kit/scripts/fab-sync.sh` to validate prerequisites (`yq`, `jq`, `gh`, `direnv`, `bats`), create directories (`changes/`, `memory/`, `specs/`), skeleton files (copied from `scaffold/memory-index.md` and `scaffold/specs-index.md`), deploy skills conditionally to detected agents (copies for Claude Code, Codex, and Gemini CLI; symlinks for OpenCode — only when the agent's CLI is found in PATH), `.envrc` entries (from `scaffold/envrc`, line-ensuring), and `.gitignore` entries (from `scaffold/gitignore-entries`). The bootstrap only provides `.kit/` — no `config.yaml`, `constitution.md`, or other project files.
 
 **Scenarios**:
-- Bootstrap a new project (no `fab/` directory) — creates `fab/.kit/` with all skills, templates, scripts, and VERSION file; running `fab-sync.sh` first validates prerequisites (yq, jq, gh, direnv, bats), then creates `changes/`, `memory/index.md`, `specs/index.md`, skill deployments (copies/symlinks per platform), `.envrc` (line-ensuring from scaffold), and `.gitignore` entry
+- Bootstrap a new project (no `fab/` directory) — creates `fab/.kit/` with all skills, templates, scripts, and VERSION file; running `fab-sync.sh` first validates prerequisites (yq, jq, gh, direnv, bats), then creates `changes/`, `memory/index.md`, `specs/index.md`, skill deployments conditionally per detected agent (Claude Code, OpenCode, Codex, Gemini CLI — only when the agent's CLI command is found in PATH), `.envrc` (line-ensuring from scaffold), and `.gitignore` entry
 - Bootstrap with existing `fab/` directory — creates or replaces `fab/.kit/`; existing files outside `.kit/` (config.yaml, constitution.md, memory/, specs/, changes/) are NOT affected
 
 #### Manual Copy Still Works
@@ -127,6 +127,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260303-l6nk-gemini-cli-agent-aware-sync | 2026-03-04 | Added Gemini CLI as 4th supported agent. Updated bootstrap/sync descriptions to reflect conditional agent deployment (skills deployed only when agent's CLI found in PATH). Four agents: Claude Code (copies), OpenCode (symlinks), Codex (copies), Gemini CLI (copies). |
 | 260301-08pa-version-pinned-upgrade-and-release | 2026-03-02 | Added version-pinned upgrade (`fab-upgrade.sh v0.24.0`) with tag-aware messaging. Added backport release support to `fab-release.sh`: push to current branch instead of hardcoded `main`, `--no-latest` flag for `gh release create --latest=false`, position-independent argument parsing. |
 | 260226-koj1-version-staleness-warning | 2026-02-26 | Added sync staleness detection (`fab/.kit-sync-version` stamp, preflight stderr warning). Renamed `fab/project/VERSION` → `fab/.kit-migration-version`. Updated preserved files list in upgrade section. |
 | 260224-v40o-wt-drop-prefix-and-dotworktrees | 2026-02-25 | wt package: dropped `wt/` branch prefix from exploratory worktrees (branch = worktree name directly). Switched worktree home directory from `<repo>-worktrees` to `<repo>.worktrees` (GitLens convention). Updated `wt-create` help text. No migration for existing worktrees. |
