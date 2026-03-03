@@ -36,10 +36,10 @@ Wait for GitHub Copilot review comments on the current PR, triage them, and fix 
 **Phase 1 — Check if already reviewed**:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .id'
+gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '[.[] | select(.user.login == "copilot-pull-request-reviewer[bot]")] | sort_by(.submitted_at) | if length > 0 then .[-1].id else empty end'
 ```
 
-If a review ID is returned → capture `{review_id}` and skip directly to Step 3 (Phases 2 and 3 are skipped entirely). On the first call, if `gh api` returns a non-zero exit code → print the error and STOP.
+If a review ID is returned → capture `{review_id}` (most recent if multiple exist) and skip directly to Step 3 (Phases 2 and 3 are skipped entirely). On the first call, if `gh api` returns a non-zero exit code → print the error and STOP.
 
 **Phase 2 — Request review**:
 
@@ -52,8 +52,8 @@ gh api repos/{owner}/{repo}/pulls/{number}/requested_reviewers -X POST -f 'revie
 
 **Phase 3 — Poll for completion** (mode-specific):
 
-- **Wait mode** (when `{wait}` is set — see Step 6 of `/git-pr`): Poll `GET /reviews` for `copilot-pull-request-reviewer[bot]` every 30 seconds, max 12 attempts (6 minutes total). If review arrives → capture `{review_id}` and proceed. If timeout → print `Copilot review did not arrive within 6 minutes.` and STOP.
-- **Standalone mode** (default): Single check of `GET /reviews`. If review found → capture `{review_id}` and proceed. If not found → print `Copilot review requested but not yet available — re-run later.` and STOP.
+- **Wait mode** (when invoked inline from `/git-pr` Step 6): Poll `GET /reviews` for `copilot-pull-request-reviewer[bot]` every 30 seconds, max 12 attempts (6 minutes total). If review arrives → capture `{review_id}` and proceed. If timeout → print `Copilot review did not arrive within 6 minutes.` and STOP.
+- **Standalone mode** (when `/git-pr-fix` is invoked directly; default): Single check of `GET /reviews`. If review found → capture `{review_id}` and proceed. If not found → print `Copilot review requested but not yet available — re-run later.` and STOP.
 
 ### Step 3: Fetch and Triage Comments
 
