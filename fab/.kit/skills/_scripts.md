@@ -28,19 +28,20 @@ All scripts accept a unified `<change>` argument, resolved by `resolve.sh` inter
 
 ## Script Architecture
 
-Six scripts with atomic responsibilities (`preflight.sh` serves as the validation entry point):
+Seven scripts with atomic responsibilities (`preflight.sh` serves as the validation entry point):
 
 ```
 resolve.sh     ← universal resolver (no side effects)
    ↑
 changeman.sh   ← change lifecycle (new, rename, switch, list)
+archiveman.sh  ← archive lifecycle (archive, restore, list)
 statusman.sh   ← stage state machine + .status.yaml metadata
 logman.sh      ← append-only .history.jsonl logging
 calc-score.sh  ← confidence scoring from Assumptions tables
 preflight.sh   ← validation entry point (calls all above)
 ```
 
-**Call graph**: `resolve.sh` is called by every other script. `logman.sh` is called by `statusman.sh` (review auto-log), `calc-score.sh` (confidence log), `changeman.sh` (new/rename log), and skills (command log directly via `_preamble.md` §2 or per-skill instructions). Skills call `logman.sh command` directly for command invocation logging.
+**Call graph**: `resolve.sh` is called by every other script; `archiveman.sh` uses it for archive mode but implements its own archive-folder resolution for restore mode. `archiveman.sh` delegates pointer operations to `changeman.sh` (`switch --blank`, `switch <name>`). `logman.sh` is called by `statusman.sh` (review auto-log), `calc-score.sh` (confidence log), `changeman.sh` (new/rename log), and skills (command log directly via `_preamble.md` §2 or per-skill instructions). Skills call `logman.sh command` directly for command invocation logging.
 
 ---
 
@@ -184,6 +185,31 @@ preflight.sh [<change-name>]
 - `<change-name>`: Optional change override (resolved via changeman → resolve.sh).
 
 Validates: config.yaml exists, constitution.md exists, active change resolved, `.status.yaml` exists. Outputs YAML with `name`, `change_dir`, `stage`, `progress`, `checklist`, `confidence` fields. Non-zero exit on failure with error message on stderr.
+
+---
+
+## archiveman.sh
+
+Archive Manager — handles archive/restore lifecycle operations.
+
+```
+archiveman.sh archive <change> --description "..."
+archiveman.sh restore <change> [--switch]
+archiveman.sh list
+archiveman.sh --help
+```
+
+| Subcommand | Usage | Purpose |
+|------------|-------|---------|
+| `archive` | `archive <change> --description "..."` | Clean .pr-done, move to archive/, update index, clear pointer |
+| `restore` | `restore <change> [--switch]` | Move from archive/, remove index entry, optionally activate |
+| `list` | `list` | List archived folder names (one per line) |
+
+**Resolution**: `archive` resolves `<change>` via standard `resolve.sh --folder` (active changes). `restore` uses internal `resolve_archive` (archive folder names). Both support 4-char ID, substring, and full folder name.
+
+**Output**: Both `archive` and `restore` output structured YAML to stdout (e.g., `action: archive`, `name: ...`, `move: moved`, etc.). Skills parse this YAML to construct user-facing reports.
+
+**Note**: `archiveman.sh` does NOT call `logman.sh` or `statusman.sh` — it is purely mechanical. Pointer operations are delegated to `changeman.sh`.
 
 ---
 
