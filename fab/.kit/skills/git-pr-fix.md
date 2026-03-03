@@ -23,22 +23,37 @@ Wait for GitHub Copilot review comments on the current PR, triage them, and fix 
 4. If the command succeeds, capture `{number}` and `{url}` from the response.
 5. Get owner/repo: `gh repo view --json nameWithOwner -q '.nameWithOwner'`
 
-### Step 2: Wait for Copilot Review
+### Step 2: Detect Copilot Review
 
-Poll the reviews API for a review from `copilot-pull-request-reviewer[bot]`:
+3-phase detection: check for an existing review, request one if absent, then poll for completion.
+
+<!-- API login name discrepancy (empirically confirmed on wvrdz/fab-kit PR #192):
+     - GET /requested_reviewers response: "login": "Copilot" (type: Bot)
+     - GET /reviews response (once submitted): "login": "copilot-pull-request-reviewer[bot]"
+     - POST /requested_reviewers request body: reviewers[]=copilot-pull-request-reviewer[bot]
+     These are different representations of the same bot across GitHub API endpoints. -->
+
+**Phase 1 — Check if already reviewed**:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]")'
+gh api repos/{owner}/{repo}/pulls/{number}/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .id'
 ```
 
-**Two detection modes**:
+If a review ID is returned → capture `{review_id}` and skip directly to Step 3 (Phases 2 and 3 are skipped entirely). On the first call, if `gh api` returns a non-zero exit code → print the error and STOP.
 
-- **Standalone mode** (default): Check once. If no Copilot review found → print `No Copilot review found — skipping.` and STOP. No polling.
-- **Wait mode** (when `{wait}` is set — see Step 6 of `/git-pr`): Poll every 30 seconds, max 12 attempts (6 minutes total). If review arrives → proceed. If timeout → print `Copilot review did not arrive within 6 minutes.` and STOP.
+**Phase 2 — Request review**:
 
-On the first poll, if `gh api` returns a non-zero exit code → print the error and STOP.
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/requested_reviewers -X POST -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
+```
 
-When a review is found, capture its `{review_id}` from the `.id` field.
+- **Any non-2xx response** (422, 403, 404, network error, or any other failure — i.e., any non-zero exit from `gh api`) → print `Copilot review not available — skipping.` and STOP. No polling.
+- **Success (2xx)** → proceed to Phase 3.
+
+**Phase 3 — Poll for completion** (mode-specific):
+
+- **Wait mode** (when `{wait}` is set — see Step 6 of `/git-pr`): Poll `GET /reviews` for `copilot-pull-request-reviewer[bot]` every 30 seconds, max 12 attempts (6 minutes total). If review arrives → capture `{review_id}` and proceed. If timeout → print `Copilot review did not arrive within 6 minutes.` and STOP.
+- **Standalone mode** (default): Single check of `GET /reviews`. If review found → capture `{review_id}` and proceed. If not found → print `Copilot review requested but not yet available — re-run later.` and STOP.
 
 ### Step 3: Fetch and Triage Comments
 
