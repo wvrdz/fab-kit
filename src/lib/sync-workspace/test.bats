@@ -94,6 +94,9 @@ MD
   # Copy the actual 2-sync-workspace.sh into the kit
   cp "$SYNC_WORKSPACE" "$KIT/sync/2-sync-workspace.sh"
   chmod +x "$KIT/sync/2-sync-workspace.sh"
+
+  # Enable all agents via FAB_AGENTS override (avoids PATH dependency in tests)
+  export FAB_AGENTS="claude opencode codex gemini"
 }
 
 teardown() {
@@ -380,5 +383,83 @@ YAML
   run bash "$KIT/sync/2-sync-workspace.sh"
   [ "$status" -ne 0 ]
   [[ "$output" == *"VERSION not found"* ]]
+}
+
+# ── Agent Detection ──────────────────────────────────────────────────
+
+@test "creates Gemini skill copies (directory-based)" {
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ -f "$REPO_ROOT/.gemini/skills/fab-continue/SKILL.md" ]
+  [ ! -L "$REPO_ROOT/.gemini/skills/fab-continue/SKILL.md" ]
+  [ -f "$REPO_ROOT/.gemini/skills/fab-status/SKILL.md" ]
+}
+
+@test "Gemini skill copies are byte-accurate" {
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  cmp -s "$KIT/skills/fab-continue.md" "$REPO_ROOT/.gemini/skills/fab-continue/SKILL.md"
+  cmp -s "$KIT/skills/fab-status.md" "$REPO_ROOT/.gemini/skills/fab-status/SKILL.md"
+}
+
+@test "cleans stale Gemini skill directories" {
+  bash "$KIT/sync/2-sync-workspace.sh" >/dev/null 2>&1
+  # Create a stale skill directory
+  mkdir -p "$REPO_ROOT/.gemini/skills/old-removed-skill"
+  echo "stale" > "$REPO_ROOT/.gemini/skills/old-removed-skill/SKILL.md"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [ ! -d "$REPO_ROOT/.gemini/skills/old-removed-skill" ]
+  [[ "$output" == *"Cleaned: 1 stale entries"* ]]
+}
+
+@test "skips agent when CLI not available" {
+  export FAB_AGENTS="claude opencode gemini"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping Codex: codex not found in PATH"* ]]
+  # Codex skills directory should not be created
+  [ ! -d "$REPO_ROOT/.agents/skills" ]
+}
+
+@test "preserves existing dot folder when agent absent" {
+  # First run: create opencode skills
+  bash "$KIT/sync/2-sync-workspace.sh" >/dev/null 2>&1
+  [ -d "$REPO_ROOT/.opencode/commands" ]
+  # Second run: remove opencode from available agents
+  export FAB_AGENTS="claude codex gemini"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  # Directory and existing files should still exist
+  [ -d "$REPO_ROOT/.opencode/commands" ]
+  [[ "$output" == *"Skipping OpenCode: opencode not found in PATH"* ]]
+}
+
+@test "prints no-agent warning when none available" {
+  export FAB_AGENTS=""
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Warning: No agent CLIs found in PATH. Skills were not deployed to any agent."* ]]
+}
+
+@test "syncs only detected agents (partial availability)" {
+  export FAB_AGENTS="claude gemini"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  # Claude and Gemini should be synced
+  [ -f "$REPO_ROOT/.claude/skills/fab-continue/SKILL.md" ]
+  [ -f "$REPO_ROOT/.gemini/skills/fab-continue/SKILL.md" ]
+  # OpenCode and Codex should be skipped
+  [[ "$output" == *"Skipping OpenCode"* ]]
+  [[ "$output" == *"Skipping Codex"* ]]
+  # No no-agent warning (some agents found)
+  [[ "$output" != *"No agent CLIs found"* ]]
+}
+
+@test "skip message includes the CLI command name" {
+  export FAB_AGENTS="claude opencode codex"
+  run bash "$KIT/sync/2-sync-workspace.sh"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping Gemini: gemini not found in PATH"* ]]
 }
 
