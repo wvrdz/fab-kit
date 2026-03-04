@@ -11,14 +11,14 @@ description: "Advance to the next pipeline stage — planning, implementation, r
 
 ## Purpose
 
-Advance through the 6-stage Fab pipeline one step at a time. Each invocation handles the current stage's work and transitions to the next. When called with a stage argument, resets to that stage and re-runs from there.
+Advance through the 8-stage Fab pipeline one step at a time. Each invocation handles the current stage's work and transitions to the next. When called with a stage argument, resets to that stage and re-runs from there.
 
 ---
 
 ## Arguments
 
 - **`<change-name>`** *(optional)* — target a specific change instead of `fab/current`. Passed to preflight as `$1` (see `_preamble.md` §2).
-- **`<stage>`** *(optional)* — reset target: `intake`, `spec`, `tasks`, `apply`, `review`, `hydrate`.
+- **`<stage>`** *(optional)* — reset target: `intake`, `spec`, `tasks`, `apply`, `review`, `hydrate`, `ship`, `review-pr`.
 
 Both may be provided in any order. Stage names are treated as reset targets; all others as change-name overrides.
 
@@ -54,6 +54,8 @@ Dispatch on preflight's derived `stage` and `display_state`. If progress is `pen
 | `apply` | `active`/`ready` | Execute apply → on completion run `finish <change> apply fab-continue` (auto-activates review) |
 | `review` | `active`/`ready` | Execute review → pass: run `finish <change> review fab-continue` (auto-activates hydrate). Fail: run `fail <change> review` then `start <change> apply fab-continue` |
 | `hydrate` | `active`/`ready` | Execute hydrate → run `finish <change> hydrate fab-continue` |
+| `ship` | `active`/`ready` | Execute `/git-pr` behavior → on completion `finish <change> ship fab-continue` (auto-activates review-pr) |
+| `review-pr` | `active`/`ready` | Execute `/git-pr-review` behavior → pass: `finish <change> review-pr fab-continue`. Fail: `fail <change> review-pr` |
 | all `done` | — | Block: "Change is complete." |
 
 ### Step 2: Load Context
@@ -214,7 +216,7 @@ The applying agent triages review comments by priority — not all comments need
 
 ## Reset Flow (with stage argument)
 
-1. **Validate**: Must be one of the 6 stage names
+1. **Validate**: Must be one of the 8 stage names
 2. **Load context** for the target stage
 3. **Reset `.status.yaml`**: Run `fab/.kit/scripts/lib/statusman.sh reset <change> <stage> fab-continue`. This atomically sets the target stage → `active` and cascades all downstream stages → `pending`. Stages before the target are preserved.
 4. **Execute**: Planning stages regenerate artifact. Execution stages re-run (task checkboxes NOT reset).
@@ -231,7 +233,7 @@ The applying agent triages review comments by priority — not all comments need
 | `checklist.md` missing for review | "No checklist found. Run /fab-continue to generate it first." |
 | Incomplete tasks for review | "{N} of {total} tasks incomplete." |
 | Review not passed for hydrate | "Review has not passed." |
-| Unknown reset target | "Unknown stage. Valid: intake, spec, tasks, apply, review, hydrate." |
+| Unknown reset target | "Unknown stage. Valid: intake, spec, tasks, apply, review, hydrate, ship, review-pr." |
 | Template file missing | "Template not found — kit may be corrupted." |
 
 ---

@@ -1,6 +1,6 @@
 ---
 name: fab-ff
-description: "Full pipeline with safety gates — confidence-gated pipeline from intake through hydrate, with sub-agent review, auto-rework loop, and stop on exhaustion."
+description: "Full pipeline with safety gates — confidence-gated pipeline from intake through PR review, with sub-agent review, auto-rework loop, and stop on exhaustion."
 ---
 
 # /fab-ff [<change-name>]
@@ -11,7 +11,7 @@ description: "Full pipeline with safety gates — confidence-gated pipeline from
 
 ## Purpose
 
-Full pipeline with safety gates: intake → spec → tasks → apply → review → hydrate. Three gates where execution can stop: (1) intake gate — indicative confidence >= 3.0, (2) spec gate — confidence >= per-type threshold via `fab/.kit/scripts/lib/calc-score.sh --check-gate`, (3) review gate — stops after 3 autonomous rework cycles. On any gate stop, the user can intervene then re-run. Resumable — re-running picks up from the first incomplete stage.
+Full pipeline with safety gates: intake → spec → tasks → apply → review → hydrate → ship → review-pr. Three gates where execution can stop: (1) intake gate — indicative confidence >= 3.0, (2) spec gate — confidence >= per-type threshold via `fab/.kit/scripts/lib/calc-score.sh --check-gate`, (3) review gate — stops after 3 autonomous rework cycles. On any gate stop, the user can intervene then re-run. Resumable — re-running picks up from the first incomplete stage.
 
 ---
 
@@ -41,7 +41,7 @@ Load per `_preamble.md` Sections 1-3 (config, constitution, intake, memory index
 
 ### Resumability
 
-Check `progress` from preflight. Skip stages already `done`. If `hydrate: done`, pipeline is already complete.
+Check `progress` from preflight. Skip stages already `done`. If `review-pr: done`, pipeline is already complete.
 
 ### Step 1: Generate `spec.md`
 
@@ -122,6 +122,26 @@ The user can run `/fab-continue` for interactive rework, or `/fab-clarify` to de
 
 Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/statusman.sh finish <change> hydrate fab-ff`.
 
+### Step 8: Ship
+
+*(Skip if `progress.ship` is `done`.)*
+
+Invoke `/git-pr` behavior — commit, push, and create a GitHub PR. The git-pr skill handles statusman integration internally (start/finish ship stage).
+
+**If git-pr fails**: STOP with the error from git-pr. The ship stage remains `active` for user retry.
+
+On success: `progress.ship` becomes `done` (handled by git-pr's statusman calls), `progress.review-pr` auto-activates.
+
+### Step 9: Review-PR
+
+*(Skip if `progress.review-pr` is `done`.)*
+
+Invoke `/git-pr-review` behavior — detect reviews, triage comments, apply fixes, push. The git-pr-review skill handles statusman integration internally (start/finish/fail review-pr stage).
+
+**If review-pr fails** (Copilot timeout, no reviews): STOP with the error. The user can re-run `/fab-ff` or `/git-pr-review` directly.
+
+On success: `progress.review-pr` becomes `done`.
+
 ---
 
 ## Output
@@ -141,7 +161,13 @@ Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate
 --- Hydrate ---
 {hydrate output}
 
-Pipeline complete. Change hydrated.
+--- Ship ---
+{git-pr output}
+
+--- Review-PR ---
+{git-pr-review output}
+
+Pipeline complete.
 
 Next: {per state table}
 ```
@@ -161,3 +187,5 @@ Resuming shows `(resuming)...` header and `Skipping {stage} — already done.` f
 | Auto-clarify bails | Stop, report blocking issues, suggest `/fab-clarify` then `/fab-ff` |
 | Task fails | Stop: "Task {ID} failed: {reason}. Investigate and re-run /fab-ff." |
 | Review fails | Auto-rework loop: 3 cycles (each re-review by fresh sub-agent), escalation after 2 consecutive fix-code. Stops after 3 cycles with summary. |
+| Ship fails | Stop with git-pr error. User retries /fab-ff or /git-pr. |
+| Review-PR fails | Stop with git-pr-review error. User retries /fab-ff or /git-pr-review. |

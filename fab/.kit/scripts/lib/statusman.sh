@@ -309,7 +309,7 @@ get_current_stage() {
   fi
 
   # Final fallback: all done (workflow complete)
-  echo "hydrate"
+  echo "review-pr"
 }
 
 # get_display_stage <status_file> — Determine "where you are" stage for display
@@ -664,7 +664,7 @@ event_advance() {
 
 # event_finish <status_file> <stage> [driver]
 # {active,ready} → done. Side-effect: if next stage is pending, activate it.
-# Auto-log: if stage is review, logs "passed" via logman.
+# Auto-log: if stage is review or review-pr, logs "passed" via logman.
 event_finish() {
   local status_file="$1"
   local stage="$2"
@@ -709,8 +709,8 @@ event_finish() {
 
   mv "$tmpfile" "$status_file"
 
-  # Auto-log review pass via logman
-  if [ "$stage" = "review" ]; then
+  # Auto-log review/review-pr pass via logman
+  if [ "$stage" = "review" ] || [ "$stage" = "review-pr" ]; then
     local change_dir
     change_dir="$(dirname "$status_file")"
     local folder
@@ -821,8 +821,8 @@ event_skip() {
 }
 
 # event_fail <status_file> <stage> [driver] [rework]
-# active → failed. Review stage only. No metrics side-effect.
-# Auto-log: if stage is review, logs "failed" with optional rework via logman.
+# active → failed. Review or review-pr stage only. No metrics side-effect.
+# Auto-log: if stage is review or review-pr, logs "failed" with optional rework via logman.
 event_fail() {
   local status_file="$1"
   local stage="$2"
@@ -857,8 +857,8 @@ event_fail() {
 
   mv "$tmpfile" "$status_file"
 
-  # Auto-log review failure via logman
-  if [ "$stage" = "review" ]; then
+  # Auto-log review/review-pr failure via logman
+  if [ "$stage" = "review" ] || [ "$stage" = "review-pr" ]; then
     local change_dir
     change_dir="$(dirname "$status_file")"
     local folder
@@ -958,10 +958,9 @@ validate_status_file() {
     local state
     state=$(yq ".progress.${stage} // \"\"" "$status_file")
 
+    # Tolerate missing stages — default to pending (backward compat for old 6-stage changes)
     if [ -z "$state" ]; then
-      echo "ERROR: Missing progress.$stage in $status_file" >&2
-      errors=$((errors + 1))
-      continue
+      state="pending"
     fi
 
     if ! validate_state "$state"; then
