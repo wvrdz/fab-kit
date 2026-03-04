@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260303-i58g-extract-pr-review-skill** — Extract PR review handling from /git-pr Step 6 into a standalone /git-review skill that supports both Copilot and human reviews, replacing the Copilot-specific /git-pr-fix skill.
 - **260303-n30u-smart-copilot-review-detection** — Replaced blind 6-minute Copilot review polling in git-pr with a 3-phase detect/request/poll flow that explicitly requests a Copilot review via the GitHub API and skips polling entirely when Copilot is unavailable.
 - **260303-l6nk-gemini-cli-agent-aware-sync** — Added Gemini CLI as a new agent target and made agent folder creation conditional on CLI availability in PATH, keeping workspaces clean by only syncing skills to agents that are actually installed.
 - **260303-6b7c-update-underscore-skill-references** — Updated all skill file references to use co-located underscore skill paths instead of the old fab/.kit/skills/ paths, after sync script began deploying underscore files alongside regular skills.
