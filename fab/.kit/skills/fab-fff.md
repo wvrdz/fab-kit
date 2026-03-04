@@ -1,6 +1,6 @@
 ---
 name: fab-fff
-description: "Full pipeline — planning, implementation, sub-agent review, and hydrate — with frontloaded questions, auto-clarify, and autonomous rework with bounded retry."
+description: "Full pipeline — planning, implementation, sub-agent review, hydrate, and PR — with frontloaded questions, auto-clarify, and autonomous rework with bounded retry."
 ---
 
 # /fab-fff [<change-name>]
@@ -11,7 +11,7 @@ description: "Full pipeline — planning, implementation, sub-agent review, and 
 
 ## Purpose
 
-Run the entire Fab pipeline from the current stage through hydrate in a single invocation. No confidence gates — forces through all stages regardless of scores. Frontloads questions, interleaves auto-clarify between planning stages, and autonomously reworks on review failure with bounded retry (3 cycles max, escalation after 2 consecutive fix-code failures). Resumable — re-running picks up from the first incomplete stage. Compare with `/fab-ff`, which has the same pipeline but with safety gates (intake score >= 3.0, spec confidence >= threshold, review 3-cycle stop).
+Run the entire Fab pipeline from the current stage through PR review in a single invocation. No confidence gates — forces through all stages regardless of scores. Frontloads questions, interleaves auto-clarify between planning stages, and autonomously reworks on review failure with bounded retry (3 cycles max, escalation after 2 consecutive fix-code failures). Resumable — re-running picks up from the first incomplete stage. Compare with `/fab-ff`, which has the same pipeline but with safety gates (intake score >= 3.0, spec confidence >= threshold, review 3-cycle stop). Both pipelines extend through ship and review-pr.
 
 ---
 
@@ -40,7 +40,7 @@ Load per `_preamble.md` Sections 1-3 (config, constitution, intake, memory index
 
 ### Resumability
 
-Check `progress` from preflight. Skip stages already `done`. If `hydrate: done`, pipeline is already complete.
+Check `progress` from preflight. Skip stages already `done`. If `review-pr: done`, pipeline is already complete.
 
 ### Step 1: Frontload All Questions
 
@@ -116,6 +116,26 @@ Run /fab-continue for manual rework options.
 
 Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/statusman.sh finish <change> hydrate fab-fff`.
 
+### Step 9: Ship
+
+*(Skip if `progress.ship` is `done`.)*
+
+Invoke `/git-pr` behavior — commit, push, and create a GitHub PR. The git-pr skill handles statusman integration internally (start/finish ship stage).
+
+**If git-pr fails**: STOP with the error from git-pr. The ship stage remains `active` for user retry.
+
+On success: `progress.ship` becomes `done`, `progress.review-pr` auto-activates.
+
+### Step 10: Review-PR
+
+*(Skip if `progress.review-pr` is `done`.)*
+
+Invoke `/git-pr-review` behavior — detect reviews, triage comments, apply fixes, push. The git-pr-review skill handles statusman integration internally (start/finish/fail review-pr stage).
+
+**If review-pr fails** (Copilot timeout, no reviews): STOP with the error.
+
+On success: `progress.review-pr` becomes `done`.
+
 ---
 
 ## Output
@@ -138,7 +158,13 @@ Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate
 --- Hydrate ---
 {hydrate output}
 
-Pipeline complete. Change hydrated.
+--- Ship ---
+{git-pr output}
+
+--- Review-PR ---
+{git-pr-review output}
+
+Pipeline complete.
 
 Next: {per state table}
 ```
@@ -156,3 +182,5 @@ Resuming shows `(resuming)...` header and `Skipping {stage} — already done.` f
 | Auto-clarify bails | Stop, report blocking issues, suggest `/fab-clarify` then `/fab-fff` |
 | Task fails | Stop: "Task {ID} failed: {reason}. Investigate and re-run /fab-fff." |
 | Review fails | Autonomous rework: agent triages sub-agent's prioritized findings, selects path, 3-cycle retry cap (each re-review by fresh sub-agent), escalation after 2 consecutive fix-code. Bail after 3 cycles with summary. |
+| Ship fails | Stop with git-pr error. User retries /fab-fff or /git-pr. |
+| Review-PR fails | Stop with git-pr-review error. User retries /fab-fff or /git-pr-review. |

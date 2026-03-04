@@ -119,11 +119,12 @@ cmd_list() {
 # switch subcommand
 # ─────────────────────────────────────────────────────────────────────────────
 
-# stage_number — map stage name to position (1-6)
+# stage_number — map stage name to position (1-8)
 stage_number() {
   case "$1" in
     intake) echo 1 ;; spec) echo 2 ;; tasks) echo 3 ;;
     apply) echo 4 ;; review) echo 5 ;; hydrate) echo 6 ;;
+    ship) echo 7 ;; review-pr) echo 8 ;;
     *) echo "?" ;;
   esac
 }
@@ -132,20 +133,23 @@ stage_number() {
 next_stage() {
   case "$1" in
     intake) echo "spec" ;; spec) echo "tasks" ;; tasks) echo "apply" ;;
-    apply) echo "review" ;; review) echo "hydrate" ;; hydrate) echo "" ;;
+    apply) echo "review" ;; review) echo "hydrate" ;; hydrate) echo "ship" ;;
+    ship) echo "review-pr" ;; review-pr) echo "" ;;
   esac
 }
 
 # default_command — derive the default command for a routing stage
 default_command() {
   case "$1" in
-    intake)  echo "/fab-continue" ;;
-    spec)    echo "/fab-continue" ;;
-    tasks)   echo "/fab-continue" ;;
-    apply)   echo "/fab-continue" ;;
-    review)  echo "/fab-continue" ;;
-    hydrate) echo "/git-pr" ;;
-    *)       echo "/fab-status" ;;
+    intake)    echo "/fab-continue" ;;
+    spec)      echo "/fab-continue" ;;
+    tasks)     echo "/fab-continue" ;;
+    apply)     echo "/fab-continue" ;;
+    review)    echo "/fab-continue" ;;
+    hydrate)   echo "/git-pr" ;;
+    ship)      echo "/git-pr-review" ;;
+    review-pr) echo "/fab-archive" ;;
+    *)         echo "/fab-status" ;;
   esac
 }
 
@@ -203,7 +207,7 @@ cmd_switch() {
   # 4. Output summary
   echo "fab/current → $resolved"
   echo ""
-  echo "Stage:  $display_stage ($dnum/6) — $display_state"
+  echo "Stage:  $display_stage ($dnum/8) — $display_state"
   local cmd nstage
   cmd=$(default_command "$routing_stage")
   nstage=$(next_stage "$routing_stage")

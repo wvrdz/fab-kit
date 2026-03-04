@@ -12,7 +12,17 @@ Autonomously ship local changes to a GitHub PR. No questions, no prompts — jus
 
 ## Behavior
 
-### Step 0: Resolve PR Type
+### Step 0a: Start Ship Stage
+
+If an active change resolves (`fab/.kit/scripts/lib/changeman.sh resolve 2>/dev/null`) and `progress.ship` is not `done`, attempt to start the `ship` stage:
+
+```bash
+fab/.kit/scripts/lib/statusman.sh start <change> ship git-pr 2>/dev/null || true
+```
+
+This is best-effort — failures are silently ignored. If the stage is already `active`, the call is a no-op. If no active change, skip entirely.
+
+### Step 0b: Resolve PR Type
 
 Determine the PR type before gathering state. The type controls the PR title prefix and body template.
 
@@ -166,7 +176,7 @@ Print: `  ✓ push   — origin/<branch>`
 
    Then read `.status.yaml` from the change directory to extract:
    - `{confidence_score}` = `confidence.score` (e.g., `3.5`)
-   - `{pipeline_stages}` = stage names from `progress` map whose value is `done`, joined with ` → `, in fixed order: intake, spec, tasks, apply, review, hydrate
+   - `{pipeline_stages}` = stage names from `progress` map whose value is `done`, joined with ` → `, in fixed order: intake, spec, tasks, apply, review, hydrate, ship, review-pr
 
    Then generate the body:
    ```
@@ -245,6 +255,16 @@ If Step 4 successfully resolved the change directory:
 This file is gitignored and never committed. It provides a race-free filesystem signal that all git operations are complete. Write is unconditional — happens in both orchestrated and manual flows.
 
 If Step 4 was skipped, skip this step silently.
+
+### Step 4d: Finish Ship Stage
+
+If an active change was resolved in Step 0a and `progress.ship` was started (not already `done`):
+
+```bash
+fab/.kit/scripts/lib/statusman.sh finish <change> ship git-pr 2>/dev/null || true
+```
+
+This marks `ship` as `done` and auto-activates `review-pr`. Best-effort — failures silently ignored.
 
 ### Step 5: Report
 

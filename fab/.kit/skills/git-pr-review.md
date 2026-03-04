@@ -1,16 +1,26 @@
 ---
-name: git-review
+name: git-pr-review
 description: "Process PR review comments — triage and fix feedback from any reviewer (human or Copilot)."
 allowed-tools: Bash(git:*), Bash(gh:*)
 ---
 
-# /git-review
+# /git-pr-review
 
 Process GitHub PR review comments on the current branch's PR. Handles feedback from any reviewer — human, Copilot, or other bots. Fully autonomous — no questions, no prompts.
 
 ---
 
 ## Behavior
+
+### Step 0: Start Review-PR Stage
+
+If an active change resolves (`fab/.kit/scripts/lib/changeman.sh resolve 2>/dev/null`), attempt to start the `review-pr` stage:
+
+```bash
+fab/.kit/scripts/lib/statusman.sh start <change> review-pr git-pr-review 2>/dev/null || true
+```
+
+This is best-effort — failures are silently ignored. The `start` command handles both `pending` and `failed` → `active`. If the stage is already `active` or `done`, the call is a no-op (exits non-zero, silently ignored).
 
 ### Step 1: Resolve PR
 
@@ -140,6 +150,32 @@ After all actionable comments are processed:
 7. If commit or push fails → run `git reset` to clear any staged changes, then print the error and STOP (no partial state)
 
 Print: `Fixed {N} comment(s) across {M} file(s)`
+
+### Step 6: Update Review-PR Stage
+
+If an active change was resolved in Step 0:
+
+1. **On success** (comments processed and pushed, or no actionable comments): Call `fab/.kit/scripts/lib/statusman.sh finish <change> review-pr git-pr-review 2>/dev/null || true`.
+2. **On failure** (Copilot timeout, no PR found, processing error): Call `fab/.kit/scripts/lib/statusman.sh fail <change> review-pr git-pr-review 2>/dev/null || true`.
+3. **On no reviews and Copilot unavailable**: Call `fab/.kit/scripts/lib/statusman.sh finish <change> review-pr git-pr-review 2>/dev/null || true` — a successful no-op outcome.
+
+All statusman calls are best-effort — failures silently ignored to avoid blocking the PR review workflow.
+
+### Phase Sub-State Tracking
+
+When an active change is resolved, update `stage_metrics.review-pr.phase` at key points during the workflow. Phase values track the skill's progress through its steps:
+
+| Phase | When set |
+|-------|----------|
+| `waiting` | After requesting Copilot review (Step 2, Phase 2 success) |
+| `received` | Reviews detected or Copilot review arrived (Step 2, Phase 1 hit or Phase 3 success) |
+| `triaging` | Before classifying comments (Step 4 start) |
+| `fixing` | Before applying fixes (Step 4, actionable comments found) |
+| `pushed` | After commit and push (Step 5 success) |
+
+Phase updates are written via `yq -i ".stage_metrics.\"review-pr\".phase = \"<phase>\"" <status_file>`. Best-effort — failures silently ignored.
+
+The `reviewer` field is set when reviews are detected: `yq -i ".stage_metrics.\"review-pr\".reviewer = \"<login>\"" <status_file>`. For Copilot: `copilot-pull-request-reviewer[bot]`. For humans: `@{username}` (first reviewer found).
 
 ---
 
