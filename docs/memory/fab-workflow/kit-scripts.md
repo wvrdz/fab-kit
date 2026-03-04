@@ -55,7 +55,7 @@ CLI dispatch resolves `<change>` via `resolve.sh --status`. Also accepts direct 
 
 Branch: `active` → `failed` (review only), `failed` → `active` (via `start`)
 
-Reset: `done`/`ready` → `active` (cascades downstream to `pending`)
+Reset: `done`/`ready`/`skipped` → `active` (cascades downstream to `pending`)
 
 ### Transitions
 

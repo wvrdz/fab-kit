@@ -108,7 +108,7 @@ finish hydrate → pipeline complete
 - `fail <change> review [driver] [rework]` → auto-calls `logman.sh review <change> "failed" [rework]`
 - Any event that sets a stage to `active` → auto-calls `logman.sh transition <change> <stage> <action> [from] [reason] [driver]` (best-effort)
 
-Skills do NOT need to call `log-review` or `log-transition` manually — it's handled by statusman.
+Skills do NOT need to call `logman.sh review` or `logman.sh transition` manually — it's handled by statusman.
 
 ---
 
