@@ -156,62 +156,62 @@ Print: `  ✓ push   — origin/<branch>`
    - If missing → print `gh CLI not found — cannot create PR` and STOP
 
 2. **Derive PR title**: Compute `{pr_title}` where:
-   - **Fab-linked** (type is `feat`, `fix`, or `refactor` AND intake exists): `{title}` = first `# ` heading from `intake.md`, stripping `Intake: ` prefix if present
-   - **Lightweight** (type is `docs`, `test`, `ci`, or `chore`, OR no intake): `{title}` = commit message subject line from `git log -1 --format=%s`
+   - If `changeman.sh resolve` succeeds AND `intake.md` exists: `{title}` = first `# ` heading from `intake.md`, stripping `Intake: ` prefix if present
+   - Otherwise: `{title}` = commit message subject line from `git log -1 --format=%s`
 
    If `issues` (from Step 1) is non-empty: `{pr_title}` = `{type}: {issues} {title}` (e.g., `feat: DEV-123 DEV-456 Add OAuth support`), where `{issues}` is space-joined.
    If `issues` is empty: `{pr_title}` = `{type}: {title}`.
 
    The `{pr_title}` variable (already prefixed) is used as-is in step 4's `gh pr create --title`.
 
-3. **Generate PR body** using the template tier matching the resolved type:
+3. **Generate PR body** using a single unified template with conditional field population based on artifact availability:
 
-   **Tier 1 — Fab-Linked** (type is `feat`, `fix`, or `refactor` AND `changeman.sh resolve` succeeds AND `intake.md` exists):
+   **Resolve fab context** (attempt once, used for all conditional fields):
+   - Run `changeman.sh resolve 2>/dev/null`. If it succeeds, set `{has_fab} = true` and `{name}` = resolved change name
+   - Check if `fab/changes/{name}/intake.md` exists → `{has_intake}`
+   - Check if `fab/changes/{name}/spec.md` exists → `{has_spec}`
+   - Check if `fab/changes/{name}/tasks.md` exists → `{has_tasks}`
+   - Read `fab/changes/{name}/.status.yaml` for `confidence`, `checklist`, `progress`, and `stage_metrics` fields
 
-   First, construct blob URLs:
+   **Construct blob URLs** (only when `{has_fab}`):
    - `{owner_repo}` = `gh repo view --json nameWithOwner -q '.nameWithOwner'`
    - `{branch}` = `git branch --show-current`
    - Intake URL = `https://github.com/{owner_repo}/blob/{branch}/fab/changes/{name}/intake.md`
-   - Spec URL = `https://github.com/{owner_repo}/blob/{branch}/fab/changes/{name}/spec.md` (only if `spec.md` exists)
+   - Spec URL = `https://github.com/{owner_repo}/blob/{branch}/fab/changes/{name}/spec.md`
 
-   Then read `.status.yaml` from the change directory to extract:
-   - `{confidence_score}` = `confidence.score` (e.g., `3.5`)
-   - `{pipeline_stages}` = stage names from `progress` map whose value is `done`, joined with ` → `, in fixed order: intake, spec, tasks, apply, review, hydrate, ship, review-pr
+   **Generate body sections**:
 
-   Then generate the body:
    ```
    ## Summary
-   {1-3 sentences derived from intake's ## Why section}
+   {if has_fab AND has_intake: 1-3 sentences derived from intake's ## Why section}
+   {otherwise: 1-3 sentences auto-generated from commit messages or git diff --stat}
 
    ## Changes
-   {bulleted list of subsection headings from intake's ## What Changes section}
+   {if has_fab AND has_intake: bulleted list of subsection headings from intake's ## What Changes section}
+   {otherwise: omit this section entirely}
 
-   ## Context
-   | Field | Detail |
-   |---|---|
-   | Type | {type} |
-   | Change | `{change_name}` |
-   | Confidence | {confidence_score} / 5.0 |
-   | Pipeline | {pipeline_stages} |
-   | Intake | [{change_name}/intake.md]({intake_url}) |
-   | Spec | [{change_name}/spec.md]({spec_url}) |
+   ## Stats
+   | Type | Confidence | Checklist | Tasks | Review |
+   |------|-----------|-----------|-------|--------|
+   | {type} | {confidence} | {checklist} | {tasks} | {review} |
    ```
 
-   If `spec.md` does not exist, omit the Spec row entirely.
+   **Stats column population**:
+   - **Type**: Always populated from the resolved PR type
+   - **Confidence**: `{confidence.score} / 5.0` from `.status.yaml`. Show `—` if no fab change or confidence data absent
+   - **Checklist**: `{checklist.completed}/{checklist.total}` from `.status.yaml`. Append ` ✓` when `completed == total` AND `total > 0`. Show `—` if not available
+   - **Tasks**: Parse `tasks.md` for checkbox counts (`- [x]` vs `- [ ]`), formatted as `{done}/{total}`. Show `—` if `tasks.md` doesn't exist
+   - **Review**: Derive from `.status.yaml` `progress.review` state and `stage_metrics.review.iterations`. Show `Pass ({N} iterations)` if review is `done`, `Fail ({N} iterations)` if review is `failed`, `—` if review not yet reached. If `iterations` is not populated, omit the parenthetical
 
-   **Tier 2 — Lightweight** (type is `docs`, `test`, `ci`, or `chore`, OR no fab change, OR intake missing):
+   **Pipeline progress line** (only when `{has_fab}`):
 
-   ```
-   ## Summary
-   {1-3 sentences auto-generated from commit messages or git diff --stat}
+   Below the Stats table, show a pipeline progress line. Stages with `done` status from `.status.yaml`'s `progress` map are listed in fixed order: intake, spec, tasks, apply, review, hydrate, ship, review-pr — joined with ` → `.
 
-   ## Context
-   | Field | Detail |
-   |---|---|
-   | Type | {type} |
+   - If `{has_intake}`: "intake" is a hyperlink → `[intake]({intake_url})`
+   - If `{has_spec}`: "spec" is a hyperlink → `[spec]({spec_url})`
+   - All other stage names are plain text
 
-   No design artifacts — housekeeping change.
-   ```
+   If no fab change exists (`{has_fab}` is false), the pipeline line is omitted entirely.
 
 4. Create PR: `gh pr create --title "{pr_title}" --body "<body>"` (where `{pr_title}` is the already-prefixed title from step 2)
    - If PR creation fails → report the error and STOP
@@ -288,14 +288,14 @@ Shipped.
 
 ## PR Type Reference
 
-| Type | Description | Fab Pipeline? | Template Tier |
-|------|-------------|---------------|---------------|
-| `feat` | New feature or capability | Yes | 1 (fab-linked) |
-| `fix` | Bug fix | Yes | 1 (fab-linked) |
-| `refactor` | Restructure without behavior change | Yes | 1 (fab-linked) |
-| `docs` | Documentation-only changes | No | 2 (lightweight) |
-| `test` | Adding/fixing tests only | No | 2 (lightweight) |
-| `ci` | CI/CD and build system changes | No | 2 (lightweight) |
-| `chore` | Maintenance, cleanup, housekeeping | No | 2 (lightweight) |
+| Type | Description |
+|------|-------------|
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `refactor` | Restructure without behavior change |
+| `docs` | Documentation-only changes |
+| `test` | Adding/fixing tests only |
+| `ci` | CI/CD and build system changes |
+| `chore` | Maintenance, cleanup, housekeeping |
 
 Derived from [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), consolidated: `style` → `refactor`, `perf` → `feat`/`refactor`, `build` → `ci`.
