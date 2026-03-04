@@ -8,3 +8,4 @@
 - [ ] [4szh] 2026-03-03: Improve rework loop logging — log explicit apply re-entry events in .history.jsonl, clarify whether stage_metrics.iterations counts the stage or the apply→review pair, and standardize ad-hoc event names (smoke-test, test-pass) into the schema
 - [ ] [7zq4] 2026-03-03: A command line to show the status (status = stage + state) of every worktree
 - [ ] [b0xs] 2026-03-04: Single type of template in git-pr instead of switching between two formats
+- [ ] [8ooz] 2026-03-04: for all stages, fab-switch and fab-status should show the confidence scores (if no spec - then tentative score, else actual score based on spec)
