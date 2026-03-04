@@ -37,5 +37,6 @@ stage_metrics:
   review: {started_at: "2026-03-05T01:14:16+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-05T01:18:03+05:30"}
   hydrate: {started_at: "2026-03-05T01:18:03+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-05T01:19:57+05:30"}
   ship: {started_at: "2026-03-05T01:19:57+05:30", driver: fab-ff, iterations: 1}
-prs: []
-last_updated: "2026-03-05T01:19:57+05:30"
+prs:
+  - https://github.com/wvrdz/fab-kit/pull/204
+last_updated: "2026-03-05T01:21:12+05:30"
