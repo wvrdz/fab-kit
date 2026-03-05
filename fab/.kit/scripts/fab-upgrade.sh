@@ -114,7 +114,7 @@ new_version=$(cat "$tmp_dir/.kit/VERSION" | tr -d '[:space:]')
 
 # ── Already up to date? ─────────────────────────────────────────────
 
-if [ "$current_version" = "$new_version" ]; then
+if [ "$current_version" = "$new_version" ] && [ -x "$kit_dir/bin/fab" ]; then
   if [ -n "$tag" ]; then
     echo "Already on $tag ($current_version). No update needed."
   else
