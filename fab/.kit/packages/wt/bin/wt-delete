@@ -399,7 +399,7 @@ wt_select_worktree_menu() {
     # Get list of worktrees (excluding main repo)
     local worktrees=()
     local names=()
-    local default_idx=1
+    local default_idx=2  # Default to first individual worktree (after "All")
 
     # Find most recently modified worktree
     local newest_path=""
@@ -548,7 +548,7 @@ Exit Codes:
   3    Git operation failed
 
 Examples:
-  wt-delete                                    # Interactive menu (includes "All" option)
+  wt-delete                                    # Current worktree, or menu with "All" option
   wt-delete --worktree-name london             # Delete worktree named 'london'
   wt-delete --non-interactive                  # Delete current worktree, no prompts
   wt-delete --delete-branch false              # Delete worktree, keep branch
