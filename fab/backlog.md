@@ -9,3 +9,4 @@
 - [ ] [7zq4] 2026-03-03: A command line to show the status (status = stage + state) of every worktree
 - [ ] [b0xs] 2026-03-04: Single type of template in git-pr instead of switching between two formats
 - [ ] [8ooz] 2026-03-04: for all stages, fab-switch and fab-status should show the confidence scores (if no spec - then tentative score, else actual score based on spec)
+- [ ] [ibst] 2026-03-05: for the git-pr-review stage, if there's no human review, and no copilot review comes in time, the final state should be done, not failed
