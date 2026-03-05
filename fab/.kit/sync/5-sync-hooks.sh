@@ -44,12 +44,12 @@ map_event() {
 }
 
 # ── Build desired hooks JSON ─────────────────────────────────────────
-# Construct a JSON object: { "EventName": [{"type":"command","command":"..."}], ... }
+# Construct a JSON object: { "EventName": [{"matcher":{},"hooks":[{"type":"command","command":"..."}]}], ... }
 desired='{}'
 for hook_file in "${hooks[@]}"; do
   event="$(map_event "$hook_file")"
   [ -n "$event" ] || continue
-  entry=$(jq -n --arg cmd "bash fab/.kit/hooks/$hook_file" '{"type":"command","command":$cmd}')
+  entry=$(jq -n --arg cmd "bash fab/.kit/hooks/$hook_file" '{"matcher":{},"hooks":[{"type":"command","command":$cmd}]}')
   desired=$(echo "$desired" | jq --arg ev "$event" --argjson entry "$entry" \
     '.[$ev] = ((.[$ev] // []) + [$entry])')
 done
@@ -61,14 +61,15 @@ if [ ! -f "$settings_file" ]; then
 fi
 
 # ── Merge hooks into settings ────────────────────────────────────────
-# For each event in desired hooks, append entries that don't already exist
-# (duplicate detection by command field).
+# For each event in desired hooks, append matcher entries that don't already exist
+# (duplicate detection by hooks[].command field inside each matcher entry).
 merged=$(jq --argjson desired "$desired" '
   reduce ($desired | to_entries[]) as $ev (
     .;
     reduce $ev.value[] as $new_entry (
       .;
-      if ((.hooks[$ev.key] // []) | map(.command) | index($new_entry.command)) then
+      ($new_entry.hooks[0].command) as $cmd |
+      if ((.hooks[$ev.key] // []) | [.[].hooks[].command] | index($cmd)) then
         .
       else
         .hooks[$ev.key] = ((.hooks[$ev.key] // []) + [$new_entry])

@@ -45,9 +45,9 @@ JSON
   [ "$status" -eq 0 ]
   [[ "$output" == *"Created: .claude/settings.local.json hooks (2 hook entries)"* ]]
 
-  # Verify hooks are present
-  session_start=$(jq -r '.hooks.SessionStart[0].command' "$REPO/.claude/settings.local.json")
-  stop=$(jq -r '.hooks.Stop[0].command' "$REPO/.claude/settings.local.json")
+  # Verify hooks are present (new matcher format)
+  session_start=$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$REPO/.claude/settings.local.json")
+  stop=$(jq -r '.hooks.Stop[0].hooks[0].command' "$REPO/.claude/settings.local.json")
   [ "$session_start" = "bash fab/.kit/hooks/on-session-start.sh" ]
   [ "$stop" = "bash fab/.kit/hooks/on-stop.sh" ]
 
@@ -58,7 +58,7 @@ JSON
 
 @test "sync-hooks: idempotent re-sync produces OK" {
   cat > "$REPO/.claude/settings.local.json" <<'JSON'
-{"permissions":{"allow":[]},"hooks":{"SessionStart":[{"type":"command","command":"bash fab/.kit/hooks/on-session-start.sh"}],"Stop":[{"type":"command","command":"bash fab/.kit/hooks/on-stop.sh"}]}}
+{"permissions":{"allow":[]},"hooks":{"SessionStart":[{"matcher":{},"hooks":[{"type":"command","command":"bash fab/.kit/hooks/on-session-start.sh"}]}],"Stop":[{"matcher":{},"hooks":[{"type":"command","command":"bash fab/.kit/hooks/on-stop.sh"}]}]}}
 JSON
 
   cd "$REPO"
@@ -69,7 +69,7 @@ JSON
 
 @test "sync-hooks: preserves user hooks" {
   cat > "$REPO/.claude/settings.local.json" <<'JSON'
-{"hooks":{"Stop":[{"type":"command","command":"bash my-custom-hook.sh"}]}}
+{"hooks":{"Stop":[{"matcher":{},"hooks":[{"type":"command","command":"bash my-custom-hook.sh"}]}]}}
 JSON
 
   cd "$REPO"
@@ -77,11 +77,11 @@ JSON
   [ "$status" -eq 0 ]
 
   # User hook preserved
-  user_hook=$(jq -r '.hooks.Stop[0].command' "$REPO/.claude/settings.local.json")
+  user_hook=$(jq -r '.hooks.Stop[0].hooks[0].command' "$REPO/.claude/settings.local.json")
   [ "$user_hook" = "bash my-custom-hook.sh" ]
 
   # Fab hook appended
-  fab_hook=$(jq -r '.hooks.Stop[1].command' "$REPO/.claude/settings.local.json")
+  fab_hook=$(jq -r '.hooks.Stop[1].hooks[0].command' "$REPO/.claude/settings.local.json")
   [ "$fab_hook" = "bash fab/.kit/hooks/on-stop.sh" ]
 }
 
@@ -131,7 +131,7 @@ JSON
 
   # File created with hooks
   [ -f "$REPO/.claude/settings.local.json" ]
-  session_start=$(jq -r '.hooks.SessionStart[0].command' "$REPO/.claude/settings.local.json")
+  session_start=$(jq -r '.hooks.SessionStart[0].hooks[0].command' "$REPO/.claude/settings.local.json")
   [ "$session_start" = "bash fab/.kit/hooks/on-session-start.sh" ]
 }
 
@@ -148,7 +148,7 @@ JSON
   run bash "$KIT/sync/5-sync-hooks.sh"
   [ "$status" -eq 0 ]
 
-  # Only 2 hook entries (not 3)
+  # Only 2 matcher entries (not 3)
   total=$(jq '[.hooks[]? | length] | add' "$REPO/.claude/settings.local.json")
   [ "$total" -eq 2 ]
 }
