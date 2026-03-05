@@ -1,5 +1,7 @@
 # Archive Index
 
+- **260305-jv4y-standardize-archiveman-dispatcher** — Fix shell dispatcher's broken archive restore/list pass-through by defaulting to cmd_archive when $1 isn't a known subcommand, and removing the hardcoded archive argument from the dispatcher.
+- **260305-bs5x-orchestrator-idle-hooks** — Add SessionStart and Stop hooks that write/clear agent.idle_since in .status.yaml, replacing fixed-delay timing heuristics with an explicit filesystem idle signal for the pipeline orchestrator.
 - **260305-qagd-unified-fab-dispatcher** — Replace per-script shims with a single shell dispatcher at fab/.kit/bin/fab that routes to fab-rust > fab-go > shell scripts, unifying the entry point and eliminating 7x duplicated delegation logic.
 - **260305-gt52-rust-vs-node-benchmark** — Benchmark Rust, Go, Node, and optimized bash as replacements for shell+yq scripts, using statusman.sh as the representative subject with hyperfine-driven measurements.
 - **260305-g0uq-2-ship-fab-go-binary** — Ship the fab Go binary — parity test harness, local cross-compilation for 4 platforms, per-platform kit archives, platform detection in upgrade/bootstrap, shim layer in shell scripts, and skill caller switchover.
