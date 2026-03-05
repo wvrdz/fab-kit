@@ -415,7 +415,6 @@ case "${1:-}" in
     exit 1
     ;;
   *)
-    echo "ERROR: Unknown subcommand '$1'. Try: archiveman.sh --help" >&2
-    exit 1
+    cmd_archive "$@"
     ;;
 esac

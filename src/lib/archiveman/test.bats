@@ -466,10 +466,11 @@ create_archived() {
   [[ "$output" == *"No subcommand"* ]]
 }
 
-@test "unknown subcommand produces error" {
+@test "unknown first arg defaults to archive (resolve fails for nonexistent change)" {
   run bash "$SCRIPT" delete
   [ "$status" -ne 0 ]
-  [[ "$output" == *"Unknown subcommand 'delete'"* ]]
+  # "delete" is treated as a change name via default-to-archive fallback;
+  # resolve.sh fails because no such change exists
 }
 
 @test "restore errors when no <change> argument" {

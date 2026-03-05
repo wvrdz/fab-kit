@@ -37,7 +37,7 @@ func TestArchive(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		bashRes := runBash(t, tmpBash, "archiveman.sh", "archive", changeID, "--description", "test archive")
+		bashRes := runBash(t, tmpBash, "archiveman.sh", changeID, "--description", "test archive")
 		goRes := runGo(t, tmpGo, "archive", changeID, "--description", "test archive")
 
 		assertParity(t, "archive", bashRes, goRes)

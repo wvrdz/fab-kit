@@ -157,7 +157,7 @@ All subcommands print results to stdout; errors to stderr. Designed CLI-first fo
 
 #### `lib/archiveman.sh`
 
-Archive Manager — CLI-only utility for archive/restore lifecycle operations. Supports `archive`, `restore`, and `list` subcommands. Uses `resolve.sh` for active change resolution (archive mode) and implements its own case-insensitive substring matching for archive folder resolution (restore mode). Delegates pointer operations to `changeman.sh` (`switch --blank` for archive, `switch <name>` for restore).
+Archive Manager — CLI-only utility for archive/restore lifecycle operations. Supports `archive`, `restore`, and `list` subcommands, plus a default-to-archive fallback: when `$1` is not a recognized subcommand, all args are passed to `cmd_archive` (treating `$1` as a change name). Uses `resolve.sh` for active change resolution (archive mode) and implements its own case-insensitive substring matching for archive folder resolution (restore mode). Delegates pointer operations to `changeman.sh` (`switch --blank` for archive, `switch <name>` for restore).
 
 - **`archive <change> --description "..."`** — Archives a change in one shot: deletes `.pr-done` if present, moves folder to `fab/changes/archive/`, creates/updates `fab/changes/archive/index.md` (prepends entry with `--description` text), backfills unindexed archived folders, clears `fab/current` if the change was active. Outputs structured YAML to stdout (`action`, `name`, `clean`, `move`, `index`, `pointer` fields). Called by `/fab-archive` (archive mode).
 - **`restore <change> [--switch]`** — Restores an archived change: moves folder back to `fab/changes/`, removes index entry, optionally activates via `changeman.sh switch`. Resolution uses internal `resolve_archive` function against `fab/changes/archive/` folder names. Outputs structured YAML to stdout. Called by `/fab-archive` (restore mode).
@@ -330,9 +330,9 @@ A POSIX-compatible shell script that serves as the sole entry point for all fab 
 | `preflight` | `preflight.sh` | |
 | `change` | `changeman.sh` | |
 | `score` | `calc-score.sh` | |
-| `archive` | `archiveman.sh` | Injects `"archive"` as first arg |
+| `archive` | `archiveman.sh` | |
 
-The `archive` command injects `"archive"` as the first positional argument because `archiveman.sh` expects `archiveman.sh archive <change>` while the CLI signature is `fab archive <change>`.
+All entries use plain pass-through (`shift; exec bash "$LIB_DIR/X.sh" "$@"`). `archiveman.sh` uses a default-to-archive fallback: when `$1` is not a recognized subcommand (`archive`, `restore`, `list`, `--help`), it treats all arguments as `cmd_archive "$@"` (i.e., `$1` is the change name).
 
 Unknown commands print `Unknown command: {cmd}` to stderr and exit 1.
 

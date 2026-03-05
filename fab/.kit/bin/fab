@@ -44,6 +44,6 @@ case "$cmd" in
   preflight)  shift; exec bash "$LIB_DIR/preflight.sh" "$@" ;;
   change)     shift; exec bash "$LIB_DIR/changeman.sh" "$@" ;;
   score)      shift; exec bash "$LIB_DIR/calc-score.sh" "$@" ;;
-  archive)    shift; exec bash "$LIB_DIR/archiveman.sh" "archive" "$@" ;;
+  archive)    shift; exec bash "$LIB_DIR/archiveman.sh" "$@" ;;
   *)          echo "Unknown command: $cmd" >&2; exit 1 ;;
 esac

@@ -1,3 +1,13 @@
 {"ts":"2026-03-05T17:01:00+05:30","event":"stage-transition","stage":"intake","action":"enter","driver":"fab-new"}
 {"ts":"2026-03-05T17:01:00+05:30","event":"command","cmd":"fab-new","args":"Standardize archiveman.sh dispatcher integration: remove hardcoded archive subcommand, make archiveman.sh default to archive when $1 isn't a known subcommand"}
 {"delta":"+4.7","event":"confidence","score":4.7,"trigger":"calc-score","ts":"2026-03-05T17:02:23+05:30"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-05T17:30:00+05:30"}
+{"cmd":"fab-ff","event":"command","ts":"2026-03-05T17:34:03+05:30"}
+{"delta":"+0.0","event":"confidence","score":4.7,"trigger":"calc-score","ts":"2026-03-05T17:35:34+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"spec","ts":"2026-03-05T17:35:35+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"tasks","ts":"2026-03-05T17:36:45+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"apply","ts":"2026-03-05T17:36:50+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review","ts":"2026-03-05T17:37:58+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"hydrate","ts":"2026-03-05T17:40:21+05:30"}
+{"event":"review","result":"passed","ts":"2026-03-05T17:40:21+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"ship","ts":"2026-03-05T17:40:51+05:30"}
