@@ -37,18 +37,18 @@ Step 7: gm10    gm11              ← parallel: local cross-compilation in relea
 Step 8: gm12                      ← remove old shell scripts (deferred — only after confidence period)
 ```
 
-- [ ] [gm01] 2026-03-05: Scaffold Go module at src/fab-go/ with cobra CLI skeleton, shared internal/yaml package for .status.yaml struct, and subcommand stubs
-- [ ] [gm02] 2026-03-05: Port statusman.sh → `fab status` subcommand (43 yq calls, biggest performance win)
-- [ ] [gm03] 2026-03-05: Port resolve.sh → `fab resolve` subcommand (dependency of preflight and others)
-- [ ] [gm04] 2026-03-05: Port logman.sh → `fab log` subcommand (JSON append-only logging)
-- [ ] [gm05] 2026-03-05: Port preflight.sh → `fab preflight` subcommand (in-process calls to status + resolve + log)
-- [ ] [gm06] 2026-03-05: Port changeman.sh → `fab change` subcommand (change lifecycle)
-- [ ] [gm07] 2026-03-05: Port calc-score.sh → `fab score` subcommand (confidence scoring)
-- [ ] [gm08] 2026-03-05: Port archiveman.sh → `fab archive` subcommand (archive/restore)
-- [ ] [gm09] 2026-03-05: Parity test harness — run identical inputs through bash scripts and Go binary, diff stdout/stderr/exit codes/file mutations
-- [ ] [gm10] 2026-03-05: Local cross-compilation in fab-release.sh — build fab binary for darwin-arm64, darwin-amd64, linux-arm64, linux-amd64 via `GOOS/GOARCH go build`; produce per-platform kit-{os}-{arch}.tar.gz plus generic kit.tar.gz (no binary, fallback); update fab-upgrade.sh to detect platform and download correct archive; update bootstrap one-liner with platform detection
-- [ ] [gm11] 2026-03-05: Switchover — update all skill scripts and bash callers to invoke `fab` binary instead of shell scripts
-- [ ] [gm12] 2026-03-05: Remove shim layer from old shell scripts — make `fab` binary the sole code path (after confidence period)
+- [x] [gm01] 2026-03-05: Scaffold Go module at src/fab-go/ with cobra CLI skeleton, shared internal/yaml package for .status.yaml struct, and subcommand stubs
+- [x] [gm02] 2026-03-05: Port statusman.sh → `fab status` subcommand (43 yq calls, biggest performance win)
+- [x] [gm03] 2026-03-05: Port resolve.sh → `fab resolve` subcommand (dependency of preflight and others)
+- [x] [gm04] 2026-03-05: Port logman.sh → `fab log` subcommand (JSON append-only logging)
+- [x] [gm05] 2026-03-05: Port preflight.sh → `fab preflight` subcommand (in-process calls to status + resolve + log)
+- [x] [gm06] 2026-03-05: Port changeman.sh → `fab change` subcommand (change lifecycle)
+- [x] [gm07] 2026-03-05: Port calc-score.sh → `fab score` subcommand (confidence scoring)
+- [x] [gm08] 2026-03-05: Port archiveman.sh → `fab archive` subcommand (archive/restore)
+- [x] [gm09] 2026-03-05: Parity test harness — run identical inputs through bash scripts and Go binary, diff stdout/stderr/exit codes/file mutations
+- [x] [gm10] 2026-03-05: Local cross-compilation in fab-release.sh — build fab binary for darwin-arm64, darwin-amd64, linux-arm64, linux-amd64 via `GOOS/GOARCH go build`; produce per-platform kit-{os}-{arch}.tar.gz plus generic kit.tar.gz (no binary, fallback); update fab-upgrade.sh to detect platform and download correct archive; update bootstrap one-liner with platform detection
+- [x] [gm11] 2026-03-05: Switchover — update all skill scripts and bash callers to invoke `fab` binary instead of shell scripts
+- [x] [gm12] 2026-03-05: Remove shim layer from old shell scripts — make `fab` binary the sole code path (after confidence period)
 - [ ] [gm13] 2026-03-05: Remove old shell scripts from lib/ (deferred — only after confidence period in production)
 
 ## Go Migration — Phase 2 (wt binary)

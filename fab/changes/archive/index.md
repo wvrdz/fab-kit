@@ -1,5 +1,10 @@
 # Archive Index
 
+- **260305-qagd-unified-fab-dispatcher** — Replace per-script shims with a single shell dispatcher at fab/.kit/bin/fab that routes to fab-rust > fab-go > shell scripts, unifying the entry point and eliminating 7x duplicated delegation logic.
+- **260305-gt52-rust-vs-node-benchmark** — Benchmark Rust, Go, Node, and optimized bash as replacements for shell+yq scripts, using statusman.sh as the representative subject with hyperfine-driven measurements.
+- **260305-g0uq-2-ship-fab-go-binary** — Ship the fab Go binary — parity test harness, local cross-compilation for 4 platforms, per-platform kit archives, platform detection in upgrade/bootstrap, shim layer in shell scripts, and skill caller switchover.
+- **260305-bhd6-1-build-fab-go-binary** — Port all 8 lib/ shell scripts into a single Go binary with cobra CLI, eliminating yq dependency and inter-script subprocess overhead for 8-49x performance improvement.
+- **260305-02ip-archive-date-buckets** — Date-bucket the archive folder with yyyy/mm/ structure to replace the flat directory that grows monotonically with every completed change.
 - **260305-obib-swap-batch-archive-defaults** — Swap batch-fab-archive-change.sh default from --list to --all, so running with no arguments archives all eligible changes directly.
 - **260305-id4j-review-pr-timeout-done** — Treat Copilot review timeout as graceful completion (done) instead of failure in the review-pr stage, so changes without external review can proceed to archive.
 - **260305-7zq4-worktree-status-command** — New wt-status command that shows the fab pipeline status (stage + state) for every worktree, bridging worktree names to active fab changes.
@@ -166,3 +171,4 @@
 - **260211-r3k8-simplify-planning-stages** — (no description — pre-index archive)
 - **260212-h9k3-fab-init-family** — (no description — pre-index archive)
 - **260212-k8m3-skill-model-tiers** — (no description — pre-index archive)
+- **2026** — (no description — pre-index archive)
