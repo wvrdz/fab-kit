@@ -30,6 +30,21 @@ type RestoreResult struct {
 	Pointer string
 }
 
+// parseDateBucket extracts yyyy and mm from a YYMMDD-prefixed folder name.
+func parseDateBucket(name string) (string, string, error) {
+	if len(name) < 6 {
+		return "", "", fmt.Errorf("invalid folder name '%s': expected YYMMDD prefix", name)
+	}
+	for _, c := range name[:6] {
+		if c < '0' || c > '9' {
+			return "", "", fmt.Errorf("invalid folder name '%s': expected YYMMDD prefix", name)
+		}
+	}
+	yy := name[0:2]
+	mm := name[2:4]
+	return "20" + yy, mm, nil
+}
+
 // Archive moves a change to the archive directory.
 func Archive(fabRoot, changeArg, description string) (*ArchiveResult, error) {
 	if changeArg == "" {
@@ -56,9 +71,14 @@ func Archive(fabRoot, changeArg, description string) (*ArchiveResult, error) {
 		cleanStatus = "removed"
 	}
 
-	// 2. Move to archive
-	os.MkdirAll(archiveDir, 0755)
-	destPath := filepath.Join(archiveDir, folder)
+	// 2. Move to archive/yyyy/mm/
+	bucketYear, bucketMonth, err := parseDateBucket(folder)
+	if err != nil {
+		return nil, err
+	}
+	destDir := filepath.Join(archiveDir, bucketYear, bucketMonth)
+	os.MkdirAll(destDir, 0755)
+	destPath := filepath.Join(destDir, folder)
 	if _, err := os.Stat(destPath); err == nil {
 		return nil, fmt.Errorf("Archive destination already exists: %s", destPath)
 	}
@@ -97,7 +117,7 @@ func Restore(fabRoot, changeArg string, doSwitch bool) (*RestoreResult, error) {
 		return nil, fmt.Errorf("<change> argument is required for restore")
 	}
 
-	folder, err := resolveArchive(fabRoot, changeArg)
+	folder, resolvedDir, err := resolveArchive(fabRoot, changeArg)
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +125,13 @@ func Restore(fabRoot, changeArg string, doSwitch bool) (*RestoreResult, error) {
 	changesDir := filepath.Join(fabRoot, "changes")
 	archiveDir := filepath.Join(changesDir, "archive")
 
-	// 1. Move from archive
+	// 1. Move from archive (resolveArchive returns full dir path)
 	moveStatus := "restored"
 	destPath := filepath.Join(changesDir, folder)
 	if _, err := os.Stat(destPath); err == nil {
 		moveStatus = "already_in_changes"
 	} else {
-		srcPath := filepath.Join(archiveDir, folder)
-		if err := os.Rename(srcPath, destPath); err != nil {
+		if err := os.Rename(resolvedDir, destPath); err != nil {
 			return nil, fmt.Errorf("restore: %w", err)
 		}
 	}
@@ -139,24 +158,48 @@ func Restore(fabRoot, changeArg string, doSwitch bool) (*RestoreResult, error) {
 	}, nil
 }
 
-// List returns archived change folder names.
+// List returns archived change folder names from both flat and nested entries.
 func List(fabRoot string) ([]string, error) {
 	archiveDir := filepath.Join(fabRoot, "changes", "archive")
 	if _, err := os.Stat(archiveDir); os.IsNotExist(err) {
 		return nil, nil
 	}
 
-	entries, err := os.ReadDir(archiveDir)
+	topLevel, err := os.ReadDir(archiveDir)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []string
-	for _, e := range entries {
-		if e.IsDir() {
+
+	// Flat entries: archive/{name}/ (skip year directories)
+	for _, e := range topLevel {
+		if e.IsDir() && !isYearDir(e.Name()) {
 			results = append(results, e.Name())
 		}
 	}
+
+	// Nested entries: archive/yyyy/mm/{name}/
+	for _, yearEntry := range topLevel {
+		if !yearEntry.IsDir() || !isYearDir(yearEntry.Name()) {
+			continue
+		}
+		yearDir := filepath.Join(archiveDir, yearEntry.Name())
+		monthEntries, _ := os.ReadDir(yearDir)
+		for _, monthEntry := range monthEntries {
+			if !monthEntry.IsDir() {
+				continue
+			}
+			monthDir := filepath.Join(yearDir, monthEntry.Name())
+			changeEntries, _ := os.ReadDir(monthDir)
+			for _, ce := range changeEntries {
+				if ce.IsDir() {
+					results = append(results, ce.Name())
+				}
+			}
+		}
+	}
+
 	return results, nil
 }
 
@@ -172,57 +215,104 @@ func FormatRestoreYAML(r *RestoreResult) string {
 		r.Action, r.Name, r.Move, r.Index, r.Pointer)
 }
 
-func resolveArchive(fabRoot, override string) (string, error) {
+// resolveArchive returns (folderName, fullDirPath, error).
+// Scans both flat entries (archive/{name}/) and nested entries (archive/yyyy/mm/{name}/).
+func resolveArchive(fabRoot, override string) (string, string, error) {
 	if override == "" {
-		return "", fmt.Errorf("<change> argument is required for restore")
+		return "", "", fmt.Errorf("<change> argument is required for restore")
 	}
 
 	archiveDir := filepath.Join(fabRoot, "changes", "archive")
 	if _, err := os.Stat(archiveDir); os.IsNotExist(err) {
-		return "", fmt.Errorf("No archive folder found.")
+		return "", "", fmt.Errorf("No archive folder found.")
 	}
 
-	entries, err := os.ReadDir(archiveDir)
-	if err != nil {
-		return "", err
+	type entry struct {
+		name string
+		dir  string
+	}
+	var entries []entry
+
+	// Flat entries: archive/{name}/ (skip 4-digit year directories)
+	topLevel, _ := os.ReadDir(archiveDir)
+	for _, e := range topLevel {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if isYearDir(name) {
+			continue
+		}
+		entries = append(entries, entry{name, filepath.Join(archiveDir, name)})
 	}
 
-	var folders []string
-	for _, e := range entries {
-		if e.IsDir() {
-			folders = append(folders, e.Name())
+	// Nested entries: archive/yyyy/mm/{name}/
+	for _, yearEntry := range topLevel {
+		if !yearEntry.IsDir() || !isYearDir(yearEntry.Name()) {
+			continue
+		}
+		yearDir := filepath.Join(archiveDir, yearEntry.Name())
+		monthEntries, _ := os.ReadDir(yearDir)
+		for _, monthEntry := range monthEntries {
+			if !monthEntry.IsDir() {
+				continue
+			}
+			monthDir := filepath.Join(yearDir, monthEntry.Name())
+			changeEntries, _ := os.ReadDir(monthDir)
+			for _, ce := range changeEntries {
+				if ce.IsDir() {
+					entries = append(entries, entry{ce.Name(), filepath.Join(monthDir, ce.Name())})
+				}
+			}
 		}
 	}
 
-	if len(folders) == 0 {
-		return "", fmt.Errorf("No archived changes found.")
+	if len(entries) == 0 {
+		return "", "", fmt.Errorf("No archived changes found.")
 	}
 
 	overrideLower := strings.ToLower(override)
 
 	// Exact match
-	for _, f := range folders {
-		if strings.ToLower(f) == overrideLower {
-			return f, nil
+	for _, e := range entries {
+		if strings.ToLower(e.name) == overrideLower {
+			return e.name, e.dir, nil
 		}
 	}
 
 	// Substring match
-	var partials []string
-	for _, f := range folders {
-		if strings.Contains(strings.ToLower(f), overrideLower) {
-			partials = append(partials, f)
+	var partials []entry
+	for _, e := range entries {
+		if strings.Contains(strings.ToLower(e.name), overrideLower) {
+			partials = append(partials, e)
 		}
 	}
 
 	if len(partials) == 1 {
-		return partials[0], nil
+		return partials[0].name, partials[0].dir, nil
 	}
 	if len(partials) > 1 {
-		return "", fmt.Errorf("Multiple archives match \"%s\": %s.", override, strings.Join(partials, ", "))
+		names := make([]string, len(partials))
+		for i, p := range partials {
+			names[i] = p.name
+		}
+		return "", "", fmt.Errorf("Multiple archives match \"%s\": %s.", override, strings.Join(names, ", "))
 	}
 
-	return "", fmt.Errorf("No archive matches \"%s\".", override)
+	return "", "", fmt.Errorf("No archive matches \"%s\".", override)
+}
+
+// isYearDir returns true if the name is a 4-digit year directory.
+func isYearDir(name string) bool {
+	if len(name) != 4 {
+		return false
+	}
+	for _, c := range name {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func updateIndex(indexFile, folder, description string) string {
@@ -264,7 +354,6 @@ func updateIndex(indexFile, folder, description string) string {
 }
 
 func backfillIndex(archiveDir, indexFile string) {
-	entries, _ := os.ReadDir(archiveDir)
 	indexData, _ := os.ReadFile(indexFile)
 	indexContent := string(indexData)
 
@@ -274,13 +363,40 @@ func backfillIndex(archiveDir, indexFile string) {
 	}
 	defer f.Close()
 
-	for _, e := range entries {
-		if !e.IsDir() {
+	backfillEntry := func(name string) {
+		marker := fmt.Sprintf("**%s**", name)
+		if !strings.Contains(indexContent, marker) {
+			fmt.Fprintf(f, "- **%s** — (no description — pre-index archive)\n", name)
+		}
+	}
+
+	topLevel, _ := os.ReadDir(archiveDir)
+
+	// Flat entries (pre-migration)
+	for _, e := range topLevel {
+		if e.IsDir() && !isYearDir(e.Name()) {
+			backfillEntry(e.Name())
+		}
+	}
+
+	// Nested entries: archive/yyyy/mm/{name}/
+	for _, yearEntry := range topLevel {
+		if !yearEntry.IsDir() || !isYearDir(yearEntry.Name()) {
 			continue
 		}
-		marker := fmt.Sprintf("**%s**", e.Name())
-		if !strings.Contains(indexContent, marker) {
-			fmt.Fprintf(f, "- **%s** — (no description — pre-index archive)\n", e.Name())
+		yearDir := filepath.Join(archiveDir, yearEntry.Name())
+		monthEntries, _ := os.ReadDir(yearDir)
+		for _, monthEntry := range monthEntries {
+			if !monthEntry.IsDir() {
+				continue
+			}
+			monthDir := filepath.Join(yearDir, monthEntry.Name())
+			changeEntries, _ := os.ReadDir(monthDir)
+			for _, ce := range changeEntries {
+				if ce.IsDir() {
+					backfillEntry(ce.Name())
+				}
+			}
 		}
 	}
 }
