@@ -1,0 +1,18 @@
+language: rust
+source_paths:
+  - "src/"
+  - "crates/"
+
+checklist:
+  extra_categories:
+    - compilation_clean
+    - cargo_test_pass
+    - clippy_clean
+
+stage_directives:
+  spec:
+    - "Reference Cargo.toml for dependency constraints"
+  review:
+    - "Verify cargo check passes with no warnings"
+    - "Verify cargo test passes"
+    - "Run cargo clippy -- -D warnings"

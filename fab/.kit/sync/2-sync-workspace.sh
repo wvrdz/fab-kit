@@ -435,7 +435,24 @@ if [ -d "$claude_agents_dir" ]; then
   fi
 fi
 
-# ── 5. Sync version stamp ────────────────────────────────────────────
+# ── 5. Language template advisory ─────────────────────────────────────
+# If language-specific constitution templates exist and the project matches
+# but hasn't applied them yet, print an advisory (sync never modifies
+# constitution automatically).
+templates_dir="$kit_dir/templates/constitutions"
+if [ -d "$templates_dir" ]; then
+  constitution_file="$fab_dir/project/constitution.md"
+  if [ -f "$constitution_file" ]; then
+    # Rust detection
+    if [ -f "$repo_root/Cargo.toml" ] && [ -f "$templates_dir/rust.md" ]; then
+      if ! grep -qF "## Rust Conventions" "$constitution_file"; then
+        echo "Note: Rust project detected but constitution lacks Rust conventions. Run /fab-setup to apply."
+      fi
+    fi
+  fi
+fi
+
+# ── 6. Sync version stamp ────────────────────────────────────────────
 # Record the kit version that was last synced. Preflight compares this
 # against fab/.kit/VERSION to detect stale skill deployments.
 sync_version_file="$fab_dir/.kit-sync-version"
