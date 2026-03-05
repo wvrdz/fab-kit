@@ -1,0 +1,3 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-05T20:44:58+05:30"}
+{"args":"Clean break: remove shell script fallbacks, delete ported shell scripts, remove wt-status, absorb into fab status with --json/--all, add fab/.kit/bin/ to PATH","cmd":"fab-new","event":"command","ts":"2026-03-05T20:44:58+05:30"}
+{"delta":"+4.4","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-05T20:48:44+05:30"}
