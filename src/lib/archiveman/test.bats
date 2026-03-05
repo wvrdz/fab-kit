@@ -79,7 +79,7 @@ create_archived() {
 
   run bash "$SCRIPT" archive "260303-hcq9-test-change" --description "Test archive"
   [ "$status" -eq 0 ]
-  [ -d "$FAB_ROOT/changes/archive/260303-hcq9-test-change" ]
+  [ -d "$FAB_ROOT/changes/archive/2026/03/260303-hcq9-test-change" ]
   [ ! -d "$FAB_ROOT/changes/260303-hcq9-test-change" ]
   [[ "$output" == *"action: archive"* ]]
   [[ "$output" == *"name: 260303-hcq9-test-change"* ]]
@@ -101,7 +101,7 @@ create_archived() {
   run bash "$SCRIPT" archive "260303-hcq9-test-change" --description "Test"
   [ "$status" -eq 0 ]
   [[ "$output" == *"clean: removed"* ]]
-  [ ! -f "$FAB_ROOT/changes/archive/260303-hcq9-test-change/.pr-done" ]
+  [ ! -f "$FAB_ROOT/changes/archive/2026/03/260303-hcq9-test-change/.pr-done" ]
 }
 
 @test "archive reports clean: not_present when no .pr-done" {
@@ -119,7 +119,7 @@ create_archived() {
   run bash "$SCRIPT" archive "260303-hcq9-test-change" --description "Test"
   [ "$status" -eq 0 ]
   [ -d "$FAB_ROOT/changes/archive" ]
-  [ -d "$FAB_ROOT/changes/archive/260303-hcq9-test-change" ]
+  [ -d "$FAB_ROOT/changes/archive/2026/03/260303-hcq9-test-change" ]
 }
 
 @test "archive clears pointer when change is active" {
