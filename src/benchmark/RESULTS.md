@@ -83,6 +83,34 @@ unknown
 - Node is slower than baseline for simple operations due to V8 startup overhead (~13ms floor)
 - The baseline bash+yq finish operation (38ms) shows the cumulative cost of repeated yq subprocess spawns
 
+## Qualitative Analysis
+
+### bash+yq (baseline)
+
+The current production implementation. Each `yq` call spawns a Go binary, parses the full YAML, operates, and writes back. A `finish` operation triggers ~10 `yq` subprocesses at ~4ms each, totaling 39ms. **Strengths**: zero build infrastructure, readable, any contributor can modify. **Weaknesses**: latency scales linearly with operation complexity; already painful in agent workflows where every skill invocation pays this tax.
+
+### optimized bash
+
+Batches `yq` reads (single compound expression) and uses `awk` for writes. Gets 2-5x improvement for free — no new dependencies, no build step, same contributor accessibility. **Strengths**: quick win, stays within the constitution's current architecture. **Weaknesses**: has a performance ceiling — still spawning subprocesses, just fewer of them. The `finish` operation (7.4ms) is where the ceiling shows: even with batching, shell overhead and `yq` startup dominate.
+
+### node (js-yaml)
+
+Disqualified on two fronts. **Performance**: V8 startup overhead (~13ms) creates a floor that makes Node *slower* than bash+yq for simple operations. Only competitive on complex operations where single-process advantage outweighs startup. **Constitution**: Requires a runtime (`node`) and dependency tree (`node_modules`), violating Principle I ("single-binary utilities, no runtime or library installation").
+
+### go (yaml.v3)
+
+The pragmatic middle ground. 8-49x faster than baseline, sub-millisecond for all operations. **Strengths**: trivial cross-compilation (`GOOS=linux GOARCH=arm64 go build` — no cross toolchains), proven pattern in this ecosystem (`yq` itself is Go), single binary, constitution-compliant. **Weaknesses**: 3.4 MB binary (6x larger than Rust's 595 KB), 2-3x slower than Rust (though both are sub-ms — imperceptible difference). Go's garbage collector adds ~0.3ms variance visible in the stddev.
+
+### rust (serde_yaml)
+
+The absolute performance winner. Sub-millisecond everything, 20-110x faster than baseline. 595 KB stripped binary. **Strengths**: smallest binary, fastest execution, no GC pauses. **Weaknesses**: cross-compilation requires target-specific linkers and toolchains (unlike Go's trivial `GOOS`/`GOARCH`), CI matrix needed for 4-5 platform targets, smaller contributor pool, higher implementation complexity. The `serde_yaml` crate is deprecated (use `serde_yml` for new projects).
+
+### Recommendation
+
+**Go** is the recommended rewrite target. The 2-3x gap to Rust is imperceptible in practice (0.8ms vs 0.3ms), while Go's cross-compilation simplicity, ecosystem familiarity (yq precedent), and lower maintenance burden make it the better engineering tradeoff. If a specific hot path later proves that sub-0.5ms matters, a targeted Rust binary can complement the Go suite.
+
+**Optimized bash** should be applied to the existing scripts regardless — it's a free 2-5x improvement with zero infrastructure cost.
+
 ## Raw Data
 
 JSON files in `src/benchmark/results/`:
