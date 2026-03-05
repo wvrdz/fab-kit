@@ -1,3 +1,13 @@
 {"ts":"2026-03-05T12:35:22+05:30","event":"stage-transition","stage":"intake","action":"enter","driver":"fab-new"}
 {"ts":"2026-03-05T12:35:22+05:30","event":"command","cmd":"fab-new","args":"Build the fab Go binary — scaffold Go module, port all 8 lib/ shell scripts into subcommands of a single fab binary"}
 {"ts":"2026-03-05T12:36:43+05:30","event":"confidence","score":4.4,"delta":"+4.4","trigger":"calc-score"}
+{"ts":"2026-03-05T12:44:46+05:30","event":"command","cmd":"fab-switch"}
+{"ts":"2026-03-05T12:45:22+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-03-05T12:49:09+05:30","event":"stage-transition","stage":"spec","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T12:49:10+05:30","event":"confidence","score":4.4,"delta":"+0.0","trigger":"calc-score"}
+{"ts":"2026-03-05T12:50:32+05:30","event":"stage-transition","stage":"tasks","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T12:50:32+05:30","event":"stage-transition","stage":"apply","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T12:59:51+05:30","event":"stage-transition","stage":"review","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T13:05:41+05:30","event":"stage-transition","stage":"hydrate","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T13:05:41+05:30","event":"review","result":"passed"}
+{"ts":"2026-03-05T13:07:07+05:30","event":"stage-transition","stage":"ship","action":"enter","driver":"fab-ff"}

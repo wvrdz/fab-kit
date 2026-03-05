@@ -127,6 +127,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260305-bhd6-1-build-fab-go-binary | 2026-03-05 | Go binary (`src/fab-go/`) built — ports all lib/ scripts to single `fab` binary. No distribution changes in this change — binary inclusion in kit.tar.gz and per-platform archives are deferred to a future change. Go toolchain required only for building from source, not for end users. |
 | 260303-l6nk-gemini-cli-agent-aware-sync | 2026-03-04 | Added Gemini CLI as 4th supported agent. Updated bootstrap/sync descriptions to reflect conditional agent deployment (skills deployed only when agent's CLI found in PATH). Four agents: Claude Code (copies), OpenCode (symlinks), Codex (copies), Gemini CLI (copies). |
 | 260301-08pa-version-pinned-upgrade-and-release | 2026-03-02 | Added version-pinned upgrade (`fab-upgrade.sh v0.24.0`) with tag-aware messaging. Added backport release support to `fab-release.sh`: push to current branch instead of hardcoded `main`, `--no-latest` flag for `gh release create --latest=false`, position-independent argument parsing. |
 | 260226-koj1-version-staleness-warning | 2026-02-26 | Added sync staleness detection (`fab/.kit-sync-version` stamp, preflight stderr warning). Renamed `fab/project/VERSION` → `fab/.kit-migration-version`. Updated preserved files list in upgrade section. |
