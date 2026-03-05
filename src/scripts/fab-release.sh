@@ -173,7 +173,7 @@ for platform in "${platforms[@]}"; do
   arch="${platform##*/}"
   output="$build_dir/fab-${os}-${arch}"
   echo "  Building ${os}/${arch}..."
-  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -o "$output" -C "$go_src" ./cmd/fab
+  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -C "$go_src" -o "$output" ./cmd/fab
 done
 
 echo "Cross-compilation complete."
