@@ -10,3 +10,5 @@
 - [ ] [b0xs] 2026-03-04: Single type of template in git-pr instead of switching between two formats
 - [ ] [8ooz] 2026-03-04: for all stages, fab-switch and fab-status should show the confidence scores (if no spec - then tentative score, else actual score based on spec)
 - [ ] [ibst] 2026-03-05: for the git-pr-review stage, if there's no human review, and no copilot review comes in time, the final state should be done, not failed
+- [ ] [o9nw] 2026-03-05: batch-fab-archive-changes.sh: move the default behaviour to --list. Make --alll the new default behaviour when no arguments are passed - as that is the most frequent action
+- [ ] [38q7] 2026-03-05: wt-delete: the option 'wt-delete --all' should be absorved into the default invocation of wt-delete (without arguments). How? Show All as the first option
