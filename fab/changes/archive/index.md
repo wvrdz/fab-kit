@@ -1,5 +1,9 @@
 # Archive Index
 
+- **260305-obib-swap-batch-archive-defaults** — Swap batch-fab-archive-change.sh default from --list to --all, so running with no arguments archives all eligible changes directly.
+- **260305-id4j-review-pr-timeout-done** — Treat Copilot review timeout as graceful completion (done) instead of failure in the review-pr stage, so changes without external review can proceed to archive.
+- **260305-7zq4-worktree-status-command** — New wt-status command that shows the fab pipeline status (stage + state) for every worktree, bridging worktree names to active fab changes.
+- **260305-38q7-wt-delete-show-all-in-menu** — Add 'All worktrees' option as the first item in the wt-delete interactive selection menu, so users can delete all worktrees without remembering the --delete-all flag.
 - **260305-b0xs-unified-pr-template** — Replaces the two-tier PR template system with a single unified template that conditionally populates fab-linked fields based on artifact availability, adding a horizontal stats table and pipeline progress line.
 - **260305-8ooz-persist-indicative-confidence** — Persists indicative confidence scores into .status.yaml at intake finish, enabling uniform display across fab-status, fab-switch, and changeman without duplicated mode-selection logic.
 - **260305-4szh-stage-transition-logging** — Adds a stage-transition event type to logman.sh and emits transition events from statusman.sh, enabling complete state machine tracing in .history.jsonl for rework loop debugging.

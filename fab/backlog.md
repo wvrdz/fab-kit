@@ -1,8 +1,8 @@
 - [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
 - [ ] [v34t] 2026-02-23: A timeline or user journey mermaid diagram showing which commands are typed in the main repo vs the worktree
 - [ ] [lc3m] 2026-03-01: Switch fab/.kit/LICENSE from PolyForm Internal Use to MIT. Reasoning: fab-kit is a process (prompts, markdown, shell scripts) — not protectable IP in the copyright sense. The US Copyright Office ruled prompts convey unprotectable ideas. PolyForm Internal Use blocks community contributions and ecosystem growth while providing only illusory control. MIT gives attribution (copyright notice preserved), maximum adoption, zero friction, and lets the community keep the tool evolving — the real moat is speed and opinionation, not licensing restrictions.
-- [ ] [gt52] 2026-03-03: Evaluate rust vs node for speed for moving the tool scripts. Take any one command (say statusman.sh) and create it node and rust version. Compare performance.
-- [ ] [7zq4] 2026-03-03: A command line to show the status (status = stage + state) of every worktree
-- [ ] [ibst] 2026-03-05: for the git-pr-review stage, if there's no human review, and no copilot review comes in time, the final state should be done, not failed
-- [ ] [o9nw] 2026-03-05: batch-fab-archive-changes.sh: move the default behaviour to --list. Make --alll the new default behaviour when no arguments are passed - as that is the most frequent action
-- [ ] [38q7] 2026-03-05: wt-delete: the option 'wt-delete --all' should be absorbed into the default invocation of wt-delete (without arguments). How? Show All as the first option
+- [x] [gt52] 2026-03-03: Evaluate rust vs node for speed for moving the tool scripts. Take any one command (say statusman.sh) and create it node and rust version. Compare performance.
+- [x] [7zq4] 2026-03-03: A command line to show the status (status = stage + state) of every worktree
+- [x] [ibst] 2026-03-05: for the git-pr-review stage, if there's no human review, and no copilot review comes in time, the final state should be done, not failed
+- [x] [o9nw] 2026-03-05: batch-fab-archive-changes.sh: move the default behaviour to --list. Make --alll the new default behaviour when no arguments are passed - as that is the most frequent action
+- [x] [38q7] 2026-03-05: wt-delete: the option 'wt-delete --all' should be absorbed into the default invocation of wt-delete (without arguments). How? Show All as the first option
