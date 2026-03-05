@@ -1,1 +1,12 @@
 {"ts":"2026-03-05T01:01:47+05:30","event":"command","cmd":"fab-new","args":"Single type of template in git-pr instead of switching between two formats"}
+{"ts":"2026-03-05T01:06:44+05:30","event":"command","cmd":"fab-switch"}
+{"ts":"2026-03-05T01:07:13+05:30","event":"command","cmd":"fab-ff"}
+{"ts":"2026-03-05T01:08:46+05:30","event":"stage-transition","stage":"spec","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T01:08:51+05:30","event":"confidence","score":4.7,"delta":"+4.7","trigger":"calc-score"}
+{"ts":"2026-03-05T01:09:55+05:30","event":"stage-transition","stage":"tasks","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T01:09:55+05:30","event":"stage-transition","stage":"apply","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T01:12:36+05:30","event":"stage-transition","stage":"review","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T01:15:34+05:30","event":"stage-transition","stage":"hydrate","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T01:15:34+05:30","event":"review","result":"passed"}
+{"ts":"2026-03-05T01:15:52+05:30","event":"stage-transition","stage":"ship","action":"enter","driver":"fab-ff"}
+{"ts":"2026-03-05T01:16:52+05:30","event":"stage-transition","stage":"review-pr","action":"enter","driver":"fab-ff"}
