@@ -340,11 +340,26 @@ func statusSetConfidenceCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			certain, _ := strconv.Atoi(args[1])
-			confident, _ := strconv.Atoi(args[2])
-			tentative, _ := strconv.Atoi(args[3])
-			unresolved, _ := strconv.Atoi(args[4])
-			score, _ := strconv.ParseFloat(args[5], 64)
+			certain, err := strconv.Atoi(args[1])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'certain' (%q): %w", args[1], err)
+			}
+			confident, err := strconv.Atoi(args[2])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'confident' (%q): %w", args[2], err)
+			}
+			tentative, err := strconv.Atoi(args[3])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'tentative' (%q): %w", args[3], err)
+			}
+			unresolved, err := strconv.Atoi(args[4])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'unresolved' (%q): %w", args[4], err)
+			}
+			score, err := strconv.ParseFloat(args[5], 64)
+			if err != nil {
+				return fmt.Errorf("invalid value for 'score' (%q): %w", args[5], err)
+			}
 			return status.SetConfidence(sf, statusPath, certain, confident, tentative, unresolved, score, indicative)
 		},
 	}
@@ -365,15 +380,42 @@ func statusSetConfidenceFuzzyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			certain, _ := strconv.Atoi(args[1])
-			confident, _ := strconv.Atoi(args[2])
-			tentative, _ := strconv.Atoi(args[3])
-			unresolved, _ := strconv.Atoi(args[4])
-			score, _ := strconv.ParseFloat(args[5], 64)
-			meanS, _ := strconv.ParseFloat(args[6], 64)
-			meanR, _ := strconv.ParseFloat(args[7], 64)
-			meanA, _ := strconv.ParseFloat(args[8], 64)
-			meanD, _ := strconv.ParseFloat(args[9], 64)
+			certain, err := strconv.Atoi(args[1])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'certain' (%q): %w", args[1], err)
+			}
+			confident, err := strconv.Atoi(args[2])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'confident' (%q): %w", args[2], err)
+			}
+			tentative, err := strconv.Atoi(args[3])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'tentative' (%q): %w", args[3], err)
+			}
+			unresolved, err := strconv.Atoi(args[4])
+			if err != nil {
+				return fmt.Errorf("invalid value for 'unresolved' (%q): %w", args[4], err)
+			}
+			score, err := strconv.ParseFloat(args[5], 64)
+			if err != nil {
+				return fmt.Errorf("invalid value for 'score' (%q): %w", args[5], err)
+			}
+			meanS, err := strconv.ParseFloat(args[6], 64)
+			if err != nil {
+				return fmt.Errorf("invalid value for 'mean_s' (%q): %w", args[6], err)
+			}
+			meanR, err := strconv.ParseFloat(args[7], 64)
+			if err != nil {
+				return fmt.Errorf("invalid value for 'mean_r' (%q): %w", args[7], err)
+			}
+			meanA, err := strconv.ParseFloat(args[8], 64)
+			if err != nil {
+				return fmt.Errorf("invalid value for 'mean_a' (%q): %w", args[8], err)
+			}
+			meanD, err := strconv.ParseFloat(args[9], 64)
+			if err != nil {
+				return fmt.Errorf("invalid value for 'mean_d' (%q): %w", args[9], err)
+			}
 			return status.SetConfidenceFuzzy(sf, statusPath, certain, confident, tentative, unresolved, score, meanS, meanR, meanA, meanD, indicative)
 		},
 	}

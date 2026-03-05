@@ -86,7 +86,12 @@ func CheckGate(fabRoot, changeArg, stage string) (*GateResult, error) {
 		return nil, fmt.Errorf(".status.yaml not found in %s", changeDir)
 	}
 
-	changeType := readChangeType(statusPath)
+	changeType := "feat"
+	if statusFile, err := sf.Load(statusPath); err == nil {
+		if ct := statusFile.ChangeType; ct != "" && ct != "null" {
+			changeType = ct
+		}
+	}
 
 	var scoreFile string
 	var threshold float64
@@ -146,7 +151,18 @@ func Compute(fabRoot, changeArg, stage string) (*ScoreResult, error) {
 		}
 	}
 
-	changeType := readChangeType(statusPath)
+	// Load status file once for change type, previous score, and writing back
+	statusFile, loadErr := sf.Load(statusPath)
+
+	changeType := "feat"
+	prevScore := 0.0
+	if loadErr == nil {
+		if ct := statusFile.ChangeType; ct != "" && ct != "null" {
+			changeType = ct
+		}
+		prevScore = statusFile.Confidence.Score
+	}
+
 	expectedMin := getExpectedMin(stage, changeType)
 
 	gc := countGrades(scoreFile)
@@ -162,25 +178,16 @@ func Compute(fabRoot, changeArg, stage string) (*ScoreResult, error) {
 		meanD = roundTo1(float64(gc.SumD) / float64(gc.DimCount))
 	}
 
-	// Read previous score
-	prevScore := 0.0
-	if statusFile, err := sf.Load(statusPath); err == nil {
-		prevScore = statusFile.Confidence.Score
-	}
-
 	delta := score - prevScore
 	deltaStr := fmt.Sprintf("%+.1f", delta)
 
 	// Write to .status.yaml
-	if _, err := os.Stat(statusPath); err == nil {
-		statusFile, err := sf.Load(statusPath)
-		if err == nil {
-			indicative := stage == "intake"
-			if gc.HasFuzzy {
-				_ = status.SetConfidenceFuzzy(statusFile, statusPath, gc.Certain, gc.Confident, gc.Tentative, gc.Unresolved, score, meanS, meanR, meanA, meanD, indicative)
-			} else {
-				_ = status.SetConfidence(statusFile, statusPath, gc.Certain, gc.Confident, gc.Tentative, gc.Unresolved, score, indicative)
-			}
+	if loadErr == nil {
+		indicative := stage == "intake"
+		if gc.HasFuzzy {
+			_ = status.SetConfidenceFuzzy(statusFile, statusPath, gc.Certain, gc.Confident, gc.Tentative, gc.Unresolved, score, meanS, meanR, meanA, meanD, indicative)
+		} else {
+			_ = status.SetConfidence(statusFile, statusPath, gc.Certain, gc.Confident, gc.Tentative, gc.Unresolved, score, indicative)
 		}
 
 		folder := filepath.Base(changeDir)
@@ -365,18 +372,6 @@ func getGateThreshold(changeType string) float64 {
 		return v
 	}
 	return 3.0 // default
-}
-
-func readChangeType(statusPath string) string {
-	statusFile, err := sf.Load(statusPath)
-	if err != nil {
-		return "feat"
-	}
-	ct := statusFile.ChangeType
-	if ct == "" || ct == "null" {
-		return "feat"
-	}
-	return ct
 }
 
 func roundTo1(f float64) float64 {

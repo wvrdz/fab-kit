@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/wvrdz/fab-kit/src/fab-go/internal/resolve"
+
 	"github.com/wvrdz/fab-kit/src/fab-go/internal/status"
 	sf "github.com/wvrdz/fab-kit/src/fab-go/internal/statusfile"
 )
@@ -26,8 +27,6 @@ type Result struct {
 
 // Run performs preflight validation and returns structured result.
 func Run(fabRoot, changeOverride string) (*Result, error) {
-	repoRoot := filepath.Dir(fabRoot)
-
 	// 1. Check project initialization
 	configPath := filepath.Join(fabRoot, "project", "config.yaml")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
@@ -75,7 +74,6 @@ func Run(fabRoot, changeOverride string) (*Result, error) {
 	displayStage, displayState := status.DisplayStage(statusFile)
 
 	relChangeDir := "fab/changes/" + folder
-	_ = repoRoot // used for absolute path resolution if needed
 
 	return &Result{
 		ID:           id,

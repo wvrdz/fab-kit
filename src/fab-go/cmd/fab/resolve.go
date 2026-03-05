@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/wvrdz/fab-kit/src/fab-go/internal/resolve"
@@ -45,7 +44,6 @@ func resolveCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&outputMode, "mode", "id", "")
 	// Register the --id, --folder, --dir, --status flags matching the bash interface
 	cmd.Flags().Bool("id", false, "Output 4-char change ID (default)")
 	cmd.Flags().Bool("folder", false, "Output full folder name")
@@ -66,13 +64,4 @@ func resolveCmd() *cobra.Command {
 	}
 
 	return cmd
-}
-
-func mustFabRoot() string {
-	fabRoot, err := resolve.FabRoot()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-		os.Exit(1)
-	}
-	return fabRoot
 }
