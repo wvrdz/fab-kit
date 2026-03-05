@@ -1,14 +1,8 @@
 - [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
 - [ ] [v34t] 2026-02-23: A timeline or user journey mermaid diagram showing which commands are typed in the main repo vs the worktree
 - [ ] [lc3m] 2026-03-01: Switch fab/.kit/LICENSE from PolyForm Internal Use to MIT. Reasoning: fab-kit is a process (prompts, markdown, shell scripts) — not protectable IP in the copyright sense. The US Copyright Office ruled prompts convey unprotectable ideas. PolyForm Internal Use blocks community contributions and ecosystem growth while providing only illusory control. MIT gives attribution (copyright notice preserved), maximum adoption, zero friction, and lets the community keep the tool evolving — the real moat is speed and opinionation, not licensing restrictions.
-- [x] [hcq9] 2026-03-03: See if the some or all steps for fab-archive skill can be offloaded to a script to make it faster
-- [x] [a4v0] 2026-03-03: A few extra states have been added for git-pr command. I want all states to be trackable via the .status.yaml file - ie 'is there copilot? Are we waiting for review? Is review done? All qns should be answerable via the status.yaml file (in a minimalistic way)
-- [x] [9yvv] 2026-03-03: Make FabKit a full state machine - even sub states within git-pr
-- [ ] [gt52] 2026-03-03: Evaluate rust vs node for speed for moving the tool scripts
-- [x] [4szh] 2026-03-03: Improve rework loop logging — log explicit apply re-entry events in .history.jsonl, clarify whether stage_metrics.iterations counts the stage or the apply→review pair, and standardize ad-hoc event names (smoke-test, test-pass) into the schema
+- [ ] [gt52] 2026-03-03: Evaluate rust vs node for speed for moving the tool scripts. Take any one command (say statusman.sh) and create it node and rust version. Compare performance.
 - [ ] [7zq4] 2026-03-03: A command line to show the status (status = stage + state) of every worktree
-- [x] [b0xs] 2026-03-04: Single type of template in git-pr instead of switching between two formats
-- [x] [8ooz] 2026-03-04: for all stages, fab-switch and fab-status should show the confidence scores (if no spec - then tentative score, else actual score based on spec)
 - [ ] [ibst] 2026-03-05: for the git-pr-review stage, if there's no human review, and no copilot review comes in time, the final state should be done, not failed
 - [ ] [o9nw] 2026-03-05: batch-fab-archive-changes.sh: move the default behaviour to --list. Make --alll the new default behaviour when no arguments are passed - as that is the most frequent action
-- [ ] [38q7] 2026-03-05: wt-delete: the option 'wt-delete --all' should be absorved into the default invocation of wt-delete (without arguments). How? Show All as the first option
+- [ ] [38q7] 2026-03-05: wt-delete: the option 'wt-delete --all' should be absorbed into the default invocation of wt-delete (without arguments). How? Show All as the first option
