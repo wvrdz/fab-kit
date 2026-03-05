@@ -183,7 +183,7 @@ echo "Cross-compilation complete."
 echo "Packaging archives..."
 
 # Generic archive (no binary) — exclude .kit/bin/fab in case it was built locally
-COPYFILE_DISABLE=1 tar czf "$repo_root/kit.tar.gz" -C "$repo_root/fab" --exclude='.kit/bin/fab' .kit
+COPYFILE_DISABLE=1 tar czf "$repo_root/kit.tar.gz" -C "$repo_root/fab" --exclude='.kit/bin/fab-go' .kit
 echo "  kit.tar.gz ($(wc -c < "$repo_root/kit.tar.gz") bytes)"
 
 # Per-platform archives (kit + binary)
@@ -198,8 +198,8 @@ for platform in "${platforms[@]}"; do
   mkdir -p "$staging"
   cp -a "$repo_root/fab/.kit" "$staging/.kit"
   mkdir -p "$staging/.kit/bin"
-  cp "$binary" "$staging/.kit/bin/fab"
-  chmod +x "$staging/.kit/bin/fab"
+  cp "$binary" "$staging/.kit/bin/fab-go"
+  chmod +x "$staging/.kit/bin/fab-go"
 
   COPYFILE_DISABLE=1 tar czf "$repo_root/$archive_name" -C "$staging" .kit
   echo "  $archive_name ($(wc -c < "$repo_root/$archive_name") bytes)"

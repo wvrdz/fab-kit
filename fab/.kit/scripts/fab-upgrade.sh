@@ -114,7 +114,7 @@ new_version=$(cat "$tmp_dir/.kit/VERSION" | tr -d '[:space:]')
 
 # ── Already up to date? ─────────────────────────────────────────────
 
-if [ "$current_version" = "$new_version" ] && [ -x "$kit_dir/bin/fab" ]; then
+if [ "$current_version" = "$new_version" ] && [ -x "$kit_dir/bin/fab-go" ]; then
   if [ -n "$tag" ]; then
     echo "Already on $tag ($current_version). No update needed."
   else
@@ -133,7 +133,7 @@ mv "$tmp_dir/.kit" "$kit_dir"
 echo "fab/.kit/ updated successfully."
 
 # Report if binary is included
-if [ -x "$kit_dir/bin/fab" ]; then
+if [ -x "$kit_dir/bin/fab-go" ]; then
   echo "Go binary: included (${detect_os}/${detect_arch})"
 else
   echo "Go binary: not included (shell scripts only)"

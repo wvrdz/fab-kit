@@ -13,7 +13,7 @@ fab_dir="$(dirname "$kit_dir")"
 bin_dir="$kit_dir/bin"
 
 # Already present — nothing to do
-if [ -x "$bin_dir/fab" ]; then
+if [ -x "$bin_dir/fab-go" ]; then
   echo "fab binary: OK"
   return 0 2>/dev/null || exit 0
 fi
@@ -50,13 +50,13 @@ if ! gh release download "$tag" --repo "$repo" --pattern "$platform_archive" --d
 fi
 
 # Extract just the binary
-if ! tar xzf "$tmp_dir/$platform_archive" -C "$tmp_dir" .kit/bin/fab 2>/dev/null; then
+if ! tar xzf "$tmp_dir/$platform_archive" -C "$tmp_dir" .kit/bin/fab-go 2>/dev/null; then
   echo "fab binary: skipped (archive lacks binary)"
   exit 0
 fi
 
 # Install
 mkdir -p "$bin_dir"
-cp "$tmp_dir/.kit/bin/fab" "$bin_dir/fab"
-chmod +x "$bin_dir/fab"
+cp "$tmp_dir/.kit/bin/fab-go" "$bin_dir/fab-go"
+chmod +x "$bin_dir/fab-go"
 echo "fab binary: installed (${detect_os}/${detect_arch})"
