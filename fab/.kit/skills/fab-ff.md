@@ -75,7 +75,7 @@ Run `fab/.kit/scripts/lib/statusman.sh finish <change> tasks fab-ff`. Then set c
 
 *(Skip if `progress.apply` is `done`.)*
 
-Execute apply behavior per `/fab-continue` — parse unchecked tasks, execute in dependency order, run tests, mark `[x]` on completion.
+Invoke `/fab-continue` using the Skill tool — follow its Apply Behavior exactly (parse unchecked tasks, execute in dependency order, run tests, mark `[x]` on completion).
 
 **If task fails**: STOP with `Task {ID} failed: {reason}. Investigate and re-run /fab-ff.`
 
@@ -85,7 +85,7 @@ On success: run `fab/.kit/scripts/lib/statusman.sh finish <change> apply fab-ff`
 
 *(Skip if `progress.review` is `done`.)*
 
-Dispatch review to a **sub-agent** per `/fab-continue` Review Behavior — the sub-agent runs in a separate execution context, performs all validation checks, and returns structured findings with three-tier priority (must-fix / should-fix / nice-to-have).
+Invoke `/fab-continue` using the Skill tool — follow its Review Behavior exactly (dispatch to a sub-agent in a separate execution context, perform all validation checks, return structured findings with three-tier priority: must-fix / should-fix / nice-to-have).
 
 **Pass**: run `fab/.kit/scripts/lib/statusman.sh finish <change> review fab-ff`. Proceed to Step 7.
 
@@ -120,13 +120,13 @@ The user can run `/fab-continue` for interactive rework, or `/fab-clarify` to de
 
 *(Skip if `progress.hydrate` is `done`.)*
 
-Execute hydrate behavior per `/fab-continue` — validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/statusman.sh finish <change> hydrate fab-ff`.
+Invoke `/fab-continue` using the Skill tool — follow its Hydrate Behavior exactly (validate review passed, hydrate into `docs/memory/`, run `fab/.kit/scripts/lib/statusman.sh finish <change> hydrate fab-ff`).
 
 ### Step 8: Ship
 
 *(Skip if `progress.ship` is `done`.)*
 
-Invoke `/git-pr` behavior — commit, push, and create a GitHub PR. The git-pr skill handles statusman integration internally (start/finish ship stage).
+Invoke `/git-pr` using the Skill tool — follow its procedure exactly (commit, push, and create a GitHub PR). The git-pr skill handles statusman integration internally (start/finish ship stage).
 
 **If git-pr fails**: STOP with the error from git-pr. The ship stage remains `active` for user retry.
 
@@ -136,7 +136,7 @@ On success: `progress.ship` becomes `done` (handled by git-pr's statusman calls)
 
 *(Skip if `progress.review-pr` is `done`.)*
 
-Invoke `/git-pr-review` behavior — detect reviews, triage comments, apply fixes, push. This includes requesting Copilot as reviewer if no reviews exist, then polling for up to 8 minutes. The git-pr-review skill handles statusman integration internally (start/finish/fail review-pr stage).
+Invoke `/git-pr-review` using the Skill tool — follow its procedure exactly (detect reviews, triage comments, apply fixes, push; request Copilot as reviewer if no reviews exist, then poll for up to 8 minutes). The git-pr-review skill handles statusman integration internally (start/finish/fail review-pr stage).
 
 **If review-pr fails** (no PR found, processing error): STOP with the error. The user can re-run `/fab-ff` or `/git-pr-review` directly.
 
