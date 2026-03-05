@@ -296,6 +296,25 @@ A monorepo is one Fab project. Place a single `fab/` at the repository root — 
 
 For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field so skills can load relevant context per package.
 
+### Go Binary (`fab`)
+
+A single Go binary at `src/fab-go/` that ports all 7 `lib/` shell scripts into subcommands of one `fab` binary. The primary motivation is performance: collapsing the preflight → statusman → resolve → logman call chain from ~25ms of subprocess spawning to <1ms of in-process function calls. Also eliminates the `yq` v4 dependency by internalizing YAML parsing.
+
+**Module**: `github.com/wvrdz/fab-kit/src/fab-go` (Go 1.22+, dependencies: cobra, gopkg.in/yaml.v3, no CGo)
+
+**Subcommands** (1:1 mapping to shell scripts):
+- `fab resolve [--id|--folder|--dir|--status] [<change>]` → resolve.sh
+- `fab log command|confidence|review|transition ...` → logman.sh
+- `fab status start|advance|finish|reset|skip|fail|...` → statusman.sh (all 20+ subcommands)
+- `fab preflight [<change>]` → preflight.sh
+- `fab change new|rename|switch|list|resolve ...` → changeman.sh
+- `fab score [--check-gate] [--stage <stage>] <change>` → calc-score.sh
+- `fab archive <change> --description "..." | restore | list` → archiveman.sh
+
+**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. This replaces the 43+ `yq` invocations in statusman.sh. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`) import `statusfile` for YAML access.
+
+**Parity**: All subcommands produce stdout/stderr output matching the bash versions (modulo timestamps). Shell scripts remain unchanged — binary switchover is a separate change.
+
 ## Design Decisions
 
 ### All Logic in Markdown and Shell
@@ -444,6 +463,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 | 260213-w8p3-extract-fab-score | 2026-02-14 | Added `_calc-score.sh` to scripts directory listing and Shell Scripts section — internal confidence scoring script |
 | 260213-puow-consolidate-status-reads | 2026-02-14 | Renamed `statusman.sh` → `_statusman.sh`; added `.status.yaml` accessor API (`get_progress_map`, `get_checklist`, `get_confidence`); refactored `get_current_stage` to use accessors; extracted `_resolve-change.sh` change resolution library; documented underscore prefix convention |
 | 260213-v3rn-batch-commands | 2026-02-14 | Renamed `fab-batch-new.sh` → `batch-new-backlog.sh`, `fab-batch-switch.sh` → `batch-switch-change.sh`; added `batch-archive-change.sh`; added batch scripts section to Shell Scripts docs |
+| 260305-bhd6-1-build-fab-go-binary | 2026-03-05 | Added Go binary section: `src/fab-go/` with `fab` binary porting all 7 lib/ shell scripts into cobra subcommands. Uses `internal/statusfile` as shared YAML foundation (single parse, atomic writes), eliminating yq dependency. Shell scripts unchanged — switchover is a separate change. |
 | 260305-gt52-rust-vs-node-benchmark | 2026-03-05 | Added Performance Benchmark section: Rust vs Node vs optimized bash vs bash+yq for statusman.sh operations. Rust is 23-123x faster than baseline; optimized bash 2-5x; Node slower than baseline due to V8 startup |
 | 260213-3njv-scaffold-dir | 2026-02-13 | Added `scaffold/` directory to tree listing; `_init_scaffold.sh` now reads bootstrap content from scaffold files instead of hardcoded heredocs |
 | 260213-iq2l-rename-setup-scripts | 2026-02-13 | Renamed `fab-setup.sh` → `_init_scaffold.sh` and `fab-update.sh` → `fab-upgrade.sh`; updated directory listing and all script references |
