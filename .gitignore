@@ -25,3 +25,8 @@ src/benchmark/results/*.json
 
 fab/.kit/bin/fab-go
 fab/.kit/bin/fab-rust
+
+# Gas Town runtime
+.beads/
+.runtime/
+.logs/
