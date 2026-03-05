@@ -320,16 +320,26 @@ func readFile(t *testing.T, tmpDir, relPath string) string {
 	return string(data)
 }
 
-// normalizeYAMLTypes converts time.Time → string and strips known-optional
-// false boolean fields to handle omitted-vs-false differences.
+// normalizeYAMLTypes converts time.Time → string, strips known-optional
+// false boolean fields, and removes inherently non-deterministic fields.
 func normalizeYAMLTypes(v interface{}) interface{} {
 	// Fields where Go binary omits false and bash includes it
 	optionalFalseFields := map[string]bool{"indicative": true}
+	// Fields that are inherently non-deterministic across sequential runs
+	// (timestamps generated at execution time differ between bash and Go)
+	ignoredFields := map[string]bool{
+		"last_updated": true,
+		"started_at":   true,
+		"completed_at": true,
+	}
 
 	switch val := v.(type) {
 	case map[string]interface{}:
 		out := make(map[string]interface{}, len(val))
 		for k, v2 := range val {
+			if ignoredFields[k] {
+				continue
+			}
 			// Strip only known-optional false booleans
 			if b, ok := v2.(bool); ok && !b && optionalFalseFields[k] {
 				continue
@@ -405,6 +415,9 @@ func assertFileParity(t *testing.T, label, bashDir, goDir, relPath string) {
 				t.Errorf("%s: failed to parse go JSONL line %d: %v", label, i, err)
 				continue
 			}
+			// Remove non-deterministic timestamp fields
+			delete(bashObj, "ts")
+			delete(goObj, "ts")
 			bashNorm, _ := json.Marshal(bashObj)
 			goNorm, _ := json.Marshal(goObj)
 			if string(bashNorm) != string(goNorm) {
