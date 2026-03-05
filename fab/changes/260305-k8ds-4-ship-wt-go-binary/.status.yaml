@@ -1,0 +1,36 @@
+name: 260305-k8ds-4-ship-wt-go-binary
+created: 2026-03-05T12:38:43+05:30
+created_by: sahil-weaver
+change_type: feat
+issues: []
+progress:
+  intake: ready
+  spec: pending
+  tasks: pending
+  apply: pending
+  review: pending
+  hydrate: pending
+  ship: pending
+  review-pr: pending
+checklist:
+  generated: false
+  path: checklist.md
+  completed: 0
+  total: 0
+confidence:
+  certain: 2
+  confident: 2
+  tentative: 0
+  unresolved: 0
+  score: 3.5
+  indicative: true
+  fuzzy: true
+  dimensions:
+    signal: 80.0
+    reversibility: 86.2
+    competence: 82.5
+    disambiguation: 81.2
+stage_metrics:
+  intake: {started_at: "2026-03-05T12:38:43+05:30", driver: fab-new, iterations: 1}
+prs: []
+last_updated: "2026-03-05T12:39:15+05:30"

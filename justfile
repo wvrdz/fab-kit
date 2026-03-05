@@ -33,3 +33,5 @@ test-rust:
 # Check prerequisites and environment health
 doctor:
     fab/.kit/scripts/fab-doctor.sh
+    @echo ""
+    {{scripts}}/dev-doctor.sh

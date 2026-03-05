@@ -67,10 +67,12 @@ fab/current/add-spinner/
 
 ### Prerequisites
 
+#### Using Fab Kit
+
 Install with [Homebrew](https://brew.sh/) (macOS and Linux):
 
 ```bash
-brew install yq jq gh bats-core direnv parallel
+brew install yq jq gh direnv
 ```
 
 * After installing `gh`, authenticate with `gh auth login`.
@@ -81,9 +83,21 @@ brew install yq jq gh bats-core direnv parallel
 | [yq](https://github.com/mikefarah/yq) | YAML processing for status files and schemas |
 | [jq](https://jqlang.github.io/jq/) | JSON processing for settings merge during sync |
 | [gh](https://cli.github.com/) | GitHub CLI - used for installation and releases |
-| [bats-core](https://github.com/bats-core/bats-core) | Bash test runner for kit validation |
 | [direnv](https://direnv.net/) | Auto-loads `.envrc` to put fab scripts on PATH |
+
+#### Developing Fab Kit
+
+In addition to the above:
+
+```bash
+brew install bats-core parallel go
+```
+
+| Tool | Purpose |
+|------|---------|
+| [bats-core](https://github.com/bats-core/bats-core) | Bash test runner for kit validation |
 | [parallel](https://www.gnu.org/software/parallel/) | Parallel execution for test suites and batch operations |
+| [Go](https://go.dev/) | Required for building the `fab` binary from source (`src/fab-go/`) |
 
 ### 1. Install
 
