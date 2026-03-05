@@ -78,8 +78,8 @@ merged=$(jq --argjson desired "$desired" '
 ' "$settings_file")
 
 # ── Detect changes and write ─────────────────────────────────────────
-existing_hooks=$(jq '.hooks // {}' "$settings_file")
-new_hooks=$(echo "$merged" | jq '.hooks // {}')
+existing_hooks=$(jq -cS '.hooks // {}' "$settings_file")
+new_hooks=$(echo "$merged" | jq -cS '.hooks // {}')
 
 if [ "$existing_hooks" = "$new_hooks" ]; then
   echo ".claude/settings.local.json hooks: OK"

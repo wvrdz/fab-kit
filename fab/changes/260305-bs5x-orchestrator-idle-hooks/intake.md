@@ -62,7 +62,7 @@ A shell script at `fab/.kit/hooks/on-stop.sh` that:
 
 ### Hook registration
 
-The hooks need to be registered in Claude Code's settings. This is a user-side configuration — the hooks reference scripts inside `fab/.kit/hooks/`. Registration format (in `.claude/settings.json` or equivalent):
+The hooks need to be registered in Claude Code's settings. This is a project-local configuration — the hooks reference scripts inside `fab/.kit/hooks/`. Registration format (in `.claude/settings.local.json`):
 
 ```json
 {
@@ -76,7 +76,7 @@ The hooks need to be registered in Claude Code's settings. This is a user-side c
 Registration SHALL be handled by a new `fab/.kit/sync/5-sync-hooks.sh` script, following the existing numbered-step convention alongside `1-prerequisites.sh`, `2-sync-workspace.sh`, etc. The script:
 
 1. Reads hook definitions from `fab/.kit/hooks/` (discovers available hook scripts)
-2. Merges them into `.claude/settings.json` under the `hooks` key (same file as permissions scaffold)
+2. Merges them into `.claude/settings.local.json` under the `hooks` key (same file as permissions scaffold)
 3. Uses its own idempotent merge logic for `hooks.*` arrays — the existing `json_merge_permissions` only handles `permissions.allow` and won't work for hooks. Entries already present are not duplicated.
 4. Requires `jq` (already used by `2-sync-workspace.sh` for JSON merging)
 
@@ -131,6 +131,6 @@ Both scripts must work from any working directory (worktrees, repo root). They s
 
 | # | Question | Resolution |
 |---|----------|------------|
-| 1 | fab-sync.sh registration mechanism | New `5-sync-hooks.sh` in `fab/.kit/sync/`, idempotent merge into `.claude/settings.json` |
+| 1 | fab-sync.sh registration mechanism | New `5-sync-hooks.sh` in `fab/.kit/sync/`, idempotent merge into `.claude/settings.local.json` |
 | 2 | Affected Memory gap for fab-sync scope | Added `fab-workflow/setup` and `fab-workflow/distribution` |
 | 3 | Shared file open question (#8) | Explicitly deferred — upgraded #8 to Confident, removed from Open Questions |

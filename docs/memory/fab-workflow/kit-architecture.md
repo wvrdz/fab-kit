@@ -73,7 +73,7 @@ fab/.kit/
 ├── schemas/                # Workflow schema
 │   └── workflow.yaml       # Canonical stage/state definitions
 ├── hooks/                  # Claude Code hook scripts (runtime lifecycle signals)
-│   ├── on-session-start.sh # SessionStart hook — clears agent.idle_since from .status.yaml
+│   ├── on-session-start.sh # SessionStart hook — removes agent block from .status.yaml
 │   └── on-stop.sh          # Stop hook — writes agent.idle_since timestamp to .status.yaml
 ├── sync/                   # Kit-level sync scripts (iterated by fab-sync.sh)
 │   ├── 1-prerequisites.sh  # Validate required tools (yq, jq, gh, direnv, bats) — fatal on missing
