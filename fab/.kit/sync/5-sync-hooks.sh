@@ -44,12 +44,12 @@ map_event() {
 }
 
 # ── Build desired hooks JSON ─────────────────────────────────────────
-# Construct a JSON object: { "EventName": [{"matcher":{},"hooks":[{"type":"command","command":"..."}]}], ... }
+# Construct a JSON object: { "EventName": [{"matcher":"","hooks":[{"type":"command","command":"..."}]}], ... }
 desired='{}'
 for hook_file in "${hooks[@]}"; do
   event="$(map_event "$hook_file")"
   [ -n "$event" ] || continue
-  entry=$(jq -n --arg cmd "bash fab/.kit/hooks/$hook_file" '{"matcher":{},"hooks":[{"type":"command","command":$cmd}]}')
+  entry=$(jq -n --arg cmd "bash fab/.kit/hooks/$hook_file" '{"matcher":"","hooks":[{"type":"command","command":$cmd}]}')
   desired=$(echo "$desired" | jq --arg ev "$event" --argjson entry "$entry" \
     '.[$ev] = ((.[$ev] // []) + [$entry])')
 done

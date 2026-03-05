@@ -58,7 +58,7 @@ JSON
 
 @test "sync-hooks: idempotent re-sync produces OK" {
   cat > "$REPO/.claude/settings.local.json" <<'JSON'
-{"permissions":{"allow":[]},"hooks":{"SessionStart":[{"matcher":{},"hooks":[{"type":"command","command":"bash fab/.kit/hooks/on-session-start.sh"}]}],"Stop":[{"matcher":{},"hooks":[{"type":"command","command":"bash fab/.kit/hooks/on-stop.sh"}]}]}}
+{"permissions":{"allow":[]},"hooks":{"SessionStart":[{"matcher":"","hooks":[{"type":"command","command":"bash fab/.kit/hooks/on-session-start.sh"}]}],"Stop":[{"matcher":"","hooks":[{"type":"command","command":"bash fab/.kit/hooks/on-stop.sh"}]}]}}
 JSON
 
   cd "$REPO"
@@ -69,7 +69,7 @@ JSON
 
 @test "sync-hooks: preserves user hooks" {
   cat > "$REPO/.claude/settings.local.json" <<'JSON'
-{"hooks":{"Stop":[{"matcher":{},"hooks":[{"type":"command","command":"bash my-custom-hook.sh"}]}]}}
+{"hooks":{"Stop":[{"matcher":"","hooks":[{"type":"command","command":"bash my-custom-hook.sh"}]}]}}
 JSON
 
   cd "$REPO"
