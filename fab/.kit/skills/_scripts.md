@@ -99,6 +99,10 @@ fab/.kit/bin/fab status <subcommand> <change> [args...]
 | `set-checklist` | `set-checklist <change> <field> <value>` | Update checklist field |
 | `set-confidence` | `set-confidence <change> <counts...> <score> [--indicative]` | Set confidence block (with optional indicative flag) |
 | `set-confidence-fuzzy` | `set-confidence-fuzzy <change> <counts...> <score> <dims...> [--indicative]` | Set confidence with dimensions (with optional indicative flag) |
+| `add-issue` | `add-issue <change> <id>` | Append issue ID to issues array (idempotent) |
+| `get-issues` | `get-issues <change>` | List issue IDs (one per line) |
+| `add-pr` | `add-pr <change> <url>` | Append PR URL to prs array (idempotent) |
+| `get-prs` | `get-prs <change>` | List PR URLs (one per line) |
 | `progress-line` | `progress-line <change>` | Single-line visual progress |
 | `current-stage` | `current-stage <change>` | Detect active stage |
 

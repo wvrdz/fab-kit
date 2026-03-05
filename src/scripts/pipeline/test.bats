@@ -34,15 +34,19 @@ exec /usr/bin/git "$@"
 STUB
   chmod +x "$TEST_DIR/bin/git"
 
-  # Stub calc-score.sh — default: gate passes
-  cat > "$TEST_DIR/bin/calc-score.sh" <<'STUB'
+  # Stub fab dispatcher — default: gate passes (for score --check-gate)
+  cat > "$TEST_DIR/bin/fab-stub" <<'STUB'
 #!/usr/bin/env bash
-echo "gate: pass"
-echo "score: 4.0"
-echo "threshold: 3.0"
-echo "change_type: feature"
+if [[ "$1" == "score" && "$2" == "--check-gate" ]]; then
+  echo "gate: pass"
+  echo "score: 4.0"
+  echo "threshold: 3.0"
+  echo "change_type: feature"
+  exit 0
+fi
+exit 1
 STUB
-  chmod +x "$TEST_DIR/bin/calc-score.sh"
+  chmod +x "$TEST_DIR/bin/fab-stub"
 }
 
 teardown() {
@@ -802,9 +806,9 @@ YAML
   mkdir -p "$wt_path/fab/changes/test-change"
   echo "intake" > "$wt_path/fab/changes/test-change/intake.md"
   echo "spec" > "$wt_path/fab/changes/test-change/spec.md"
-  # Put calc-score.sh where validate_prerequisites expects it
-  mkdir -p "$wt_path/fab/.kit/scripts/lib"
-  cp "$TEST_DIR/bin/calc-score.sh" "$wt_path/fab/.kit/scripts/lib/calc-score.sh"
+  # Put fab dispatcher stub where validate_prerequisites expects it
+  mkdir -p "$wt_path/fab/.kit/bin"
+  cp "$TEST_DIR/bin/fab-stub" "$wt_path/fab/.kit/bin/fab"
 
   cat > "$TEST_DIR/manifest.yaml" <<'YAML'
 base: main

@@ -132,15 +132,15 @@ Stage Manager — CLI-only utility for workflow schema queries, `.status.yaml` a
 
 Internal helper functions (`validate_state`, `validate_stage`, `get_allowed_states`, `validate_stage_state`, `get_next_stage`, `get_all_states`, `_append_to_array`, `_get_array`) are retained as implementation details used by write/validation functions but are not exposed via CLI.
 
-Accessor subcommands use a line-oriented output pattern (`key:value` per line) — consumers parse with `while IFS=: read -r key val`. Lives in `scripts/lib/` to indicate it is internal plumbing. The comprehensive test suite (`src/lib/statusman/test.bats`, 71 tests) serves as a contract test for any future reimplementation (e.g., Rust binary).
+Accessor subcommands use a line-oriented output pattern (`key:value` per line) — consumers parse with `while IFS=: read -r key val`. Lives in `scripts/lib/` to indicate it is internal plumbing.
 
 #### `lib/logman.sh`
 
-History Logger — append-only JSON logging to `.history.jsonl`. Three subcommands: `command <cmd> [change] [args]` (skill invocation logging), `confidence <change> <score> <delta> <trigger>` (score changes), `review <change> <result> [rework]` (review outcomes). The `command` subcommand accepts `<cmd>` (skill name) as the first positional arg; `[change]` is optional — when omitted, logman resolves the active change via `fab/current` and silently exits 0 if resolution fails (no `fab/current`, empty, stale pointer). When `[change]` IS provided and doesn't resolve, exits 1 with error. Skills call `logman.sh command` directly: preflight-calling skills via `_preamble.md` §2 step 4, exempt skills via per-skill instructions. Also called internally by `statusman.sh` (review auto-log), `calc-score.sh` (confidence log), and `changeman.sh` (new/rename log). Dev folder: `src/lib/logman/` (test suite, smoke test).
+History Logger — append-only JSON logging to `.history.jsonl`. Three subcommands: `command <cmd> [change] [args]` (skill invocation logging), `confidence <change> <score> <delta> <trigger>` (score changes), `review <change> <result> [rework]` (review outcomes). The `command` subcommand accepts `<cmd>` (skill name) as the first positional arg; `[change]` is optional — when omitted, logman resolves the active change via `fab/current` and silently exits 0 if resolution fails (no `fab/current`, empty, stale pointer). When `[change]` IS provided and doesn't resolve, exits 1 with error. Skills call `logman.sh command` directly: preflight-calling skills via `_preamble.md` §2 step 4, exempt skills via per-skill instructions. Also called internally by `statusman.sh` (review auto-log), `calc-score.sh` (confidence log), and `changeman.sh` (new/rename log).
 
 #### `lib/calc-score.sh`
 
-Internal library script for confidence score computation. Scans the `## Assumptions` table in `spec.md` only (not intake.md — intake assumptions are state transfer, not scored), counts all four SRAD grades (Certain, Confident, Tentative, Unresolved; case-insensitive), extracts dimension scores from the required `Scores` column (`cols[6]`), applies the confidence formula, delegates the `.status.yaml` write to `$STATUSMAN set-confidence` / `$STATUSMAN set-confidence-fuzzy` (CLI subprocess calls), calls `logman.sh confidence` to record the score change in `.history.jsonl`, and emits YAML with delta to stdout. Invoked by `/fab-continue` (spec stage) and `/fab-clarify` (suggest mode). Not called directly by users. Dev folder: `src/lib/calc-score/` (README, smoke test, comprehensive test suite).
+Internal library script for confidence score computation. Scans the `## Assumptions` table in `spec.md` only (not intake.md — intake assumptions are state transfer, not scored), counts all four SRAD grades (Certain, Confident, Tentative, Unresolved; case-insensitive), extracts dimension scores from the required `Scores` column (`cols[6]`), applies the confidence formula, delegates the `.status.yaml` write to `$STATUSMAN set-confidence` / `$STATUSMAN set-confidence-fuzzy` (CLI subprocess calls), calls `logman.sh confidence` to record the score change in `.history.jsonl`, and emits YAML with delta to stdout. Invoked by `/fab-continue` (spec stage) and `/fab-clarify` (suggest mode). Not called directly by users.
 
 #### `lib/changeman.sh`
 
@@ -161,7 +161,7 @@ Archive Manager — CLI-only utility for archive/restore lifecycle operations. S
 - **`restore <change> [--switch]`** — Restores an archived change: moves folder back to `fab/changes/`, removes index entry, optionally activates via `changeman.sh switch`. Resolution uses internal `resolve_archive` function against `fab/changes/archive/` folder names. Outputs structured YAML to stdout. Called by `/fab-archive` (restore mode).
 - **`list`** — Lists archived folder names (one per line, excludes `index.md`). Returns exit 0 even for empty/missing archive.
 
-All subcommands print results to stdout; errors to stderr. Dev folder: `src/lib/archiveman/` (BATS test suite, 41 tests).
+All subcommands print results to stdout; errors to stderr.
 
 #### `batch-pipeline.sh`
 
@@ -340,6 +340,8 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 
 **Parity**: All subcommands produce stdout/stderr output matching the bash versions (modulo timestamps).
 
+**Testing**: Go parity tests in `src/fab-go/test/parity/` are the sole test infrastructure for the CLI backend. The previous shell script test suites (`src/lib/*/test.bats`, `src/lib/*/test-simple.sh`, `src/lib/*/SPEC-*.md`, etc.) were removed along with the shell scripts they tested. The `src/lib/` and `src/sync/` directories no longer exist.
+
 #### Skill Invocation Convention (`_scripts.md`)
 
 The `_scripts.md` partial (loaded by every skill via `_preamble.md`) defines the calling convention for all kit operations. Skills invoke operations via `fab/.kit/bin/fab <command> <subcommand> [args...]` — this calls the dispatcher, which routes to the best available backend. The `_scripts.md` partial includes the full command mapping table, backend priority documentation, argument formats, stage transition sequences, and error patterns.
@@ -443,6 +445,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260306-7arg-fix-stale-shell-refs | 2026-03-06 | Deleted 20 orphaned shell test files (`src/lib/*/test.bats`, `src/lib/*/SPEC-*.md`, `src/lib/*/test-simple.sh`, `src/lib/calc-score/sensitivity.sh`, `src/sync/test-5-sync-hooks.bats`) and removed `src/lib/` and `src/sync/` directories. Removed "Dev folder" references from statusman, logman, calc-score, and archiveman sections. Added Go parity test documentation note. Fixed stale `calc-score.sh` stub in `src/scripts/pipeline/test.bats` (replaced with `fab` dispatcher stub). Added 4 missing status subcommands (`add-issue`, `get-issues`, `add-pr`, `get-prs`) to `_scripts.md`. Fixed `git-pr.md` Step 4 to pass `<change>` instead of `<status_file>` path to `add-pr`. |
 | 260305-u8t9-clean-break-go-only | 2026-03-05 | Removed shell fallback from dispatcher (backend priority: rust > go > error, no shell fallback). Deleted all 7 ported shell scripts from `lib/` (statusman, changeman, archiveman, logman, calc-score, preflight, resolve). Only `env-packages.sh` and `frontmatter.sh` remain. Deleted `wt-status` from wt package (replaced by `fab status show`). Added `fab status show [--all] [--json] [<name>]` to Go binary for worktree pipeline status. Added `internal/worktree` package for worktree discovery. Updated `env-packages.sh` to add `$KIT_DIR/bin` to PATH. Updated `dispatch.sh` from `calc-score.sh` to `fab score --check-gate`. Updated `_scripts.md` to reflect Go-only backend. Updated parity tests with graceful skip when bash scripts missing. |
 | 260305-bs5x-orchestrator-idle-hooks | 2026-03-05 | Added `hooks/` directory to `.kit/` tree with `on-session-start.sh` (clears `agent` block) and `on-stop.sh` (writes `agent.idle_since` timestamp). Added `5-sync-hooks.sh` to `sync/` directory (registers hooks into `.claude/settings.local.json` via idempotent jq merge). Fixed sync directory tree listing (added missing `4-get-fab-binary.sh`, corrected sort order of `2-sync-workspace.sh` and `3-direnv.sh`). |
 | 260305-7zq4-worktree-status-command | 2026-03-05 | Added `wt-status` to wt package — shows fab pipeline status (stage + state) per worktree. Three modes: no args (current worktree), `<name>` (specific worktree), `--all` (all worktrees). Composable architecture: atomic `wt_get_fab_status` function reads `fab/current` + `.status.yaml` via `statusman.sh display-stage`. |

@@ -227,9 +227,8 @@ Print: `  ✓ pr     — <PR URL>`
 After the PR URL is known (from step 3c or from the existing PR in step 1), attempt to record it in the active change's `.status.yaml`:
 
 1. Resolve the active change: `fab/.kit/bin/fab change resolve 2>/dev/null`
-2. If resolution succeeds (exit 0), derive the status file path: `fab/changes/{name}/.status.yaml`
-3. Call: `fab/.kit/bin/fab status add-pr <status_file> <pr_url>`
-4. If resolution fails (exit non-zero), skip silently — do not print any error or warning
+2. If resolution succeeds (exit 0), call: `fab/.kit/bin/fab status add-pr <name> <pr_url>`
+3. If resolution fails (exit non-zero), skip silently — do not print any error or warning
 
 This step MUST NOT block or fail the PR workflow. Any error is silently ignored.
 

@@ -2,3 +2,12 @@
 {"args":"Delete 9 orphaned bats test files, add missing status subcommands to _scripts.md, fix git-pr.md add-pr signature","cmd":"fab-new","event":"command","ts":"2026-03-06T01:42:32+05:30"}
 {"delta":"+4.7","event":"confidence","score":4.7,"trigger":"calc-score","ts":"2026-03-06T01:46:18+05:30"}
 {"cmd":"fab-new","event":"command","ts":"2026-03-06T01:47:08+05:30"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-06T01:49:02+05:30"}
+{"cmd":"fab-ff","event":"command","ts":"2026-03-06T01:49:45+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"spec","ts":"2026-03-06T01:51:06+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"tasks","ts":"2026-03-06T01:51:45+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"apply","ts":"2026-03-06T01:51:45+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review","ts":"2026-03-06T01:54:50+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"hydrate","ts":"2026-03-06T01:57:33+05:30"}
+{"event":"review","result":"passed","ts":"2026-03-06T01:57:33+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"ship","ts":"2026-03-06T01:59:45+05:30"}
