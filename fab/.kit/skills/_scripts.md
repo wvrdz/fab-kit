@@ -61,23 +61,6 @@ All commands accept a unified `<change>` argument:
 
 # Change Lifecycle
 
-## fab resolve
-
-Change Resolver — pure query, no side effects. Converts any change reference to a canonical output.
-
-```
-fab/.kit/bin/fab resolve [--id|--folder|--dir|--status] [<change>]
-```
-
-| Flag | Output |
-|------|--------|
-| `--id` (default) | 4-char change ID (e.g., `9fg2`) |
-| `--folder` | Full folder name (e.g., `260228-9fg2-refactor-kit-scripts`) |
-| `--dir` | Directory path (e.g., `fab/changes/260228-9fg2-refactor-kit-scripts/`) |
-| `--status` | `.status.yaml` path (e.g., `fab/changes/260228-9fg2-refactor-kit-scripts/.status.yaml`) |
-
----
-
 ## fab change
 
 Change Manager — manages change folders, naming, and the `fab/current` pointer.
@@ -160,33 +143,6 @@ Skills do NOT need to call `fab log review` or `fab log transition` manually —
 
 ---
 
-## fab log
-
-History Logger — append-only JSON logging to `.history.jsonl`. Skills call `fab log command` directly for command invocation logging.
-
-```
-fab/.kit/bin/fab log command <cmd> [change] [args]
-fab/.kit/bin/fab log confidence <change> <score> <delta> <trigger>
-fab/.kit/bin/fab log review <change> <result> [rework]
-fab/.kit/bin/fab log transition <change> <stage> <action> [from] [reason] [driver]
-```
-
-The `command` subcommand accepts `<cmd>` (skill name) as the first argument. `[change]` is optional — when omitted, it resolves the active change via `fab/current`. If resolution fails (no `fab/current`, empty file, stale pointer), exits 0 silently. When `[change]` IS provided and doesn't resolve, exits 1 with an error.
-
-**Callers**:
-
-| Caller | Trigger | Call |
-|--------|---------|------|
-| Skills (via `_preamble.md` §2) | Skill invocation (preflight-calling skills) | `fab/.kit/bin/fab log command "<skill>" "<change>"` |
-| Skills (per-skill instructions) | Skill invocation (exempt skills) | `fab/.kit/bin/fab log command "<skill>"` |
-| `fab status finish review` | Review pass | auto-logs review "passed" |
-| `fab status fail review` | Review fail | auto-logs review "failed" |
-| `fab score` | Score computation | auto-logs confidence |
-| `fab change new` | Change creation | auto-logs command |
-| `fab change rename` | Change rename | auto-logs command |
-
----
-
 ## fab score
 
 Confidence scorer — computes SRAD confidence score from Assumptions tables.
@@ -219,6 +175,50 @@ Validates: config.yaml exists, constitution.md exists, active change resolved, `
 ---
 
 # Plumbing
+
+## fab resolve
+
+Change Resolver — pure query, no side effects. Converts any change reference to a canonical output.
+
+```
+fab/.kit/bin/fab resolve [--id|--folder|--dir|--status] [<change>]
+```
+
+| Flag | Output |
+|------|--------|
+| `--id` (default) | 4-char change ID (e.g., `9fg2`) |
+| `--folder` | Full folder name (e.g., `260228-9fg2-refactor-kit-scripts`) |
+| `--dir` | Directory path (e.g., `fab/changes/260228-9fg2-refactor-kit-scripts/`) |
+| `--status` | `.status.yaml` path (e.g., `fab/changes/260228-9fg2-refactor-kit-scripts/.status.yaml`) |
+
+---
+
+## fab log
+
+History Logger — append-only JSON logging to `.history.jsonl`. Skills call `fab log command` directly for command invocation logging.
+
+```
+fab/.kit/bin/fab log command <cmd> [change] [args]
+fab/.kit/bin/fab log confidence <change> <score> <delta> <trigger>
+fab/.kit/bin/fab log review <change> <result> [rework]
+fab/.kit/bin/fab log transition <change> <stage> <action> [from] [reason] [driver]
+```
+
+The `command` subcommand accepts `<cmd>` (skill name) as the first argument. `[change]` is optional — when omitted, it resolves the active change via `fab/current`. If resolution fails (no `fab/current`, empty file, stale pointer), exits 0 silently. When `[change]` IS provided and doesn't resolve, exits 1 with an error.
+
+**Callers**:
+
+| Caller | Trigger | Call |
+|--------|---------|------|
+| Skills (via `_preamble.md` §2) | Skill invocation (preflight-calling skills) | `fab/.kit/bin/fab log command "<skill>" "<change>"` |
+| Skills (per-skill instructions) | Skill invocation (exempt skills) | `fab/.kit/bin/fab log command "<skill>"` |
+| `fab status finish review` | Review pass | auto-logs review "passed" |
+| `fab status fail review` | Review fail | auto-logs review "failed" |
+| `fab score` | Score computation | auto-logs confidence |
+| `fab change new` | Change creation | auto-logs command |
+| `fab change rename` | Change rename | auto-logs command |
+
+---
 
 ## fab runtime
 
