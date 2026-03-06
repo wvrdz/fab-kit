@@ -71,17 +71,17 @@ case "$artifact" in
     # Infer change type from content using keyword matching
     type="feat"
     content_lower="$(echo "$content" | tr '[:upper:]' '[:lower:]')"
-    if echo "$content_lower" | grep -qE '\b(fix|bug|broken|regression)\b'; then
+    if echo "$content_lower" | grep -qE '(^|[^[:alnum:]_])(fix|bug|broken|regression)([^[:alnum:]_]|$)'; then
       type="fix"
-    elif echo "$content_lower" | grep -qE '\b(refactor|restructure|consolidate|split|rename)\b'; then
+    elif echo "$content_lower" | grep -qE '(^|[^[:alnum:]_])(refactor|restructure|consolidate|split|rename)([^[:alnum:]_]|$)'; then
       type="refactor"
-    elif echo "$content_lower" | grep -qE '\b(docs|document|readme|guide)\b'; then
+    elif echo "$content_lower" | grep -qE '(^|[^[:alnum:]_])(docs|document|readme|guide)([^[:alnum:]_]|$)'; then
       type="docs"
-    elif echo "$content_lower" | grep -qE '\b(test|spec|coverage)\b'; then
+    elif echo "$content_lower" | grep -qE '(^|[^[:alnum:]_])(test|spec|coverage)([^[:alnum:]_]|$)'; then
       type="test"
-    elif echo "$content_lower" | grep -qE '\b(ci|pipeline|deploy|build)\b'; then
+    elif echo "$content_lower" | grep -qE '(^|[^[:alnum:]_])(ci|pipeline|deploy|build)([^[:alnum:]_]|$)'; then
       type="ci"
-    elif echo "$content_lower" | grep -qE '\b(chore|cleanup|maintenance|housekeeping)\b'; then
+    elif echo "$content_lower" | grep -qE '(^|[^[:alnum:]_])(chore|cleanup|maintenance|housekeeping)([^[:alnum:]_]|$)'; then
       type="chore"
     fi
     "$fab_cmd" status set-change-type "$change_name" "$type" 2>/dev/null || true
@@ -98,7 +98,8 @@ case "$artifact" in
 
   tasks)
     # Count task items (both checked and unchecked)
-    total="$(echo "$content" | grep -cE '^\s*- \[([ x])\] ' 2>/dev/null || echo 0)"
+    total="$(echo "$content" | grep -cE '^[[:space:]]*- \[([ x])\] ' 2>/dev/null || true)"
+    [ -z "$total" ] && total=0
     "$fab_cmd" status set-checklist "$change_name" total "$total" 2>/dev/null || true
     context_msg="Bookkeeping: tasks total=$total"
     ;;
@@ -107,8 +108,10 @@ case "$artifact" in
     # Set generated flag
     "$fab_cmd" status set-checklist "$change_name" generated true 2>/dev/null || true
     # Count total items and completed items
-    total="$(echo "$content" | grep -cE '^\s*- \[([ x])\] ' 2>/dev/null || echo 0)"
-    completed="$(echo "$content" | grep -cE '^\s*- \[x\] ' 2>/dev/null || echo 0)"
+    total="$(echo "$content" | grep -cE '^[[:space:]]*- \[([ x])\] ' 2>/dev/null || true)"
+    [ -z "$total" ] && total=0
+    completed="$(echo "$content" | grep -cE '^[[:space:]]*- \[x\] ' 2>/dev/null || true)"
+    [ -z "$completed" ] && completed=0
     "$fab_cmd" status set-checklist "$change_name" total "$total" 2>/dev/null || true
     "$fab_cmd" status set-checklist "$change_name" completed "$completed" 2>/dev/null || true
     context_msg="Bookkeeping: checklist generated=true, total=$total, completed=$completed"

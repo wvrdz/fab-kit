@@ -12,7 +12,7 @@
 
 - [x] T002 Implement `fab runtime set-idle` in `src/fab-go/internal/runtime/runtime.go` — resolve change via `resolve` package, read/create `.fab-runtime.yaml`, write `{folder}.agent.idle_since` timestamp using `gopkg.in/yaml.v3`
 - [x] T003 Implement `fab runtime clear-idle` in `src/fab-go/internal/runtime/runtime.go` — resolve change, read `.fab-runtime.yaml`, delete `{folder}.agent` block, handle missing file as no-op
-- [x] T004 Add tests for runtime package at `src/fab-go/internal/runtime/runtime_test.go` — cover set-idle (create file, update existing), clear-idle (existing entry, no entry, missing file), invalid change reference
+- [x] T004 Add tests for runtime package at `src/fab-go/internal/runtime/runtime_test.go` — cover set-idle (create file, update existing), clear-idle (existing entry, no entry, missing file)
 - [x] T005 Create `fab/.kit/hooks/on-artifact-write.sh` — read stdin JSON, extract `file_path`, pattern-match against `fab/changes/*/intake.md|spec.md|tasks.md|checklist.md`, derive change name, dispatch per-artifact bookkeeping, return `additionalContext` JSON, exit 0 always
 - [x] T006 [P] Update `fab/.kit/hooks/on-stop.sh` — replace yq-based idle timestamp write with `"$fab_cmd" runtime set-idle "$change_folder" 2>/dev/null || true`, remove `command -v yq` guard and yq invocations
 - [x] T007 [P] Update `fab/.kit/hooks/on-session-start.sh` — replace yq-based agent block deletion with `"$fab_cmd" runtime clear-idle "$change_folder" 2>/dev/null || true`, remove `command -v yq` guard and yq invocations

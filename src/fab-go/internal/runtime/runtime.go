@@ -45,13 +45,46 @@ func loadFile(path string) (map[string]*changeEntry, error) {
 	return entries, nil
 }
 
-// saveFile writes the runtime entries to .fab-runtime.yaml.
+// saveFile writes the runtime entries to .fab-runtime.yaml atomically via temp+rename.
 func saveFile(path string, entries map[string]*changeEntry) error {
 	data, err := yaml.Marshal(entries)
 	if err != nil {
 		return fmt.Errorf("marshaling runtime file: %w", err)
 	}
-	return os.WriteFile(path, data, 0o644)
+
+	dir := filepath.Dir(path)
+	tmpFile, err := os.CreateTemp(dir, ".fab-runtime-*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating temp runtime file: %w", err)
+	}
+	// Best-effort cleanup of the temp file; harmless if already renamed.
+	defer func() {
+		_ = os.Remove(tmpFile.Name())
+	}()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		_ = tmpFile.Close()
+		return fmt.Errorf("writing temp runtime file: %w", err)
+	}
+
+	if err := tmpFile.Sync(); err != nil {
+		_ = tmpFile.Close()
+		return fmt.Errorf("syncing temp runtime file: %w", err)
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("closing temp runtime file: %w", err)
+	}
+
+	if err := os.Chmod(tmpFile.Name(), 0o644); err != nil {
+		return fmt.Errorf("setting temp runtime file permissions: %w", err)
+	}
+
+	if err := os.Rename(tmpFile.Name(), path); err != nil {
+		return fmt.Errorf("renaming temp runtime file: %w", err)
+	}
+
+	return nil
 }
 
 // SetIdle writes agent.idle_since timestamp for the given change folder.
