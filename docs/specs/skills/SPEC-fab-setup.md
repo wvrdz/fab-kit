@@ -2,7 +2,7 @@
 
 ## Summary
 
-Bootstraps a new project or manages config/constitution/migrations. Creates `fab/project/` files, `docs/memory/`, `docs/specs/`, skill symlinks, and gitignore entries. Detects project language and applies templates. Safe to re-run.
+Bootstraps a new project or manages config/constitution/migrations. Creates `fab/project/` files, `docs/memory/`, `docs/specs/`, skill symlinks, and gitignore entries. Detects project language and infers conventions. Safe to re-run.
 
 ## Flow
 
@@ -29,11 +29,11 @@ User invokes /fab-setup [subcommand]
 │  │  ├─ (agent generates principles)
 │  │  └─ Write: fab/project/constitution.md
 │  │
-│  ├─ Phase 1b-lang: Language Detection
-│  │  ├─ Read: Cargo.toml / package.json / tsconfig.json / go.mod
-│  │  ├─ Read: fab/.kit/templates/constitutions/{lang}.md
-│  │  ├─ Read: fab/.kit/templates/configs/{lang}.yaml
-│  │  └─ Edit: constitution.md + config.yaml (append/merge)
+│  ├─ Phase 1b-lang: Language Convention Inference
+│  │  ├─ Read: Cargo.toml / package.json / tsconfig.json / go.mod / pyproject.toml
+│  │  ├─ Read: linter/formatter configs (.eslintrc, rustfmt.toml, etc.)
+│  │  ├─ (agent infers conventions from training knowledge + actual config values)
+│  │  └─ Write: fab/project/* (constitution, context, code-quality, code-review, config)
 │  │
 │  ├─ Phase 1b2-1b4: Optional project files
 │  │  └─ Write: context.md, code-quality.md, code-review.md (from scaffold)

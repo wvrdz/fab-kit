@@ -157,7 +157,7 @@ Each subcommand operates independently — they can be invoked directly without 
 
 ### Template-Driven Language Detection (Step 1b-lang)
 **Deprecated by**: 260306-143f-setup-language-inference (2026-03-06)
-**Reason**: Replaced by agent-inferred conventions. Template files (`fab/.kit/templates/constitutions/`, `fab/.kit/templates/configs/`) deleted. Language template advisory in `fab-sync.sh` (section 2b) removed.
+**Reason**: Replaced by agent-inferred conventions. Template files (`fab/.kit/templates/constitutions/`, `fab/.kit/templates/configs/`) deleted. Language template advisory in `fab/.kit/sync/2-sync-workspace.sh` (invoked by `fab-sync.sh`, section 2b) removed.
 **Migration**: Step 1b-lang now uses agent inference — no user action required.
 
 ## Changelog
