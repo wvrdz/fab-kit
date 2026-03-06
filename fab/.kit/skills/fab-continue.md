@@ -74,8 +74,6 @@ Load per `_preamble.md` layers. Stage-specific additions: planning stages load i
 | review | [Review Behavior](#review-behavior) |
 | hydrate | [Hydrate Behavior](#hydrate-behavior) |
 
-**Spec stage only**: After spec generation, invoke `fab/.kit/bin/fab score <change>` to compute the confidence score. No scoring at other stages.
-
 ### Step 4: Update `.status.yaml`
 
 Use event commands via CLI to update `.status.yaml`. The `finish` command handles the two-write transition atomically: `fab/.kit/bin/fab status finish <change> <completed-stage> fab-continue`. This sets `{completed}` → `done`, auto-activates the next pending stage, refreshes `last_updated`, and updates `stage_metrics`.

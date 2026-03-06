@@ -42,6 +42,7 @@ fab/.kit/bin/fab <command> <subcommand> [args...]
 | `fab change` | Change lifecycle (new, rename, switch, list) |
 | `fab score` | Confidence scoring |
 | `fab archive` | Archive/restore operations |
+| `fab runtime` | Ephemeral agent runtime state (.fab-runtime.yaml) |
 
 ---
 
@@ -226,6 +227,28 @@ fab/.kit/bin/fab archive list
 **Resolution**: archive resolves `<change>` via standard resolution (active changes). `restore` uses internal archive-folder resolution. Both support 4-char ID, substring, and full folder name.
 
 **Output**: Both archive and restore output structured YAML to stdout. Skills parse this YAML to construct user-facing reports.
+
+---
+
+## fab runtime
+
+Runtime State Manager — manages ephemeral agent runtime state in `.fab-runtime.yaml` (repo root, gitignored).
+
+```
+fab/.kit/bin/fab runtime set-idle <change>
+fab/.kit/bin/fab runtime clear-idle <change>
+```
+
+| Subcommand | Usage | Purpose |
+|------------|-------|---------|
+| `set-idle` | `set-idle <change>` | Write `agent.idle_since` Unix timestamp for the change |
+| `clear-idle` | `clear-idle <change>` | Delete `agent` block for the change |
+
+Both subcommands use the standard `<change>` argument convention (4-char ID, substring, full folder name). The file is keyed by full change folder name.
+
+`set-idle` creates `.fab-runtime.yaml` if it doesn't exist. `clear-idle` is a no-op if the file or entry doesn't exist.
+
+**Callers**: `fab/.kit/hooks/on-stop.sh` (set-idle), `fab/.kit/hooks/on-session-start.sh` (clear-idle). These replace the former `yq`-based YAML operations.
 
 ---
 

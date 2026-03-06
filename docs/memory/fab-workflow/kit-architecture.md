@@ -73,14 +73,15 @@ fab/.kit/
 ├── schemas/                # Workflow schema
 │   └── workflow.yaml       # Canonical stage/state definitions
 ├── hooks/                  # Claude Code hook scripts (runtime lifecycle signals)
-│   ├── on-session-start.sh # SessionStart hook — removes agent block from .status.yaml
-│   └── on-stop.sh          # Stop hook — writes agent.idle_since timestamp to .status.yaml
+│   ├── on-artifact-write.sh # PostToolUse hook (Write+Edit matchers) — auto-bookkeeping on fab artifact writes
+│   ├── on-session-start.sh # SessionStart hook — clears agent idle state via `fab runtime clear-idle`
+│   └── on-stop.sh          # Stop hook — sets agent idle state via `fab runtime set-idle`
 ├── sync/                   # Kit-level sync scripts (iterated by fab-sync.sh)
 │   ├── 1-prerequisites.sh  # Validate required tools (yq, jq, gh, direnv, bats) — fatal on missing
 │   ├── 2-sync-workspace.sh # Workspace sync logic (directories, symlinks, agents, .envrc, .gitignore, settings)
 │   ├── 3-direnv.sh         # Run direnv allow (idempotent)
 │   ├── 4-get-fab-binary.sh # Download platform-specific Go binary (optional, graceful skip)
-│   └── 5-sync-hooks.sh     # Register hook scripts into .claude/settings.local.json (idempotent)
+│   └── 5-sync-hooks.sh     # Register hook scripts into .claude/settings.local.json (idempotent, supports matchers)
 └── scripts/                # Shell utilities
     ├── batch-fab-archive-change.sh  # Batch archive completed changes via tmux + Claude
     ├── batch-fab-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
@@ -202,6 +203,41 @@ Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern (except p
 - **`batch-fab-new-backlog.sh`** — Per backlog ID: creates a worktree, opens a tmux tab, runs `/fab-new <description>`. Supports `--list` (show pending), `--all` (all pending), and direct ID arguments.
 - **`batch-fab-switch-change.sh`** — Per change name/ID: creates a worktree with the expected branch, opens a tmux tab, runs `/fab-switch <change>`. Supports `--list`, `--all`, substring matching. Uses `fab/.kit/bin/fab change resolve` for name resolution (via the dispatcher).
 - **`batch-fab-archive-change.sh`** — Per completed change (`hydrate:done|skipped`): runs `/fab-archive <change>` for each. Filters by reading `.status.yaml` for `hydrate: done|skipped`. Default (no arguments) archives all eligible (same as `--all`). Supports `--list` (preview), `--all`, and positional change arguments. Uses `fab/.kit/bin/fab change resolve` for name resolution (via the dispatcher).
+
+### Hook Scripts
+
+Claude Code hook scripts in `fab/.kit/hooks/` are registered into `.claude/settings.local.json` by `sync/5-sync-hooks.sh`. The sync script uses a mapping table to translate hook filenames to Claude Code event+matcher pairs. Hooks with matchers (e.g., PostToolUse Write/Edit) produce one entry per matcher; hooks without matchers (Stop, SessionStart) produce a single matcher-less entry.
+
+#### `hooks/on-artifact-write.sh`
+
+PostToolUse hook registered for both `Write` and `Edit` matchers. Detects fab artifact writes and executes bookkeeping commands automatically. Reads JSON from stdin containing `tool_input.file_path` (and `tool_input.content` for Write events). For Edit events, reads file from disk for content analysis.
+
+**Path matching**: Matches `fab/changes/*/intake.md`, `fab/changes/*/spec.md`, `fab/changes/*/tasks.md`, `fab/changes/*/checklist.md`. Non-matching paths exit 0 immediately (fast-path no-op). Change name is derived from the folder between `fab/changes/` and the artifact filename.
+
+**Bookkeeping per artifact**:
+
+| Artifact | Commands |
+|----------|----------|
+| `intake.md` | `fab status set-change-type <change> <inferred-type>` (keyword scan) + `fab score --stage intake <change>` |
+| `spec.md` | `fab score <change>` |
+| `tasks.md` | `fab status set-checklist <change> total <N>` (count task items) |
+| `checklist.md` | `fab status set-checklist <change> generated true` + `total <N>` + `completed <M>` |
+
+**Change type inference** (keyword matching, case-insensitive, first match wins): fix/bug/broken/regression → `fix`, refactor/restructure/consolidate/split/rename → `refactor`, docs/document/readme/guide → `docs`, test/spec/coverage → `test`, ci/pipeline/deploy/build → `ci`, chore/cleanup/maintenance/housekeeping → `chore`, otherwise → `feat`.
+
+**Output**: Returns JSON with `additionalContext` field to inform the agent what was auto-handled (e.g., `{"additionalContext": "Bookkeeping: score 4.2/5.0, type: refactor"}`). Exits 0 always — bookkeeping failures never interrupt the agent.
+
+#### `hooks/on-stop.sh`
+
+Stop hook. Detects the active change from `fab/current` and calls `fab runtime set-idle <change>` to write the `agent.idle_since` timestamp to `.fab-runtime.yaml`. Uses `fab` CLI exclusively — no yq dependency. Exits 0 silently if the fab binary is not found or no active change exists.
+
+#### `hooks/on-session-start.sh`
+
+SessionStart hook. Detects the active change from `fab/current` and calls `fab runtime clear-idle <change>` to remove the agent idle state from `.fab-runtime.yaml`. Uses `fab` CLI exclusively — no yq dependency. Exits 0 silently if the fab binary is not found or no active change exists.
+
+#### `sync/5-sync-hooks.sh`
+
+Kit-level sync script. Registers `fab/.kit/hooks/on-*.sh` into `.claude/settings.local.json` hooks via idempotent jq merge. Uses a mapping table to translate hook filenames to Claude Code event+matcher pairs: `on-artifact-write.sh` → `PostToolUse/Write` + `PostToolUse/Edit` (two entries), `on-stop.sh` → `Stop` (matcher-less), `on-session-start.sh` → `SessionStart` (matcher-less).
 
 ### Agent Skill Deployment
 
@@ -334,9 +370,10 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 - `fab preflight [<change>]`
 - `fab change new|rename|switch|list|resolve ...`
 - `fab score [--check-gate] [--stage <stage>] <change>`
+- `fab runtime set-idle|clear-idle <change>` — manages `.fab-runtime.yaml` agent idle state (replaces yq)
 - `fab archive <change> --description "..." | restore | list`
 
-**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`, `worktree`) import `statusfile` for YAML access. The `worktree` package provides worktree discovery via `git worktree list --porcelain` and fab state resolution.
+**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`, `runtime`, `worktree`) import `statusfile` for YAML access. The `runtime` package manages `.fab-runtime.yaml` (agent idle state) using `gopkg.in/yaml.v3`. The `worktree` package provides worktree discovery via `git worktree list --porcelain` and fab state resolution.
 
 **Parity**: All subcommands produce stdout/stderr output matching the bash versions (modulo timestamps).
 
@@ -445,6 +482,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260306-6bba-redesign-hooks-strategy | 2026-03-06 | Added `on-artifact-write.sh` PostToolUse hook (Write+Edit matchers) for automatic artifact bookkeeping. Added `fab runtime set-idle\|clear-idle` subcommands (Go, replaces yq). Migrated `on-stop.sh` and `on-session-start.sh` from yq to `fab runtime`. Updated `5-sync-hooks.sh` to support PostToolUse matchers. Added Hook Scripts section documenting all three hooks and the sync script's event+matcher mapping. Added `runtime` package to Go binary architecture. |
 | 260306-7arg-fix-stale-shell-refs | 2026-03-06 | Deleted 20 orphaned shell test files (`src/lib/*/test.bats`, `src/lib/*/SPEC-*.md`, `src/lib/*/test-simple.sh`, `src/lib/calc-score/sensitivity.sh`, `src/sync/test-5-sync-hooks.bats`) and removed `src/lib/` and `src/sync/` directories. Removed "Dev folder" references from statusman, logman, calc-score, and archiveman sections. Added Go parity test documentation note. Fixed stale `calc-score.sh` stub in `src/scripts/pipeline/test.bats` (replaced with `fab` dispatcher stub). Added 4 missing status subcommands (`add-issue`, `get-issues`, `add-pr`, `get-prs`) to `_scripts.md`. Fixed `git-pr.md` Step 4 to pass `<change>` instead of `<status_file>` path to `add-pr`. |
 | 260305-u8t9-clean-break-go-only | 2026-03-05 | Removed shell fallback from dispatcher (backend priority: rust > go > error, no shell fallback). Deleted all 7 ported shell scripts from `lib/` (statusman, changeman, archiveman, logman, calc-score, preflight, resolve). Only `env-packages.sh` and `frontmatter.sh` remain. Deleted `wt-status` from wt package (replaced by `fab status show`). Added `fab status show [--all] [--json] [<name>]` to Go binary for worktree pipeline status. Added `internal/worktree` package for worktree discovery. Updated `env-packages.sh` to add `$KIT_DIR/bin` to PATH. Updated `dispatch.sh` from `calc-score.sh` to `fab score --check-gate`. Updated `_scripts.md` to reflect Go-only backend. Updated parity tests with graceful skip when bash scripts missing. |
 | 260305-bs5x-orchestrator-idle-hooks | 2026-03-05 | Added `hooks/` directory to `.kit/` tree with `on-session-start.sh` (clears `agent` block) and `on-stop.sh` (writes `agent.idle_since` timestamp). Added `5-sync-hooks.sh` to `sync/` directory (registers hooks into `.claude/settings.local.json` via idempotent jq merge). Fixed sync directory tree listing (added missing `4-get-fab-binary.sh`, corrected sort order of `2-sync-workspace.sh` and `3-direnv.sh`). |

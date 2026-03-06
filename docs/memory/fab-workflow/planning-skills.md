@@ -15,7 +15,7 @@ The artifact generation logic (spec, tasks, checklist) is defined in a single sh
 The partial contains three procedures:
 - **Spec Generation Procedure** — template loading, metadata, RFC 2119 requirements, GIVEN/WHEN/THEN scenarios, Assumptions section (reads intake assumptions as starting point, confirms/upgrades/overrides each)
 - **Tasks Generation Procedure** — template loading, metadata, phased task breakdown, task format, execution order
-- **Checklist Generation Procedure** — template loading, category population, sequential CHK IDs, `.status.yaml` updates via `lib/statusman.sh set-checklist` CLI commands
+- **Checklist Generation Procedure** — template loading, category population, sequential CHK IDs. Checklist metadata updates (`generated`, `total`, `completed`) are handled automatically by the `on-artifact-write.sh` PostToolUse hook when `checklist.md` is written
 
 Command invocations are auto-logged via `preflight.sh --driver <skill-name>` — skills no longer call `log-command` manually. All event commands (`start`, `advance`, `finish`, `reset`, `fail`) accept an optional `driver` parameter; skills always pass it to identify the invoking skill (e.g., `fab-continue`, `fab-ff`).
 
@@ -59,11 +59,11 @@ The skill SHALL:
 
 #### Change Type Inference
 
-After generating `intake.md`, `/fab-new` infers the `change_type` from the intake content using keyword matching (case-insensitive, first match wins): fix/bug/broken/regression → `fix`, refactor/restructure/consolidate/split/rename → `refactor`, docs/document/readme/guide → `docs`, test/spec/coverage → `test`, ci/pipeline/deploy/build → `ci`, chore/cleanup/maintenance/housekeeping → `chore`, otherwise → `feat`. The inferred type is written to `.status.yaml` via `statusman.sh set-change-type`.
+Change type is inferred automatically by the `on-artifact-write.sh` PostToolUse hook when `intake.md` is written or edited. The hook scans intake content using keyword matching (case-insensitive, first match wins): fix/bug/broken/regression → `fix`, refactor/restructure/consolidate/split/rename → `refactor`, docs/document/readme/guide → `docs`, test/spec/coverage → `test`, ci/pipeline/deploy/build → `ci`, chore/cleanup/maintenance/housekeeping → `chore`, otherwise → `feat`. The inferred type is written to `.status.yaml` via `fab status set-change-type`. Skills do not need to call this explicitly.
 
 #### Indicative Confidence
 
-After generating `intake.md` and inferring the change type, `/fab-new` persists an indicative confidence score by calling `calc-score.sh --stage intake <change>` in normal mode (not `--check-gate`). This writes the score to `.status.yaml` with `confidence.indicative: true`, making it visible to all consumers (`/fab-switch`, `/fab-status`, `changeman.sh list`) without recomputation. The authoritative spec-stage score overwrites it (clearing `indicative: true`) when `calc-score.sh` runs at the spec stage. Output format: `Indicative confidence: {score} / 5.0 ({N} decisions)`.
+Indicative confidence is computed automatically by the `on-artifact-write.sh` PostToolUse hook when `intake.md` is written or edited. The hook calls `fab score --stage intake <change>` in normal mode (not `--check-gate`). This writes the score to `.status.yaml` with `confidence.indicative: true`, making it visible to all consumers (`/fab-switch`, `/fab-status`, `changeman.sh list`) without recomputation. The authoritative spec-stage score overwrites it (clearing `indicative: true`) when the hook fires on `spec.md` write. Skills do not need to call this explicitly.
 
 #### Intake-Only Output
 
@@ -86,7 +86,7 @@ Loads: config, constitution, `docs/memory/index.md` (to understand the existing 
    - For execution stages (apply, review, hydrate): dispatch to the stage's behavior (unchanged — these already work in single invocations)
 3. Load relevant template + context (including `fab/project/constitution.md` for principles)
 4. Generate artifact using the shared generation procedures from `_generation.md` (with clarification/research as needed)
-5. Run `lib/calc-score.sh` (spec stage only — computes confidence from spec Assumptions table)
+5. Confidence scoring (spec stage) and checklist metadata (tasks/checklist) are handled automatically by the PostToolUse hook when artifacts are written
 6. Auto-generate checklist when creating tasks (using `_generation.md` Checklist Generation Procedure)
 7. Update `.status.yaml`
 
@@ -189,7 +189,7 @@ On review failure, `/fab-ff` presents the user with the same 3 rework options as
 
 #### Confidence Recomputation
 
-`/fab-ff` does NOT recompute the confidence score during execution. The gate check uses the score from the last manual step (`/fab-continue` at spec stage, or `/fab-clarify`).
+`/fab-ff` does NOT recompute the confidence score during execution. The gate check uses the score persisted by the PostToolUse hook (triggered when `spec.md` was last written or edited by `/fab-continue` or `/fab-clarify`).
 
 #### When to Use
 
@@ -220,6 +220,8 @@ When the user invokes `/fab-clarify` directly:
 9. Append audit trail under `## Clarifications > ### Session {date}` with `Q:` / `A:` entries
 10. Display coverage summary (Resolved / Clear / Deferred / Outstanding)
 11. Do NOT advance the stage
+
+Confidence recomputation after spec edits is handled automatically by the PostToolUse hook — `/fab-clarify` does not need to call `fab score` explicitly.
 
 #### Auto Mode (Internal fab-ff Call)
 
@@ -323,6 +325,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260306-6bba-redesign-hooks-strategy | 2026-03-06 | Bookkeeping (change type inference, indicative confidence, spec confidence, checklist metadata) is now hook-driven via `on-artifact-write.sh` PostToolUse hook, not skill-instructed. Updated Change Type Inference, Indicative Confidence, and Shared Generation Partial sections. `/fab-clarify` confidence recomputation is automatic on spec edit. `/fab-continue` spec scoring is automatic on spec write. `/fab-ff` gate check reads hook-persisted score. |
 | 260305-8ooz-persist-indicative-confidence | 2026-03-05 | `/fab-new` Step 7 now persists indicative confidence via `calc-score.sh --stage intake` (normal mode) instead of inline display-only computation. Score written to `.status.yaml` with `indicative: true`. `_preamble.md` Confidence Scoring section updated to document indicative flag, persistence, and uniform consumer reads. |
 | 260303-6b7c-update-underscore-skill-references | 2026-03-04 | Standardized top-of-file `_preamble.md` references in all skill files — removed `./` prefix from `./fab/.kit/skills/_preamble.md`, now `fab/.kit/skills/_preamble.md`. Updated `_preamble.md` self-reference (line 12). Inline shorthand references (`_preamble.md` §2, `_generation.md`) unchanged. |
 | 260302-c7is-fab-clarify-bulk-confirm | 2026-03-02 | Added bulk confirm mode (Step 1.5) to `/fab-clarify` suggest mode — detects Confident-dominant confidence drag, presents numbered list for conversational bulk confirmation. Updated suggest mode steps (now 11 steps, bulk confirm at step 4). Documented in `_preamble.md` Confidence Scoring section. |

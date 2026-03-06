@@ -71,7 +71,7 @@ Follow **Checklist Generation Procedure** (`_generation.md`).
 
 ### Step 4: Update `.status.yaml` (Planning Complete)
 
-Run `fab/.kit/bin/fab status finish <change> tasks fab-ff`. Then set checklist fields via `fab/.kit/bin/fab status set-checklist <change> generated true`, `fab/.kit/bin/fab status set-checklist <change> total <count>`, `fab/.kit/bin/fab status set-checklist <change> completed 0`.
+Run `fab/.kit/bin/fab status finish <change> tasks fab-ff`.
 
 ### Step 5: Implementation
 

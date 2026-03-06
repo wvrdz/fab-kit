@@ -71,40 +71,11 @@ If no prior discussion exists in the conversation, skip this step — behavior i
 
 Follow the **Intake Generation Procedure** (`_generation.md`). Load context per `_preamble.md` Layer 1 and generate from `fab/.kit/templates/intake.md`. Incorporate any decisions extracted in Step 4.
 
-### Step 6: Infer Change Type
-
-After generating `intake.md`, infer the change type from the intake content using keyword matching (case-insensitive, evaluated in order, first match wins):
-
-1. Contains any of: "fix", "bug", "broken", "regression" → `fix`
-2. Contains any of: "refactor", "restructure", "consolidate", "split", "rename" → `refactor`
-3. Contains any of: "docs", "document", "readme", "guide" → `docs`
-4. Contains any of: "test", "spec", "coverage" → `test`
-5. Contains any of: "ci", "pipeline", "deploy", "build" → `ci`
-6. Contains any of: "chore", "cleanup", "maintenance", "housekeeping" → `chore`
-7. Otherwise → `feat`
-
-Write the inferred type to `.status.yaml`:
-```bash
-fab/.kit/bin/fab status set-change-type fab/changes/{name}/.status.yaml <type>
-```
-
-### Step 7: Indicative Confidence
-
-After generating `intake.md` and inferring the change type, persist and display an indicative confidence score:
-
-1. Call `fab/.kit/bin/fab score --stage intake <change>` (normal mode, **not** `--check-gate`)
-2. This writes the indicative score to `.status.yaml` with `indicative: true`
-3. Display the result from stdout (score and breakdown)
-
-Output format: `Indicative confidence: {score} / 5.0 ({N} decisions)`
-
-The indicative score is persisted to `.status.yaml` so that consumers (`/fab-switch`, `/fab-status`, `fab change list`) can display it without recomputation. The authoritative spec-stage score overwrites it (clearing `indicative: true`) when `fab score` runs at the spec stage.
-
-### Step 8: SRAD-Based Question Selection
+### Step 6: SRAD-Based Question Selection
 
 Apply SRAD (`_preamble.md`). No fixed question cap — SRAD scoring determines count. Zero questions for clear inputs. **Conversational mode**: when 5+ Unresolved, ask one at a time until resolved or user signals done.
 
-### Step 9: Advance Intake to Ready
+### Step 7: Advance Intake to Ready
 
 After all intake work is complete (generation, type inference, confidence, questions), advance intake to `ready`:
 

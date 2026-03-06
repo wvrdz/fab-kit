@@ -99,7 +99,3 @@ metadata:
    - Security-relevant changes → **Security** items (only if applicable)
    - Additional categories from `fab/project/config.yaml` `checklist.extra_categories` (if any)
 5. Use sequential IDs: CHK-001, CHK-002, ...
-6. Update `.status.yaml` via CLI:
-   - `fab/.kit/bin/fab status set-checklist <change> generated true`
-   - `fab/.kit/bin/fab status set-checklist <change> total <count>` (number of checklist items generated)
-   - `fab/.kit/bin/fab status set-checklist <change> completed 0`
