@@ -41,7 +41,7 @@ type paneRow struct {
 func runPaneMap(cmd *cobra.Command, args []string) error {
 	// Tmux session guard
 	if os.Getenv("TMUX") == "" {
-		fmt.Fprintln(os.Stderr, "Error: not inside a tmux session")
+		fmt.Fprintln(cmd.ErrOrStderr(), "Error: not inside a tmux session")
 		os.Exit(1)
 	}
 
@@ -51,8 +51,10 @@ func runPaneMap(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Determine main worktree root for relative path computation
-	mainRoot := findMainWorktreeRoot()
+	// Determine main worktree root for relative path computation.
+	// We derive mainRoot from the first resolved pane's git root so that
+	// the command works even when invoked from outside the repo.
+	mainRoot := findMainWorktreeRoot(panes)
 
 	// Resolve each pane to a row
 	var rows []paneRow
@@ -68,7 +70,7 @@ func runPaneMap(cmd *cobra.Command, args []string) error {
 
 	// Output
 	if len(rows) == 0 {
-		fmt.Println("No fab worktrees found in tmux panes.")
+		fmt.Fprintln(cmd.OutOrStdout(), "No fab worktrees found in tmux panes.")
 		return nil
 	}
 
@@ -99,15 +101,19 @@ func discoverPanes() ([]paneEntry, error) {
 }
 
 // findMainWorktreeRoot returns the main worktree root by parsing `git worktree list --porcelain`.
+// It derives the root from one of the discovered pane CWDs (via `git -C`) so that
+// the command works even when invoked from outside the repo.
 // Returns empty string if detection fails.
-func findMainWorktreeRoot() string {
-	out, err := exec.Command("git", "worktree", "list", "--porcelain").Output()
-	if err != nil {
-		return ""
-	}
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(line, "worktree ") {
-			return strings.TrimPrefix(line, "worktree ")
+func findMainWorktreeRoot(panes []paneEntry) string {
+	for _, p := range panes {
+		out, err := exec.Command("git", "-C", p.cwd, "worktree", "list", "--porcelain").Output()
+		if err != nil {
+			continue
+		}
+		for _, line := range strings.Split(string(out), "\n") {
+			if strings.HasPrefix(line, "worktree ") {
+				return strings.TrimPrefix(line, "worktree ")
+			}
 		}
 	}
 	return ""
@@ -227,8 +233,16 @@ func resolveAgentState(wtRoot, folderName string, cache map[string]interface{}) 
 		// Load and cache
 		loaded, err := loadPaneMapRuntimeFile(rtPath)
 		if err != nil {
-			cache[wtRoot] = nil
-			fileMissing = true
+			if os.IsNotExist(err) {
+				// Cache absence of runtime file so we don't re-check repeatedly.
+				cache[wtRoot] = nil
+				fileMissing = true
+			} else {
+				// Do not cache nil for non-NotExist errors; they may be transient
+				// or indicate a corrupted .fab-runtime.yaml. Surface a warning.
+				fmt.Fprintf(os.Stderr, "warning: failed to load %s: %v\n", rtPath, err)
+				return "?"
+			}
 		} else {
 			cache[wtRoot] = loaded
 			rtData = loaded
