@@ -24,6 +24,7 @@ func main() {
 		scoreCmd(),
 		archiveCmd(),
 		runtimeCmd(),
+		paneMapCmd(),
 	)
 
 	if err := root.Execute(); err != nil {
