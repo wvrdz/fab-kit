@@ -80,39 +80,44 @@ If exists and not a raw template: report "config.yaml already exists — skippin
 If missing or raw template (contains `{Project Name}`): execute **Constitution Behavior** (below) in create mode.
 If exists and not a raw template: report "constitution.md already exists — skipping".
 
-#### 1b-lang. Language Detection and Template Application
+#### 1b-lang. Language Detection and Convention Inference
 
-After config and constitution are created (or already exist), detect the project's language/framework and apply matching templates from `fab/.kit/templates/`. This step merges language-specific conventions into the constitution and config without overwriting user content.
+After config and constitution are created (or already exist), detect the project's language/framework and infer conventions from the actual project configuration. If no language markers are found, skip silently.
 
-**Detection rules (checked in order):**
+**Detection phase** — check for marker files at the repo root (multiple can match):
 
-| Marker file(s) | Language | Constitution section | Config overlay |
-|----------------|----------|---------------------|----------------|
-| `Cargo.toml` | Rust | `## Rust Conventions` | `templates/configs/rust.yaml` |
-| `package.json` + `tsconfig.json` | TypeScript | `## TypeScript Conventions` | `templates/configs/typescript.yaml` |
-| `package.json` (no tsconfig) | Node.js | `## Node.js Conventions` | `templates/configs/node.yaml` |
-| `go.mod` | Go | `## Go Conventions` | `templates/configs/go.yaml` |
+| Marker file(s) | Language/Framework |
+|----------------|-------------------|
+| `Cargo.toml` | Rust |
+| `tsconfig.json` + `package.json` | TypeScript |
+| `package.json` (no `tsconfig.json`) | Node.js / JavaScript |
+| `go.mod` | Go |
+| `pyproject.toml` or `setup.py` or `requirements.txt` | Python |
 
-**Framework detection (checked after language):**
+After language detection, scan for framework signals in `package.json` dependencies: `react`/`next` (React/Next.js), `vue` (Vue), `svelte` (Svelte). Also scan for linter/formatter configs (`.eslintrc*`, `eslint.config.*`, `biome.json`, `.prettierrc*`, `clippy.toml`, `rustfmt.toml`, `ruff.toml`, `vitest.config.*`, `jest.config.*`, `pytest.ini`, and relevant `pyproject.toml`/`Cargo.toml` tool sections).
 
-| Condition | Framework | Constitution section | Config overlay |
-|-----------|-----------|---------------------|----------------|
-| `package.json` contains `"react":` in dependencies | React | `## React Conventions` | `templates/configs/react.yaml` |
+**Inference phase** — for each detected language/framework:
 
-**Application logic:**
+1. Read the detected marker files and config files to extract concrete values (compiler options, linter rules, dependency versions, scripts, features)
+2. Use agent training knowledge to derive standard conventions for the detected stack, grounded in the actual config values read — do NOT hard-code convention content in this skill
+3. Distinguish between enforcement rules (MUST/SHOULD) and descriptive context
 
-1. For each matching detection rule:
-   a. Check `fab/.kit/templates/constitutions/{language}.md` and `fab/.kit/templates/configs/{language}.yaml` exist. If either is missing, skip silently (template not yet available for this language)
-   b. Check if `fab/project/constitution.md` already contains the section heading (idempotency marker)
-   c. If missing: read the constitution template and append before the `## Governance` section. Preserve existing principles — this is append-only.
-   d. Read the config template overlay and merge into `fab/project/config.yaml`:
-      - `source_paths`: union with existing (no duplicates)
-      - `checklist.extra_categories`: union with existing
-      - `stage_directives`: merge per-stage arrays (append directives not already present)
-      - Preserve YAML comments via targeted string replacement, not full YAML rewrite
-   e. Print: `"Detected {Language} project. Applied {Language} conventions to constitution and config."`
-2. If no templates directory exists or no markers match: skip silently
-3. Framework templates layer on top of language templates (a React+TS project gets both)
+**Adaptive questions** — ask up to 3 free-form questions about aspects genuinely not inferable from the project files (e.g., error handling philosophy, architecture pattern, testing expectations when no test infrastructure is visible). Skip questions for signals already present. SRAD does not apply.
+
+**Write phase** — route inferred conventions to `fab/project/*` files by content type:
+
+| Content type | Target file |
+|-------------|------------|
+| MUST/SHOULD enforcement rules | `fab/project/constitution.md` |
+| Descriptive stack info | `fab/project/context.md` |
+| Coding standards, anti-patterns | `fab/project/code-quality.md` |
+| Review policy additions | `fab/project/code-review.md` |
+| Source paths, checklist categories | `fab/project/config.yaml` |
+
+Insert constitution sections as `## {Language} Conventions` before the `## Governance` heading. Append to `context.md`, `code-quality.md`, and `code-review.md` under appropriate headings. Merge `config.yaml` via targeted string replacement: union `source_paths`, union `checklist.extra_categories`, merge `stage_directives`.
+
+**Idempotency** — read existing `fab/project/*` content before writing. Detect what conventions are already present. Merge/update without duplicating or overwriting user edits. Skip sections that are already complete. On re-run after user edits, preserve user changes and append only new conventions not already covered.
+
 #### 1b2. `fab/project/context.md`
 
 If missing: copy `fab/.kit/scaffold/fab/project/context.md` to `fab/project/context.md`. Report "Created: fab/project/context.md".

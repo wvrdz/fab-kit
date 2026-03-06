@@ -216,36 +216,6 @@ if [ -d "$scaffold_dir" ]; then
   done < <(find "$scaffold_dir" -type f | sort)
 fi
 
-# ── 2b. Language template advisory ─────────────────────────────────
-# If a language is detected but the constitution lacks the corresponding
-# conventions section, suggest running /fab-setup --refresh.
-if [ -d "$kit_dir/templates/constitutions" ] && [ -f "$fab_dir/project/constitution.md" ]; then
-  constitution="$fab_dir/project/constitution.md"
-
-  # Rust detection
-  if [ -f "$repo_root/Cargo.toml" ] && [ -f "$kit_dir/templates/constitutions/rust.md" ]; then
-    if ! grep -q "## Rust Conventions" "$constitution"; then
-      echo "Note: Rust project detected but constitution lacks Rust conventions. Run /fab-setup to apply."
-    fi
-  fi
-
-  # TypeScript detection
-  if [ -f "$repo_root/tsconfig.json" ] && [ -f "$kit_dir/templates/constitutions/typescript.md" ]; then
-    if ! grep -q "## TypeScript Conventions" "$constitution"; then
-      echo "Note: TypeScript project detected but constitution lacks TypeScript conventions. Run /fab-setup to apply."
-    fi
-  fi
-
-  # React detection
-  if [ -f "$repo_root/package.json" ] && [ -f "$kit_dir/templates/constitutions/react.md" ]; then
-    if grep -q '"react":' "$repo_root/package.json"; then
-      if ! grep -q "## React Conventions" "$constitution"; then
-        echo "Note: React project detected but constitution lacks React conventions. Run /fab-setup to apply."
-      fi
-    fi
-  fi
-fi
-
 # ── 3. Skill deployment ────────────────────────────────────────────
 # Canonical list: every *.md in .kit/skills/ (including _underscore partials)
 skills=()
