@@ -1,5 +1,8 @@
 # Archive Index
 
+- **260306-6bba-redesign-hooks-strategy** — Redesigned fab-kit hooks strategy: added PostToolUse hook for automatic artifact bookkeeping, migrated existing hooks from yq to fab CLI, and updated Constitution §I.
+- **260306-1lwf-extract-agent-runtime-file** — Moved agent ephemeral runtime data (agent.idle_since) from per-change .status.yaml to a repo-root gitignored singleton file (.fab-runtime.yaml), reducing noisy writes to tracked files on every agent turn.
+- **260306-143f-setup-language-inference** — Replaced template-driven language detection in fab-setup with agent-inferred conventions, removing fab/.kit/templates/ dependency and writing to user-owned fab/project/* files instead.
 - **260306-7arg-fix-stale-shell-refs** — Clean up stale shell script references: delete orphaned bats test files and shell artifacts from src/lib/ and src/sync/, add 4 missing status subcommands to _scripts.md, and fix git-pr.md to pass <change> instead of <status_file> path.
 - **260305-socx-5-remove-legacy-shell-scripts** — Stale — scope completed by u8t9 (shell script removal) and 7arg (test cleanup); wt script removal moved to k8ds
 - **260305-u8t9-clean-break-go-only** — Remove all shell script fallbacks from the fab dispatcher, delete 7 fully-ported lib/ scripts, absorb wt-status into fab status show with JSON output, and add fab/.kit/bin/ to PATH — establishing the Go binary as the sole backend.
