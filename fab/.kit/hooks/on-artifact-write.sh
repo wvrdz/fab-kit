@@ -8,8 +8,13 @@
 # Read stdin JSON (PostToolUse hook payload)
 input="$(cat)"
 
-# Extract file_path from tool_input — simple string extraction
-file_path="$(printf '%s' "$input" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//;s/"$//')"
+# Extract file_path from tool_input — prefer JSON-safe parsing with jq when available
+if command -v jq >/dev/null 2>&1; then
+  file_path="$(printf '%s' "$input" | jq -r '(.tool_input.file_path? // .file_path? // empty)' 2>/dev/null)"
+else
+  # Fallback: simple string extraction (not fully JSON-safe)
+  file_path="$(printf '%s' "$input" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"file_path"[[:space:]]*:[[:space:]]*"//;s/"$//')"
+fi
 [ -n "$file_path" ] || exit 0
 
 # Fast path: check if the path matches a fab artifact pattern
@@ -56,7 +61,7 @@ case "$artifact" in
     content_lower="$(printf '%s' "$content" | tr '[:upper:]' '[:lower:]')"
     if printf '%s' "$content_lower" | grep -qiE '\b(fix|bug|broken|regression)\b'; then
       change_type="fix"
-    elif printf '%s' "$content_lower" | grep -qiE '\b(refactor|restructure|consolidate|split|rename)\b'; then
+    elif printf '%s' "$content_lower" | grep -qiE '\b(refactor|restructure|consolidate|split|rename|redesign)\b'; then
       change_type="refactor"
     elif printf '%s' "$content_lower" | grep -qiE '\b(docs|document|readme|guide)\b'; then
       change_type="docs"

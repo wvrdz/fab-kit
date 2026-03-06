@@ -50,13 +50,47 @@ func loadRuntimeFile(path string) (map[string]interface{}, error) {
 	return m, nil
 }
 
-// saveRuntimeFile marshals the map and writes it to the given path.
+// saveRuntimeFile marshals the map and writes it atomically via temp+rename.
 func saveRuntimeFile(path string, m map[string]interface{}) error {
 	data, err := yaml.Marshal(m)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0o644)
+
+	dir := filepath.Dir(path)
+	tmpFile, err := os.CreateTemp(dir, ".fab-runtime-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpName := tmpFile.Name()
+
+	// Ensure temporary file is cleaned up on error.
+	success := false
+	defer func() {
+		if !success {
+			_ = tmpFile.Close()
+			_ = os.Remove(tmpName)
+		}
+	}()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		return err
+	}
+	if err := tmpFile.Sync(); err != nil {
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(tmpName, 0o644); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		return err
+	}
+
+	success = true
+	return nil
 }
 
 func runtimeSetIdleCmd() *cobra.Command {
@@ -87,10 +121,13 @@ func runtimeSetIdleCmd() *cobra.Command {
 				folderEntry = make(map[string]interface{})
 			}
 
-			// Set agent.idle_since
-			folderEntry["agent"] = map[string]interface{}{
-				"idle_since": time.Now().Unix(),
+			// Set or update agent.idle_since without discarding other agent fields
+			agentEntry, ok := folderEntry["agent"].(map[string]interface{})
+			if !ok || agentEntry == nil {
+				agentEntry = make(map[string]interface{})
 			}
+			agentEntry["idle_since"] = time.Now().Unix()
+			folderEntry["agent"] = agentEntry
 			m[folder] = folderEntry
 
 			return saveRuntimeFile(rtPath, m)

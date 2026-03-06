@@ -59,15 +59,20 @@ func TestRuntimeSetIdle(t *testing.T) {
 				},
 			},
 		}
-		data, _ := yaml.Marshal(initial)
-		os.WriteFile(rtPath, data, 0o644)
+		data, err := yaml.Marshal(initial)
+		if err != nil {
+			t.Fatalf("failed to marshal initial runtime content: %v", err)
+		}
+		if err := os.WriteFile(rtPath, data, 0o644); err != nil {
+			t.Fatalf("failed to write initial runtime file: %v", err)
+		}
 
 		res := runGo(t, tmp, "runtime", "set-idle", changeID)
 		if res.ExitCode != 0 {
 			t.Fatalf("expected exit 0, got %d; stderr: %s", res.ExitCode, res.Stderr)
 		}
 
-		data, err := os.ReadFile(rtPath)
+		data, err = os.ReadFile(rtPath)
 		if err != nil {
 			t.Fatalf("reading runtime file: %v", err)
 		}
@@ -105,15 +110,20 @@ func TestRuntimeClearIdle(t *testing.T) {
 				},
 			},
 		}
-		data, _ := yaml.Marshal(initial)
-		os.WriteFile(rtPath, data, 0o644)
+		data, err := yaml.Marshal(initial)
+		if err != nil {
+			t.Fatalf("failed to marshal initial runtime content: %v", err)
+		}
+		if err := os.WriteFile(rtPath, data, 0o644); err != nil {
+			t.Fatalf("failed to write initial runtime file: %v", err)
+		}
 
 		res := runGo(t, tmp, "runtime", "clear-idle", changeID)
 		if res.ExitCode != 0 {
 			t.Fatalf("expected exit 0, got %d; stderr: %s", res.ExitCode, res.Stderr)
 		}
 
-		data, err := os.ReadFile(rtPath)
+		data, err = os.ReadFile(rtPath)
 		if err != nil {
 			t.Fatalf("reading runtime file: %v", err)
 		}
@@ -162,9 +172,14 @@ func TestRuntimeChangeResolution(t *testing.T) {
 			t.Fatalf("expected exit 0, got %d; stderr: %s", res.ExitCode, res.Stderr)
 		}
 
-		data, _ := os.ReadFile(rtPath)
+		data, err := os.ReadFile(rtPath)
+		if err != nil {
+			t.Fatalf("failed to read runtime file: %v", err)
+		}
 		var m map[string]interface{}
-		yaml.Unmarshal(data, &m)
+		if err := yaml.Unmarshal(data, &m); err != nil {
+			t.Fatalf("failed to parse runtime file: %v", err)
+		}
 
 		// Should be keyed by full folder name, not the 4-char ID
 		if _, ok := m[changeName]; !ok {
@@ -183,17 +198,27 @@ func TestRuntimeChangeResolution(t *testing.T) {
 				},
 			},
 		}
-		data, _ := yaml.Marshal(initial)
-		os.WriteFile(rtPath, data, 0o644)
+		data, err := yaml.Marshal(initial)
+		if err != nil {
+			t.Fatalf("failed to marshal initial runtime content: %v", err)
+		}
+		if err := os.WriteFile(rtPath, data, 0o644); err != nil {
+			t.Fatalf("failed to write initial runtime file: %v", err)
+		}
 
 		res := runGo(t, tmp, "runtime", "clear-idle", "parity-test")
 		if res.ExitCode != 0 {
 			t.Fatalf("expected exit 0, got %d; stderr: %s", res.ExitCode, res.Stderr)
 		}
 
-		data, _ = os.ReadFile(rtPath)
+		data, err = os.ReadFile(rtPath)
+		if err != nil {
+			t.Fatalf("failed to read runtime file: %v", err)
+		}
 		var m map[string]interface{}
-		yaml.Unmarshal(data, &m)
+		if err := yaml.Unmarshal(data, &m); err != nil {
+			t.Fatalf("failed to parse runtime file: %v", err)
+		}
 
 		if _, ok := m[changeName]; ok {
 			t.Error("expected test change to be cleared via substring resolution")

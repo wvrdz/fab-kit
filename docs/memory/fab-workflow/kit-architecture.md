@@ -339,7 +339,7 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 - `fab runtime set-idle <change>` — write `agent.idle_since` to `.fab-runtime.yaml`
 - `fab runtime clear-idle <change>` — remove agent block from `.fab-runtime.yaml`
 
-**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`, `worktree`, `runtime`) import `statusfile` for YAML access. The `worktree` package provides worktree discovery via `git worktree list --porcelain` and fab state resolution. The `runtime` package manages `.fab-runtime.yaml` (agent idle state).
+**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`, `worktree`) import `statusfile` for YAML access. The `worktree` package provides worktree discovery via `git worktree list --porcelain` and fab state resolution. The runtime-related CLI subcommands in `cmd/fab/runtime.go` manage `.fab-runtime.yaml` (agent idle state).
 
 **Parity**: All subcommands produce stdout/stderr output matching the bash versions (modulo timestamps).
 
