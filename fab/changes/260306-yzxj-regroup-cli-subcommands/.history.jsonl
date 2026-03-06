@@ -1,0 +1,4 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-06T19:31:39+05:30"}
+{"args":"Reorganize fab CLI commands: regroup _scripts.md by concern and move archive under change subcommand","cmd":"fab-new","event":"command","ts":"2026-03-06T19:31:39+05:30"}
+{"delta":"+4.4","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-06T19:32:21+05:30"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-06T19:32:29+05:30"}

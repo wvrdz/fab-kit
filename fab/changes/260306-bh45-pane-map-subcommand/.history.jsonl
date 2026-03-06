@@ -1,0 +1,4 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-06T19:21:08+05:30"}
+{"args":"Add fab pane-map subcommand combining tmux pane introspection, worktree resolution, runtime idle state, and status into a single table view","cmd":"fab-new","event":"command","ts":"2026-03-06T19:21:08+05:30"}
+{"delta":"+2.8","event":"confidence","score":2.8,"trigger":"calc-score","ts":"2026-03-06T19:21:56+05:30"}
+{"delta":"+0.0","event":"confidence","score":2.8,"trigger":"calc-score","ts":"2026-03-06T19:22:12+05:30"}
