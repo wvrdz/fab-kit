@@ -126,6 +126,12 @@ Each subcommand operates independently — they can be invoked directly without 
 **Rejected**: Keeping inline templates — two sources of truth that can diverge when the config schema evolves.
 *Introduced by*: 260217-17pe-DEV-1046-scaffold-setup-templates
 
+### Agent-Inferred Conventions Replace Templates
+**Decision**: Step 1b-lang uses agent inference (Detection → Inference → Write) instead of bundled language templates. The agent reads project marker files (`Cargo.toml`, `tsconfig.json`, `package.json`, `go.mod`, `pyproject.toml`, etc.) and linter/formatter configs, then derives conventions from its training knowledge grounded in actual config values. Conventions are routed to the appropriate `fab/project/*` file by content type (enforcement rules → constitution, stack info → context, coding standards → code-quality, review policy → code-review, source paths → config). The skill describes the *process*, not hard-coded convention content.
+**Why**: Bundling language-specific templates in `fab/.kit/templates/constitutions/` and `fab/.kit/templates/configs/` violated Constitution §V (portability — no assumptions about host project's language/toolchain). Templates created maintenance burden and encoded opinions that may not match the project's actual setup.
+**Rejected**: Keeping language templates — violates neutrality, creates maintenance burden, makes judgment calls on behalf of users.
+*Introduced by*: 260306-143f-setup-language-inference
+
 ### Absorbed /fab-update into /fab-setup migrations
 **Decision**: `/fab-update` functionality is now available as `/fab-setup migrations`. Version migrations live under the same command namespace as the rest of project setup.
 **Why**: Reduces the dropped-ball two-step flow where users had to remember a separate `/fab-update` command after upgrading the kit. Makes migrations discoverable from the same command namespace as config and constitution management.
@@ -149,10 +155,16 @@ Each subcommand operates independently — they can be invoked directly without 
 **Reason**: Absorbed into `/fab-setup migrations` to reduce the two-step upgrade flow and make migrations discoverable from the same command namespace.
 **Migration**: Use `/fab-setup migrations [file]` instead of `/fab-update`.
 
+### Template-Driven Language Detection (Step 1b-lang)
+**Deprecated by**: 260306-143f-setup-language-inference (2026-03-06)
+**Reason**: Replaced by agent-inferred conventions. Template files (`fab/.kit/templates/constitutions/`, `fab/.kit/templates/configs/`) deleted. Language template advisory in `fab-sync.sh` (section 2b) removed.
+**Migration**: Step 1b-lang now uses agent inference — no user action required.
+
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260306-143f-setup-language-inference | 2026-03-06 | Replaced template-driven language detection (step 1b-lang) with agent-inferred conventions. Deleted `fab/.kit/templates/constitutions/` and `fab/.kit/templates/configs/` (6 template files). Removed language template advisory (section 2b) from `2-sync-workspace.sh`. Added "Agent-Inferred Conventions Replace Templates" design decision. |
 | 260305-bs5x-orchestrator-idle-hooks | 2026-03-05 | Added hook registration to delegation table: `fab-sync.sh` via `5-sync-hooks.sh` registers `fab/.kit/hooks/on-*.sh` into `.claude/settings.local.json` hooks (idempotent jq merge). |
 | 260223-sr3u-add-fab-doctor | 2026-02-23 | Added Phase 0 prerequisite check: `/fab-setup` (bare bootstrap) runs `fab-doctor.sh` as early gate before creating any project artifacts. Non-zero exit stops bootstrap. Subcommands (config, constitution, migrations) skip this check. |
 | 260217-17pe-DEV-1046-scaffold-setup-templates | 2026-02-17 | Extracted inline config.yaml and constitution.md templates from `fab-setup.md` into `scaffold/config.yaml` and `scaffold/constitution.md`. Replaced inline memory-index and specs-index templates with scaffold file references. Updated delegation table notes. Added "Templates in Scaffold Files" design decision. |

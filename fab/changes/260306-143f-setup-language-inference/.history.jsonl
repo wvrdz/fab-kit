@@ -1,3 +1,12 @@
 {"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-06T14:52:51+05:30"}
 {"args":"Replace template-driven language detection in fab-setup with agent-inferred conventions","cmd":"fab-new","event":"command","ts":"2026-03-06T14:52:51+05:30"}
 {"delta":"+4.4","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-06T14:54:01+05:30"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-06T15:04:13+05:30"}
+{"cmd":"fab-ff","event":"command","ts":"2026-03-06T15:05:34+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"spec","ts":"2026-03-06T15:07:36+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"tasks","ts":"2026-03-06T15:08:20+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"apply","ts":"2026-03-06T15:09:27+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review","ts":"2026-03-06T15:12:12+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"hydrate","ts":"2026-03-06T15:14:26+05:30"}
+{"event":"review","result":"passed","ts":"2026-03-06T15:14:26+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"ship","ts":"2026-03-06T15:15:10+05:30"}
