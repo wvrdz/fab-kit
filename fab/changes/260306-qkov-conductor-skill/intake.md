@@ -107,6 +107,16 @@ Before sending keys to any pane, the conductor MUST:
 2. Check agent is idle via `fab runtime` — sending to a busy agent risks corrupting its work
 3. If agent is not idle, warn user and ask for confirmation
 
+### Guardrails (informed by agent-orchestrator patterns)
+
+The conductor needs bounded autonomy, especially during autopilot. Key guardrails:
+
+- **Always re-derive state** — re-query `fab pane-map` / `fab status show --all` / `fab runtime` before every action. Never trust stale conversation memory.
+- **Retry limits + escalation** — every automatic action has a bounded retry count. Review rework: max 3 (per code-review.md). Stuck agent nudge: max 1. Rebase conflict: 0 retries (immediate escalation). When budget exhausted, flag to user and skip.
+- **Time-based escalation** — if a change is stuck at the same stage for >30 min or total autopilot time >2 hours, flag regardless of retry state.
+- **Context discipline** — conductor never loads change artifacts (intakes, specs, tasks). Reports concisely. Delegates diagnosis to the user.
+- **Interruptibility** — user can say "stop after current", "skip X", "pause", "resume" at any time during autopilot. Conductor acknowledges immediately.
+
 ### What the conductor is not
 
 - Not a daemon — it's a Claude session, not a background process
@@ -154,5 +164,10 @@ None — all four open questions resolved during discussion (see Assumptions #11
 | 15 | Certain | Autopilot mode supports user-provided, confidence-based, or hybrid ordering | Discussed — user wants both explicit ordering and conductor-determined ordering | S:85 R:80 A:80 D:85 |
 | 16 | Confident | Autopilot flags failures to user rather than making autonomous recovery decisions | Discussed — low confidence, rebase conflicts, and exhausted rework budgets all escalate to user. Conservative: skip and continue rather than guess | S:75 R:70 A:75 D:70 |
 | 17 | Confident | Conductor must understand change lifecycle deeply: confidence gates, stage progression, /fab-ff vs /fab-fff, rework budget | Discussed — autopilot requires lifecycle knowledge to make gating and routing decisions | S:85 R:75 A:80 D:80 |
+| 18 | Certain | Always re-derive state before every action — never trust stale conversation memory | Informed by agent-orchestrator pattern: state derivation over caching | S:90 R:85 A:90 D:95 |
+| 19 | Certain | Bounded retries + escalation — every auto action has a retry limit, then escalate to user | Informed by agent-orchestrator reaction system. Prevents infinite loops | S:90 R:75 A:85 D:90 |
+| 20 | Confident | Time-based escalation — stage stuck >30 min or total >2 hours triggers user flag | Informed by agent-orchestrator `escalateAfter` pattern. Exact thresholds may adjust | S:75 R:80 A:75 D:70 |
+| 21 | Certain | Context discipline — never load change artifacts, report concisely, delegate diagnosis | Essential for long autopilot runs where conductor context window is finite | S:90 R:85 A:90 D:90 |
+| 22 | Certain | Interruptible — user can stop, skip, pause, resume at any time during autopilot | Non-negotiable UX requirement for autonomous operation | S:95 R:80 A:90 D:95 |
 
-17 assumptions (13 certain, 4 confident, 0 tentative, 0 unresolved).
+22 assumptions (17 certain, 5 confident, 0 tentative, 0 unresolved).

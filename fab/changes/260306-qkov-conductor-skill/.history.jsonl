@@ -10,3 +10,6 @@
 {"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-06T19:33:27+05:30"}
 {"delta":"-0.6","event":"confidence","score":3.8,"trigger":"calc-score","ts":"2026-03-06T19:33:38+05:30"}
 {"delta":"+0.0","event":"confidence","score":3.8,"trigger":"calc-score","ts":"2026-03-06T19:33:44+05:30"}
+{"delta":"+0.0","event":"confidence","score":3.8,"trigger":"calc-score","ts":"2026-03-06T19:38:18+05:30"}
+{"delta":"-0.3","event":"confidence","score":3.5,"trigger":"calc-score","ts":"2026-03-06T19:38:30+05:30"}
+{"delta":"+0.0","event":"confidence","score":3.5,"trigger":"calc-score","ts":"2026-03-06T19:38:37+05:30"}

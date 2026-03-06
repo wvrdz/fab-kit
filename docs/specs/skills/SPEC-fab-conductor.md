@@ -218,6 +218,61 @@ Before sending keys to any pane, the conductor MUST:
 
 ---
 
+## Guardrails
+
+Informed by patterns from [agent-orchestrator](https://github.com/sahil-weaver/agent-orchestrator) — a production orchestration layer for parallel AI agents. The guardrails below prevent the conductor from going off-track, especially during autopilot mode.
+
+### Always re-derive state
+
+The conductor MUST re-query live state (`fab pane-map`, `fab status show --all`, `fab runtime`) before every action. Never rely on stale values from conversation memory. State derivation over caching — if a pane died or a change advanced since the last check, the conductor must know.
+
+### Retry limits + escalation
+
+For autopilot mode, the conductor tracks attempt counts per change:
+
+| Situation | Max retries | Escalation |
+|-----------|-------------|------------|
+| Review fails (rework needed) | 3 (per `code-review.md` rework budget) | Flag to user: "r3m7 exhausted rework budget. Manual intervention needed." Skip to next change. |
+| Agent idle too long (>15 min at non-terminal stage) | 1 nudge (`/fab-continue`) | If still idle after nudge, flag to user: "r3m7 appears stuck at apply stage." |
+| Rebase conflict | 0 (never auto-resolve) | Immediately flag to user. |
+| Agent pane dies | 1 respawn attempt | If respawn fails, flag and skip. |
+
+The conductor MUST NOT retry indefinitely. Every automatic action has a bounded retry count. When the budget is exhausted, escalate to the user and move on.
+
+### Time-based escalation
+
+In addition to retry counts, the conductor SHOULD track wall-clock time per change during autopilot:
+
+- **Stage timeout**: If a change has been at the same stage for >30 minutes (configurable), flag to user regardless of retry state. An agent that's "active" but stuck in a loop won't trigger retry limits, but will trigger the time gate.
+- **Total timeout**: If a change has been in the autopilot pipeline for >2 hours total, flag to user for review.
+
+These are advisory — the conductor reports and asks, it doesn't kill agents autonomously.
+
+### Never send to busy agents
+
+The pre-send idle check (already specced in Pre-send validation) is a hard guardrail, not a soft suggestion. Sending commands to an active agent can corrupt its context mid-reasoning. The only exception is if the user explicitly confirms after a warning.
+
+### Context discipline
+
+The conductor's own context window is finite. During long autopilot runs:
+
+- **Report concisely**: Status updates should be brief ("bh45: merged. Rebasing qkov. 3 of 5 complete.")
+- **Don't load change artifacts**: The conductor never reads intakes, specs, or tasks — it only reads coordination state. This keeps its context lean.
+- **Delegate diagnosis**: When an agent needs investigation ("what went wrong with r3m7?"), the conductor reads terminal output via `tmux capture-pane` but does NOT try to deeply understand the agent's codebase work. It reports what it sees and lets the user decide.
+
+### Interruptibility
+
+During autopilot, the user MUST be able to interrupt at any time:
+
+- "Stop after the current change" — conductor finishes the active change, then halts
+- "Skip qkov" — conductor removes it from the queue and moves to the next
+- "Pause" — conductor stops sending new commands but doesn't kill running agents
+- "Resume" — conductor picks up from where it paused
+
+The conductor acknowledges interrupts immediately, even if an action is in progress.
+
+---
+
 ## Implementation Considerations
 
 ### Skill or package?
