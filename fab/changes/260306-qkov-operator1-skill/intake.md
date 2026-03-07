@@ -30,7 +30,7 @@ The operator relies on:
 
 | Primitive | Source | Purpose |
 |-----------|--------|---------|
-| `fab pane-map` | New CLI subcommand (separate change bh45) | Unified view: pane → worktree → change → stage → agent state |
+| `fab pane-map` | Existing CLI subcommand (landed in bh45) | Unified view: pane → worktree → change → stage → agent state |
 | `fab status show --all` | Existing CLI | Change stage and progress |
 | `fab runtime` | Existing CLI | Agent idle/active detection |
 | `fab send-keys <change> "<text>"` | **New** CLI subcommand | Send text to a target agent's tmux pane |
@@ -125,7 +125,7 @@ The operator needs bounded autonomy. Key guardrails:
 - **New skill file**: `fab/.kit/skills/fab-operator1.md` (source) → `.claude/skills/fab-operator1` (deployed)
 - **New spec file**: `docs/specs/skills/SPEC-fab-operator1.md` (to be renamed from `SPEC-fab-conductor.md`)
 - **Go binary**: New `send-keys` subcommand
-- **Dependencies**: `fab pane-map` (change bh45) must land first — operator consumes its output
+- **Dependencies**: `fab pane-map` (landed in bh45). `status-symlink-pointer` (change x2tx) should land first — replaces `fab/current` with `.fab-status.yaml` symlink, which `pane-map` will consume
 - **Existing skills**: No modifications — operator is purely additive
 - **External deps**: tmux (required at runtime), `gh` (for PR merging use case)
 
@@ -146,7 +146,7 @@ None — all four open questions resolved during discussion (see Assumptions #11
 | 7 | Certain | Not a daemon — user-driven Claude session | Discussed — waits for input, acts, reports back | S:95 R:85 A:90 D:95 |
 | 8 | Confident | Confirmation model: read-only (none), recoverable (announce), destructive (confirm) | Discussed — three tiers. Exact boundary of "destructive" vs "recoverable" may shift | S:80 R:80 A:80 D:75 |
 | 9 | Certain | Seven use cases: broadcast, sequenced rebase, merge PRs, spawn worktree, status dashboard, unstick agent, notification surface | Discussed — autopilot (sequential pipeline execution) deferred to separate change | S:90 R:85 A:85 D:90 |
-| 10 | Confident | Depends on `fab pane-map` (change bh45) landing first | Discussed — operator consumes pane-map output. Could degrade gracefully without it but design assumes it | S:80 R:75 A:85 D:80 |
+| 10 | Certain | Depends on `fab pane-map` (landed in bh45) and `.fab-status.yaml` symlink (change x2tx) | bh45 landed. x2tx replaces `fab/current` with repo-root symlink — pane-map will use this for change resolution | S:90 R:80 A:90 D:90 |
 | 11 | Certain | No standing orders in v1 — session context suffices | Resolved — user agreed. Persistence deferred until real friction. Future home: `fab/project/operator1.yaml` | S:90 R:85 A:85 D:90 |
 | 12 | Certain | User-driven, not event-driven — operator pane is single notification surface | Resolved — user agreed. Refreshes state before each action, holds "notify me" instructions in conversation context | S:90 R:80 A:85 D:90 |
 | 13 | Certain | Single-repo only, by design | Resolved — user confirmed. Fab-kit's worktree model is same-repo checkouts | S:95 R:90 A:95 D:95 |
@@ -155,4 +155,4 @@ None — all four open questions resolved during discussion (see Assumptions #11
 | 16 | Certain | Bounded retries + escalation — every auto action has a retry limit, then escalate to user | Informed by agent-orchestrator reaction system. Prevents infinite loops | S:90 R:75 A:85 D:90 |
 | 17 | Certain | Context discipline — never load change artifacts, report concisely, delegate diagnosis | Operator context window is finite; keep it lean | S:90 R:85 A:90 D:90 |
 
-17 assumptions (15 certain, 2 confident, 0 tentative, 0 unresolved).
+17 assumptions (16 certain, 1 confident, 0 tentative, 0 unresolved).

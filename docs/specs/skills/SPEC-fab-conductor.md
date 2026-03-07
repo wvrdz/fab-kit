@@ -37,11 +37,10 @@ On startup (and refreshable on demand), the conductor builds a **pane map**: a m
 
 ### Procedure
 
-1. `tmux list-panes -a -F '#{pane_id} #{pane_current_path}'` — get all panes and their CWDs
-2. For each pane CWD, check if it's a git worktree (`git -C <path> rev-parse --show-toplevel`)
-3. Match worktree paths to fab change folders — look for `fab/current` or scan `fab/changes/` in each worktree
-4. Read `.fab-runtime.yaml` to determine idle state per change
-5. Cross-reference with `fab status show --all` for stage/progress
+1. Run `fab pane-map` — returns the full pane → worktree → change → stage → agent-state table in one call
+2. Optionally cross-reference with `fab status show --all` for detailed progress/confidence per change
+
+`fab pane-map` handles all internal mechanics: tmux pane discovery, worktree detection, active change resolution (via `.fab-status.yaml` symlink), stage lookup, and agent idle state (via `.fab-runtime.yaml`). The conductor consumes the output, not the underlying files.
 
 ### Pane Map Structure
 

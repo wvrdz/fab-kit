@@ -1,5 +1,5 @@
-name: 260306-qkov-operator1-skill
-created: 2026-03-06T19:23:05+05:30
+name: 260307-x2tx-status-symlink-pointer
+created: 2026-03-07T16:54:29+05:30
 created_by: sahil-weaver
 change_type: refactor
 issues: []
@@ -18,19 +18,19 @@ checklist:
     completed: 0
     total: 0
 confidence:
-    certain: 16
-    confident: 1
+    certain: 8
+    confident: 2
     tentative: 0
     unresolved: 0
-    score: 4.7
+    score: 4.4
     indicative: true
     fuzzy: true
     dimensions:
-        signal: 90.6
-        reversibility: 83.5
-        competence: 89.1
-        disambiguation: 91.2
+        signal: 89.5
+        reversibility: 85.5
+        competence: 88.5
+        disambiguation: 91.0
 stage_metrics:
-    intake: {started_at: "2026-03-06T19:23:05+05:30", driver: fab-new, iterations: 1}
+    intake: {started_at: "2026-03-07T16:54:29+05:30", driver: fab-new, iterations: 1}
 prs: []
-last_updated: 2026-03-07T17:18:39+05:30
+last_updated: 2026-03-07T16:56:43+05:30
