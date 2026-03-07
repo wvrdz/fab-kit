@@ -52,7 +52,7 @@ func runSendKeys(cmd *cobra.Command, args []string) error {
 	sendCmd.Stdout = cmd.OutOrStdout()
 	sendCmd.Stderr = cmd.ErrOrStderr()
 	if err := sendCmd.Run(); err != nil {
-		return fmt.Errorf("Error: pane %s no longer exists.", paneID)
+		return fmt.Errorf("Error: failed to send keys to pane %s: %w", paneID, err)
 	}
 
 	return nil
@@ -121,8 +121,8 @@ func buildSendKeysArgs(paneID, text string) []string {
 	return []string{"send-keys", "-t", paneID, text, "Enter"}
 }
 
-// ValidateSendKeysInputs checks preconditions for send-keys.
-// Returns the target pane ID, or an error.
+// validateSendKeysInputs checks preconditions for send-keys.
+// It returns an error if the preconditions are not met.
 func validateSendKeysInputs(changeArg string, tmuxEnv string) error {
 	if tmuxEnv == "" {
 		return fmt.Errorf("Error: not inside a tmux session")

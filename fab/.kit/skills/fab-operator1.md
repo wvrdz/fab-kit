@@ -131,8 +131,8 @@ Each use case follows the pattern: **interpret user intent** then **refresh stat
 
 1. When user says "tell me when {change} finishes," hold the instruction in conversation context
 2. On the next user interaction (or when asked "any updates?"), check the change's status
-3. If the change has reached hydrate or later: "r3m7 finished — now at {stage}."
-4. If not finished: "r3m7 still at {stage}."
+3. If the change has reached hydrate or later: "{change} finished — now at {stage}."
+4. If not finished: "{change} still at {stage}."
 
 ---
 
