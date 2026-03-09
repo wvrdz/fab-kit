@@ -38,7 +38,7 @@ build-go:
 
 # Cross-compile Go binary for a specific target
 build-go-target os arch:
-    cd {{go_src}} && CGO_ENABLED=0 GOOS={{os}} GOARCH={{arch}} go build -o ../../.release-build/fab-{{os}}-{{arch}} ./cmd/fab
+    mkdir -p ../../.release-build && cd {{go_src}} && CGO_ENABLED=0 GOOS={{os}} GOARCH={{arch}} go build -o ../../.release-build/fab-{{os}}-{{arch}} ./cmd/fab
 
 # Cross-compile Go binary for all release targets
 build-go-all:
