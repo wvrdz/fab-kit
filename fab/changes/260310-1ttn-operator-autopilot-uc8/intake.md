@@ -39,21 +39,20 @@ A detailed behavior section (like how `/fab-continue` has "Apply Behavior" and "
 ```
 For each change in resolved order:
   1. Spawn       → wt-create --non-interactive
-  2. Open tab    → tmux new-window -c <worktree>; launch claude session
-  3. Activate    → fab send-keys <change> "/fab-switch <change>"
-  4. Gate check  → fab status show <change> for confidence
+  2. Open tab    → tmux new-window -n "fab-<id>" -c <worktree> "claude --dangerously-skip-permissions '/fab-switch <change>'"
+  3. Gate check  → fab status show <change> for confidence
      - confidence >= gate → fab send-keys <change> "/fab-ff"
      - confidence < gate  → flag: "{change} confidence {score}, below {type} gate ({threshold}). Run /fab-fff or skip?"
-  5. Monitor     → poll fab pane-map + fab runtime is-idle on each user interaction
+  4. Monitor     → poll fab pane-map + fab runtime is-idle on each user interaction
      - Stage reaches hydrate/ship → change succeeded
      - Review fails after rework budget → flag and skip
      - Agent idle >15min at non-terminal stage → nudge once, then flag
      - Pane dies → flag and skip
-  6. On success  → gh pr merge from operator shell (destructive — already confirmed at start)
-  7. Rebase next → fab send-keys <next-change> "git fetch origin main && git rebase origin/main"
+  5. On success  → gh pr merge from operator shell (destructive — already confirmed at start)
+  6. Rebase next → fab send-keys <next-change> "git fetch origin main && git rebase origin/main"
      - If conflict → flag to user, skip to next (never auto-resolve)
-  8. Cleanup     → wt-delete (optional, after merge)
-  9. Progress    → "bh45: merged. 1 of 3 complete. Starting qkov."
+  7. Cleanup     → wt-delete (optional, after merge)
+  8. Progress    → "bh45: merged. 1 of 3 complete. Starting qkov."
 ```
 
 **Failure matrix:**
@@ -101,8 +100,16 @@ Per constitution constraint: changes to skill files MUST update the correspondin
 
 ## Open Questions
 
-- Should the operator track queue state in a file (e.g., `.fab-operator-queue.yaml`) for crash recovery, or is conversation context + pane-map re-derivation sufficient for v1?
-- When the operator spawns a worktree + tmux tab + claude session, what exact commands does it use? The spec says `wt-create --non-interactive` but this needs to chain with `tmux new-window` and launching a claude session — the exact shell incantation matters.
+None — all resolved during clarification.
+
+## Clarifications
+
+### Session 2026-03-10
+
+| # | Action | Detail |
+|---|--------|--------|
+| 8 | Confirmed | User chose conversation-only (option A) for v1 queue state |
+| 9 | Resolved | Validated spawn pattern from `batch-fab-new-backlog.sh` lines 135-144 |
 
 ## Assumptions
 
@@ -115,9 +122,7 @@ Per constitution constraint: changes to skill files MUST update the correspondin
 | 5 | Certain | Approach B: UC8 stub + separate Autopilot Behavior section | Discussed — user chose Approach B over inlining | S:95 R:85 A:90 D:95 |
 | 6 | Confident | Renumber spec UC7 → UC8 to match skill numbering | Spec's UC7 (autopilot) maps to skill's UC8 since skill's UC7 is Notification surface; renumbering avoids confusion | S:70 R:90 A:80 D:75 |
 | 7 | Confident | No new CLI primitives needed | All required commands (pane-map, send-keys, status show, runtime) already exist in the fab CLI | S:80 R:85 A:90 D:80 |
-| 8 | Tentative | Conversation context + pane-map re-derivation is sufficient for v1 queue state recovery | Spec resolved "no persistent standing orders in v1" but autopilot queue is more complex than simple standing orders; may need file-based state | S:50 R:60 A:55 D:50 |
-<!-- assumed: conversation-only queue state — spec's "no persistent standing orders" decision may not fully apply to autopilot queues which are more complex -->
-| 9 | Tentative | Worktree spawn uses `wt-create --non-interactive` + `tmux new-window` + claude CLI launch | UC4 in the spec describes this pattern but the exact shell incantation for launching a claude session in a new tmux tab hasn't been validated | S:60 R:70 A:50 D:55 |
-<!-- assumed: wt-create + tmux new-window + claude launch pattern from UC4 spec — exact commands need validation -->
+| 8 | Certain | Conversation context + pane-map re-derivation is sufficient for v1 queue state recovery | Clarified — user chose conversation-only (option A) for v1; file-backed queue is a clean upgrade path if context compression causes friction | S:95 R:60 A:55 D:50 |
+| 9 | Certain | Worktree spawn uses `wt create --non-interactive` + `tmux new-window` + `claude --dangerously-skip-permissions` | Clarified — validated from `batch-fab-new-backlog.sh` lines 135-144 which implements this exact pattern | S:95 R:70 A:90 D:90 |
 
-9 assumptions (5 certain, 2 confident, 2 tentative, 0 unresolved).
+9 assumptions (7 certain, 2 confident, 0 tentative, 0 unresolved).
