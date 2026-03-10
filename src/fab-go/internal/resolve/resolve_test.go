@@ -210,7 +210,7 @@ func TestFabRoot(t *testing.T) {
 	// FabRoot walks up from cwd to find a fab/ directory.
 	// Test creates a temp dir with fab/ and a nested subdir, then
 	// verifies FabRoot resolves correctly from the nested location.
-	dir := t.TempDir()
+	dir, _ := filepath.EvalSymlinks(t.TempDir())
 	fabDir := filepath.Join(dir, "fab")
 	os.MkdirAll(fabDir, 0755)
 

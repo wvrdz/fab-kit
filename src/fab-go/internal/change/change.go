@@ -38,7 +38,7 @@ func New(fabRoot, slug, changeID, logArgs string) (string, error) {
 	}
 
 	changesDir := filepath.Join(fabRoot, "changes")
-	datePrefix := time.Now().Format("060102")
+	datePrefix := time.Now().UTC().Format("060102")
 
 	if idProvided {
 		if hasIDCollision(changesDir, changeID) {
@@ -61,7 +61,7 @@ func New(fabRoot, slug, changeID, logArgs string) (string, error) {
 	}
 
 	createdBy := detectCreatedBy()
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now().UTC().Format(time.RFC3339)
 
 	// Initialize .status.yaml from template
 	templatePath := filepath.Join(fabRoot, ".kit", "templates", "status.yaml")

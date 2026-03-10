@@ -513,7 +513,7 @@ func AllStages() []string {
 }
 
 func applyMetricsSideEffect(statusFile *sf.StatusFile, fabRoot, stage, state, driver, from, reason string) {
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now().UTC().Format(time.RFC3339)
 
 	switch state {
 	case "active":

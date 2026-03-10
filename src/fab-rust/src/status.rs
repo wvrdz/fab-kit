@@ -542,7 +542,7 @@ fn apply_metrics_side_effect(
     from: &str,
     reason: &str,
 ) {
-    let now = chrono::Local::now().to_rfc3339();
+    let now = chrono::Utc::now().to_rfc3339();
 
     match state {
         "active" => {

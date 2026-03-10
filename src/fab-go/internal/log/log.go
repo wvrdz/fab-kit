@@ -130,5 +130,5 @@ func appendJSON(changeDir string, entry map[string]interface{}) error {
 }
 
 func nowISO() string {
-	return time.Now().Format(time.RFC3339)
+	return time.Now().UTC().Format(time.RFC3339)
 }

@@ -131,5 +131,5 @@ fn append_json(change_dir: &str, entry: &serde_json::Value) -> Result<()> {
 }
 
 fn now_iso() -> String {
-    chrono::Local::now().to_rfc3339()
+    chrono::Utc::now().to_rfc3339()
 }
