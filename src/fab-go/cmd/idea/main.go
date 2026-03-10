@@ -9,30 +9,34 @@ import (
 	"github.com/wvrdz/fab-kit/src/fab-go/internal/idea"
 )
 
-func ideaCmd() *cobra.Command {
-	var fileFlag string
-
-	cmd := &cobra.Command{
+func main() {
+	root := &cobra.Command{
 		Use:   "idea",
-		Short: "Backlog idea management (CRUD for fab/backlog.md)",
+		Short: "Backlog idea management — CRUD for fab/backlog.md",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
-	cmd.PersistentFlags().StringVar(&fileFlag, "file", "", "Override backlog file path (relative to git root)")
+	var fileFlag string
+	root.PersistentFlags().StringVar(&fileFlag, "file", "", "Override backlog file path (relative to git root)")
 
-	cmd.AddCommand(
-		ideaAddCmd(&fileFlag),
-		ideaListCmd(&fileFlag),
-		ideaShowCmd(&fileFlag),
-		ideaDoneCmd(&fileFlag),
-		ideaReopenCmd(&fileFlag),
-		ideaEditCmd(&fileFlag),
-		ideaRmCmd(&fileFlag),
+	root.AddCommand(
+		addCmd(&fileFlag),
+		listCmd(&fileFlag),
+		showCmd(&fileFlag),
+		doneCmd(&fileFlag),
+		reopenCmd(&fileFlag),
+		editCmd(&fileFlag),
+		rmCmd(&fileFlag),
 	)
 
-	return cmd
+	if err := root.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		os.Exit(1)
+	}
 }
 
-func resolveIdeaFile(fileFlag *string) (string, error) {
+func resolveFile(fileFlag *string) (string, error) {
 	repoRoot, err := idea.GitRepoRoot()
 	if err != nil {
 		return "", err
@@ -40,7 +44,7 @@ func resolveIdeaFile(fileFlag *string) (string, error) {
 	return idea.ResolveFilePath(repoRoot, *fileFlag), nil
 }
 
-func ideaAddCmd(fileFlag *string) *cobra.Command {
+func addCmd(fileFlag *string) *cobra.Command {
 	var customID, customDate string
 
 	cmd := &cobra.Command{
@@ -48,12 +52,11 @@ func ideaAddCmd(fileFlag *string) *cobra.Command {
 		Short: "Add a new idea to the backlog",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
-			text := args[0]
-			i, err := idea.Add(path, text, customID, customDate)
+			i, err := idea.Add(path, args[0], customID, customDate)
 			if err != nil {
 				return err
 			}
@@ -68,7 +71,7 @@ func ideaAddCmd(fileFlag *string) *cobra.Command {
 	return cmd
 }
 
-func ideaListCmd(fileFlag *string) *cobra.Command {
+func listCmd(fileFlag *string) *cobra.Command {
 	var all, done, jsonOut, reverse bool
 	var sortField string
 
@@ -76,17 +79,16 @@ func ideaListCmd(fileFlag *string) *cobra.Command {
 		Use:   "list",
 		Short: "List ideas from the backlog",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
 
-			// Check if file exists
 			if _, statErr := os.Stat(path); os.IsNotExist(statErr) {
 				if jsonOut {
 					fmt.Println("[]")
 				} else {
-					fmt.Println("No ideas file yet. Add one with: fab idea add \"your idea\"")
+					fmt.Println("No ideas file yet. Add one with: idea add \"your idea\"")
 				}
 				return nil
 			}
@@ -134,7 +136,7 @@ func ideaListCmd(fileFlag *string) *cobra.Command {
 	return cmd
 }
 
-func ideaShowCmd(fileFlag *string) *cobra.Command {
+func showCmd(fileFlag *string) *cobra.Command {
 	var jsonOut bool
 
 	cmd := &cobra.Command{
@@ -142,7 +144,7 @@ func ideaShowCmd(fileFlag *string) *cobra.Command {
 		Short: "Show a single idea",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
@@ -167,13 +169,13 @@ func ideaShowCmd(fileFlag *string) *cobra.Command {
 	return cmd
 }
 
-func ideaDoneCmd(fileFlag *string) *cobra.Command {
+func doneCmd(fileFlag *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "done <query>",
 		Short: "Mark an idea as done",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
@@ -189,13 +191,13 @@ func ideaDoneCmd(fileFlag *string) *cobra.Command {
 	}
 }
 
-func ideaReopenCmd(fileFlag *string) *cobra.Command {
+func reopenCmd(fileFlag *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "reopen <query>",
 		Short: "Reopen a completed idea",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
@@ -211,7 +213,7 @@ func ideaReopenCmd(fileFlag *string) *cobra.Command {
 	}
 }
 
-func ideaEditCmd(fileFlag *string) *cobra.Command {
+func editCmd(fileFlag *string) *cobra.Command {
 	var newID, newDate string
 
 	cmd := &cobra.Command{
@@ -219,7 +221,7 @@ func ideaEditCmd(fileFlag *string) *cobra.Command {
 		Short: "Modify an idea's text",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
@@ -240,7 +242,7 @@ func ideaEditCmd(fileFlag *string) *cobra.Command {
 	return cmd
 }
 
-func ideaRmCmd(fileFlag *string) *cobra.Command {
+func rmCmd(fileFlag *string) *cobra.Command {
 	var force bool
 
 	cmd := &cobra.Command{
@@ -248,7 +250,7 @@ func ideaRmCmd(fileFlag *string) *cobra.Command {
 		Short: "Delete an idea from the backlog",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := resolveIdeaFile(fileFlag)
+			path, err := resolveFile(fileFlag)
 			if err != nil {
 				return err
 			}
