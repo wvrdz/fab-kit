@@ -275,7 +275,7 @@ func (sf *StatusFile) syncToRaw() {
 }
 
 func nowISO() string {
-	return time.Now().Format(time.RFC3339)
+	return time.Now().UTC().Format(time.RFC3339)
 }
 
 func decodeStringSlice(n *yaml.Node) []string {

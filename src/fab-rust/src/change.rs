@@ -41,7 +41,7 @@ pub fn new(fab_root: &str, slug: &str, change_id: &str, log_args: &str) -> Resul
     }
 
     let changes_dir = PathBuf::from(fab_root).join("changes");
-    let date_prefix = chrono::Local::now().format("%y%m%d").to_string();
+    let date_prefix = chrono::Utc::now().format("%y%m%d").to_string();
 
     if id_provided {
         if has_id_collision(&changes_dir, &cid) {
@@ -58,7 +58,7 @@ pub fn new(fab_root: &str, slug: &str, change_id: &str, log_args: &str) -> Resul
     fs::create_dir(&change_dir)?;
 
     let created_by = detect_created_by();
-    let now = chrono::Local::now().to_rfc3339();
+    let now = chrono::Utc::now().to_rfc3339();
 
     // Initialize .status.yaml from template
     let template_path = PathBuf::from(fab_root)

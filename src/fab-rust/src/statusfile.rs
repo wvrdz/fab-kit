@@ -525,5 +525,5 @@ fn parse_stage_metrics(root: &serde_yaml::Mapping) -> HashMap<String, StageMetri
 }
 
 fn now_iso() -> String {
-    chrono::Local::now().to_rfc3339()
+    chrono::Utc::now().to_rfc3339()
 }
