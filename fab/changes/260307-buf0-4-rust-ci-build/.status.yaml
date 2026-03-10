@@ -12,7 +12,7 @@ progress:
   review: done
   hydrate: done
   ship: done
-  review-pr: active
+  review-pr: done
 checklist:
   generated: true
   path: checklist.md
@@ -70,8 +70,7 @@ stage_metrics:
     started_at: 2026-03-10T13:08:59.737094001+05:30
     driver: git-pr
     iterations: 1
-    phase: fixing
-    reviewer: copilot-pull-request-reviewer[bot]
+    completed_at: 2026-03-10T13:14:00.934368145+05:30
 prs:
-  - https://github.com/wvrdz/fab-kit/pull/234
-last_updated: 2026-03-10T13:09:22.943333138+05:30
+- https://github.com/wvrdz/fab-kit/pull/234
+last_updated: 2026-03-10T13:14:00.934382937+05:30
