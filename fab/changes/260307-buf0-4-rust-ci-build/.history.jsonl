@@ -2,3 +2,13 @@
 {"args":"Add cargo-zigbuild Rust cross-compilation to justfile and CI workflow","cmd":"fab-new","event":"command","ts":"2026-03-07T20:37:33+05:30"}
 {"delta":"+4.1","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-03-07T20:38:19+05:30"}
 {"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-03-07T20:38:27+05:30"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-10T12:58:08+05:30"}
+{"cmd":"fab-ff","event":"command","ts":"2026-03-10T12:59:06.524842052+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"spec","ts":"2026-03-10T12:59:34.283339899+05:30"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-03-10T13:00:21.096135962+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"tasks","ts":"2026-03-10T13:00:45.978721058+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"apply","ts":"2026-03-10T13:01:13.202051654+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review","ts":"2026-03-10T13:02:45.068267448+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"hydrate","ts":"2026-03-10T13:05:33.066095070+05:30"}
+{"event":"review","result":"passed","ts":"2026-03-10T13:05:33.067527320+05:30"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"ship","ts":"2026-03-10T13:07:32.244702543+05:30"}

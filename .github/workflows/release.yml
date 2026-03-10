@@ -19,14 +19,34 @@ jobs:
         with:
           go-version: '1.22'
 
+      # Set up Rust toolchain with cross-compilation targets
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin,aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
+
+      # Cache cargo-zigbuild and Zig installations
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/cargo-zigbuild
+            ~/.local/lib/python*/site-packages/ziglang
+            ~/.local/bin/zig
+          key: cross-tools-v1-${{ runner.os }}
+
+      # Install Zig via pip and cargo-zigbuild (skipped on cache hit)
+      - name: Install cross-compilation tools
+        run: |
+          which zig || pip install ziglang
+          which cargo-zigbuild || cargo install cargo-zigbuild
+
       # Install just command runner
       - uses: extractions/setup-just@v2
 
-      # Cross-compile Go binary for all release targets
+      # Cross-compile Go and Rust binaries for all release targets
       - name: Build all targets
-        run: just build-go-all
+        run: just build-all
 
-      # Create kit archives (generic + per-platform)
+      # Create kit archives (generic + per-platform with dual binaries)
       - name: Package kit archives
         run: just package-kit
 
