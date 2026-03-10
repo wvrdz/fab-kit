@@ -367,10 +367,10 @@ When no worktree is specified and not in a worktree, the binary SHALL show a sel
 
 ### Requirement: Separate Binary
 
-The `wt` binary SHALL be built from `src/fab-go/cmd/wt/main.go` as a separate binary from `fab`. It uses cobra for subcommand dispatch. It SHALL NOT depend on any `fab`-specific packages — only `internal/worktree/` and shared utilities in `internal/`.
+The `wt` binary SHALL be built from `src/go/fab/cmd/wt/main.go` as a separate binary from `fab`. It uses cobra for subcommand dispatch. It SHALL NOT depend on any `fab`-specific packages — only `internal/worktree/` and shared utilities in `internal/`.
 
 #### Scenario: Build wt binary
-- **GIVEN** the Go module at `src/fab-go/`
+- **GIVEN** the Go module at `src/go/fab/`
 - **WHEN** `go build ./cmd/wt` is run
 - **THEN** a `wt` binary is produced
 
@@ -477,7 +477,7 @@ Go tests SHALL provide same or greater coverage than the shell scripts being rep
 
 | # | Grade | Decision | Rationale | Scores |
 |---|-------|----------|-----------|--------|
-| 1 | Certain | Go, same module as fab (`src/fab-go/`) | Confirmed from intake #1 — shared internal packages, single go.mod | S:95 R:85 A:90 D:90 |
+| 1 | Certain | Go, same module as fab (`src/go/fab/`) | Confirmed from intake #1 — shared internal packages, single go.mod | S:95 R:85 A:90 D:90 |
 | 2 | Certain | Separate `wt` binary at `cmd/wt/` | Confirmed from intake #2 — different concern domains, works without fab init | S:95 R:85 A:90 D:90 |
 | 3 | Certain | wt-common.sh → extend `internal/worktree/` | Confirmed from intake #3, leverages existing worktree.go | S:95 R:85 A:90 D:95 |
 | 4 | Certain | Exclude wt pr, remove shell script | Confirmed from intake #4 — overlaps /git-pr, dropped entirely | S:95 R:85 A:80 D:75 |

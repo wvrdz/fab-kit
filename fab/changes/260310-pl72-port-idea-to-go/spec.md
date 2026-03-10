@@ -277,7 +277,7 @@ When adding a new idea, if the backlog file does not exist, the file and its par
 
 ### Requirement: Subcommand Registration
 
-`fab idea` SHALL be registered as a top-level Cobra subcommand in `src/fab-go/cmd/fab/main.go`. It SHALL have subcommands: `add`, `list`, `show`, `done`, `reopen`, `edit`, `rm`.
+`fab idea` SHALL be registered as a top-level Cobra subcommand in `src/go/fab/cmd/fab/main.go`. It SHALL have subcommands: `add`, `list`, `show`, `done`, `reopen`, `edit`, `rm`.
 
 #### Scenario: Help output
 
@@ -342,7 +342,7 @@ All confirmation messages SHALL match the Bash script's format:
 
 ### Requirement: Comprehensive Go Tests
 
-Tests SHALL be placed in `src/fab-go/internal/idea/idea_test.go` following the table-driven test pattern used in existing packages (e.g., `internal/change/change_test.go`).
+Tests SHALL be placed in `src/go/fab/internal/idea/idea_test.go` following the table-driven test pattern used in existing packages (e.g., `internal/change/change_test.go`).
 
 #### Scenario: Tests use temp directories
 

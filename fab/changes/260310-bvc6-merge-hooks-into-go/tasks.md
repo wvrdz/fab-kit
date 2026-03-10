@@ -6,17 +6,17 @@
 
 ## Phase 1: Setup
 
-- [x] T001 Extract runtime file helpers (`loadRuntimeFile`, `saveRuntimeFile`, `runtimeFilePath`) from `src/fab-go/cmd/fab/runtime.go` into new `src/fab-go/internal/runtime/runtime.go` package — export as `LoadFile`, `SaveFile`, `FilePath`
-- [x] T002 Update `src/fab-go/cmd/fab/runtime.go` to import and use `internal/runtime` package instead of local helpers — verify `fab runtime set-idle`, `clear-idle`, `is-idle` still pass existing tests
+- [x] T001 Extract runtime file helpers (`loadRuntimeFile`, `saveRuntimeFile`, `runtimeFilePath`) from `src/go/fab/cmd/fab/runtime.go` into new `src/go/fab/internal/runtime/runtime.go` package — export as `LoadFile`, `SaveFile`, `FilePath`
+- [x] T002 Update `src/go/fab/cmd/fab/runtime.go` to import and use `internal/runtime` package instead of local helpers — verify `fab runtime set-idle`, `clear-idle`, `is-idle` still pass existing tests
 
 ## Phase 2: Core Implementation
 
-- [x] T003 Create `src/fab-go/cmd/fab/hook.go` with `hookCmd()` parent command and `hookSessionStartCmd()`, `hookStopCmd()`, `hookUserPromptCmd()` subcommands — each resolves active change via `resolve.FabRoot()`/`resolve.ToFolder("")` and calls `internal/runtime` functions, swallowing all errors (returns nil always)
-- [x] T004 Create `src/fab-go/internal/hooklib/artifact.go` with artifact-write logic: `ParsePayload(stdin) (filePath, error)`, `MatchArtifactPath(filePath) (changeFolder, artifact, bool)`, `InferChangeType(content) string`, `CountUncheckedTasks(content) int`, `CountChecklistItems(content) int`
-- [x] T005 Create `hookArtifactWriteCmd()` in `src/fab-go/cmd/fab/hook.go` — reads stdin, calls `hooklib` functions, performs per-artifact bookkeeping using `statusfile` and `score` packages, outputs JSON to stdout, swallows all errors
-- [x] T006 Create `src/fab-go/internal/hooklib/sync.go` with hook sync logic: discover `on-*.sh` in hooks dir, mapping table, read/merge/write `.claude/settings.local.json`, duplicate detection by matcher+command pair
-- [x] T007 Create `hookSyncCmd()` in `src/fab-go/cmd/fab/hook.go` — calls `hooklib.Sync()`, reports created/updated/OK status to stdout
-- [x] T008 Register `hookCmd()` in `src/fab-go/cmd/fab/main.go` root command
+- [x] T003 Create `src/go/fab/cmd/fab/hook.go` with `hookCmd()` parent command and `hookSessionStartCmd()`, `hookStopCmd()`, `hookUserPromptCmd()` subcommands — each resolves active change via `resolve.FabRoot()`/`resolve.ToFolder("")` and calls `internal/runtime` functions, swallowing all errors (returns nil always)
+- [x] T004 Create `src/go/fab/internal/hooklib/artifact.go` with artifact-write logic: `ParsePayload(stdin) (filePath, error)`, `MatchArtifactPath(filePath) (changeFolder, artifact, bool)`, `InferChangeType(content) string`, `CountUncheckedTasks(content) int`, `CountChecklistItems(content) int`
+- [x] T005 Create `hookArtifactWriteCmd()` in `src/go/fab/cmd/fab/hook.go` — reads stdin, calls `hooklib` functions, performs per-artifact bookkeeping using `statusfile` and `score` packages, outputs JSON to stdout, swallows all errors
+- [x] T006 Create `src/go/fab/internal/hooklib/sync.go` with hook sync logic: discover `on-*.sh` in hooks dir, mapping table, read/merge/write `.claude/settings.local.json`, duplicate detection by matcher+command pair
+- [x] T007 Create `hookSyncCmd()` in `src/go/fab/cmd/fab/hook.go` — calls `hooklib.Sync()`, reports created/updated/OK status to stdout
+- [x] T008 Register `hookCmd()` in `src/go/fab/cmd/fab/main.go` root command
 
 ## Phase 3: Integration & Edge Cases
 
@@ -29,9 +29,9 @@
 
 ## Phase 4: Tests & Documentation
 
-- [x] T015 Create `src/fab-go/internal/runtime/runtime_test.go` — unit tests for extracted runtime helpers (load, save, file path)
-- [x] T016 Create `src/fab-go/internal/hooklib/artifact_test.go` — unit tests for JSON parsing, path matching, keyword matching, task counting, checklist counting
-- [x] T017 [P] Create `src/fab-go/internal/hooklib/sync_test.go` — unit tests for hook sync: fresh settings, deduplication, merge, missing scripts, preserve non-hook settings
+- [x] T015 Create `src/go/fab/internal/runtime/runtime_test.go` — unit tests for extracted runtime helpers (load, save, file path)
+- [x] T016 Create `src/go/fab/internal/hooklib/artifact_test.go` — unit tests for JSON parsing, path matching, keyword matching, task counting, checklist counting
+- [x] T017 [P] Create `src/go/fab/internal/hooklib/sync_test.go` — unit tests for hook sync: fresh settings, deduplication, merge, missing scripts, preserve non-hook settings
 - [x] T018 Update `src/hooks/test-on-session-start.bats` — test thin wrapper delegates to binary, binary-missing graceful fallback
 - [x] T019 [P] Update `src/hooks/test-on-stop.bats` — test thin wrapper delegates to binary, binary-missing graceful fallback
 - [x] T020 Update `fab/.kit/skills/_scripts.md` — add `fab hook` command group with `session-start`, `stop`, `user-prompt`, `artifact-write`, `sync` subcommands to Command Reference table and add detailed section

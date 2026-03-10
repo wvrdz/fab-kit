@@ -24,7 +24,7 @@
 - [ ] CHK-013 No dangling references to src/packages, src/tests, or bats remain in codebase
 
 ## Scenario Coverage
-- [ ] CHK-014 `go test ./...` passes in src/wt-go/ with all ported tests
+- [ ] CHK-014 `go test ./...` passes in src/go/wt/ with all ported tests
 - [ ] CHK-015 wt pr tests explicitly noted as not ported (no Go implementation)
 
 ## Edge Cases & Error Handling
@@ -32,7 +32,7 @@
 - [ ] CHK-017 Tests work in CI (no interactive prompts, no real git remotes needed beyond local bare repos)
 
 ## Code Quality
-- [ ] CHK-018 Pattern consistency: Test files follow naming and structure of existing *_test.go files in src/wt-go/
+- [ ] CHK-018 Pattern consistency: Test files follow naming and structure of existing *_test.go files in src/go/wt/
 - [ ] CHK-019 No unnecessary duplication: Shared test utilities in testutil_test.go
 
 ## Documentation Accuracy

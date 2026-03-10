@@ -97,8 +97,8 @@ cargo install cargo-zigbuild
 | Tool | Purpose |
 |------|---------|
 | [parallel](https://www.gnu.org/software/parallel/) | Parallel execution for test suites and batch operations |
-| [Go](https://go.dev/) | Required for building the `fab` binary from source (`src/fab-go/`) |
-| [Rust](https://www.rust-lang.org/) | Required for building the `fab` binary from source (`src/fab-rust/`) |
+| [Go](https://go.dev/) | Required for building the `fab` binary from source (`src/go/fab/`) |
+| [Rust](https://www.rust-lang.org/) | Required for building the `fab` binary from source (`src/rust/fab/`) |
 | [zig](https://ziglang.org/) | C/C++ cross-compiler backend used by cargo-zigbuild |
 | [cargo-zigbuild](https://github.com/rust-cross/cargo-zigbuild) | Cross-compilation for Rust release builds |
 

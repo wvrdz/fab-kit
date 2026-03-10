@@ -6,11 +6,11 @@
 
 ## Origin
 
-> Check src/packages/wt/ — these are test cases written for the older shell-based implementation of wt. Port them to the new Go implementation in src/wt-go/. Then check if src/tests, src/packages/ are still needed. Also check if .gitmodules is still needed.
+> Check src/packages/wt/ — these are test cases written for the older shell-based implementation of wt. Port them to the new Go implementation in src/go/wt/. Then check if src/tests, src/packages/ are still needed. Also check if .gitmodules is still needed.
 
 ## Why
 
-The project recently extracted `wt` from a shell-based implementation (`src/packages/wt/`) into a standalone Go binary (`src/wt-go/`). The shell-based tests in `src/packages/wt/tests/` (13 bats test files covering init, create, delete, list, open, pr, edge cases, integration) encode valuable behavioral expectations that should carry forward. Without porting these, the Go implementation lacks equivalent coverage for the behaviors the bats tests verified.
+The project recently extracted `wt` from a shell-based implementation (`src/packages/wt/`) into a standalone Go binary (`src/go/wt/`). The shell-based tests in `src/packages/wt/tests/` (13 bats test files covering init, create, delete, list, open, pr, edge cases, integration) encode valuable behavioral expectations that should carry forward. Without porting these, the Go implementation lacks equivalent coverage for the behaviors the bats tests verified.
 
 Additionally, the shell infrastructure that supported the old implementation — `src/packages/` (rc-init.sh, the wt shell package), `src/tests/` (empty except for bats libs), and `.gitmodules` (bats submodule references) — is now dead weight. Removing them reduces repo clutter and eliminates the bats submodule dependency entirely.
 
@@ -18,7 +18,7 @@ Additionally, the shell infrastructure that supported the old implementation —
 
 ### 1. Port wt bats tests to Go tests
 
-Review each bats test file in `src/packages/wt/tests/` and port the behavioral expectations to Go tests in `src/wt-go/`:
+Review each bats test file in `src/packages/wt/tests/` and port the behavioral expectations to Go tests in `src/go/wt/`:
 
 | Bats file | Scope |
 |-----------|-------|
@@ -70,19 +70,19 @@ Check for references to `src/packages/`, `src/tests/`, or bats in CI configs, sc
 ## Open Questions
 
 - Are there any CI pipelines that invoke the bats tests directly?
-- Does `wt pr` have a Go implementation yet? (only `init`, `create`, `delete`, `list`, `open` seen in `src/wt-go/cmd/`)
+- Does `wt pr` have a Go implementation yet? (only `init`, `create`, `delete`, `list`, `open` seen in `src/go/wt/cmd/`)
 
 ## Assumptions
 
 | # | Grade | Decision | Rationale | Scores |
 |---|-------|----------|-----------|--------|
-| 1 | Certain | Port tests to Go test files in src/wt-go/ | Go module already has test infrastructure; natural target | S:90 R:90 A:95 D:95 |
+| 1 | Certain | Port tests to Go test files in src/go/wt/ | Go module already has test infrastructure; natural target | S:90 R:90 A:95 D:95 |
 | 2 | Certain | Remove src/packages/ entirely | All contents are legacy shell infrastructure superseded by Go rewrite | S:85 R:85 A:90 D:95 |
 | 3 | Certain | Remove src/tests/ entirely | Contains only bats submodule libs, no longer needed | S:85 R:85 A:90 D:95 |
 | 4 | Certain | Remove .gitmodules | Only contains bats submodule refs; confirmed by reading the file | S:95 R:85 A:95 D:95 |
 | 5 | Confident | Tests target cmd/ layer or integration level | Existing Go tests cover internal/; bats tests are behavioral/CLI-level | S:75 R:85 A:80 D:75 |
 | 6 | Confident | No CI references to bats tests | No CI config files observed, but not exhaustively searched | S:60 R:75 A:70 D:80 |
-| 7 | Certain | wt pr not yet implemented in Go | Only init, create, delete, list, open found in src/wt-go/cmd/ | S:90 R:90 A:90 D:95 |
+| 7 | Certain | wt pr not yet implemented in Go | Only init, create, delete, list, open found in src/go/wt/cmd/ | S:90 R:90 A:90 D:95 |
 | 8 | Certain | .gitmodules has no non-bats entries | File contents confirmed — only 4 bats submodule entries | S:95 R:90 A:95 D:95 |
 
 8 assumptions (6 certain, 2 confident, 0 tentative, 0 unresolved).

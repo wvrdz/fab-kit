@@ -6,7 +6,7 @@
 
 ## Origin
 
-> Consolidate wt-* shell scripts into a single `wt` Go binary. The wt binary lives in the same Go module as fab (`src/fab-go/`) but builds a separate binary. Uses cobra subcommands (wt create, wt list, wt open, wt delete, wt init) mirroring the current wt-* script functionality. `wt pr` excluded (overlaps with `/git-pr`). Separate binary from fab — wt should work in any git repo, not just fab-initialized projects.
+> Consolidate wt-* shell scripts into a single `wt` Go binary. The wt binary lives in the same Go module as fab (`src/go/fab/`) but builds a separate binary. Uses cobra subcommands (wt create, wt list, wt open, wt delete, wt init) mirroring the current wt-* script functionality. `wt pr` excluded (overlaps with `/git-pr`). Separate binary from fab — wt should work in any git repo, not just fab-initialized projects.
 
 Initiated via `/fab-discuss` conversation. The user chose Go to match the existing `fab-go` binary and leverage the shared `internal/` packages. Chose **option B** (separate binary) over merging wt into fab as a subcommand.
 
@@ -14,9 +14,9 @@ This change supersedes the earlier Go-based wt binary intakes (`260305-jug9-3-bu
 
 ## Why
 
-1. **Single toolchain**: The `fab` binary is already Go (`src/fab-go/`, cobra + yaml.v3). The wt binary lives in the same module, shares `go.mod`, and reuses existing `internal/` packages.
+1. **Single toolchain**: The `fab` binary is already Go (`src/go/fab/`, cobra + yaml.v3). The wt binary lives in the same module, shares `go.mod`, and reuses existing `internal/` packages.
 
-2. **Shared code**: `wt` needs repo root detection, worktree path conventions, and config reading — already implemented in `src/fab-go/internal/`. No reimplementation needed.
+2. **Shared code**: `wt` needs repo root detection, worktree path conventions, and config reading — already implemented in `src/go/fab/internal/`. No reimplementation needed.
 
 3. **Code quality**: The 6 wt-* shell scripts total ~2,800 lines plus a 578-line shared library (`wt-common.sh`). Go provides proper argument parsing (cobra), testability, structured error handling, and eliminates repeated `source wt-common.sh` parse overhead.
 
@@ -26,10 +26,10 @@ This change supersedes the earlier Go-based wt binary intakes (`260305-jug9-3-bu
 
 ### Go Module Structure
 
-The wt binary lives in the same Go module at `src/fab-go/` as a separate `cmd/` entry:
+The wt binary lives in the same Go module at `src/go/fab/` as a separate `cmd/` entry:
 
 ```
-src/fab-go/
+src/go/fab/
 ├── cmd/
 │   ├── fab/
 │   │   └── main.go          # fab binary (existing)
@@ -114,7 +114,7 @@ Direct cutover — no shim layer. Remove all bash wt-* scripts:
 
 ## Impact
 
-- **Source**: New `src/fab-go/cmd/wt/` and `src/fab-go/internal/worktree/` (~1,200-1,700 lines estimated, wt pr excluded)
+- **Source**: New `src/go/fab/cmd/wt/` and `src/go/fab/internal/worktree/` (~1,200-1,700 lines estimated, wt pr excluded)
 - **Test coverage**: Same or greater coverage than the shell scripts being replaced
 - **Build**: `justfile`, `fab-release.sh` — updated for dual binary builds and cross-compilation
 - **Release pipeline**: Both `fab` and `wt` binaries in each per-platform archive
@@ -142,7 +142,7 @@ Direct cutover — no shim layer. Remove all bash wt-* scripts:
 
 | # | Grade | Decision | Rationale | Scores |
 |---|-------|----------|-----------|--------|
-| 1 | Certain | Go, same module as fab (`src/fab-go/`) | Discussed — shared internal packages, single go.mod, consistent toolchain | S:90 R:85 A:90 D:90 |
+| 1 | Certain | Go, same module as fab (`src/go/fab/`) | Discussed — shared internal packages, single go.mod, consistent toolchain | S:90 R:85 A:90 D:90 |
 | 2 | Certain | Separate `wt` binary, not a `fab` subcommand | Discussed — different concern domains, wt works in any git repo without fab init | S:90 R:85 A:90 D:90 |
 | 3 | Certain | wt-common.sh → `internal/worktree/` package | Shared library becomes proper Go package with testable units | S:85 R:85 A:90 D:95 |
 | 4 | Certain | Exclude wt pr from scope — overlaps with /git-pr. Shell script also removed | Clarified — user changed: wt pr dropped entirely, not ported and not kept | S:95 R:85 A:80 D:75 |

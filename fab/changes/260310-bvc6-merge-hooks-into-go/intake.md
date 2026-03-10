@@ -130,7 +130,7 @@ Update `fab/.kit/scripts/fab-doctor.sh` to remove the `jq` prerequisite check, s
 
 ## Impact
 
-- **Go binary** (`src/fab-go/`): New `hook` package with Cobra subcommands, reusing existing internal packages (`resolve`, `runtime`, `statusman`, `score`)
+- **Go binary** (`src/go/fab/`): New `hook` package with Cobra subcommands, reusing existing internal packages (`resolve`, `runtime`, `statusman`, `score`)
 - **Shell hooks** (`fab/.kit/hooks/`): Rewritten to one-liners
 - **Bats tests** (`src/hooks/`): Updated to test binary instead of shell scripts
 - **fab-doctor.sh**: Remove jq prerequisite

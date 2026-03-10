@@ -14,7 +14,7 @@
 
 ### Requirement: Init command tests SHALL cover script execution and error handling
 
-The `wt init` Go command (`src/wt-go/cmd/init.go`) SHALL have tests covering: running the init script when it exists, friendly message when script doesn't exist, running from a worktree, idempotency, and error when not in a git repo.
+The `wt init` Go command (`src/go/wt/cmd/init.go`) SHALL have tests covering: running the init script when it exists, friendly message when script doesn't exist, running from a worktree, idempotency, and error when not in a git repo.
 
 #### Scenario: Init runs script when it exists
 - **GIVEN** a git repo with an init script at `fab/.kit/worktree-init.sh`
@@ -37,7 +37,7 @@ The `wt init` Go command (`src/wt-go/cmd/init.go`) SHALL have tests covering: ru
 
 ### Requirement: Create command tests SHALL cover worktree creation, naming, branching, and collision handling
 
-Tests for `src/wt-go/cmd/create.go` SHALL cover: exploratory worktree creation with random names, branch-based creation (local, remote, new), name derivation from branches, `--worktree-name` override, name collision errors, `--reuse` flag, init script integration, `--worktree-open` flag, porcelain output contract (stdout = path only, stderr = human messages), and branch-off-HEAD behavior.
+Tests for `src/go/wt/cmd/create.go` SHALL cover: exploratory worktree creation with random names, branch-based creation (local, remote, new), name derivation from branches, `--worktree-name` override, name collision errors, `--reuse` flag, init script integration, `--worktree-open` flag, porcelain output contract (stdout = path only, stderr = human messages), and branch-off-HEAD behavior.
 
 #### Scenario: Exploratory worktree creation
 - **GIVEN** a git repo on the main branch
@@ -71,7 +71,7 @@ Tests for `src/wt-go/cmd/create.go` SHALL cover: exploratory worktree creation w
 
 ### Requirement: Delete command tests SHALL cover deletion modes, branch cleanup, stashing, and delete-all
 
-Tests for `src/wt-go/cmd/delete.go` SHALL cover: deleting by name, deleting current worktree, `--delete-branch` and `--delete-remote` flags, `--stash` flag for uncommitted changes, `--delete-all`, error for non-existent worktree, and directory cleanup verification.
+Tests for `src/go/wt/cmd/delete.go` SHALL cover: deleting by name, deleting current worktree, `--delete-branch` and `--delete-remote` flags, `--stash` flag for uncommitted changes, `--delete-all`, error for non-existent worktree, and directory cleanup verification.
 
 #### Scenario: Delete by name removes worktree and branch
 - **GIVEN** a worktree "test-wt" exists
@@ -100,7 +100,7 @@ Tests for `src/wt-go/cmd/delete.go` SHALL cover: deleting by name, deleting curr
 
 ### Requirement: List command tests SHALL cover output formatting, --path, --json, and status indicators
 
-Tests for `src/wt-go/cmd/list.go` SHALL cover: showing repo name and location, marking current worktree, total count, `--path` flag for single worktree lookup, `--json` flag with all required fields (name, branch, path, is_main, is_current, dirty, unpushed), mutual exclusivity of `--path` and `--json`, dirty/unpushed indicators, and `NO_COLOR` support.
+Tests for `src/go/wt/cmd/list.go` SHALL cover: showing repo name and location, marking current worktree, total count, `--path` flag for single worktree lookup, `--json` flag with all required fields (name, branch, path, is_main, is_current, dirty, unpushed), mutual exclusivity of `--path` and `--json`, dirty/unpushed indicators, and `NO_COLOR` support.
 
 #### Scenario: List shows all worktrees
 - **GIVEN** two worktrees "wt1" and "wt2" exist
@@ -129,7 +129,7 @@ Tests for `src/wt-go/cmd/list.go` SHALL cover: showing repo name and location, m
 
 ### Requirement: Open command tests SHALL cover target resolution and app launching
 
-Tests for `src/wt-go/cmd/open.go` SHALL cover: opening current worktree, opening by name, opening by path, error for non-existent worktree, error for unknown app, and error from main repo without target.
+Tests for `src/go/wt/cmd/open.go` SHALL cover: opening current worktree, opening by name, opening by path, error for non-existent worktree, error for unknown app, and error from main repo without target.
 
 #### Scenario: Open by name
 - **GIVEN** a worktree "named-open" exists
@@ -240,14 +240,14 @@ Any references to `src/packages/`, `src/tests/`, or bats in documentation, scrip
 ## Deprecated Requirements
 
 ### wt pr tests
-**Reason**: `wt pr` has no Go implementation — only `init`, `create`, `delete`, `list`, `open` exist in `src/wt-go/cmd/`
+**Reason**: `wt pr` has no Go implementation — only `init`, `create`, `delete`, `list`, `open` exist in `src/go/wt/cmd/`
 **Migration**: Test expectations captured as TODO comments in test files for when `wt pr` is implemented
 
 ## Assumptions
 
 | # | Grade | Decision | Rationale | Scores |
 |---|-------|----------|-----------|--------|
-| 1 | Certain | Port tests to Go test files in src/wt-go/ | Confirmed from intake #1 — Go module has test infra | S:90 R:90 A:95 D:95 |
+| 1 | Certain | Port tests to Go test files in src/go/wt/ | Confirmed from intake #1 — Go module has test infra | S:90 R:90 A:95 D:95 |
 | 2 | Certain | Remove src/packages/ entirely | Confirmed from intake #2 — all legacy shell | S:85 R:85 A:90 D:95 |
 | 3 | Certain | Remove src/tests/ entirely | Confirmed from intake #3 — only bats libs | S:85 R:85 A:90 D:95 |
 | 4 | Certain | Remove .gitmodules | Confirmed from intake #4 — only bats entries | S:95 R:85 A:95 D:95 |

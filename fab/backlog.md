@@ -37,7 +37,7 @@ Step 7: gm10    gm11              ← parallel: local cross-compilation in relea
 Step 8: gm12                      ← remove old shell scripts (deferred — only after confidence period)
 ```
 
-- [x] [gm01] 2026-03-05: Scaffold Go module at src/fab-go/ with cobra CLI skeleton, shared internal/yaml package for .status.yaml struct, and subcommand stubs
+- [x] [gm01] 2026-03-05: Scaffold Go module at src/go/fab/ with cobra CLI skeleton, shared internal/yaml package for .status.yaml struct, and subcommand stubs
 - [x] [gm02] 2026-03-05: Port statusman.sh → `fab status` subcommand (43 yq calls, biggest performance win)
 - [x] [gm03] 2026-03-05: Port resolve.sh → `fab resolve` subcommand (dependency of preflight and others)
 - [x] [gm04] 2026-03-05: Port logman.sh → `fab log` subcommand (JSON append-only logging)

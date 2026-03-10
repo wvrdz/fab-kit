@@ -10,7 +10,7 @@
 
 ## Why
 
-The `idea` command is currently a ~350-line Bash script at `fab/.kit/packages/idea/bin/idea`. It's the only package still implemented as a shell script while the core `fab` CLI has been fully ported to Go (`src/fab-go/`). Porting `idea` to Go:
+The `idea` command is currently a ~350-line Bash script at `fab/.kit/packages/idea/bin/idea`. It's the only package still implemented as a shell script while the core `fab` CLI has been fully ported to Go (`src/go/fab/`). Porting `idea` to Go:
 
 1. **Consistency** — all fab CLI tooling runs through a single compiled binary, matching the existing pattern (`fab resolve`, `fab change`, `fab status`, etc.)
 2. **Testability** — Go's testing infrastructure enables proper unit and integration tests, whereas the Bash script has no test coverage. The user explicitly wants comprehensive Go test cases.
@@ -23,7 +23,7 @@ If we don't do this, `idea` remains a Bash outlier in an otherwise Go-based CLI,
 
 ### New `idea` subcommand on the `fab` CLI
 
-Add `fab idea` as a new top-level Cobra subcommand in `src/fab-go/`, implementing all current `idea` commands:
+Add `fab idea` as a new top-level Cobra subcommand in `src/go/fab/`, implementing all current `idea` commands:
 
 | Current shell command | New Go command |
 |---|---|
@@ -49,7 +49,7 @@ The markdown format in `fab/backlog.md` remains identical:
 
 ### Internal package: `internal/idea/`
 
-Create `src/fab-go/internal/idea/` with:
+Create `src/go/fab/internal/idea/` with:
 
 - **`idea.go`** — core types (`Idea` struct with ID, Date, Text, Done fields), parsing logic (line ↔ struct), file read/write, query matching (case-insensitive substring on ID and text)
 - **`idea_test.go`** — unit tests covering: parsing valid/invalid lines, query matching (by ID, by text, case-insensitive, multiple matches, no matches), CRUD operations against a temp file, ID collision detection, `--json` output format
@@ -92,7 +92,7 @@ The user explicitly requested proper Go-based test cases. Tests SHALL:
 - Test edge cases: empty file, missing file (auto-create on add), ID collision, invalid line format
 - Test flag combinations: `--json`, `-a`, `--done`, `--sort`, `--reverse`, `--force`
 - Use temp directories and files — no reliance on actual git repos
-- Follow the existing test patterns in `src/fab-go/internal/` (e.g., table-driven tests with `t.Run`)
+- Follow the existing test patterns in `src/go/fab/internal/` (e.g., table-driven tests with `t.Run`)
 
 ## Affected Memory
 
@@ -101,8 +101,8 @@ The user explicitly requested proper Go-based test cases. Tests SHALL:
 
 ## Impact
 
-- **`src/fab-go/`** — new `internal/idea/` package + `cmd/fab/idea.go` command file
-- **`src/fab-go/cmd/fab/main.go`** — add `ideaCmd()` to root command registration
+- **`src/go/fab/`** — new `internal/idea/` package + `cmd/fab/idea.go` command file
+- **`src/go/fab/cmd/fab/main.go`** — add `ideaCmd()` to root command registration
 - **`fab/.kit/bin/fab` dispatcher** — no changes needed (routes to `fab-go` already)
 - **`fab/.kit/packages/idea/bin/idea`** — unchanged (coexists, deprecated later)
 - **`docs/specs/packages.md`** — may need a note about Go port availability

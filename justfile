@@ -1,5 +1,5 @@
 scripts := "src/scripts/just"
-rust_src := "src/fab-rust"
+rust_src := "src/rust/fab"
 
 # Run all tests with summary (excludes Rust)
 test:
@@ -12,31 +12,31 @@ test-scripts:
 
 # Run Go unit tests (all modules)
 test-go:
-    cd src/fab-go && go test ./... -count=1
-    cd src/idea-go && go test ./... -count=1
-    cd src/wt-go && go test ./... -count=1
+    cd src/go/fab && go test ./... -count=1
+    cd src/go/idea && go test ./... -count=1
+    cd src/go/wt && go test ./... -count=1
 
 # Run Go unit tests (verbose)
 test-go-v:
-    cd src/fab-go && go test ./... -v -count=1
-    cd src/idea-go && go test ./... -v -count=1
-    cd src/wt-go && go test ./... -v -count=1
+    cd src/go/fab && go test ./... -v -count=1
+    cd src/go/idea && go test ./... -v -count=1
+    cd src/go/wt && go test ./... -v -count=1
 
 # Build all Go binaries for current platform (fab, wt, idea)
 build-go:
-    cd src/fab-go && CGO_ENABLED=0 go build -o ../../fab/.kit/bin/fab-go ./cmd/fab
-    cd src/idea-go && CGO_ENABLED=0 go build -o ../../fab/.kit/bin/idea ./cmd
-    cd src/wt-go && CGO_ENABLED=0 go build -o ../../fab/.kit/bin/wt ./cmd
+    cd src/go/fab && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/fab-go ./cmd/fab
+    cd src/go/idea && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/idea ./cmd
+    cd src/go/wt && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/wt ./cmd
 
 # Cross-compile a Go binary for a specific target
 _build-go-binary src_dir cmd_path name os arch:
-    mkdir -p .release-build && cd {{src_dir}} && CGO_ENABLED=0 GOOS={{os}} GOARCH={{arch}} go build -o ../../.release-build/{{name}}-{{os}}-{{arch}} {{cmd_path}}
+    mkdir -p .release-build && cd {{src_dir}} && CGO_ENABLED=0 GOOS={{os}} GOARCH={{arch}} go build -o ../../../.release-build/{{name}}-{{os}}-{{arch}} {{cmd_path}}
 
 # Cross-compile all Go binaries for a specific target
 build-go-target os arch:
-    just _build-go-binary src/fab-go ./cmd/fab fab {{os}} {{arch}}
-    just _build-go-binary src/idea-go ./cmd idea {{os}} {{arch}}
-    just _build-go-binary src/wt-go ./cmd wt {{os}} {{arch}}
+    just _build-go-binary src/go/fab ./cmd/fab fab {{os}} {{arch}}
+    just _build-go-binary src/go/idea ./cmd idea {{os}} {{arch}}
+    just _build-go-binary src/go/wt ./cmd wt {{os}} {{arch}}
 
 # Cross-compile all Go binaries for all release targets
 build-go-all:
@@ -52,7 +52,7 @@ build-all:
 
 # Run Rust integration tests
 test-rust:
-    cargo test --manifest-path src/fab-rust/Cargo.toml
+    cargo test --manifest-path src/rust/fab/Cargo.toml
 
 # Build Rust binary for the current platform (local dev)
 build-rust:
