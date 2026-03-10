@@ -73,21 +73,22 @@ fab/.kit/
 │       └── lib/wt-common.sh
 ├── schemas/                # Workflow schema
 │   └── workflow.yaml       # Canonical stage/state definitions
-├── hooks/                  # Claude Code hook scripts (runtime lifecycle signals)
-│   ├── on-artifact-write.sh # PostToolUse hook (Write + Edit matchers) — artifact bookkeeping
-│   ├── on-session-start.sh # SessionStart hook — clears agent idle state via fab runtime
-│   └── on-stop.sh          # Stop hook — sets agent idle state via fab runtime
+├── hooks/                  # Claude Code hook scripts (thin wrappers delegating to fab hook <subcommand>)
+│   ├── on-artifact-write.sh # PostToolUse hook (Write + Edit matchers) — delegates to fab hook artifact-write
+│   ├── on-session-start.sh # SessionStart hook — delegates to fab hook session-start
+│   ├── on-stop.sh          # Stop hook — delegates to fab hook stop
+│   └── on-user-prompt.sh   # UserPromptSubmit hook — delegates to fab hook user-prompt
 ├── sync/                   # Kit-level sync scripts (iterated by fab-sync.sh)
-│   ├── 1-prerequisites.sh  # Validate required tools (yq, jq, gh, direnv, bats) — fatal on missing
+│   ├── 1-prerequisites.sh  # Validate required tools (git, bash, yq, gh, direnv) — fatal on missing
 │   ├── 2-sync-workspace.sh # Workspace sync logic (directories, symlinks, agents, .envrc, .gitignore, settings)
 │   ├── 3-direnv.sh         # Run direnv allow (idempotent)
 │   ├── 4-get-fab-binary.sh # Download platform-specific Go binary (optional, graceful skip)
-│   └── 5-sync-hooks.sh     # Register hook scripts into .claude/settings.local.json (idempotent, supports matchers)
+│   └── 5-sync-hooks.sh     # Thin wrapper delegating to fab hook sync (registers hooks into .claude/settings.local.json)
 └── scripts/                # Shell utilities
     ├── batch-fab-archive-change.sh  # Batch archive completed changes via tmux + Claude
     ├── batch-fab-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
     ├── batch-fab-switch-change.sh   # Batch switch to changes via tmux + Claude
-    ├── fab-doctor.sh       # Prerequisite checker (7 tools: git, bash, yq v4+, jq, gh, bats, direnv+hook)
+    ├── fab-doctor.sh       # Prerequisite checker (5 tools: git, bash, yq v4+, gh, direnv+hook)
     ├── fab-help.sh         # Print help overview
     ├── batch-pipeline.sh      # Entry point for the pipeline orchestrator (listing, matching, delegation)
     ├── batch-pipeline-series.sh # Sequential chain shorthand (generates manifest, delegates to orchestrator)
@@ -175,7 +176,7 @@ Shorthand for running a sequential chain of changes. Accepts change IDs as posit
 
 #### `fab-doctor.sh`
 
-Standalone prerequisite checker, sibling of `fab-help.sh`. Validates 7 required tools in order: `git`, `bash`, `yq` (v4+ gate), `jq`, `gh`, `bats`, `direnv` (binary + shell hook). Each check uses `command -v` for presence detection, tool-specific version extraction, and structured output (`✓`/`✗` with version or error + actionable fix hint). The yq check parses the major version and rejects v3 (Python) with a specific message. The direnv check has two parts: binary presence and shell hook integration — spawns an interactive subshell (`-i` flag) to source rc files, checking for `_direnv_hook` function (zsh) or `PROMPT_COMMAND` containing "direnv" (bash); unsupported shells pass with a "hook check skipped" note. All subshell output suppressed via `&>/dev/null`. Failures are accumulated (no early exit) — the script runs all 7 checks before reporting. Exit code equals the failure count (0 = all pass, 1-7 = number of failures). Output format: header line, per-tool result lines (indented), blank line, summary. Called by: `sync/1-prerequisites.sh` (exec delegate) and `/fab-setup` (Phase 0 early gate).
+Standalone prerequisite checker, sibling of `fab-help.sh`. Validates 5 required tools in order: `git`, `bash`, `yq` (v4+ gate), `gh`, `direnv` (binary + shell hook). Each check uses `command -v` for presence detection, tool-specific version extraction, and structured output (`✓`/`✗` with version or error + actionable fix hint). The yq check parses the major version and rejects v3 (Python) with a specific message. The direnv check has two parts: binary presence and shell hook integration — spawns an interactive subshell (`-i` flag) to source rc files, checking for `_direnv_hook` function (zsh) or `PROMPT_COMMAND` containing "direnv" (bash); unsupported shells pass with a "hook check skipped" note. All subshell output suppressed via `&>/dev/null`. Failures are accumulated (no early exit) — the script runs all 5 checks before reporting. Exit code equals the failure count (0 = all pass, 1-5 = number of failures). Output format: header line, per-tool result lines (indented), blank line, summary. Supports `--porcelain` flag for scripted callers (quiet mode: only errors, no passes/hints/summary). Called by: `sync/1-prerequisites.sh` (exec delegate) and `/fab-setup` (Phase 0 early gate).
 
 #### `fab-help.sh`
 
@@ -345,14 +346,19 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 - `fab runtime set-idle <change>` — write `agent.idle_since` to `.fab-runtime.yaml`
 - `fab runtime clear-idle <change>` — remove agent block from `.fab-runtime.yaml`
 - `fab runtime is-idle <change>` — read-only idle state query; prints `idle {duration}`, `active`, or `unknown` (exit 0 always)
+- `fab hook session-start` — clear agent idle state (SessionStart event)
+- `fab hook stop` — set agent idle timestamp (Stop event)
+- `fab hook user-prompt` — clear agent idle state (UserPromptSubmit event)
+- `fab hook artifact-write` — artifact bookkeeping: parse PostToolUse JSON from stdin, pattern-match fab artifact paths, perform per-artifact bookkeeping (type inference, scoring, checklist counting)
+- `fab hook sync` — register hook scripts into `.claude/settings.local.json` (replaces jq-dependent shell implementation)
 - `fab pane-map` — combine tmux pane introspection with worktree/change/runtime state into a unified table (columns: Pane, Tab, Worktree, Change, Stage, Agent); session-scoped via `-s`
 - `fab send-keys <change> "<text>"` — send text to a target agent's tmux pane (see below)
 
-**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`, `worktree`) import `statusfile` for YAML access. The `worktree` package provides worktree discovery via `git worktree list --porcelain` and fab state resolution. The runtime-related CLI subcommands in `cmd/fab/runtime.go` manage `.fab-runtime.yaml` (agent idle state). The `pane-map` subcommand in `cmd/fab/panemap.go` combines tmux pane discovery, worktree resolution, change state, and runtime state into a single observation command.
+**Architecture**: `internal/statusfile` is the shared foundation — a `StatusFile` struct parsed once via `Load()`, passed by pointer across all operations, and written atomically via temp+rename `Save()`. All other packages (`resolve`, `log`, `status`, `preflight`, `change`, `score`, `archive`, `worktree`) import `statusfile` for YAML access. The `worktree` package provides worktree discovery via `git worktree list --porcelain` and fab state resolution. The `internal/runtime` package (extracted from `cmd/fab/runtime.go`) provides shared runtime file manipulation (`LoadRuntimeFile`, `SaveRuntimeFile`, `RuntimeFilePath`, `ClearIdle`, `SetIdle`) — used by both `fab runtime` CLI subcommands and `fab hook` subcommands. The `internal/hooklib` package provides artifact bookkeeping logic (JSON parsing, path pattern matching, change type inference, task/checklist counting) and hook sync logic (hook-to-event mapping, JSON merging for `.claude/settings.local.json`). The `pane-map` subcommand in `cmd/fab/panemap.go` combines tmux pane discovery, worktree resolution, change state, and runtime state into a single observation command.
 
 **Parity**: All subcommands produce stdout/stderr output matching the bash versions (modulo timestamps).
 
-**Testing**: Unit tests in `src/fab-go/` cover all internal packages via `go test ./...`. Run with `just test-go` (or `just test-go-v` for verbose). Tested packages: `cmd/fab` (panemap, sendkeys), `internal/config`, `internal/hooks`, `internal/status`, `internal/statusfile`, `internal/resolve`, `internal/log`, `internal/preflight`, `internal/score`, `internal/archive`, `internal/change`. The `internal/worktree` package has no tests (depends on live git worktree state). Test patterns: `t.TempDir()` for filesystem isolation, table-driven tests with `t.Run()` subtests, standard `testing` package only (no external test frameworks). The previous parity tests (`src/fab-go/test/parity/`) were removed — the bash scripts they validated against no longer exist.
+**Testing**: Unit tests in `src/fab-go/` cover all internal packages via `go test ./...`. Run with `just test-go` (or `just test-go-v` for verbose). Tested packages: `cmd/fab` (panemap, sendkeys), `internal/config`, `internal/hooks`, `internal/hooklib` (artifact bookkeeping + hook sync), `internal/runtime` (runtime file manipulation), `internal/status`, `internal/statusfile`, `internal/resolve`, `internal/log`, `internal/preflight`, `internal/score`, `internal/archive`, `internal/change`. The `internal/worktree` package has no tests (depends on live git worktree state). Test patterns: `t.TempDir()` for filesystem isolation, table-driven tests with `t.Run()` subtests, standard `testing` package only (no external test frameworks). The previous parity tests (`src/fab-go/test/parity/`) were removed — the bash scripts they validated against no longer exist.
 
 ### Rust Binary (`fab-rust`)
 
@@ -511,6 +517,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260310-bvc6-merge-hooks-into-go | 2026-03-10 | Merged Claude Code hooks into Go binary. New `fab hook` subcommand group with 5 subcommands: `session-start`, `stop`, `user-prompt`, `artifact-write`, `sync`. Shell scripts in `fab/.kit/hooks/` are now thin wrappers (`exec ... 2>/dev/null; exit 0`) delegating to `fab hook <subcommand>`. New `on-user-prompt.sh` for `UserPromptSubmit` event (improves agent idle tracking). `5-sync-hooks.sh` rewritten as thin wrapper delegating to `fab hook sync`, eliminating its jq dependency. Removed jq and bats from `fab-doctor.sh` prerequisites (7 → 5 tools). New `internal/runtime/` package (extracted from `cmd/fab/runtime.go` for shared use by `fab runtime` and `fab hook` commands). New `internal/hooklib/` package (artifact bookkeeping + hook sync logic). |
 | 260310-czb7-go-test-coverage | 2026-03-10 | Documented Go test strategy: 11 internal packages now have unit tests (added resolve, log, preflight, score, archive, change). Tests run via `just test-go` / `just test-go-v` (`go test ./...`). Test patterns: `t.TempDir()` isolation, table-driven, `t.Run()` subtests, standard `testing` package. Only `internal/worktree` intentionally untested. Replaced stale parity test reference. |
 | 260310-b8ff-operator-observation-fixes | 2026-03-10 | Updated pane-map and send-keys to use session-scoped pane discovery (`-s` instead of `-a`). Added Tab column to pane-map output (6 columns: Pane, Tab, Worktree, Change, Stage, Agent). Added `fab runtime is-idle <change>` read-only subcommand (prints `idle {duration}`, `active`, or `unknown`). Updated send-keys pane resolution description to reflect session scoping and `#{window_name}` in tmux format string. |
 | 260307-bmp3-3-rust-binary-port | 2026-03-10 | Added Rust binary (`fab-rust`) as second backend — all 9 subcommands with strict Go parity. Source at `src/fab-rust/` (flat modules, clap derive, serde_yaml, anyhow). Release profile: `lto` + `strip`. Built locally via `just build-rust` (+ `test-rust` recipe). Updated dispatcher with backend override mechanism (`FAB_BACKEND` env var, `.fab-backend` file, priority: override > rust > go). Updated directory tree (`fab-rust` no longer "future"). CI/release for Rust deferred. |
