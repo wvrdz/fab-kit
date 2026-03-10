@@ -90,7 +90,7 @@ brew install yq jq gh direnv
 In addition to the above:
 
 ```bash
-brew install bats-core parallel go rust
+brew install bats-core parallel go rust zig
 cargo install cargo-zigbuild
 ```
 
@@ -100,6 +100,7 @@ cargo install cargo-zigbuild
 | [parallel](https://www.gnu.org/software/parallel/) | Parallel execution for test suites and batch operations |
 | [Go](https://go.dev/) | Required for building the `fab` binary from source (`src/fab-go/`) |
 | [Rust](https://www.rust-lang.org/) | Required for building the `fab` binary from source (`src/fab-rust/`) |
+| [zig](https://ziglang.org/) | C/C++ cross-compiler backend used by cargo-zigbuild |
 | [cargo-zigbuild](https://github.com/rust-cross/cargo-zigbuild) | Cross-compilation for Rust release builds |
 
 ### 1. Install
