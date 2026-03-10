@@ -46,7 +46,7 @@ func ideaAddCmd(fileFlag *string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add <text>",
 		Short: "Add a new idea to the backlog",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path, err := resolveIdeaFile(fileFlag)
 			if err != nil {

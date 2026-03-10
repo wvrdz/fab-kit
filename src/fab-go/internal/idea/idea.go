@@ -58,6 +58,28 @@ var lineRegex = regexp.MustCompile(`^- \[([ x])\] \[([a-z0-9]{4})\] (\d{4}-\d{2}
 
 var idChars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
+// idRegex validates that an ID is exactly 4 lowercase alphanumeric characters.
+var idRegex = regexp.MustCompile(`^[a-z0-9]{4}$`)
+
+// dateRegex validates the YYYY-MM-DD date format.
+var dateRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+
+// ValidateID checks that id matches the expected 4-char lowercase alphanumeric format.
+func ValidateID(id string) error {
+	if !idRegex.MatchString(id) {
+		return fmt.Errorf("invalid ID %q: must be exactly 4 lowercase alphanumeric characters", id)
+	}
+	return nil
+}
+
+// ValidateDate checks that date matches YYYY-MM-DD format.
+func ValidateDate(date string) error {
+	if !dateRegex.MatchString(date) {
+		return fmt.Errorf("invalid date %q: must be in YYYY-MM-DD format", date)
+	}
+	return nil
+}
+
 // ParseLine parses a single backlog line into an Idea.
 // Returns the parsed idea and true if the line is valid, or a zero Idea and false.
 func ParseLine(line string) (Idea, bool) {
@@ -248,6 +270,20 @@ func Add(path, text, customID, customDate string) (Idea, error) {
 		return Idea{}, fmt.Errorf("text is required")
 	}
 
+	// Validate custom ID format if provided
+	if customID != "" {
+		if err := ValidateID(customID); err != nil {
+			return Idea{}, err
+		}
+	}
+
+	// Validate custom date format if provided
+	if customDate != "" {
+		if err := ValidateDate(customDate); err != nil {
+			return Idea{}, err
+		}
+	}
+
 	// Determine ID
 	id := customID
 	if id == "" {
@@ -421,6 +457,20 @@ func Edit(path, query, newText, newID, newDate string) (Idea, error) {
 	_, idx, err := RequireSingle(query, f.ideas, FilterAll)
 	if err != nil {
 		return Idea{}, err
+	}
+
+	// Validate new ID format if provided
+	if newID != "" {
+		if err := ValidateID(newID); err != nil {
+			return Idea{}, err
+		}
+	}
+
+	// Validate new date format if provided
+	if newDate != "" {
+		if err := ValidateDate(newDate); err != nil {
+			return Idea{}, err
+		}
 	}
 
 	// Check ID collision if changing
