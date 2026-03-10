@@ -332,8 +332,8 @@ func TestList(t *testing.T) {
 	// Each entry should have format name:stage:state:score:indicative
 	for _, entry := range results {
 		parts := strings.Split(entry, ":")
-		if len(parts) < 4 {
-			t.Errorf("entry %q has fewer than 4 colon-separated parts", entry)
+		if len(parts) < 5 {
+			t.Errorf("entry %q has fewer than 5 colon-separated parts (expected name:stage:state:score:indicative)", entry)
 		}
 	}
 }

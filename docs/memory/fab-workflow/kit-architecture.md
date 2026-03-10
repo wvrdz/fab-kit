@@ -16,7 +16,7 @@ The `.kit/` directory SHALL contain:
 fab/.kit/
 ├── VERSION                 # Semver string (e.g., "0.1.0")
 ├── bin/                    # Dispatcher + optional compiled backends
-│   ├── fab                 # Shell dispatcher — sole entry point, checks fab-rust → fab-go → error
+│   ├── fab                 # Shell dispatcher — sole entry point, checks fab-go → fab-rust → error
 │   ├── fab-go              # Go binary (optional, platform-specific from per-platform archives)
 │   ├── fab-rust            # Rust binary (optional, built locally via `just build-rust`)
 │   └── .gitkeep            # Ensures directory exists even in generic archive (no binary)
@@ -317,8 +317,8 @@ A POSIX-compatible shell script that serves as the sole entry point for all fab 
 Invalid or unavailable override values silently fall through to the default priority chain.
 
 **Default priority chain** (first available wins):
-1. `fab/.kit/bin/fab-rust` — Rust binary (built locally via `just build-rust`)
-2. `fab/.kit/bin/fab-go` — Go binary (from per-platform release archives)
+1. `fab/.kit/bin/fab-go` — Go binary (from per-platform release archives)
+2. `fab/.kit/bin/fab-rust` — Rust binary (built locally via `just build-rust`)
 3. Error — exits 1 with message: `Error: no fab backend found (expected fab-go or fab-rust in <dir>)`
 
 **Version handling**: `fab --version` is handled by the dispatcher itself (not delegated). Reads `fab/.kit/VERSION` and reports the active backend: `fab {version} ({backend} backend)` where `{backend}` is `rust`, `go`, or `none`.
@@ -356,7 +356,7 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 
 ### Rust Binary (`fab-rust`)
 
-A second backend implementing all 9 subcommands with strict output parity to the Go binary. A single Rust binary crate at `src/fab-rust/` (source), placed at `fab/.kit/bin/fab-rust` when built. The dispatcher prefers it over `fab-go` by default.
+A second backend implementing all 9 subcommands with strict output parity to the Go binary. A single Rust binary crate at `src/fab-rust/` (source), placed at `fab/.kit/bin/fab-rust` when built. The dispatcher prefers `fab-go` over it by default.
 
 **Module**: `fab-rust` (Rust 2021 edition, dependencies: `clap` 4 with derive, `serde` + `serde_yaml` 0.9, `serde_json`, `anyhow`, `chrono`, `rand`, `regex`; dev: `tempfile`)
 
@@ -415,7 +415,7 @@ Sends text to a target agent's tmux pane. Signature: `fab send-keys <change> "<t
 ## Design Decisions
 
 ### All Logic in Markdown and Shell (with Optional Compiled Backends)
-**Decision**: Workflow logic lives in markdown skill files and shell scripts. A shell dispatcher at `fab/.kit/bin/fab` serves as the sole entry point, routing to compiled backends (`fab-rust` → `fab-go`) with a backend override mechanism (`FAB_BACKEND` env var, `.fab-backend` file). No runtime dependencies for end users; Go/Rust toolchains are only needed for building from source.
+**Decision**: Workflow logic lives in markdown skill files and shell scripts. A shell dispatcher at `fab/.kit/bin/fab` serves as the sole entry point, routing to compiled backends (`fab-go` → `fab-rust`) with a backend override mechanism (`FAB_BACKEND` env var, `.fab-backend` file). No runtime dependencies for end users; Go/Rust toolchains are only needed for building from source.
 **Why**: Constitution I (Pure Prompt Play). Any AI agent that can read markdown and execute shell commands can drive the workflow. Compiled backends are pre-compiled static binaries (no runtime dependencies via `CGO_ENABLED=0` for Go, `lto`+`strip` for Rust), distributed inside platform-specific archives — they are not system installs. The dispatcher pattern centralizes backend selection in one place instead of duplicating shim logic in every shell script. The override mechanism enables comparison during the Rust transition period.
 **Rejected**: CLI tool, npm package, or Python script — all introduce system dependencies. Also rejected: making compiled backends mandatory — preserves graceful degradation for unsupported platforms. Also rejected: per-script shim delegation (previous approach) — duplicated 3-line shim in all 7 scripts, no path for multiple compiled backends. Also rejected: CLI flag for backend selection — would require dispatcher to parse args before delegating.
 *Source*: doc/fab-spec/README.md, fab/project/constitution.md, 260305-qagd-unified-fab-dispatcher

@@ -207,10 +207,9 @@ func TestToAbsStatus(t *testing.T) {
 }
 
 func TestFabRoot(t *testing.T) {
-	// FabRoot searches upward from cwd for a fab/ directory.
-	// We can't easily test this without changing the working directory,
-	// but we can verify it doesn't panic and returns something when
-	// run from the actual repo.
+	// FabRoot walks up from cwd to find a fab/ directory.
+	// Test creates a temp dir with fab/ and a nested subdir, then
+	// verifies FabRoot resolves correctly from the nested location.
 	dir := t.TempDir()
 	fabDir := filepath.Join(dir, "fab")
 	os.MkdirAll(fabDir, 0755)

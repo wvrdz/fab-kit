@@ -56,7 +56,8 @@ func setupScoreFixture(t *testing.T, changeType, specContent string) string {
 	// Write spec.md
 	os.WriteFile(filepath.Join(changeDir, "spec.md"), []byte(specContent), 0644)
 
-	// Also create a project config for hooks (score's status.SetConfidence path)
+	// Create project config — required by status.SetConfidence/SetConfidenceFuzzy
+	// which reads project config to locate the status file during YAML writes
 	os.MkdirAll(filepath.Join(fabRoot, "project"), 0755)
 	os.WriteFile(filepath.Join(fabRoot, "project", "config.yaml"), []byte("project:\n  name: test\n"), 0644)
 
