@@ -32,8 +32,8 @@ for platform in "${platforms[@]}"; do
   archive_name="kit-${os}-${arch}.tar.gz"
   staging="$build_dir/staging-${os}-${arch}"
   rm -rf "$staging"
-  mkdir -p "$staging/.kit/bin"
-  cp -a fab/.kit "$staging/.kit"
+  mkdir -p "$staging"
+  cp -a fab/.kit "$staging/"
   for bin_pair in "fab:fab-go" "wt:wt" "idea:idea"; do
     src_name="${bin_pair%%:*}"
     dest_name="${bin_pair##*:}"
