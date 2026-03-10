@@ -5,16 +5,16 @@ created_by: sahil-weaver
 change_type: fix
 issues: []
 progress:
-  intake: ready
-  spec: pending
-  tasks: pending
-  apply: pending
-  review: pending
-  hydrate: pending
-  ship: pending
-  review-pr: pending
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+  ship: done
+  review-pr: active
 checklist:
-  generated: false
+  generated: true
   path: checklist.md
   completed: 0
   total: 0
@@ -32,9 +32,14 @@ confidence:
     competence: 88.0
     disambiguation: 88.0
 stage_metrics:
-  intake:
-    started_at: 2026-03-10T14:02:13.985791+05:30
-    driver: fab-new
-    iterations: 1
-prs: []
-last_updated: 2026-03-10T14:06:21.097281+05:30
+  intake: {started_at: "2026-03-10T14:02:13.985791+05:30", driver: fab-new, iterations: 1, completed_at: "2026-03-10T14:19:02+05:30"}
+  spec: {started_at: "2026-03-10T14:19:02+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-10T14:19:11+05:30"}
+  tasks: {started_at: "2026-03-10T14:19:11+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-10T14:20:31+05:30"}
+  apply: {started_at: "2026-03-10T14:20:31+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-10T14:27:04+05:30"}
+  review: {started_at: "2026-03-10T14:27:04+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-10T14:29:04+05:30"}
+  hydrate: {started_at: "2026-03-10T14:29:04+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-10T14:30:15+05:30"}
+  ship: {started_at: "2026-03-10T14:30:15+05:30", driver: fab-ff, iterations: 1, completed_at: "2026-03-10T14:31:57+05:30"}
+  review-pr: {started_at: "2026-03-10T14:31:57+05:30", driver: git-pr, iterations: 1, phase: fixing, reviewer: 'copilot-pull-request-reviewer[bot]'}
+prs:
+  - https://github.com/wvrdz/fab-kit/pull/235
+last_updated: 2026-03-10T14:31:57+05:30
