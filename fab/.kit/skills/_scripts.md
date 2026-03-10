@@ -45,6 +45,7 @@ fab/.kit/bin/fab <command> <subcommand> [args...]
 | `fab hook` | Claude Code hook subcommands (session-start, stop, user-prompt, artifact-write, sync) |
 | `fab pane-map` | Tmux pane-to-worktree mapping with fab pipeline state |
 | `fab send-keys` | Send text to a change's tmux pane |
+| `fab idea` | Backlog idea management (add, list, show, done, reopen, edit, rm) |
 
 ---
 
@@ -335,6 +336,47 @@ fab/.kit/bin/fab send-keys <change> "<text>"
 fab/.kit/bin/fab send-keys r3m7 "/fab-continue"
 fab/.kit/bin/fab send-keys 260306-k8ds-ship-wt-binary "git fetch origin main && git rebase origin/main"
 ```
+
+---
+
+# Backlog
+
+## fab idea
+
+Idea Manager — full CRUD for `fab/backlog.md` in the current git repo. Manages backlog ideas as markdown checkbox items.
+
+```
+fab/.kit/bin/fab idea <subcommand> [flags...]
+```
+
+| Subcommand | Usage | Purpose |
+|------------|-------|---------|
+| `add` | `add <text> [--id <4char>] [--date <YYYY-MM-DD>]` | Add a new idea |
+| `list` | `list [-a] [--done] [--json] [--sort <id\|date>] [--reverse]` | List ideas |
+| `show` | `show <query> [--json]` | Show a single idea |
+| `done` | `done <query>` | Mark an idea as done |
+| `reopen` | `reopen <query>` | Reopen a completed idea |
+| `edit` | `edit <query> <new-text> [--id <4char>] [--date <YYYY-MM-DD>]` | Modify an idea |
+| `rm` | `rm <query> --force` | Delete an idea (requires --force) |
+
+**Persistent flag**: `--file <path>` overrides the backlog file location (relative to git root). Also respects `IDEAS_FILE` env var. Priority: `--file` > `IDEAS_FILE` > default `fab/backlog.md`.
+
+**Query matching**: Case-insensitive substring match on both the idea ID and text fields. Commands that modify a single idea (`show`, `done`, `reopen`, `edit`, `rm`) require exactly one match; zero matches returns "No idea matching", multiple matches returns disambiguation guidance.
+
+**Backlog format** (unchanged from the original Bash script):
+
+```
+- [ ] [a7k2] 2025-06-15: Add dark mode to settings page
+- [ ] [c3d4] 2025-06-10: DES-123 Link to a Linear ticket
+- [x] [e5f6] 2025-06-08: Fix login redirect bug
+```
+
+**Output format**:
+- Add: `Added: [{id}] {date}: {text}`
+- Done: `Done: - [x] [{id}] {date}: {text}`
+- Reopen: `Reopened: - [ ] [{id}] {date}: {text}`
+- Edit: `Updated: - [{status}] [{id}] {date}: {text}`
+- Rm: `Removed: - [{status}] [{id}] {date}: {text}`
 
 ---
 
