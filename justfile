@@ -89,16 +89,12 @@ build-go-all:
     just build-go-target linux arm64
     just build-go-target linux amd64
 
-# Package kit archives for release (generic + per-platform)
+# Package kit archives for release (generic + per-platform with Go binary)
 package-kit:
     #!/usr/bin/env bash
     set -euo pipefail
     platforms=("darwin/arm64" "darwin/amd64" "linux/arm64" "linux/amd64")
     build_dir=".release-build"
-    # Resolve Rust target triple via _rust-target (single source of truth)
-    rust_target_for() {
-      just _rust-target "$1" "$2"
-    }
     # Verify cross-compiled Go binaries exist
     for platform in "${platforms[@]}"; do
       os="${platform%%/*}"
@@ -109,42 +105,28 @@ package-kit:
         exit 1
       fi
     done
-    # Verify cross-compiled Rust binaries exist
-    for platform in "${platforms[@]}"; do
-      os="${platform%%/*}"
-      arch="${platform##*/}"
-      target="$(rust_target_for "$os" "$arch")"
-      binary="$build_dir/fab-rust-${target}"
-      if [ ! -f "$binary" ]; then
-        echo "ERROR: Missing Rust binary $binary — run 'just build-rust-all' first."
-        exit 1
-      fi
-    done
     # Generic archive (no binary)
     echo "Packaging kit.tar.gz (generic, no binary)..."
     COPYFILE_DISABLE=1 tar czf kit.tar.gz -C fab --exclude='.kit/bin/fab-go' --exclude='.kit/bin/fab-rust' .kit
     echo "  kit.tar.gz ($(wc -c < kit.tar.gz) bytes)"
-    # Per-platform archives (kit + both binaries)
+    # Per-platform archives (kit + Go binary)
     for platform in "${platforms[@]}"; do
       os="${platform%%/*}"
       arch="${platform##*/}"
-      target="$(rust_target_for "$os" "$arch")"
       archive_name="kit-${os}-${arch}.tar.gz"
       go_binary="$build_dir/fab-${os}-${arch}"
-      rust_binary="$build_dir/fab-rust-${target}"
       staging="$build_dir/staging-${os}-${arch}"
       rm -rf "$staging"
       mkdir -p "$staging"
       cp -a fab/.kit "$staging/.kit"
       mkdir -p "$staging/.kit/bin"
       cp "$go_binary" "$staging/.kit/bin/fab-go"
-      cp "$rust_binary" "$staging/.kit/bin/fab-rust"
-      chmod +x "$staging/.kit/bin/fab-go" "$staging/.kit/bin/fab-rust"
+      chmod +x "$staging/.kit/bin/fab-go"
       COPYFILE_DISABLE=1 tar czf "$archive_name" -C "$staging" .kit
       echo "  $archive_name ($(wc -c < "$archive_name") bytes)"
       rm -rf "$staging"
     done
-    echo "Packaging complete: kit.tar.gz + ${#platforms[@]} platform archives (dual binary)"
+    echo "Packaging complete: kit.tar.gz + ${#platforms[@]} platform archives"
 
 # Remove build artifacts and kit archives
 clean:

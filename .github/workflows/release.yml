@@ -13,48 +13,38 @@ jobs:
     steps:
       # Checkout repository
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Set up Go toolchain
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      # Set up Rust toolchain with cross-compilation targets
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin,aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
-
-      # Cache cargo-zigbuild and Zig installations (versioned key)
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/cargo-zigbuild
-            ~/.local/lib/python*/site-packages/ziglang
-            ~/.local/bin/zig
-          key: cross-tools-zig0.13-zigbuild0.19-${{ runner.os }}
-
-      # Install Zig via pip and cargo-zigbuild with pinned versions (skipped on cache hit)
-      - name: Install cross-compilation tools
-        run: |
-          which zig || pip install ziglang==0.13.0
-          which cargo-zigbuild || cargo install cargo-zigbuild@0.19.8
-
       # Install just command runner
       - uses: extractions/setup-just@v2
 
-      # Cross-compile Go and Rust binaries for all release targets
+      # Cross-compile Go binaries for all release targets
       - name: Build all targets
-        run: just build-all
+        run: just build-go-all
 
-      # Create kit archives (generic + per-platform with dual binaries)
+      # Create kit archives (generic + per-platform with Go binary)
       - name: Package kit archives
         run: just package-kit
 
-      # Create GitHub Release with all archives
+      # Create GitHub Release with commit-level changelog
       - name: Create GitHub Release
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --generate-notes \
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          PREV=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          COMMITS=$(git log --oneline "${PREV}..${TAG}" | sed 's/^/- /')
+          printf 'Fab Kit release %s\n\n## Changes since %s\n\n%s\n' \
+            "$VERSION" "$PREV" "$COMMITS" > /tmp/release-body.md
+
+          gh release create "$TAG" \
+            --title "Fab Kit ${TAG}" \
+            --notes-file /tmp/release-body.md \
             kit.tar.gz \
             kit-darwin-arm64.tar.gz \
             kit-darwin-amd64.tar.gz \
