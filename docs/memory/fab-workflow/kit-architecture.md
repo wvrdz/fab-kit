@@ -352,7 +352,7 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 
 **Parity**: All subcommands produce stdout/stderr output matching the bash versions (modulo timestamps).
 
-**Testing**: Go parity tests in `src/fab-go/test/parity/` validate the Go binary. The previous shell script test suites (`src/lib/*/test.bats`, `src/lib/*/test-simple.sh`, `src/lib/*/SPEC-*.md`, etc.) were removed along with the shell scripts they tested. The `src/lib/` and `src/sync/` directories no longer exist.
+**Testing**: Unit tests in `src/fab-go/` cover all internal packages via `go test ./...`. Run with `just test-go` (or `just test-go-v` for verbose). Tested packages: `cmd/fab` (panemap, sendkeys), `internal/config`, `internal/hooks`, `internal/status`, `internal/statusfile`, `internal/resolve`, `internal/log`, `internal/preflight`, `internal/score`, `internal/archive`, `internal/change`. The `internal/worktree` package has no tests (depends on live git worktree state). Test patterns: `t.TempDir()` for filesystem isolation, table-driven tests with `t.Run()` subtests, standard `testing` package only (no external test frameworks). The previous parity tests (`src/fab-go/test/parity/`) were removed — the bash scripts they validated against no longer exist.
 
 ### Rust Binary (`fab-rust`)
 
@@ -511,6 +511,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260310-czb7-go-test-coverage | 2026-03-10 | Documented Go test strategy: 11 internal packages now have unit tests (added resolve, log, preflight, score, archive, change). Tests run via `just test-go` / `just test-go-v` (`go test ./...`). Test patterns: `t.TempDir()` isolation, table-driven, `t.Run()` subtests, standard `testing` package. Only `internal/worktree` intentionally untested. Replaced stale parity test reference. |
 | 260310-b8ff-operator-observation-fixes | 2026-03-10 | Updated pane-map and send-keys to use session-scoped pane discovery (`-s` instead of `-a`). Added Tab column to pane-map output (6 columns: Pane, Tab, Worktree, Change, Stage, Agent). Added `fab runtime is-idle <change>` read-only subcommand (prints `idle {duration}`, `active`, or `unknown`). Updated send-keys pane resolution description to reflect session scoping and `#{window_name}` in tmux format string. |
 | 260307-bmp3-3-rust-binary-port | 2026-03-10 | Added Rust binary (`fab-rust`) as second backend — all 9 subcommands with strict Go parity. Source at `src/fab-rust/` (flat modules, clap derive, serde_yaml, anyhow). Release profile: `lto` + `strip`. Built locally via `just build-rust` (+ `test-rust` recipe). Updated dispatcher with backend override mechanism (`FAB_BACKEND` env var, `.fab-backend` file, priority: override > rust > go). Updated directory tree (`fab-rust` no longer "future"). CI/release for Rust deferred. |
 | 260307-x2tx-status-symlink-pointer | 2026-03-07 | Replaced `fab/current` pointer file with `.fab-status.yaml` symlink at repo root. Added `id` field to `.status.yaml`. Updated resolution, switch, rename, pane-map, hooks, and dispatch. Migration `0.32.0-to-0.34.0` covers conversion. |

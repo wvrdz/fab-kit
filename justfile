@@ -9,6 +9,7 @@ test:
     just test-packages
     just test-scripts
     just test-rust
+    just test-go
 
 # Setup test dependencies
 test-setup:
@@ -25,6 +26,14 @@ test-packages:
 # Run script tests (bats)
 test-scripts:
     {{scripts}}/test-scripts.sh
+
+# Run Go unit tests
+test-go:
+    cd {{go_src}} && go test ./... -count=1
+
+# Run Go unit tests (verbose)
+test-go-v:
+    cd {{go_src}} && go test ./... -v -count=1
 
 # Run Rust integration tests
 test-rust:
