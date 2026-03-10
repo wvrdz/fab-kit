@@ -26,7 +26,7 @@ jobs:
 
       # Cross-compile Go binaries for all release targets
       - name: Build all targets
-        run: just build-go-all
+        run: just build-all
 
       # Create kit archives (generic + per-platform with Go binary)
       - name: Package kit archives
