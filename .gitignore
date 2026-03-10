@@ -5,7 +5,9 @@ fab/.kit-sync-version
 # fab/backlog.md
 fab/pipelines/.series-*.yaml
 fab/changes/**/.pr-done
-fab/.kit/bin/fab-*
+fab/.kit/bin/*
+!fab/.kit/bin/fab
+!fab/.kit/bin/.gitkeep
 
 /.agents
 /.claude
@@ -26,10 +28,6 @@ src/benchmark/statusman-rust/target/
 src/benchmark/statusman-node/node_modules/
 src/benchmark/statusman-go/statusman
 src/benchmark/results/*.json
-
-fab/.kit/bin/fab-go
-fab/.kit/bin/fab-rust
-fab/.kit/bin/wt
 src/fab-go/wt
 
 # Rust build artifacts
