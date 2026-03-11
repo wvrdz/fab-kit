@@ -177,5 +177,5 @@ func InitScriptPath() string {
 	if v := os.Getenv("WORKTREE_INIT_SCRIPT"); v != "" {
 		return v
 	}
-	return "fab/.kit/worktree-init.sh"
+	return "fab/.kit/scripts/fab-sync.sh"
 }
