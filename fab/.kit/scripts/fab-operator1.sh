@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ---
-# name: fab-operator
-# description: "Launch the operator in a dedicated tmux tab (singleton per session)"
+# name: fab-operator1
+# description: "Launch operator1 in a dedicated tmux tab (singleton per session)"
 # ---
 set -euo pipefail
 
-TAB_NAME="operator1"
+TAB_NAME="operator"
 
 # Must be inside tmux/byobu
 if [[ -z "${TMUX:-}" ]]; then
