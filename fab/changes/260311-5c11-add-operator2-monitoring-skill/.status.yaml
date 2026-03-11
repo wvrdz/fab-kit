@@ -2,43 +2,43 @@ id: 5c11
 name: 260311-5c11-add-operator2-monitoring-skill
 created: 2026-03-11T08:05:12Z
 created_by: sahil-weaver
-change_type: refactor
+change_type: feat
 issues: []
 progress:
-    intake: done
-    spec: done
-    tasks: done
-    apply: done
-    review: done
-    hydrate: done
-    ship: done
-    review-pr: active
+  intake: done
+  spec: done
+  tasks: done
+  apply: done
+  review: done
+  hydrate: done
+  ship: done
+  review-pr: active
 checklist:
-    generated: true
-    path: checklist.md
-    completed: 0
-    total: 36
+  generated: true
+  path: checklist.md
+  completed: 0
+  total: 36
 confidence:
-    certain: 11
-    confident: 1
-    tentative: 0
-    unresolved: 0
-    score: 4.7
-    fuzzy: true
-    dimensions:
-        signal: 90.8
-        reversibility: 88.8
-        competence: 90.8
-        disambiguation: 92.5
+  certain: 11
+  confident: 1
+  tentative: 0
+  unresolved: 0
+  score: 4.7
+  fuzzy: true
+  dimensions:
+    signal: 90.8
+    reversibility: 88.8
+    competence: 90.8
+    disambiguation: 92.5
 stage_metrics:
-    intake: {started_at: "2026-03-11T08:05:12Z", driver: fab-new, iterations: 1, completed_at: "2026-03-11T08:20:24Z"}
-    spec: {started_at: "2026-03-11T08:20:24Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:21:52Z"}
-    tasks: {started_at: "2026-03-11T08:21:52Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:21:52Z"}
-    apply: {started_at: "2026-03-11T08:21:52Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:27:40Z"}
-    review: {started_at: "2026-03-11T08:27:40Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:30:56Z"}
-    hydrate: {started_at: "2026-03-11T08:30:56Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:32:30Z"}
-    ship: {started_at: "2026-03-11T08:32:30Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:33:54Z"}
-    review-pr: {started_at: "2026-03-11T08:33:54Z", driver: fab-ff, iterations: 1}
+  intake: {started_at: "2026-03-11T08:05:12Z", driver: fab-new, iterations: 1, completed_at: "2026-03-11T08:20:24Z"}
+  spec: {started_at: "2026-03-11T08:20:24Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:21:52Z"}
+  tasks: {started_at: "2026-03-11T08:21:52Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:21:52Z"}
+  apply: {started_at: "2026-03-11T08:21:52Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:27:40Z"}
+  review: {started_at: "2026-03-11T08:27:40Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:30:56Z"}
+  hydrate: {started_at: "2026-03-11T08:30:56Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:32:30Z"}
+  ship: {started_at: "2026-03-11T08:32:30Z", driver: fab-ff, iterations: 1, completed_at: "2026-03-11T08:33:54Z"}
+  review-pr: {started_at: "2026-03-11T08:33:54Z", driver: fab-ff, iterations: 1, phase: fixing, reviewer: 'copilot-pull-request-reviewer[bot]'}
 prs:
-    - https://github.com/wvrdz/fab-kit/pull/245
+  - https://github.com/wvrdz/fab-kit/pull/245
 last_updated: 2026-03-11T08:33:54Z
