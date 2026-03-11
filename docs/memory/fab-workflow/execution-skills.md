@@ -193,7 +193,7 @@ On invocation, the operator displays the pane map (via `fab pane-map` — column
 
 The operator MUST re-query live state (`fab pane-map`, `fab runtime is-idle`) before every action. It SHALL NOT rely on stale values from conversation memory. `fab pane-map` is the primary observation mechanism; `fab runtime is-idle <change>` provides per-agent idle checks for pre-send validation.
 
-#### Seven Use Cases
+#### Use Cases
 
 Each use case follows the pattern: interpret user intent → refresh state → validate preconditions → execute → report.
 
@@ -204,6 +204,7 @@ Each use case follows the pattern: interpret user intent → refresh state → v
 5. **Status dashboard** — refresh pane map (`fab pane-map`), present concise human-readable summary
 6. **Unstick a stuck agent** — confirm idle via `fab runtime is-idle <change>`, send `/fab-continue`, warn on repeated nudge ("Already nudged once. Manual investigation recommended.")
 7. **Notification surface** — hold "notify me" instructions in conversation context, check on next user interaction, report status
+8. **Autopilot** — accept a list of changes (IDs, names, or "all idle"), resolve ordering (user-provided, confidence-based, or hybrid), confirm full queue at start (destructive — merges PRs after each success), delegate to Autopilot Behavior for execution
 
 #### Confirmation Model
 
@@ -211,7 +212,7 @@ Each use case follows the pattern: interpret user intent → refresh state → v
 |------|----------|----------|
 | Read-only | Status check, pane map | No confirmation |
 | Recoverable | Send `/fab-continue`, rebase | Announce before sending |
-| Destructive | Merge PR, archive, delete worktree | Confirm before executing |
+| Destructive | Merge PR, archive, delete worktree, Autopilot (merge after each success) | Confirm before executing |
 
 #### Pre-Send Validation
 
@@ -231,6 +232,31 @@ The operator SHALL NOT load change artifacts (intakes, specs, tasks). It reports
 #### Interaction Primitive: `fab send-keys`
 
 The operator sends commands to other agents via the `fab send-keys <change> "<text>"` CLI subcommand (see kit-architecture.md for full subcommand documentation). The skill enforces policy (idle check, pane validation); the CLI provides mechanism (text delivery to pane).
+
+#### Autopilot Behavior (UC8)
+
+When UC8 delegates here, the operator drives a queue of changes through the full pipeline — spawning agents, monitoring progress, merging PRs, and rebasing downstream changes. Queue state is held in conversation context only (no file-backed persistence in v1).
+
+**Ordering strategies**: Three strategies resolve queue order: (1) user-provided — exact order as given; (2) confidence-based — sorted by confidence score descending via `fab status show --all`; (3) hybrid — user provides partial ordering constraints, operator sorts unconstrained changes by confidence as tiebreaker.
+
+**Per-change loop**: For each change in the resolved queue: spawn worktree (`wt create --non-interactive`) → open tmux tab (`tmux new-window -n "fab-<id>" -c <worktree> "claude --dangerously-skip-permissions '/fab-switch <change>'"`) → gate check confidence (`fab status show <change>`; if >= gate, dispatch `/fab-ff` via `fab send-keys`; if < gate, flag to user) → monitor via `fab pane-map` + `fab runtime is-idle` on each user interaction → on success, merge PR from operator shell (`gh pr merge`) → rebase next change on main (`git fetch origin main && git rebase origin/main` via `fab send-keys`; conflict = flag and skip, never auto-resolve) → optional cleanup (`wt-delete`) → report one-line status.
+
+**Failure matrix**:
+
+| Failure | Action | Resume? |
+|---------|--------|---------|
+| Confidence below gate | Flag to user: run `/fab-fff` or skip | Wait for user input |
+| Review fails (rework exhausted) | Flag, skip to next change | Yes |
+| Rebase conflict | Flag, skip to next change | Yes |
+| Agent pane dies | 1 respawn attempt, then flag and skip | Yes |
+| Stage timeout (>30 min same stage) | Flag regardless of retry state | Yes |
+| Total timeout (>2 hr per change) | Flag for review | Yes |
+
+**Interruptibility**: During autopilot, the user can interrupt with: `"stop after current"` (finish active change, halt queue), `"skip <change>"` (remove from queue, proceed), `"pause"` (stop sending new commands, running agents continue), `"resume"` (pick up from where paused). Interrupts are acknowledged immediately.
+
+**Resumability**: If the operator session restarts, state is reconstructable from `fab pane-map`. Merged changes appear as archived/shipped; in-progress changes show their current stage. The operator resumes from the first non-completed change.
+
+**Progress reporting**: One-line status after each change completes (success or skip). Final summary lists all changes with outcomes (merged, skipped, failed).
 
 ## Design Decisions
 
@@ -324,6 +350,7 @@ The operator sends commands to other agents via the `fab send-keys <change> "<te
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260310-1ttn-operator-autopilot-uc8 | 2026-03-11 | Added UC8 (Autopilot) to `/fab-operator1`: drives a queue of changes through the full pipeline with per-change spawn, gate check, monitoring, merge, and rebase-next loop. Three ordering strategies (user-provided, confidence-based, hybrid). Failure matrix with 6 failure types. Interruptibility (stop/skip/pause/resume). Session-resumable via `fab pane-map`. Queue state held in conversation context (v1). "Seven Use Cases" heading renamed to "Use Cases". Confirmation model updated to include autopilot as destructive. |
 | 260310-b8ff-operator-observation-fixes | 2026-03-10 | Updated `/fab-operator1` observation model: pane-map is now the sole primary observation mechanism (session-scoped via `-s`, 6 columns: Pane, Tab, Worktree, Change, Stage, Agent). `fab status show --all` retained only as outside-tmux fallback. State re-derivation uses `fab pane-map` + `fab runtime is-idle <change>` (replacing `fab status show --all`). Pre-send validation references `fab runtime is-idle <change>` explicitly. |
 | 260307-8ggm-git-pr-ship-finish-ordering | 2026-03-07 | Fixed git-pr post-PR step ordering: reordered as 4a (record PR URL) → 4b (finish ship stage) → 4c (commit+push .status.yaml and .history.jsonl) → 4d (write .pr-done sentinel). All status mutations now occur before the commit boundary, preventing uncommitted fab state files in the working tree after PR creation. Steps renumbered from 4/4b/4c/4d to 4a/4b/4c/4d. |
 | 260306-qkov-operator1-skill | 2026-03-07 | Added `/fab-operator1` standalone coordination skill: user-driven Claude session for cross-agent coordination (not a pipeline stage, not a lifecycle enforcer). Seven use cases (broadcast, sequenced rebase, merge PRs, spawn worktree, status dashboard, unstick agent, notification surface). Three-tier confirmation model. Pre-send validation via `fab runtime`. Bounded retries with escalation. Context discipline — loads always-load layer only, never change artifacts. Relies on `fab send-keys` CLI primitive for agent interaction. |

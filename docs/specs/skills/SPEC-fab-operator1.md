@@ -113,7 +113,13 @@ Operator:
 
 The operator can also diagnose — "what's r3m7's last output?" could use `tmux capture-pane -t <pane> -p` to read recent terminal output and reason about what went wrong.
 
-### 7. Sequential pipeline execution (autopilot)
+### 7. Notification surface
+
+The operator pane serves as the **single notification surface** for cross-agent events. When the user asks "tell me when r3m7 finishes" or "notify me if anything fails," the operator holds the instruction in its conversation context and checks on the next user interaction (or when explicitly asked to check).
+
+This is user-driven, not event-driven — the operator does not poll in the background. But it is the designated place where cross-agent status converges, making it the natural surface for the user to check.
+
+### 8. Sequential pipeline execution (autopilot)
 
 User says: "take all these changes to completion: bh45, qkov, ab12" — or "run all my changes, highest confidence first."
 
@@ -161,12 +167,6 @@ This use case requires the operator to understand:
 - The difference between `/fab-ff` (gated, no frontloaded questions) and `/fab-fff` (ungated, frontloaded questions)
 - Rework budget (max 3 cycles from `fab/project/code-review.md`)
 - PR merge mechanics via `gh`
-
-### 8. Notification surface
-
-The operator pane serves as the **single notification surface** for cross-agent events. When the user asks "tell me when r3m7 finishes" or "notify me if anything fails," the operator holds the instruction in its conversation context and checks on the next user interaction (or when explicitly asked to check).
-
-This is user-driven, not event-driven — the operator does not poll in the background. But it is the designated place where cross-agent status converges, making it the natural surface for the user to check.
 
 ---
 
