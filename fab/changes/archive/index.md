@@ -1,5 +1,6 @@
 # Archive Index
 
+- **260310-1ttn-operator-autopilot-uc8** — Extended fab-operator1 with UC8 autopilot — multi-worktree batch pipeline execution with ordering strategies, failure matrix, and interruptibility controls.
 - **260310-qbiq-go-wt-binary** — Consolidate wt-* shell scripts into a single Go binary with cobra subcommands, sharing the fab Go module and internal packages.
 - **260310-pl72-port-idea-to-go** — Port the idea Bash script to a Go subcommand (fab idea) with comprehensive tests, making all fab CLI tooling run through a single compiled binary.
 - **260310-bvc6-merge-hooks-into-go** — Merge all three Claude Code hook shell scripts into the Go binary as fab hook subcommands, eliminating jq dependency and subprocess overhead.
