@@ -81,7 +81,7 @@ Never rely on stale values from conversation memory. If a pane died or a change 
 
 ---
 
-## Seven Use Cases
+## Use Cases
 
 Each use case follows the pattern: **interpret user intent** then **refresh state** then **validate preconditions** then **execute** then **report**.
 
@@ -132,6 +132,13 @@ Each use case follows the pattern: **interpret user intent** then **refresh stat
 3. If the change has reached hydrate or later: "{change} finished — now at {stage}."
 4. If not finished: "{change} still at {stage}."
 
+### UC8: Autopilot
+
+1. Accept a list of changes (IDs, names, or "all idle")
+2. Resolve ordering via one of three strategies (user-provided, confidence-based, hybrid)
+3. Confirm the full queue at start (destructive — merges PRs)
+4. Delegate to the [Autopilot Behavior](#autopilot-behavior) section for execution
+
 ---
 
 ## Confirmation Model
@@ -142,7 +149,7 @@ Actions are categorized into three risk tiers:
 |------|----------|----------|
 | Read-only | Status check, pane map | No confirmation |
 | Recoverable | Send `/fab-continue`, rebase | Announce before sending |
-| Destructive | Merge PR, archive, delete worktree | Confirm before executing |
+| Destructive | Merge PR, archive, delete worktree, Autopilot (merge after each success) | Confirm before executing |
 
 ---
 
@@ -195,6 +202,83 @@ tmux capture-pane -t <pane> -p
 ```
 
 Present the output to the user. Do NOT attempt to load the agent's spec, tasks, or source files.
+
+---
+
+## Autopilot Behavior
+
+When UC8 delegates here, the operator drives a queue of changes through the full pipeline — spawning agents, monitoring progress, merging PRs, and rebasing downstream changes.
+
+### Ordering Strategies
+
+The operator resolves queue order via one of three strategies:
+
+| Strategy | Description |
+|----------|-------------|
+| User-provided | Run in the exact order given by the user |
+| Confidence-based | Sort by confidence score descending (via `fab/.kit/bin/fab status show --all`). Highest-confidence changes merge first. |
+| Hybrid | User provides ordering constraints (partial order); operator sorts unconstrained changes by confidence as tiebreaker |
+
+### Per-Change Autopilot Loop
+
+For each change in the resolved queue:
+
+```
+1. Spawn        → wt create --non-interactive --reuse --worktree-name <change> <branch>
+2. Open tab     → tmux new-window -n "fab-<id>" -c <worktree> \
+                   "claude --dangerously-skip-permissions '/fab-switch <change>'"
+3. Gate check   → fab/.kit/bin/fab status show <change>
+                   - confidence >= gate → fab/.kit/bin/fab send-keys <change> "/fab-ff"
+                   - confidence < gate  → flag to user with score and threshold
+4. Monitor      → poll fab/.kit/bin/fab pane-map + fab/.kit/bin/fab runtime is-idle on each user interaction
+                   - stage reaches hydrate/ship → change succeeded
+                   - review fails after rework budget → flag and skip
+                   - agent idle >15 min at non-terminal stage → nudge once, then flag
+                   - pane dies → flag and skip
+5. Merge        → gh pr merge from operator shell (destructive — already confirmed)
+6. Rebase next  → fab/.kit/bin/fab send-keys <next-change> "git fetch origin main && git rebase origin/main"
+                   - conflict → flag to user, skip to next (never auto-resolve)
+7. Cleanup      → wt delete (optional, after merge)
+8. Progress     → report one-line status
+```
+
+### Failure Matrix
+
+| Failure | Action | Resume? |
+|---------|--------|---------|
+| Confidence below gate | Flag to user: run `/fab-fff` or skip | Wait for user input |
+| Review fails (rework exhausted) | Flag, skip to next change | Yes |
+| Rebase conflict | Flag, skip to next change | Yes |
+| Agent pane dies | 1 respawn attempt, then flag and skip | Yes |
+| Stage timeout (>30 min same stage) | Flag regardless of retry state | Yes |
+| Total timeout (>2 hr per change) | Flag for review | Yes |
+
+### Interruptibility
+
+During autopilot, the user can interrupt at any time with these commands:
+
+| Command | Effect |
+|---------|--------|
+| `"stop after current"` | Finish the active change (merge if successful), halt the queue |
+| `"skip <change>"` | Remove from queue, proceed to next |
+| `"pause"` | Stop sending new commands; already-running agents continue |
+| `"resume"` | Pick up from where paused |
+
+The operator SHALL acknowledge interrupts immediately, even if an action is in progress.
+
+### Resumability
+
+If the operator session restarts, state is reconstructable from `fab pane-map`. Merged changes appear as archived/shipped; in-progress changes show their current stage. The operator resumes from the first non-completed change in the queue.
+
+### Progress Reporting
+
+After each change completes (success or skip), the operator outputs a one-line status:
+
+```
+bh45: merged. 1 of 3 complete. Starting qkov.
+```
+
+When the queue is complete, the operator outputs a final summary listing each change with its outcome (merged, skipped, failed).
 
 ---
 
