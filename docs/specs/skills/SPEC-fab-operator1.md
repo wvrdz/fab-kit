@@ -294,7 +294,7 @@ The operator acknowledges interrupts immediately, even if an action is in progre
 
 ### Launcher
 
-Start the operator via `fab/.kit/scripts/fab-operator.sh` — creates a singleton tmux tab named `operator1` and invokes `/fab-operator1` in a new Claude session.
+Start the operator via `fab/.kit/scripts/fab-operator1.sh` — creates a singleton tmux tab named `operator` and invokes `/fab-operator1` in a new Claude session.
 
 ### Skill or package?
 

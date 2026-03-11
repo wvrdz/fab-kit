@@ -258,6 +258,61 @@ When UC8 delegates here, the operator drives a queue of changes through the full
 
 **Progress reporting**: One-line status after each change completes (success or skip). Final summary lists all changes with outcomes (merged, skipped, failed).
 
+### `/fab-operator2` (Standalone Coordination Skill — Monitoring Iteration)
+
+`/fab-operator2` is a workflow iteration of `/fab-operator1`. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator2.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator2'`. Only one operator (1 or 2) runs at a time in the shared `operator` tab.
+
+#### Monitor-After-Action
+
+When operator2 sends a command to an agent via `fab send-keys`, it does NOT simply report the send and go idle. Instead:
+
+1. **Send the command** (same as operator1)
+2. **Enroll the target change in monitoring** — capture its current state (stage, agent status) as a baseline
+3. **Start or extend a `/loop`** at configurable interval (default 5m) to periodically check progress
+4. **Each tick**: Re-query `fab pane-map`, compare current state against the last known state for all monitored changes, report transitions:
+   - Stage advances (e.g., "r3m7: spec -> tasks")
+   - Completions (e.g., "r3m7: reached hydrate -- pipeline complete")
+   - Failures (e.g., "r3m7: review failed, reworking")
+   - Pane deaths (e.g., "r3m7: pane %3 is gone -- agent exited")
+   - Stuck detection (e.g., "r3m7: idle at apply for 15m -- may be stuck")
+5. **Terminal state**: Stop monitoring a change when it reaches hydrate/ship/review-pr, the user says stop, or the pane dies
+
+The monitored set (change ID, last-known stage, last-known agent state, enrolled-at timestamp) is held in conversation context — not in a persistent file. This matches operator1's pattern for standing orders (UC7). If the operator session ends, state is lost, but `fab pane-map` allows full reconstruction on restart.
+
+#### Loop Lifecycle
+
+The `/loop` is started when the first change is enrolled in monitoring and stopped when the monitored set becomes empty. Only one loop is active at a time. When all monitored changes reach terminal state, the loop stops and the operator reports "All monitored changes complete."
+
+#### Stuck Detection
+
+Agents idle at a non-terminal stage for longer than the stuck threshold (default 15m, configurable) are flagged as potentially stuck. Stuck detection is advisory only — the operator reports to the user but does NOT auto-nudge. Auto-nudging could corrupt an agent blocked on a legitimate long operation. Nudging requires explicit UC6 invocation or user instruction.
+
+#### Monitoring-Enhanced Use Cases
+
+All operator1 use cases carry over. The following gain monitoring integration:
+
+- **UC1 (Broadcast)**: After broadcasting, all recipients are auto-enrolled in monitoring
+- **UC2 (Sequenced rebase)**: Monitoring detects when the trigger change reaches the target stage and sends the rebase automatically (driven by the loop instead of next-user-interaction)
+- **UC6 (Unstick)**: After nudging, the nudged agent is enrolled in monitoring to check recovery
+- **UC7 (Notification)**: "Tell me when X finishes" immediately enrolls the change in monitoring — no "check on next user interaction" caveat
+
+UC3 (merge), UC4 (spawn), UC5 (status dashboard), and UC8 (autopilot) behave identically to operator1.
+
+#### Configuration
+
+- **Monitoring interval**: Default 5 minutes, overridable via natural language (e.g., "check every 2m" uses `/loop 2m`)
+- **Stuck threshold**: Default 15 minutes, adjustable per user instruction
+
+#### Design Constraints
+
+- **Pane-map only**: Uses `fab pane-map` as its sole observation primitive — no `fab runtime is-idle` (same cross-worktree issue as operator1)
+- **No change artifacts**: Never reads intakes, specs, or tasks — context window reserved for coordination state
+- **One operator at a time**: The operator tab runs either `/fab-operator1` or `/fab-operator2`, never both simultaneously
+
+#### Launcher Scripts
+
+`fab-operator1.sh` (renamed from `fab-operator.sh`) launches operator1; `fab-operator2.sh` launches operator2. Both use the shared singleton tmux tab name `operator`. The launcher reference in `fab-operator1.md` was updated from `fab-operator.sh` to `fab-operator1.sh` for naming symmetry.
+
 ## Design Decisions
 
 ### Checklist Tests Implementation Fidelity and Code Quality
@@ -350,6 +405,7 @@ When UC8 delegates here, the operator drives a queue of changes through the full
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260311-5c11-add-operator2-monitoring-skill | 2026-03-11 | Added `/fab-operator2` standalone coordination skill — workflow iteration of operator1 with proactive monitoring. After every `fab send-keys`, enrolls target change in a monitoring set and runs `/loop` (default 5m) to detect stage advances, completions, failures, pane deaths, and stuck agents. Monitoring-enhanced UC1 (auto-enroll after broadcast), UC2 (loop-driven sequenced rebase), UC6 (monitor recovery after nudge), UC7 (immediate enrollment instead of next-interaction check). Advisory-only stuck detection (15m threshold). Conversation-held monitored set, not file-backed. New launcher `fab-operator2.sh`; renamed `fab-operator.sh` to `fab-operator1.sh` with shared `operator` tab name. |
 | 260311-ftrh-drop-runtime-idle-from-operator | 2026-03-11 | Removed all `fab runtime is-idle` references from `/fab-operator1` description. The operator now uses the pane-map Agent column exclusively for idle detection — `fab runtime is-idle` reads the wrong worktree's `.fab-runtime.yaml` when called from the operator's pane. Updated state re-derivation, UC6 (unstick), pre-send validation, autopilot per-change loop, and two prior changelog entries (b8ff, qkov). |
 | 260310-1ttn-operator-autopilot-uc8 | 2026-03-11 | Added UC8 (Autopilot) to `/fab-operator1`: drives a queue of changes through the full pipeline with per-change spawn, gate check, monitoring, merge, and rebase-next loop. Three ordering strategies (user-provided, confidence-based, hybrid). Failure matrix with 6 failure types. Interruptibility (stop/skip/pause/resume). Session-resumable via `fab pane-map`. Queue state held in conversation context (v1). "Seven Use Cases" heading renamed to "Use Cases". Confirmation model updated to include autopilot as destructive. |
 | 260310-b8ff-operator-observation-fixes | 2026-03-10 | Updated `/fab-operator1` observation model: pane-map is now the sole primary observation mechanism (session-scoped via `-s`, 6 columns: Pane, Tab, Worktree, Change, Stage, Agent). `fab status show --all` retained only as outside-tmux fallback. State re-derivation uses `fab pane-map` (replacing `fab status show --all`). Pre-send validation uses the Agent column in the pane map. |
