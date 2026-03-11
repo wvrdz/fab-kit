@@ -88,7 +88,7 @@ The Autopilot Behavior section SHALL support three ordering strategies for the c
 
 For each change in the resolved queue, the operator SHALL execute the following sequence:
 
-1. **Spawn**: Create worktree via `wt create --non-interactive`
+1. **Spawn**: Create or reuse a worktree tied to `<change>` via `wt create --non-interactive --reuse --worktree-name <change> <branch>`, ensuring the change's expected branch is checked out (same pattern as `batch-fab-switch-change.sh`)
 2. **Open tab**: `tmux new-window -n "fab-<id>" -c <worktree> "claude --dangerously-skip-permissions '/fab-switch <change>'"`
 3. **Gate check**: Check confidence via `fab status show <change>`
    - confidence >= gate → `fab send-keys <change> "/fab-ff"`

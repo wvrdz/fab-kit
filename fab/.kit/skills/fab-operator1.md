@@ -224,7 +224,7 @@ The operator resolves queue order via one of three strategies:
 For each change in the resolved queue:
 
 ```
-1. Spawn        → wt create --non-interactive
+1. Spawn        → wt create --non-interactive --reuse --worktree-name <change> <branch>
 2. Open tab     → tmux new-window -n "fab-<id>" -c <worktree> \
                    "claude --dangerously-skip-permissions '/fab-switch <change>'"
 3. Gate check   → fab/.kit/bin/fab status show <change>
