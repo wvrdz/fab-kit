@@ -7,10 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var version = "dev"
+
 func main() {
 	root := &cobra.Command{
-		Use:   "fab",
-		Short: "Fab workflow engine — single binary replacement for kit shell scripts",
+		Use:     "fab",
+		Short:   "Fab workflow engine — single binary replacement for kit shell scripts",
+		Version: version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

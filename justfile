@@ -1,4 +1,6 @@
 scripts := "src/scripts/just"
+fab_version := `cat fab/.kit/VERSION`
+fab_ldflags := "-X main.version=" + fab_version
 
 # Run all tests with summary
 test:
@@ -23,17 +25,17 @@ test-go-v:
 
 # Build all Go binaries for current platform (fab, wt, idea)
 build-go:
-    cd src/go/fab && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/fab-go ./cmd/fab
+    cd src/go/fab && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../fab/.kit/bin/fab-go ./cmd/fab
     cd src/go/idea && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/idea ./cmd
     cd src/go/wt && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/wt ./cmd
 
 # Cross-compile a Go binary for a specific target
-_build-go-binary src_dir cmd_path name os arch:
-    mkdir -p .release-build && cd {{src_dir}} && CGO_ENABLED=0 GOOS={{os}} GOARCH={{arch}} go build -o ../../../.release-build/{{name}}-{{os}}-{{arch}} {{cmd_path}}
+_build-go-binary src_dir cmd_path name os arch ldflags="":
+    mkdir -p .release-build && cd {{src_dir}} && CGO_ENABLED=0 GOOS={{os}} GOARCH={{arch}} go build -ldflags '{{ldflags}}' -o ../../../.release-build/{{name}}-{{os}}-{{arch}} {{cmd_path}}
 
 # Cross-compile all Go binaries for a specific target
 build-go-target os arch:
-    just _build-go-binary src/go/fab ./cmd/fab fab {{os}} {{arch}}
+    just _build-go-binary src/go/fab ./cmd/fab fab {{os}} {{arch}} '{{fab_ldflags}}'
     just _build-go-binary src/go/idea ./cmd idea {{os}} {{arch}}
     just _build-go-binary src/go/wt ./cmd wt {{os}} {{arch}}
 
