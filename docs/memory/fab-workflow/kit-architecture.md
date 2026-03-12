@@ -304,7 +304,7 @@ The sole backend for all fab CLI operations. A single Go binary at `fab/.kit/bin
 **Subcommands**:
 - `fab resolve [--id|--folder|--dir|--status] [<change>]`
 - `fab log command|confidence|review|transition ...`
-- `fab status start|advance|finish|reset|skip|fail|...` (all stage-machine subcommands)
+- `fab status start|advance|finish|reset|skip|fail|all-stages|progress-map|...` (stage-machine operations plus status/diagnostic utilities)
 - `fab preflight [<change>]`
 - `fab change new|rename|switch|list|resolve ...`
 - `fab score [--check-gate] [--stage <stage>] <change>`
