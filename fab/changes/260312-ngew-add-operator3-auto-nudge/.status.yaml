@@ -2,7 +2,7 @@ id: ngew
 name: 260312-ngew-add-operator3-auto-nudge
 created: 2026-03-12T08:23:21Z
 created_by: sahil-weaver
-change_type: feat
+change_type: fix
 issues: []
 progress:
     intake: ready
@@ -19,19 +19,19 @@ checklist:
     completed: 0
     total: 0
 confidence:
-    certain: 6
+    certain: 8
     confident: 2
-    tentative: 2
+    tentative: 0
     unresolved: 0
-    score: 2.4
+    score: 4.4
     indicative: true
     fuzzy: true
     dimensions:
-        signal: 83.0
-        reversibility: 85.5
-        competence: 84.5
-        disambiguation: 83.5
+        signal: 90.5
+        reversibility: 87.5
+        competence: 86.0
+        disambiguation: 89.0
 stage_metrics:
     intake: {started_at: "2026-03-12T08:23:21Z", driver: fab-new, iterations: 1}
 prs: []
-last_updated: 2026-03-12T08:24:49Z
+last_updated: 2026-03-12T08:28:13Z

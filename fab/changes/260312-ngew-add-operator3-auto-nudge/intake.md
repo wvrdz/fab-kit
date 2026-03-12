@@ -76,7 +76,7 @@ Note: input-waiting detection runs **before** stuck detection. An agent waiting 
 
 #### Nudge Budget
 
-Auto-answers have no retry limit per se — each question is a distinct event. However, if operator3 auto-answers a question and the **same agent asks another question within 2 minutes**, operator3 escalates instead of auto-answering. This prevents runaway auto-answer loops where the agent keeps asking follow-up questions that compound.
+No cooldown or retry limit. Each question is evaluated independently on its own merits by the confidence model. The PR review step (human and/or Copilot review before merge) serves as the safety net against any compounding bad auto-answers.
 
 ### New Launcher Script: `fab/.kit/scripts/fab-operator3.sh`
 
@@ -105,7 +105,7 @@ New per-skill spec for operator3.
 
 ## Open Questions
 
-- Should the terminal heuristic patterns be configurable (e.g., in `config.yaml`), or is the hardcoded set sufficient for v1?
+None — all resolved during clarification.
 
 ## Assumptions
 
@@ -119,9 +119,18 @@ New per-skill spec for operator3.
 | 6 | Certain | "Not a Lifecycle Enforcer" still holds | Discussed — user confirmed "not enforcing, just nudging recovery" | S:90 R:90 A:90 D:90 |
 | 7 | Confident | Nudge is not /fab-continue but answering the actual question | Discussed — user clarified with the "commit before rebasing" example; operator3 reads and responds to the specific question | S:85 R:80 A:80 D:75 |
 | 8 | Confident | No skip-on-failure behavior | Discussed — user said "No, don't skip" when asked about nudge-then-skip | S:85 R:85 A:80 D:80 |
-| 9 | Tentative | Rapid follow-up questions (same agent within 2m) trigger escalation | Reasonable guard against auto-answer loops, not explicitly discussed | S:50 R:70 A:70 D:60 |
-<!-- assumed: 2-minute cooldown for follow-up questions — prevents runaway auto-answer chains without explicit user discussion -->
-| 10 | Tentative | Terminal heuristic patterns are hardcoded in the skill file (not configurable) | Simpler for v1; config.yaml extension can come later if needed | S:55 R:85 A:75 D:65 |
-<!-- assumed: hardcoded patterns — no user discussion on configurability, but high reversibility -->
+| 9 | Certain | No cooldown between auto-answers — each question evaluated independently | Clarified — user chose option (b); PR review is the safety net against compounding bad answers | S:90 R:90 A:85 D:90 |
+<!-- clarified: removed 2-minute cooldown — PR review serves as safety net -->
+| 10 | Certain | Terminal heuristic patterns are hardcoded in the skill file (not configurable) | Clarified — user confirmed hardcoded for v1 | S:90 R:85 A:75 D:90 |
+<!-- clarified: hardcoded patterns confirmed by user -->
 
-10 assumptions (6 certain, 2 confident, 2 tentative, 0 unresolved).
+10 assumptions (8 certain, 2 confident, 0 tentative, 0 unresolved).
+
+## Clarifications
+
+### Session 2026-03-12
+
+| # | Action | Detail |
+|---|--------|--------|
+| 9 | Changed | No cooldown — each question evaluated independently; PR review is the safety net |
+| 10 | Confirmed | Hardcoded patterns for v1 |

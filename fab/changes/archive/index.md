@@ -1,5 +1,8 @@
 # Archive Index
 
+- **260312-wrk6-add-wt-create-base-flag** — Added --base flag to wt create for specifying a start-point branch when creating worktrees, enabling dependent changes to be worked on in parallel. Also updated operator2 autopilot to use --base for sequential queue dependencies.
+- **260312-kvng-resolve-pane-evolve-panemap** — Added --pane flag to fab resolve for change-to-pane lookup, deleted the redundant fab send-keys subcommand, and evolved pane-map to show all tmux panes including non-fab ones.
+- **260312-9lci-fix-status-show-fab-current** — Removed the redundant fab status show subcommand (superseded by fab pane-map, wt list, and fab change list) and updated stale fab/current references to .fab-status.yaml throughout documentation.
 - **260311-i7it-fix-stale-shell-script-refs** — Fix stale shell-script references in specs and memory after Go binary conversion — updates docs that still described wt/idea as shell scripts, preventing agents from generating plans based on the old architecture.
 - **260311-ftrh-drop-runtime-idle-from-operator** — Drop broken fab runtime is-idle calls from operator1 skill — the command reads the wrong worktree's runtime file. Replace with pane-map Agent column which already resolves cross-worktree state correctly.
 - **260311-5c11-add-operator2-monitoring-skill** — Add operator2 skill — a full-capability operator with proactive monitoring that replaces operator1's fire-and-forget pattern with automatic /loop-based progress tracking after dispatching commands to agents.

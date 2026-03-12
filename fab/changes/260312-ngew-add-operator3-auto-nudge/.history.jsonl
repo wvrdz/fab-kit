@@ -3,3 +3,9 @@
 {"delta":"+2.4","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-03-12T08:24:37Z"}
 {"delta":"+0.0","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-03-12T08:24:46Z"}
 {"cmd":"fab-clarify","event":"command","ts":"2026-03-12T08:25:19Z"}
+{"delta":"+0.0","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-03-12T08:26:58Z"}
+{"delta":"+1.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-12T08:27:05Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-12T08:27:11Z"}
+{"delta":"+1.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-12T08:27:55Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-12T08:28:02Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-12T08:28:13Z"}
