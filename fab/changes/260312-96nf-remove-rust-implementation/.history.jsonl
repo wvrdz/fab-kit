@@ -1,0 +1,4 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-12T07:51:43Z"}
+{"args":"remove the rust implementation (src/rust) - its confusing the agent on any new work. The rust version isn't being maintained only the go version is. Also remove any related commands in justfile, in build workflows.","cmd":"fab-new","event":"command","ts":"2026-03-12T07:51:43Z"}
+{"delta":"+4.1","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-03-12T07:53:01Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-03-12T07:53:13Z"}
