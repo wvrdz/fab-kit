@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/wvrdz/fab-kit/src/go/fab/internal/resolve"
@@ -39,16 +40,39 @@ func resolveCmd() *cobra.Command {
 				fmt.Printf("fab/changes/%s/\n", folder)
 			case "status":
 				fmt.Printf("fab/changes/%s/.status.yaml\n", folder)
+			case "pane":
+				if os.Getenv("TMUX") == "" {
+					fmt.Fprintln(cmd.ErrOrStderr(), "Error: not inside a tmux session")
+					os.Exit(1)
+				}
+
+				panes, err := discoverPanes()
+				if err != nil {
+					return err
+				}
+
+				matches, warning := matchPanesByFolder(panes, folder, resolvePaneChange)
+
+				if len(matches) == 0 {
+					return fmt.Errorf("no tmux pane found for change %q", folder)
+				}
+
+				if warning != "" {
+					fmt.Fprintln(cmd.ErrOrStderr(), warning)
+				}
+
+				fmt.Println(matches[0])
 			}
 			return nil
 		},
 	}
 
-	// Register the --id, --folder, --dir, --status flags matching the bash interface
+	// Register the --id, --folder, --dir, --status, --pane flags matching the bash interface
 	cmd.Flags().Bool("id", false, "Output 4-char change ID (default)")
 	cmd.Flags().Bool("folder", false, "Output full folder name")
 	cmd.Flags().Bool("dir", false, "Output directory path")
 	cmd.Flags().Bool("status", false, "Output .status.yaml path")
+	cmd.Flags().Bool("pane", false, "Output tmux pane ID")
 
 	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
 		if f, _ := cmd.Flags().GetBool("folder"); f {
@@ -57,6 +81,8 @@ func resolveCmd() *cobra.Command {
 			outputMode = "dir"
 		} else if f, _ := cmd.Flags().GetBool("status"); f {
 			outputMode = "status"
+		} else if f, _ := cmd.Flags().GetBool("pane"); f {
+			outputMode = "pane"
 		} else {
 			outputMode = "id"
 		}

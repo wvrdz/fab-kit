@@ -25,7 +25,6 @@ func main() {
 		runtimeCmd(),
 		hookCmd(),
 		paneMapCmd(),
-		sendKeysCmd(),
 	)
 
 	if err := root.Execute(); err != nil {

@@ -1,6 +1,6 @@
 ---
 name: fab-operator2
-description: "Multi-agent coordination with proactive monitoring — observe agents via pane-map, interact via send-keys, monitor progress after every action."
+description: "Multi-agent coordination with proactive monitoring — observe agents via pane-map, interact via resolve --pane + tmux send-keys, monitor progress after every action."
 ---
 
 # /fab-operator2
@@ -11,7 +11,7 @@ description: "Multi-agent coordination with proactive monitoring — observe age
 
 ## Purpose
 
-Multi-agent coordination layer with proactive monitoring. Runs in a dedicated tmux pane, observes all running fab agents via `fab pane-map`, and interacts with them via `fab send-keys`. Translates natural-language user instructions into cross-agent actions: broadcasting commands, sequencing rebases, spawning new worktrees, and merging PRs.
+Multi-agent coordination layer with proactive monitoring. Runs in a dedicated tmux pane, observes all running fab agents via `fab pane-map`, and interacts with them via `fab resolve --pane` + raw `tmux send-keys`. Translates natural-language user instructions into cross-agent actions: broadcasting commands, sequencing rebases, spawning new worktrees, and merging PRs.
 
 **Key difference from operator1**: After every action that dispatches work to another agent, operator2 automatically enrolls the target in a monitoring loop. Instead of fire-and-forget (send and go idle), operator2 uses `/loop` to periodically check agent progress, detect stage advances, completions, failures, pane deaths, and stuck agents — then reports transitions to the user.
 
@@ -79,7 +79,7 @@ This is the authoritative mapping of intent to tool. Use the right tool for the 
 
 | Intent | Tool | Notes |
 |--------|------|-------|
-| Send a command to an agent | `fab/.kit/bin/fab send-keys <change> "<text>"` | Always validate pane exists + agent idle first. |
+| Send a command to an agent | `tmux send-keys -t "$(fab/.kit/bin/fab resolve <change> --pane)" "<text>" Enter` | Always validate pane exists + agent idle first. |
 | Create a worktree | `fab/.kit/bin/wt create --non-interactive --worktree-name <name>` | Add `--reuse` for autopilot respawns. |
 | Delete a worktree | `fab/.kit/bin/wt delete <name>` | Post-merge cleanup. Destructive — confirm first. |
 | Open a new agent tab | `tmux new-window -n "fab-<id>" -c <worktree> "claude --dangerously-skip-permissions '<command>'"` | Spawns a new Claude session in the worktree. |
@@ -106,7 +106,7 @@ On invocation, display the current coordination landscape:
 If `$TMUX` is unset, display:
 
 ```
-Warning: not inside a tmux session. Pane map and send-keys unavailable. Status-only mode.
+Warning: not inside a tmux session. Pane map and resolve --pane unavailable. Status-only mode.
 ```
 
 Use `wt list` (worktree overview) and `fab change list` (pipeline state) for status queries only. Monitoring is disabled.
@@ -130,7 +130,7 @@ The operator maintains a **monitored set** in conversation context (not a persis
 
 A change is enrolled in the monitored set when:
 
-1. The operator sends a command to it via `fab send-keys` (broadcast, nudge, any direct send)
+1. The operator sends a command to it via `resolve --pane` + `tmux send-keys` (broadcast, nudge, any direct send)
 2. The user explicitly requests monitoring ("tell me when r3m7 finishes")
 3. The operator triggers an automatic action toward it (sequenced rebase)
 
@@ -228,7 +228,7 @@ Actions are categorized into three risk tiers:
 
 ## Pre-Send Validation
 
-Before sending keys to any pane via `fab send-keys`, the operator MUST:
+Before sending keys to any pane via `fab resolve --pane` + `tmux send-keys`, the operator MUST:
 
 1. **Verify pane exists**: Refresh the pane map. If the target pane is gone, report: "Pane for {change} is gone (agent exited or tab closed)." Do NOT attempt to send.
 2. **Check agent is idle**: Read the Agent column from the pane map. If the agent is not idle, warn: "{change} is currently active. Sending may corrupt its work. Send anyway?" Only send if the user confirms.
@@ -368,5 +368,5 @@ All settings are session-scoped — they reset when the operator session restart
 | Advances stage? | No |
 | Outputs `Next:` line? | No — ends with ready signal |
 | Loads change artifacts? | No — coordination context only |
-| Requires tmux? | Yes for pane-map, send-keys, and monitoring; status-only mode without |
+| Requires tmux? | Yes for pane-map, resolve --pane, and monitoring; status-only mode without |
 | Uses `/loop`? | Yes — for proactive monitoring after every send |

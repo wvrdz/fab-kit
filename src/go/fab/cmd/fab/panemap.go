@@ -73,7 +73,7 @@ func runPaneMap(cmd *cobra.Command, args []string) error {
 
 	// Output
 	if len(rows) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "No fab worktrees found in tmux panes.")
+		fmt.Fprintln(cmd.OutOrStdout(), "No tmux panes found.")
 		return nil
 	}
 
@@ -123,19 +123,74 @@ func findMainWorktreeRoot(panes []paneEntry) string {
 	return ""
 }
 
+// resolvePaneChange resolves a pane entry to its active change folder name.
+// Returns empty string if the pane is not in a git repo, has no fab/ directory,
+// or has no active change.
+func resolvePaneChange(p paneEntry) string {
+	wtRoot, err := gitWorktreeRoot(p.cwd)
+	if err != nil {
+		return ""
+	}
+
+	fabDir := filepath.Join(wtRoot, "fab")
+	if _, err := os.Stat(fabDir); os.IsNotExist(err) {
+		return ""
+	}
+
+	_, folderName := readFabCurrent(wtRoot)
+	return folderName
+}
+
+// matchPanesByFolder is a testable helper that matches pane entries to a change folder.
+// Returns (matchedPaneIDs, warningMessage).
+func matchPanesByFolder(panes []paneEntry, folder string, resolveFunc func(paneEntry) string) ([]string, string) {
+	var matches []string
+	for _, p := range panes {
+		if resolveFunc(p) == folder {
+			matches = append(matches, p.id)
+		}
+	}
+
+	warning := ""
+	if len(matches) > 1 {
+		warning = fmt.Sprintf("Warning: multiple panes found for %s, using %s",
+			resolve.ExtractID(folder), matches[0])
+	}
+
+	return matches, warning
+}
+
 // resolvePane resolves a pane entry into a table row.
-// Returns false if the pane should be excluded (non-git, non-fab).
+// Returns true for all panes — non-git and non-fab panes show fallback values.
 func resolvePane(p paneEntry, mainRoot string, runtimeCache map[string]interface{}) (paneRow, bool) {
+	emDash := "\u2014"
+
 	// Resolve git worktree root
 	wtRoot, err := gitWorktreeRoot(p.cwd)
 	if err != nil {
-		return paneRow{}, false
+		// Non-git directory: show basename of CWD
+		return paneRow{
+			pane:     p.id,
+			tab:      p.tab,
+			worktree: filepath.Base(p.cwd) + "/",
+			change:   emDash,
+			stage:    emDash,
+			agent:    emDash,
+		}, true
 	}
 
 	// Check for fab/ directory
 	fabDir := filepath.Join(wtRoot, "fab")
 	if _, err := os.Stat(fabDir); os.IsNotExist(err) {
-		return paneRow{}, false
+		// Git repo without fab/: show worktree path
+		return paneRow{
+			pane:     p.id,
+			tab:      p.tab,
+			worktree: worktreeDisplayPath(wtRoot, mainRoot),
+			change:   emDash,
+			stage:    emDash,
+			agent:    emDash,
+		}, true
 	}
 
 	// Compute worktree display path
@@ -145,7 +200,7 @@ func resolvePane(p paneEntry, mainRoot string, runtimeCache map[string]interface
 	changeName, folderName := readFabCurrent(wtRoot)
 
 	// Read stage from .status.yaml
-	stageName := "\u2014" // em dash
+	stageName := emDash
 	if folderName != "" {
 		statusPath := filepath.Join(fabDir, "changes", folderName, ".status.yaml")
 		if statusFile, err := sf.Load(statusPath); err == nil {
