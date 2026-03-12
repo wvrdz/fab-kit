@@ -1,5 +1,8 @@
 # Archive Index
 
+- **260311-i7it-fix-stale-shell-script-refs** — Fix stale shell-script references in specs and memory after Go binary conversion — updates docs that still described wt/idea as shell scripts, preventing agents from generating plans based on the old architecture.
+- **260311-ftrh-drop-runtime-idle-from-operator** — Drop broken fab runtime is-idle calls from operator1 skill — the command reads the wrong worktree's runtime file. Replace with pane-map Agent column which already resolves cross-worktree state correctly.
+- **260311-5c11-add-operator2-monitoring-skill** — Add operator2 skill — a full-capability operator with proactive monitoring that replaces operator1's fire-and-forget pattern with automatic /loop-based progress tracking after dispatching commands to agents.
 - **260310-1ttn-operator-autopilot-uc8** — Extended fab-operator1 with UC8 autopilot — multi-worktree batch pipeline execution with ordering strategies, failure matrix, and interruptibility controls.
 - **260310-qbiq-go-wt-binary** — Consolidate wt-* shell scripts into a single Go binary with cobra subcommands, sharing the fab Go module and internal packages.
 - **260310-pl72-port-idea-to-go** — Port the idea Bash script to a Go subcommand (fab idea) with comprehensive tests, making all fab CLI tooling run through a single compiled binary.
