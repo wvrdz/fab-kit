@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -114,6 +115,14 @@ func hookArtifactWriteCmd() *cobra.Command {
 			}
 
 			contextParts := artifactBookkeeping(fabRoot, filePath, match, statusFile, statusPath)
+
+			// Auto-stage status files so they don't block git operations
+			changeDir := filepath.Join(fabRoot, "changes", match.ChangeFolder)
+			repoRoot := filepath.Dir(fabRoot)
+			_ = exec.Command("git", "-C", repoRoot, "add",
+				filepath.Join(changeDir, ".status.yaml"),
+				filepath.Join(changeDir, ".history.jsonl"),
+			).Run()
 
 			// Output additionalContext JSON
 			if len(contextParts) > 0 {

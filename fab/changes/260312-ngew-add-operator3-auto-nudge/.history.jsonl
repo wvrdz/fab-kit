@@ -1,0 +1,5 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-12T08:23:21Z"}
+{"args":"Add operator3 skill — extends operator2 with auto-nudge for agents waiting on user input via terminal heuristic","cmd":"fab-new","event":"command","ts":"2026-03-12T08:23:21Z"}
+{"delta":"+2.4","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-03-12T08:24:37Z"}
+{"delta":"+0.0","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-03-12T08:24:46Z"}
+{"cmd":"fab-clarify","event":"command","ts":"2026-03-12T08:25:19Z"}
