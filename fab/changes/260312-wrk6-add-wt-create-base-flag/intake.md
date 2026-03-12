@@ -82,6 +82,24 @@ wt create --non-interactive --reuse --worktree-name <change-B> <branch-B> --base
 
 The operator already knows the ordering (user-provided, confidence-based, or hybrid). For user-provided ordering, the operator assumes each change depends on the previous one in the queue. For confidence-based ordering, no `--base` is used (independent changes sorted by score).
 
+### Test coverage
+
+New test cases in `src/go/wt/cmd/create_test.go`, following the existing patterns (real git repos via `createTestRepo`, `runWtSuccess`/`runWt` helpers, `assertContains`/`assertWorktreeExists` assertions):
+
+1. **`TestCreate_BaseNewBranch`** — Create a new branch with `--base <other-branch>`. Verify the worktree's HEAD matches the base branch's tip, not main's HEAD. Create a marker file on the base branch (like `TestCreate_BranchesOffCurrentBranch` does) and assert it exists in the new worktree.
+
+2. **`TestCreate_BaseExploratoryWorktree`** — Create an exploratory worktree with `--base <branch>`. Verify it branches from the base branch's tip, not current HEAD.
+
+3. **`TestCreate_BaseWithExistingLocalBranch`** — Pass `--base` when the target branch already exists locally. Verify warning on stderr ("--base ignored") and that the worktree checks out the existing branch unchanged (HEAD matches the existing branch, not the base).
+
+4. **`TestCreate_BaseWithExistingRemoteBranch`** — Pass `--base` when the target branch exists on the remote. Verify warning on stderr and that the remote branch is fetched and checked out normally.
+
+5. **`TestCreate_BaseInvalidRef`** — Pass `--base nonexistent-ref` with a new branch. Verify non-zero exit code and an error message about the unresolvable base ref.
+
+6. **`TestCreate_BaseWithReuse`** — Pass `--base` with `--reuse` when the worktree already exists. Verify `--reuse` takes precedence (returns existing path) and `--base` has no effect.
+
+7. **`TestCreate_BaseDoesNotAffectExistingBehavior`** — Verify that creating a new branch *without* `--base` still branches from HEAD (regression guard — existing `TestCreate_BranchesOffCurrentBranch` and `TestCreate_ExploratoryFromMainStillWorks` cover this, but an explicit test with the flag absent is valuable).
+
 ### wt package spec update
 
 Update `docs/specs/packages.md` to document the new `--base` flag in the wt section.
