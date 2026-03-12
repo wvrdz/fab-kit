@@ -15,6 +15,7 @@ Fab uses a set of complementary configuration files — the **5 Cs of Quality**:
 #### `project`
 - `name` — Project name (string)
 - `description` — Project description (string)
+- `linear_workspace` — Linear workspace slug (string, optional). When present, `/git-pr` constructs issue hyperlinks using `https://linear.app/{linear_workspace}/issue/{ISSUE_ID}`. When absent, issue IDs are rendered as bare text. Set once per project. Used exclusively by `/git-pr` for URL construction in the PR body's Change section.
 
 #### `model_tiers`
 Provider-specific model identifiers for the two-tier system. Replaces the former `fab/.kit/model-tiers.yaml` file. Structure:
@@ -24,9 +25,6 @@ model_tiers:
     claude: haiku   # or sonnet, etc.
 ```
 When absent, `fab-sync.sh` falls back to `haiku` for the fast tier. See [model-tiers](model-tiers.md) for the full tier system.
-
-#### `linear_workspace`
-- `linear_workspace` — Linear workspace slug (string, optional). When present, `/git-pr` constructs issue hyperlinks using `https://linear.app/{linear_workspace}/issue/{ISSUE_ID}`. When absent, issue IDs are rendered as bare text. Set once per project. Used exclusively by `/git-pr` for URL construction in the PR body's Change section.
 
 #### `checklist`
 - `extra_categories` — Project-specific quality categories added to the default checklist categories (functional_completeness, behavioral_correctness, scenario_coverage, edge_cases, code_quality, security)
