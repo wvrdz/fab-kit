@@ -431,6 +431,41 @@ func TestCreate_BaseInvalidRef(t *testing.T) {
 	assertBranchNotExists(t, repo, "new-branch")
 }
 
+func TestCreate_BaseInvalidRefExistingBranch(t *testing.T) {
+	repo := createTestRepo(t)
+
+	// Create an existing branch with a commit
+	gitRun(t, repo, "checkout", "-b", "existing-branch")
+	os.WriteFile(filepath.Join(repo, "existing.txt"), []byte("existing"), 0644)
+	gitRun(t, repo, "add", "existing.txt")
+	gitRun(t, repo, "commit", "-q", "-m", "Add existing.txt")
+	gitRun(t, repo, "checkout", "main")
+
+	// Create a worktree for the existing branch with an invalid --base; it should be ignored
+	r := runWtSuccess(t, repo, nil, "create", "--non-interactive", "--worktree-name", "exist-branch",
+		"--worktree-init", "false", "existing-branch", "--base", "nonexistent-ref")
+
+	// Command should succeed and worktree should exist, despite invalid --base
+	assertContains(t, r.Stderr, "--base ignored: branch already exists locally")
+	assertWorktreeExists(t, repo, "exist-branch")
+}
+
+func TestCreate_BaseInvalidRefWithReuse(t *testing.T) {
+	repo := createTestRepo(t)
+
+	// Create a worktree first
+	firstPath := createWorktreeViaWt(t, repo, "reuse-invalid-base")
+
+	// Attempt to reuse the existing worktree with an invalid --base; --reuse should take precedence
+	r := runWtSuccess(t, repo, nil, "create", "--non-interactive", "--reuse", "--worktree-name", "reuse-invalid-base",
+		"--base", "nonexistent-ref")
+
+	reusedPath := strings.TrimSpace(r.Stdout)
+	if reusedPath != firstPath {
+		t.Errorf("--reuse path mismatch with invalid --base: got %q, want %q", reusedPath, firstPath)
+	}
+}
+
 func TestCreate_BaseWithReuse(t *testing.T) {
 	repo := createTestRepo(t)
 

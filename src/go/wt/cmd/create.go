@@ -98,13 +98,25 @@ or creates a new branch.`,
 				}
 			}
 
-			// Validate --base ref when provided
-			if base != "" {
-				if err := exec.Command("git", "rev-parse", "--verify", base).Run(); err != nil {
-					wt.ExitWithError(wt.ExitInvalidArgs,
-						fmt.Sprintf("Invalid --base ref: %s", base),
-						fmt.Sprintf("'%s' does not resolve to a valid git object", base),
-						"Provide a valid branch name, tag, or commit SHA")
+			// Validate --base ref only when it will actually be used.
+			// When --reuse is set, or when BRANCH already exists locally/remotely,
+			// later logic ignores --base, so we skip validation here to avoid
+			// failing commands like `wt create --reuse --base <bad>` or
+			// `wt create <existing-branch> --base <bad>`.
+			if base != "" && !reuse {
+				existingBranch := false
+				if branchArg != "" {
+					if err := exec.Command("git", "rev-parse", "--verify", branchArg).Run(); err == nil {
+						existingBranch = true
+					}
+				}
+				if !existingBranch {
+					if err := exec.Command("git", "rev-parse", "--verify", base).Run(); err != nil {
+						wt.ExitWithError(wt.ExitInvalidArgs,
+							fmt.Sprintf("Invalid --base ref: %s", base),
+							fmt.Sprintf("'%s' does not resolve to a valid git object", base),
+							"Provide a valid branch name, tag, or commit SHA")
+					}
 				}
 			}
 
