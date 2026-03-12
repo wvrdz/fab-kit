@@ -2,3 +2,18 @@
 {"args":"Add --pane flag to fab resolve, delete fab send-keys subcommand, and evolve fab pane-map to show all tmux panes","cmd":"fab-new","event":"command","ts":"2026-03-12T06:32:37Z"}
 {"delta":"+4.4","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-12T06:33:32Z"}
 {"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-12T06:33:44Z"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-12T07:12:59Z"}
+{"cmd":"fab-ff","event":"command","ts":"2026-03-12T07:13:21Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-12T07:15:09Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"spec","ts":"2026-03-12T07:15:13Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"tasks","ts":"2026-03-12T07:16:58Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"apply","ts":"2026-03-12T07:19:02Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review","ts":"2026-03-12T07:26:33Z"}
+{"event":"review","result":"failed","ts":"2026-03-12T07:28:49Z"}
+{"action":"re-entry","driver":"fab-ff","event":"stage-transition","stage":"apply","ts":"2026-03-12T07:28:49Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review","ts":"2026-03-12T07:34:41Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"hydrate","ts":"2026-03-12T07:37:03Z"}
+{"event":"review","result":"passed","ts":"2026-03-12T07:37:03Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"ship","ts":"2026-03-12T07:40:07Z"}
+{"action":"enter","driver":"fab-ff","event":"stage-transition","stage":"review-pr","ts":"2026-03-12T07:42:08Z"}
+{"event":"review","result":"passed","ts":"2026-03-12T07:49:19Z"}

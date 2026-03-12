@@ -2,7 +2,7 @@
 
 ## Summary
 
-Multi-agent coordination layer that runs in a dedicated tmux pane. Observes all running fab agents via `fab pane-map`, and interacts with them via `fab send-keys`. Translates natural-language user instructions into cross-agent actions: broadcasting commands, sequencing rebases, spawning new worktrees, and merging PRs.
+Multi-agent coordination layer that runs in a dedicated tmux pane. Observes all running fab agents via `fab pane-map`, and interacts with them via `fab resolve --pane` + raw `tmux send-keys`. Translates natural-language user instructions into cross-agent actions: broadcasting commands, sequencing rebases, spawning new worktrees, and merging PRs.
 
 Not a lifecycle enforcer — individual agents already know their pipeline. The operator handles coordination that requires cross-agent awareness.
 
@@ -14,19 +14,19 @@ The operator relies on these primitives:
 
 | Primitive | Source | Purpose |
 |-----------|--------|---------|
-| `fab pane-map` | fab CLI | Primary observation: pane-to-change mapping with stage and agent state |
-| `fab send-keys` | fab CLI | Send text to a target agent's tmux pane |
+| `fab pane-map` | fab CLI | Primary observation: pane-to-change mapping with stage and agent state (all panes) |
+| `fab resolve --pane` | fab CLI | Resolve a change to its tmux pane ID for use with raw `tmux send-keys` |
 | `fab status show --all` | fab CLI | Fallback observation when outside tmux |
 
-### `fab send-keys` (new subcommand)
+### `fab resolve --pane` (change-to-pane primitive)
 
 ```
-fab send-keys <change> "<text>"
+tmux send-keys -t "$(fab resolve <change> --pane)" "<text>" Enter
 ```
 
-Resolves `<change>` to a tmux pane (via the pane map — see Discovery below), then runs `tmux send-keys -t <pane> "<text>" Enter`. The indirection through `fab` means the operator never constructs raw `tmux send-keys` calls — it uses the same change resolution (4-char ID, substring, full name) as every other fab command.
+Resolves `<change>` to a tmux pane ID via standard change resolution (4-char ID, substring, full name), then the operator composes with raw `tmux send-keys`. This is the composable primitive — the operator constructs the full command.
 
-**Safety**: `fab send-keys` SHOULD validate that the target pane exists and is associated with a known worktree before sending. If the pane is gone (agent exited, tab closed), it returns an error rather than sending keys into the void.
+**Safety**: `fab resolve --pane` errors if no matching pane exists. The operator SHOULD verify the pane exists and the agent is idle before sending.
 
 ---
 
@@ -62,7 +62,7 @@ User says: "run /fab-continue in all idle agents"
 Operator:
 1. Refreshes pane map via `fab pane-map`
 2. Filters for agents where the Agent column shows idle
-3. For each: `fab send-keys <change> "/fab-continue"`
+3. For each: `tmux send-keys -t "$(fab resolve <change> --pane)" "/fab-continue" Enter`
 
 ### 2. Sequenced rebase after completion
 
@@ -71,7 +71,7 @@ User says: "when r3m7 finishes, rebase k8ds on main"
 Operator:
 1. Polls `fab pane-map` to check the trigger change's stage
 2. When r3m7 reaches hydrate (or a target stage), sends to k8ds:
-   - `fab send-keys k8ds "git fetch origin main && git rebase origin/main"`
+   - `tmux send-keys -t "$(fab resolve k8ds --pane)" "git fetch origin main && git rebase origin/main" Enter`
 
 ### 3. Merge completed PRs
 
@@ -110,7 +110,7 @@ User says: "r3m7 looks stuck, nudge it" — or notices via status that an agent 
 Operator:
 1. Refreshes pane map, confirms r3m7 is idle
 2. Reads the agent's current stage to craft an appropriate nudge
-3. Sends: `fab send-keys r3m7 "/fab-continue"` (or a more targeted prompt if the user describes what's wrong)
+3. Sends: `tmux send-keys -t "$(fab resolve r3m7 --pane)" "/fab-continue" Enter` (or a more targeted prompt if the user describes what's wrong)
 
 The operator can also diagnose — "what's r3m7's last output?" could use `tmux capture-pane -t <pane> -p` to read recent terminal output and reason about what went wrong.
 
@@ -145,7 +145,7 @@ For each change (in order):
   2. Open tmux tab          → tmux new-window -n "fab-<id>" -c <worktree> \
                                "claude --dangerously-skip-permissions '/fab-switch <change>'"
   3. Check confidence       → fab status confidence <change>
-     - confidence >= gate   → fab send-keys <change> "/fab-ff"
+     - confidence >= gate   → tmux send-keys -t "$(fab resolve <change> --pane)" "/fab-ff" Enter
      - confidence < gate    → flag to user, skip or run /fab-fff
   4. Monitor (on each tick) → fab pane-map
      - stage reaches hydrate/ship → change succeeded
@@ -153,7 +153,7 @@ For each change (in order):
      - agent idle >15 min at non-terminal stage → nudge once, then flag
      - pane dies → flag and skip
   5. Merge                  → gh pr merge from operator's shell
-  6. Rebase remaining       → fab send-keys <next> "git fetch origin main && git rebase origin/main"
+  6. Rebase remaining       → tmux send-keys -t "$(fab resolve <next> --pane)" "git fetch origin main && git rebase origin/main" Enter
      - conflict → flag to user, skip to next (never auto-resolve)
   7. Cleanup                → wt delete <worktree-name> (optional, after merge)
   8. Progress               → report one-line status
@@ -298,7 +298,7 @@ Start the operator via `fab/.kit/scripts/fab-operator1.sh` — creates a singlet
 
 ### Skill or package?
 
-This is a **skill** (`/fab-operator1`), not a package. It requires an AI agent to interpret natural language and reason about cross-agent coordination. The supporting `fab send-keys` subcommand is a CLI primitive (Go binary addition).
+This is a **skill** (`/fab-operator1`), not a package. It requires an AI agent to interpret natural language and reason about cross-agent coordination. The supporting `fab resolve --pane` flag is the CLI primitive for change-to-pane resolution.
 
 ### Context loading
 
@@ -339,4 +339,4 @@ A worktree may not have an active change yet (freshly created). The operator sho
 
 3. **Single-repo only, by design.** Fab-kit's model is one repo with worktrees as checkouts of the same repo. Multi-repo coordination is a fundamentally different tool, out of scope.
 
-4. **`fab send-keys` targets fab-managed worktrees only.** The subcommand resolves a `<change>` argument via standard change resolution — this is meaningless for plain shell tabs. For edge cases where the operator skill needs to interact with non-fab panes, it can use raw `tmux send-keys` via Bash directly.
+4. **`fab resolve --pane` targets fab-managed worktrees only.** The flag resolves a `<change>` argument via standard change resolution — this is meaningless for plain shell tabs. For edge cases where the operator skill needs to interact with non-fab panes, it can use raw `tmux send-keys` with a pane ID from the pane map directly.

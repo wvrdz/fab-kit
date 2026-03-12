@@ -1,6 +1,6 @@
 ---
 name: fab-operator1
-description: "Multi-agent coordination in tmux — observe agents via pane-map and status, interact via send-keys, coordinate cross-agent actions."
+description: "Multi-agent coordination in tmux — observe agents via pane-map and status, interact via resolve --pane + tmux send-keys, coordinate cross-agent actions."
 ---
 
 # /fab-operator1
@@ -11,7 +11,7 @@ description: "Multi-agent coordination in tmux — observe agents via pane-map a
 
 ## Purpose
 
-Multi-agent coordination layer that runs in a dedicated tmux pane. Observes all running fab agents via `fab pane-map`, and interacts with them via `fab send-keys`. Translates natural-language user instructions into cross-agent actions: broadcasting commands, sequencing rebases, spawning new worktrees, and merging PRs.
+Multi-agent coordination layer that runs in a dedicated tmux pane. Observes all running fab agents via `fab pane-map`, and interacts with them via `fab resolve --pane` + raw `tmux send-keys`. Translates natural-language user instructions into cross-agent actions: broadcasting commands, sequencing rebases, spawning new worktrees, and merging PRs.
 
 Not a lifecycle enforcer — individual agents already know their pipeline. The operator handles coordination that requires cross-agent awareness.
 
@@ -77,7 +77,7 @@ This is the authoritative mapping of intent to tool. Use the right tool for the 
 
 | Intent | Tool | Notes |
 |--------|------|-------|
-| Send a command to an agent | `fab/.kit/bin/fab send-keys <change> "<text>"` | Always validate pane exists + agent idle first. |
+| Send a command to an agent | `tmux send-keys -t "$(fab/.kit/bin/fab resolve <change> --pane)" "<text>" Enter` | Always validate pane exists + agent idle first. |
 | Create a worktree | `fab/.kit/bin/wt create --non-interactive --worktree-name <name>` | Add `--reuse` for autopilot respawns. |
 | Delete a worktree | `fab/.kit/bin/wt delete <name>` | Post-merge cleanup. Destructive — confirm first. |
 | Open a new agent tab | `tmux new-window -n "fab-<id>" -c <worktree> "claude --dangerously-skip-permissions '<command>'"` | Spawns a new Claude session in the worktree. |
@@ -103,7 +103,7 @@ On invocation, display the current coordination landscape:
 If `$TMUX` is unset, display:
 
 ```
-Warning: not inside a tmux session. Pane map and send-keys unavailable. Status-only mode.
+Warning: not inside a tmux session. Pane map and resolve --pane unavailable. Status-only mode.
 ```
 
 Use `wt list` (worktree overview) and `fab change list` (pipeline state) for status queries only.
@@ -162,7 +162,7 @@ Actions are categorized into three risk tiers:
 
 ## Pre-Send Validation
 
-Before sending keys to any pane via `fab send-keys`, the operator MUST:
+Before sending keys to any pane via `fab resolve --pane` + `tmux send-keys`, the operator MUST:
 
 1. **Verify pane exists**: Refresh the pane map. If the target pane is gone, report: "Pane for {change} is gone (agent exited or tab closed)." Do NOT attempt to send.
 2. **Check agent is idle**: Read the Agent column from the pane map. If the agent is not idle, warn: "{change} is currently active. Sending may corrupt its work. Send anyway?" Only send if the user confirms.
@@ -290,4 +290,4 @@ When the queue is complete, the operator outputs a final summary listing each ch
 | Advances stage? | No |
 | Outputs `Next:` line? | No — ends with ready signal |
 | Loads change artifacts? | No — coordination context only |
-| Requires tmux? | Yes for pane-map and send-keys; status-only mode without |
+| Requires tmux? | Yes for pane-map and resolve --pane; status-only mode without |
