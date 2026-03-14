@@ -104,7 +104,7 @@ The State Table's available commands may need updating. Currently both ff and ff
 
 ## Open Questions
 
-- Should the `--force` flag also be available on `/fab-continue` for individual stage transitions, or only on the pipeline shortcuts?
+None — all resolved.
 
 ## Assumptions
 
@@ -117,7 +117,6 @@ The State Table's available commands may need updating. Currently both ff and ff
 | 5 | Certain | Naming: ff = fast-forward, fff = fast-forward-further | Discussed — user confirmed the naming philosophy | S:90 R:90 A:90 D:95 |
 | 6 | Confident | Auto-clarify behavior is identical in both (after spec and after tasks) | Current ff behavior is the baseline; user didn't object when I raised this | S:70 R:80 A:85 D:80 |
 | 7 | Confident | No changes to Go binary, scripts, or templates | Scope is docs/skills only — no CLI behavior changes needed | S:75 R:85 A:80 D:85 |
-| 8 | Tentative | --force flag only on ff/fff, not on /fab-continue | User mentioned it in context of ff/fff only; /fab-continue doesn't have gates to bypass | S:60 R:85 A:70 D:60 |
-<!-- assumed: --force scope limited to pipeline shortcuts — /fab-continue doesn't currently have gates, so the flag would be a no-op there -->
+| 8 | Certain | --force flag only on ff/fff, not on /fab-continue | Clarified — user confirmed: /fab-continue doesn't have gates to bypass, so --force is scoped to pipeline shortcuts only | S:95 R:85 A:90 D:95 |
 
-8 assumptions (5 certain, 2 confident, 1 tentative, 0 unresolved).
+8 assumptions (6 certain, 2 confident, 0 tentative, 0 unresolved).
