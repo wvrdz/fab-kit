@@ -548,4 +548,4 @@ When `/fab-continue` (hydrate) hydrates `spec.md` into memory:
 2. **Existing memory file**: Compare `spec.md` requirements against the current file to determine what's new, changed, or removed. Update the Requirements section semantically. Minimize edits to unchanged sections.
 3. **Index updates**: Update domain index "Last Updated" column. Add new entries if new files were created.
 4. **Changelog row**: Append a row to the memory file's Changelog table with the change name, date, and one-line summary.
-5. **Archive index**: Maintain `fab/changes/archive/index.md` listing all completed changes. Each entry includes the change folder name, date, and a one-line summary. `/fab-continue` (hydrate) appends a row when moving a change to the archive directory.
+5. **Archive index**: Maintain `fab/changes/archive/index.md` listing all completed changes. Each entry includes the change folder name, date, and a one-line summary. `/fab-archive` appends a row when moving a change to the archive directory.
