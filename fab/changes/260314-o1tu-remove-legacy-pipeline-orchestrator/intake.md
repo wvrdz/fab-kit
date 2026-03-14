@@ -72,18 +72,23 @@ Edit `docs/memory/fab-workflow/kit-architecture.md`:
 - Remove the `dispatch.sh` reference in the Non-Interactive Porcelain Output Contract
 - Remove the changelog entry for `260222-bcfy-batch-pipeline-series-rename`
 
-### 9. Update fab-help.sh
+### 9. Update README.md
+
+Edit `README.md`:
+- Remove the `batch-pipeline.sh` and `batch-pipeline-series.sh` rows from the Shell Utilities table in the Command Quick Reference section
+
+### 10. Update fab-help.sh
 
 Edit `fab/.kit/scripts/fab-help.sh`:
 - Remove the `batch-pipeline` and `batch-pipeline-series` entries from the `batch_to_group` mapping (or equivalent category mapping)
 
-### 10. Clean Up .gitignore Files
+### 11. Clean Up .gitignore Files
 
 **Repo `.gitignore`**: Remove the line `fab/pipelines/.series-*.yaml`
 
 **Scaffold `fragment-.gitignore`**: Remove the line `fab/pipelines/.series-*.yaml`
 
-### 11. Add Migration
+### 12. Add Migration
 
 Create `fab/.kit/migrations/0.37.0-to-0.38.0.md` with instructions for deployed projects to:
 
@@ -105,6 +110,7 @@ Create `fab/.kit/migrations/0.37.0-to-0.38.0.md` with instructions for deployed 
 - **Tests**: 1 BATS file deleted
 - **Memory**: 1 file deleted, 2 files edited
 - **Memory index**: 1 entry removed from domain index, 1 from top-level index
+- **README**: 2 rows removed from Shell Utilities table
 - **Help**: 2 entries removed from fab-help.sh
 - **Gitignore**: 1 line removed from each of 2 files
 - **Migration**: 1 new migration file

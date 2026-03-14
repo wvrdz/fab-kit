@@ -2,7 +2,7 @@ id: o1tu
 name: 260314-o1tu-remove-legacy-pipeline-orchestrator
 created: 2026-03-14T11:35:45Z
 created_by: sahil-weaver
-change_type: chore
+change_type: refactor
 issues: []
 progress:
     intake: ready
@@ -34,4 +34,4 @@ confidence:
 stage_metrics:
     intake: {started_at: "2026-03-14T11:35:45Z", driver: fab-new, iterations: 1}
 prs: []
-last_updated: 2026-03-14T11:36:44Z
+last_updated: 2026-03-14T16:43:33Z
