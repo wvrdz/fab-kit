@@ -1,0 +1,37 @@
+id: o1tu
+name: 260314-o1tu-remove-legacy-pipeline-orchestrator
+created: 2026-03-14T11:35:45Z
+created_by: sahil-weaver
+change_type: chore
+issues: []
+progress:
+    intake: ready
+    spec: pending
+    tasks: pending
+    apply: pending
+    review: pending
+    hydrate: pending
+    ship: pending
+    review-pr: pending
+checklist:
+    generated: false
+    path: checklist.md
+    completed: 0
+    total: 0
+confidence:
+    certain: 8
+    confident: 2
+    tentative: 0
+    unresolved: 0
+    score: 4.4
+    indicative: true
+    fuzzy: true
+    dimensions:
+        signal: 88.0
+        reversibility: 89.5
+        competence: 92.0
+        disambiguation: 92.5
+stage_metrics:
+    intake: {started_at: "2026-03-14T11:35:45Z", driver: fab-new, iterations: 1}
+prs: []
+last_updated: 2026-03-14T11:36:44Z
