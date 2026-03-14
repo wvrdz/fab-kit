@@ -1,0 +1,4 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-14T16:44:49Z"}
+{"args":"Create fab-operator4: extends operator3 with simplified auto-answer model, routing discipline, improved detection heuristics, re-capture guard, per-answer logging","cmd":"fab-new","event":"command","ts":"2026-03-14T16:44:49Z"}
+{"delta":"+4.4","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-14T16:46:25Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-14T16:46:31Z"}
