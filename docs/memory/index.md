@@ -2,7 +2,7 @@
 
 > **Memory files are post-implementation artifacts** — what actually *happened*. They are the
 > authoritative source of truth for system behavior and design decisions, maintained by
-> `/fab-continue` (hydrate) and `/fab-archive` after each change is completed.
+> `/fab-continue` (hydrate) after each change is completed.
 >
 > Contrast with [`docs/specs/index.md`](../specs/index.md): specs are *pre-implementation* —
 > what you planned. Specs capture conceptual design intent and are human-curated.

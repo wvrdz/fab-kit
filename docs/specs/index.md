@@ -6,7 +6,7 @@
 >
 > Contrast with [`docs/memory/index.md`](../memory/index.md): memory files are *post-implementation* —
 > what actually happened. Memory is the authoritative source of truth for system behavior,
-> maintained by `/fab-continue` (archive) hydration.
+> maintained by `/fab-continue` (hydrate).
 >
 > **Ownership**: Specs are written and maintained by humans. No automated tooling creates or
 > enforces structure here — organize files however makes sense for your project.

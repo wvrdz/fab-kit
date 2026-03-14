@@ -363,7 +363,7 @@ For larger changes that span multiple user stories, the agent should adapt by sp
 ## Notes
 
 - Check items as you review: `- [x]`
-- All items must pass before `/fab-continue` (archive)
+- All items must pass before `/fab-continue` (hydrate)
 - If an item is not applicable, mark checked and prefix with **N/A**: `- [x] CHK-008 **N/A**: {reason}`
 ```
 
@@ -415,7 +415,7 @@ When `/fab-continue` or `/fab-ff` creates `tasks.md`, it also generates `checkli
 
 ## Notes
 - Check items as you review: `- [x]`
-- All items must pass before `/fab-continue` (archive)
+- All items must pass before `/fab-continue` (hydrate)
 - If an item is not applicable, mark checked and prefix with **N/A**: `- [x] CHK-008 **N/A**: {reason}`
 ```
 
@@ -448,7 +448,7 @@ docs/memory/
 ```markdown
 # Memory Index
 
-> Source of truth for system behavior and design. Updated by `/fab-continue` (archive) hydration.
+> Source of truth for system behavior and design. Updated by `/fab-continue` (hydrate) hydration.
 
 | Domain | Description | Memory Files |
 |--------|-------------|--------------|
@@ -520,7 +520,7 @@ docs/memory/
 
 ### Initial Memory (created by `/fab-setup`)
 
-A fresh project starts with a single index file. The first `/fab-continue` (archive) populates domains and files:
+A fresh project starts with a single index file. The first `/fab-continue` (hydrate) populates domains and files:
 
 ```
 docs/memory/
@@ -530,7 +530,7 @@ docs/memory/
 ```markdown
 # Documentation Index
 
-> Source of truth for system behavior and design. Updated by `/fab-continue` (archive) hydration.
+> Source of truth for system behavior and design. Updated by `/fab-continue` (hydrate) hydration.
 
 <!-- No domains yet. /fab-continue (archive) will create domain folders and populate this table. -->
 
@@ -542,10 +542,10 @@ docs/memory/
 
 ### Hydration Rules
 
-When `/fab-continue` (archive) hydrates `spec.md` into memory:
+When `/fab-continue` (hydrate) hydrates `spec.md` into memory:
 
 1. **New memory file**: If the spec references a file that doesn't exist yet, create it from the individual memory file template and add it to the domain index. If the domain doesn't exist, create the domain folder and add it to the top-level index.
 2. **Existing memory file**: Compare `spec.md` requirements against the current file to determine what's new, changed, or removed. Update the Requirements section semantically. Minimize edits to unchanged sections.
 3. **Index updates**: Update domain index "Last Updated" column. Add new entries if new files were created.
 4. **Changelog row**: Append a row to the memory file's Changelog table with the change name, date, and one-line summary.
-5. **Archive index**: Maintain `fab/changes/archive/index.md` listing all completed changes. Each entry includes the change folder name, date, and a one-line summary. `/fab-continue` (archive) appends a row when moving a change to the archive directory.
+5. **Archive index**: Maintain `fab/changes/archive/index.md` listing all completed changes. Each entry includes the change folder name, date, and a one-line summary. `/fab-continue` (hydrate) appends a row when moving a change to the archive directory.
