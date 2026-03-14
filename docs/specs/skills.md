@@ -535,6 +535,34 @@ The applying agent triages review comments by priority — not all comments need
 
 ---
 
+## `/git-rebase`
+
+**Purpose**: Fetch the latest main branch and rebase the current branch onto it. Standalone git command — does not modify fab state.
+
+**Example**:
+```
+/git-rebase
+→ "Rebased 260314-yfbc-add-git-rebase-skill onto origin/main."
+```
+
+**Behavior**:
+1. Check inside a git repo (`git rev-parse --is-inside-work-tree`)
+2. Branch guard — refuse to run on `main` or `master`
+3. Check for uncommitted changes (`git status --porcelain`)
+   - If dirty → prompt user: stash-and-rebase or abort
+4. Auto-detect main branch name (`main` vs `master`)
+5. Fetch latest main (`git fetch origin {main_branch}`)
+6. Rebase onto main (`git rebase origin/{main_branch}`)
+7. If stashed → restore with `git stash pop`
+8. Report result
+
+**Key properties**:
+- Does not modify `.fab-status.yaml` or `.status.yaml`
+- Idempotent — rebasing an already up-to-date branch is a no-op
+- Prompts user only when uncommitted changes exist
+
+---
+
 ## `/fab-status`
 
 **Purpose**: Show current change state at a glance.
