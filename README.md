@@ -373,8 +373,6 @@ Grades aggregate into a **confidence score** that gates `/fab-ff`. If ambiguity 
 | `batch-fab-new-backlog.sh` | Create changes from multiple backlog entries |
 | `batch-fab-switch-change.sh` | Switch changes across multiple worktrees |
 | `batch-fab-archive-change.sh` | Archive multiple completed changes |
-| `batch-pipeline.sh` | Run pipeline on a change in a worktree |
-| `batch-pipeline-series.sh` | Chain multiple pipeline runs in sequence |
 
 ## Packages
 
