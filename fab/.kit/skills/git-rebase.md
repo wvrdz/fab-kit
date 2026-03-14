@@ -72,7 +72,13 @@ Wait for user response. If the user chooses to abort, STOP. If the user chooses 
 
 ### Step 4: Fetch and Rebase
 
-Determine the upstream main branch name (`main` or `master`):
+Determine the upstream default branch name:
+
+```bash
+git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||'
+```
+
+If that fails (e.g., `origin/HEAD` not set), fall back to local detection:
 
 ```bash
 git rev-parse --verify main >/dev/null 2>&1 && echo main || echo master

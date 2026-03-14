@@ -25,7 +25,7 @@ The skill SHALL verify it is running inside a git repository before any other op
 - **GIVEN** the current directory is not inside a git repository
 - **WHEN** the user runs `/git-rebase`
 - **THEN** the skill reports "Not inside a git repository."
-- **AND** no git commands are executed
+- **AND** no git commands beyond the repo check are executed
 
 ### Requirement: Branch Guard
 
@@ -74,15 +74,15 @@ The skill SHALL check for uncommitted changes via `git status --porcelain` befor
 
 ### Requirement: Main Branch Auto-Detection
 
-The skill SHALL auto-detect whether the repository uses `main` or `master` as its primary branch via `git rev-parse --verify main`. If `main` exists, use `main`; otherwise fall back to `master`.
+The skill SHALL auto-detect the repository's default branch. The primary method is `git symbolic-ref refs/remotes/origin/HEAD`, which reads the remote's default branch without requiring a local branch. If that fails (e.g., `origin/HEAD` not set), fall back to `git rev-parse --verify main` with `master` as the final fallback.
 
-#### Scenario: Repository uses main
-- **GIVEN** the repository has a `main` branch
+#### Scenario: Repository uses main (via origin/HEAD)
+- **GIVEN** the repository's `origin/HEAD` points to `origin/main`
 - **WHEN** the skill detects the main branch
 - **THEN** it uses `origin/main` as the rebase target
 
-#### Scenario: Repository uses master
-- **GIVEN** the repository has no `main` branch but has `master`
+#### Scenario: Repository uses master (fallback)
+- **GIVEN** `origin/HEAD` is not set and no local `main` branch exists
 - **WHEN** the skill detects the main branch
 - **THEN** it uses `origin/master` as the rebase target
 
