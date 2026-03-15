@@ -179,236 +179,156 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 - Restore mode requires explicit `<change-name>` — no "restore most recent" convenience
 - Restore mode optionally activates via `--switch` flag
 
-### `/fab-operator1` (Standalone Coordination Skill)
+### `/fab-operator4` (Standalone Coordination Skill)
 
-`/fab-operator1` is a standalone coordination skill — NOT a pipeline stage. It runs as a long-lived Claude session in a dedicated tmux pane. It is user-driven (not a daemon or polling loop): waits for user input, acts, reports back. It handles cross-agent coordination only — it is NOT a lifecycle enforcer (individual agents self-govern via their own pipeline skills). Launch via `fab/.kit/scripts/fab-operator.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator1` running `claude --dangerously-skip-permissions '/fab-operator1'`.
+`/fab-operator4` is a standalone, self-contained coordination skill — NOT a pipeline stage. It runs as a long-lived Claude session in a dedicated tmux pane, observing agents via `fab pane-map`, routing commands via `tmux send-keys`, monitoring progress via `/loop`, and auto-answering idle agent prompts. Launch via `fab/.kit/scripts/fab-operator4.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator4'`.
+
+Operator4 is the single operator skill. Previous iterations (operator1, operator2, operator3) have been removed — their behavior is fully inlined into operator4 as a standalone file. An agent reading operator4 has complete knowledge of all operator behavior from this single file plus the standard `_` files loaded via `_preamble.md`.
+
+#### Principles
+
+**Coordinate, don't execute.** The operator routes user instructions to the right agent — it never implements work directly. If the target is ambiguous, ask.
+
+**Not a lifecycle enforcer.** Individual agents self-govern via their own pipeline skills. The operator does not validate stage transitions or enforce pipeline rules.
+
+**Context discipline.** The operator never reads change artifacts (intakes, specs, tasks). Its context window is reserved for coordination state — pane maps, stage snapshots, monitoring state.
+
+**State re-derivation.** Before every action, re-query live state via `fab pane-map` (or `wt list` + `fab change list` outside tmux). Panes die, stages advance, agents finish — stale state leads to wrong actions.
 
 #### Context Loading
 
-The operator loads the always-load layer (`_preamble.md` §1) — the same 7 files as `/fab-discuss`. It does NOT run preflight. It does NOT load change-specific artifacts (intakes, specs, tasks). The operator's context window is reserved for coordination state, not change content.
+The operator loads the always-load layer (`_preamble.md` §1) plus `fab/.kit/skills/_cli-external.md` (external tool reference for `wt`, `tmux`, and `/loop` — loaded only by operator, not by pipeline skills). It does NOT run preflight. It does NOT load change-specific artifacts.
 
-#### Orientation on Start
+#### Orientation
 
-On invocation, the operator displays the pane map (via `fab pane-map` — columns: Pane, Tab, Worktree, Change, Stage, Agent), then signals readiness. Pane-map uses session-scoped discovery (`-s`), showing only panes in the current tmux session. Outside tmux, the operator falls back to `wt list` + `fab change list` (pane-map is unavailable) and enters status-only mode with a warning.
+On invocation, runs `fab pane-map` and displays the output, then signals readiness. Outside tmux (`$TMUX` unset), falls back to `wt list` + `fab change list` for status queries only — monitoring is disabled.
 
-#### State Re-derivation
+#### Safety Model
 
-The operator MUST re-query live state before every action (`fab pane-map` in tmux sessions, `wt list` + `fab change list` when running outside tmux). It SHALL NOT rely on stale values from conversation memory. Within tmux, `fab pane-map` is the primary observation mechanism; the Agent column provides per-agent idle state for pre-send validation.
-
-#### Use Cases
-
-Each use case follows the pattern: interpret user intent → refresh state → validate preconditions → execute → report.
-
-1. **Broadcast command to all agents** — refresh pane map, filter for idle agents, send command (e.g., `/fab-continue`) to each via `tmux send-keys -t "$(fab resolve <change> --pane)"`
-2. **Sequenced rebase after completion** — hold instruction in conversation context, check target agent's status on next interaction, send rebase command when precondition met
-3. **Merge completed PRs** — identify changes with PRs via `fab status get-prs`, confirm before executing (destructive), run `gh pr merge` from operator's own shell
-4. **Spawn new worktree + agent from idea** — look up idea, create worktree via `wt create --non-interactive`, open tmux tab, send `/fab-new <description>`
-5. **Status dashboard** — refresh pane map (`fab pane-map`), present concise human-readable summary
-6. **Unstick a stuck agent** — confirm idle via the Agent column in the pane map, send `/fab-continue`, warn on repeated nudge ("Already nudged once. Manual investigation recommended.")
-7. **Notification surface** — hold "notify me" instructions in conversation context, check on next user interaction, report status
-8. **Autopilot** — accept a list of changes (IDs, names, or "all idle"), resolve ordering (user-provided, confidence-based, or hybrid), confirm full queue at start (destructive — merges PRs after each success), delegate to Autopilot Behavior for execution
-
-#### Confirmation Model
-
-| Risk | Examples | Behavior |
+| Tier | Examples | Behavior |
 |------|----------|----------|
 | Read-only | Status check, pane map | No confirmation |
 | Recoverable | Send `/fab-continue`, rebase | Announce before sending |
-| Destructive | Merge PR, archive, delete worktree, Autopilot (merge after each success) | Confirm before executing |
+| Destructive | Merge PR, archive, delete worktree, autopilot | Confirm before executing |
 
-#### Pre-Send Validation
+**Pre-send validation**: Before sending keys to any pane, the operator MUST (1) verify the pane exists via refreshed pane map (dead panes fail silently), (2) check the agent is idle via the Agent column. If busy, warn and require explicit confirmation.
 
-Before sending keys to any pane via `fab resolve --pane` + `tmux send-keys`, the operator MUST: (1) verify the target pane still exists (via refreshed pane map), (2) check the agent is idle via the Agent column in the pane map, (3) if the agent is not idle, warn the user and ask for confirmation before sending.
-
-#### Bounded Retries and Escalation
+**Bounded retries**: Every automatic action has a bounded retry count. Unbounded retries compound errors.
 
 | Situation | Max retries | Escalation |
 |-----------|-------------|------------|
 | Stuck agent nudge | 1 | "Appears stuck at {stage}. Manual investigation recommended." |
-| Rebase conflict | 0 (never auto-resolve) | Immediately flag to user |
+| Rebase conflict | 0 | Immediately flag to user |
+| Pane death (non-autopilot) | 0 | Report pane gone. No respawn outside autopilot |
+| Send to busy agent | 0 | Warn user, require explicit confirmation |
 
-#### Context Discipline
+#### Monitoring System
 
-The operator SHALL NOT load change artifacts (intakes, specs, tasks). It reports concisely. It delegates diagnosis to the user. For terminal output inspection, it MAY use `tmux capture-pane -t <pane> -p` to read recent output but SHALL NOT deeply analyze codebase work.
+The operator maintains a monitored set in conversation context (not a persistent file). Each entry tracks: change ID, pane, last-known stage, last-known agent state, enrolled-at timestamp, last-transition-at timestamp.
 
-#### Interaction Primitive: `resolve --pane` + `tmux send-keys`
+**Enrollment triggers**: operator sends a command to it, user requests monitoring, operator triggers an automatic action toward it. Read-only actions do not enroll.
 
-The operator sends commands to other agents via `tmux send-keys -t "$(fab/.kit/bin/fab resolve <change> --pane)" "<text>" Enter`. `fab resolve --pane` provides the pane lookup (change → tmux pane ID); raw `tmux send-keys` provides the delivery mechanism. The skill enforces policy (idle check, pane validation); the CLI provides mechanism (pane resolution).
+**Removal triggers**: change reaches a terminal stage (hydrate, ship, review-pr), pane dies, user explicitly stops monitoring.
 
-#### Autopilot Behavior (UC8)
+**`/loop` lifecycle**: Start when first change enrolled (no loop running) — `/loop 5m "check monitored agents"`. Stop when monitored set empty. One-loop invariant: at most one active `/loop` at any time.
 
-When UC8 delegates here, the operator drives a queue of changes through the full pipeline — spawning agents, monitoring progress, merging PRs, and rebasing downstream changes. Queue state is held in conversation context only (no file-backed persistence in v1).
+**Monitoring tick** (on each `/loop` tick or "any updates?"):
 
-**Ordering strategies**: Three strategies resolve queue order: (1) user-provided — exact order as given; (2) confidence-based — sorted by confidence score descending via `fab status confidence <change>`; (3) hybrid — user provides partial ordering constraints, operator sorts unconstrained changes by confidence as tiebreaker.
+1. **Stage advance detection** — compare current stage to last-known. Report transitions, update baseline.
+2. **Pipeline completion detection** — stage is hydrate, ship, or review-pr. Report and remove from monitored set.
+3. **Review failure detection** — stage went from review back to apply. Report rework.
+4. **Pane death detection** — change no longer in pane map. Report and remove from monitored set.
+5. **Auto-nudge** — for each idle agent, run question detection and answer model (see below). If a monitored agent was spawned for a new change from backlog and the tick detects the change has advanced past intake, send `/git-branch` to that agent's pane (aligns branch name with newly created change folder).
+6. **Stuck detection** — for agents NOT detected as input-waiting in step 5, check idle duration. If idle at non-terminal stage for >15m, report as potentially stuck. Advisory only — an agent waiting for input is not stuck.
 
-**Per-change loop**: For each change in the resolved queue: spawn worktree (`wt create --non-interactive --reuse --worktree-name <change> <branch>` — for user-provided ordering, add `--base <previous-change-folder-name>` so the new branch starts from the previous change's tip; for confidence-based ordering, omit `--base` since changes are independent) → open tmux tab → gate check confidence (`fab status confidence <change>`; if >= gate, dispatch `/fab-ff` via `tmux send-keys -t "$(fab resolve <change> --pane)"`; if < gate, flag to user) → monitor via `fab pane-map` on each tick → on success, merge PR from operator shell (`gh pr merge`) → rebase next change (via `tmux send-keys`; conflict = flag and skip, never auto-resolve) → optional cleanup (`wt delete`) → report one-line status.
+After processing all changes: if the monitored set is empty, stop the loop and report "All monitored changes complete."
 
-**Failure matrix**:
+#### Auto-Nudge
 
-| Failure | Action | Resume? |
-|---------|--------|---------|
-| Confidence below gate | Flag to user: run `/fab-fff` or skip | Wait for user input |
-| Review fails (rework exhausted) | Flag, skip to next change | Yes |
-| Rebase conflict | Flag, skip to next change | Yes |
-| Agent pane dies | 1 respawn attempt, then flag and skip | Yes |
-| Stage timeout (>30 min same stage) | Flag regardless of retry state | Yes |
-| Total timeout (>2 hr per change) | Flag for review | Yes |
+The operator acts as a proxy for the user on routine operational questions.
 
-**Interruptibility**: During autopilot, the user can interrupt with: `"stop after current"` (finish active change, halt queue), `"skip <change>"` (remove from queue, proceed), `"pause"` (stop sending new commands, running agents continue), `"resume"` (pick up from where paused). Interrupts are acknowledged immediately.
+**Question detection** — for each idle monitored agent:
 
-**Resumability**: If the operator session restarts, state is reconstructable from `fab pane-map`. Merged changes appear as archived/shipped; in-progress changes show their current stage. The operator resumes from the first non-completed change.
+1. Capture: `tmux capture-pane -t <pane> -p -l 20` (wide window compensates for line wrapping)
+2. Claude turn boundary guard: if `^\s*>\s*$` appears in last 2 lines, skip (normal human-turn boundary)
+3. Blank capture guard: if output is entirely blank/whitespace, skip (treat as "cannot determine")
+4. Scan for question indicators: lines ending with `?` (tightened — last non-empty line only, <120 chars, skip comment/log prefixes), `[Y/n]`/`[y/N]`/`(y/n)`/`(yes/no)`, `Allow?`/`Approve?`/`Confirm?`/`Proceed?`, Claude Code permission prompts, `Do you want to...`/`Should I...`/`Would you like...`, lines ending with `:`/`:\s*$`, enumerated options (`[1-9]\)` patterns), `Press.*key`/`press.*enter`/`hit.*enter` (case-insensitive)
+5. No match → normal idle behavior (stuck detection applies)
+6. Match found → proceed to answer model. Bottom-most (most recent) indicator evaluated when multiple match.
 
-**Progress reporting**: One-line status after each change completes (success or skip). Final summary lists all changes with outcomes (merged, skipped, failed).
-
-### `/fab-operator2` (Standalone Coordination Skill — Monitoring Iteration)
-
-`/fab-operator2` is a workflow iteration of `/fab-operator1`. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator2.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator2'`. Only one operator (1 or 2) runs at a time in the shared `operator` tab.
-
-#### Monitor-After-Action
-
-When operator2 sends a command to an agent via `tmux send-keys` (after resolving the pane with `fab resolve --pane`), it does NOT simply report the send and go idle. Instead:
-
-1. **Send the command** (same as operator1)
-2. **Enroll the target change in monitoring** — capture its current state (stage, agent status) as a baseline
-3. **Start or extend a `/loop`** at configurable interval (default 5m) to periodically check progress
-4. **Each tick**: Re-query `fab pane-map`, compare current state against the last known state for all monitored changes, report transitions:
-   - Stage advances (e.g., "r3m7: spec -> tasks")
-   - Completions (e.g., "r3m7: reached hydrate -- pipeline complete")
-   - Failures (e.g., "r3m7: review failed, reworking")
-   - Pane deaths (e.g., "r3m7: pane %3 is gone -- agent exited")
-   - Stuck detection (e.g., "r3m7: idle at apply for 15m -- may be stuck")
-5. **Terminal state**: Stop monitoring a change when it reaches hydrate/ship/review-pr, the user says stop, or the pane dies
-
-The monitored set (change ID, last-known stage, last-known agent state, enrolled-at timestamp) is held in conversation context — not in a persistent file. This matches operator1's pattern for standing orders (UC7). If the operator session ends, state is lost, but `fab pane-map` allows full reconstruction on restart.
-
-#### Loop Lifecycle
-
-The `/loop` is started when the first change is enrolled in monitoring and stopped when the monitored set becomes empty. Only one loop is active at a time. When all monitored changes reach terminal state, the loop stops and the operator reports "All monitored changes complete."
-
-#### Stuck Detection
-
-Agents idle at a non-terminal stage for longer than the stuck threshold (default 15m, configurable) are flagged as potentially stuck. Stuck detection is advisory only — the operator reports to the user but does NOT auto-nudge. Auto-nudging could corrupt an agent blocked on a legitimate long operation. Nudging requires explicit UC6 invocation or user instruction.
-
-#### Monitoring-Enhanced Use Cases
-
-All operator1 use cases carry over. The following gain monitoring integration:
-
-- **UC1 (Broadcast)**: After broadcasting, all recipients are auto-enrolled in monitoring
-- **UC2 (Sequenced rebase)**: Monitoring detects when the trigger change reaches the target stage and sends the rebase automatically (driven by the loop instead of next-user-interaction)
-- **UC6 (Unstick)**: After nudging, the nudged agent is enrolled in monitoring to check recovery
-- **UC7 (Notification)**: "Tell me when X finishes" immediately enrolls the change in monitoring — no "check on next user interaction" caveat
-
-UC3 (merge), UC4 (spawn), UC5 (status dashboard), and UC8 (autopilot) behave identically to operator1.
-
-#### Configuration
-
-- **Monitoring interval**: Default 5 minutes, overridable via natural language (e.g., "check every 2m" uses `/loop 2m`)
-- **Stuck threshold**: Default 15 minutes, adjustable per user instruction
-
-#### Design Constraints
-
-- **Pane-map only**: Uses `fab pane-map` as its sole observation primitive — no `fab runtime is-idle` (same cross-worktree issue as operator1)
-- **No change artifacts**: Never reads intakes, specs, or tasks — context window reserved for coordination state
-- **One operator at a time**: The operator tab runs either `/fab-operator1`, `/fab-operator2`, `/fab-operator3`, or `/fab-operator4`, never more than one simultaneously
-
-#### Launcher Scripts
-
-`fab-operator1.sh` (renamed from `fab-operator.sh`) launches operator1; `fab-operator2.sh` launches operator2; `fab-operator3.sh` launches operator3; `fab-operator4.sh` launches operator4. All use the shared singleton tmux tab name `operator`. The launcher reference in `fab-operator1.md` was updated from `fab-operator.sh` to `fab-operator1.sh` for naming symmetry.
-
-### `/fab-operator3` (Standalone Coordination Skill — Auto-Nudge Iteration)
-
-`/fab-operator3` is a workflow iteration of `/fab-operator2`. It inherits all operator2 behavior — monitoring, enrollment, `/loop` ticks, all eight use cases (UC1–UC8), confirmation model, pre-send validation, context discipline, and configuration — and adds auto-nudge capability: question detection via terminal heuristic, an answer confidence model, and an input-waiting detection step in the monitoring tick. Launch via `fab/.kit/scripts/fab-operator3.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator3'`. Only one operator (1, 2, 3, or 4) runs at a time in the shared `operator` tab.
-
-#### Question Detection (Terminal Heuristic)
-
-During each monitoring tick, for idle agents (per pane-map Agent column), operator3 captures the last ~10 lines of the agent's terminal via `tmux capture-pane -t <pane> -p -l 10` and scans for question indicators: lines ending with `?`, `[Y/n]`/`[y/N]`/`(y/n)`/`(yes/no)` patterns, `Allow?`/`Approve?`/`Confirm?`/`Proceed?` keywords, Claude Code permission prompts, and `Do you want to...`/`Should I...`/`Would you like...` phrasing. The heuristic is intentionally broad — false positives are handled by the confidence model (escalate when unsure). When multiple indicators appear, the bottom-most (most recent) is evaluated. Active agents are not scanned.
-
-#### Answer Confidence Model
-
-Detected questions are classified into two tiers:
-
-- **Auto-answer**: One obvious right answer — binary yes/no where "yes" continues work and "no" stalls, with no destructive or branching implications. Action: send the answer via `tmux send-keys`, report `"{change}: auto-answered '{summary}' → {answer}"`.
-- **Escalate**: Multiple valid paths or judgment required — tradeoffs, destructive actions, branching decisions, failing tests. Action: report `"{change}: waiting for input — '{summary}'. Please respond."` without sending any answer.
-
-No cooldown or retry limit. Each question is evaluated independently. PR review serves as the safety net.
-
-#### Updated Monitoring Tick
-
-The monitoring tick gains a new step 5 (input-waiting detection) between pane death detection (step 4) and stuck detection (step 6):
-
-1. Stage advance detection *(existing)*
-2. Pipeline completion detection *(existing)*
-3. Review failure detection *(existing)*
-4. Pane death detection *(existing)*
-5. **Input-waiting detection** *(new)* — terminal heuristic for idle agents, auto-answer or escalate
-6. Stuck detection *(existing, modified)* — only for agents NOT detected as input-waiting
-
-Key invariant: input-waiting detection runs before stuck detection. An agent waiting for input is not "stuck." Stuck detection only flags agents idle without a visible question.
-
-#### Design Constraints
-
-- **Inherits all operator2 constraints**: Pane-map only, no change artifacts, one operator at a time
-- **No audit trail for v1**: Auto-answers reported inline, not logged to a persistent file
-- **Hardcoded patterns**: Question indicator patterns embedded in skill file, not configurable via config.yaml
-
-### `/fab-operator4` (Standalone Coordination Skill — Redesigned Auto-Nudge)
-
-`/fab-operator4` is a workflow iteration of `/fab-operator3`. It inherits all operator3 behavior — monitoring, enrollment, `/loop` ticks, all eight use cases (UC1–UC8), confirmation model, pre-send validation, context discipline, configuration, question detection, and answer confidence model — and overrides the answer model, detection heuristics, and autopilot pipeline skill. Launch via `fab/.kit/scripts/fab-operator4.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator4'`. Only one operator (1, 2, 3, or 4) runs at a time in the shared `operator` tab.
-
-#### Routing Discipline
-
-The operator MUST NOT execute user instructions directly. When the user gives an instruction (e.g., "fix the tests", "add error handling"), the operator determines which running tmux session/agent the request corresponds to, routes the instruction to that agent via `tmux send-keys`, and enrolls the agent in monitoring. If the target agent is ambiguous, the operator asks the user which agent to route to. The operator's role is coordination, not implementation.
-
-#### Simplified Answer Model
-
-Replaces operator3's two-tier auto-answer/escalate classification with an all-auto-answer model. All detected questions are auto-answered. The only escalation case is when the operator literally cannot determine what keystrokes to send. A numbered decision list (evaluated in priority order) replaces the prose heuristic:
+**Answer model** — all detected questions are auto-answered. The only escalation is when the operator cannot determine what keystrokes to send. Evaluate in order:
 
 1. Binary yes/no or confirmation prompt → `y`
 2. `[Y/n]` or `[y/N]` prompt → `y`
 3. Claude Code permission/approval prompt → `y`
 4. Numbered menu or multi-choice → `1` (first/default option)
 5. Open-ended question where a concrete answer is determinable from visible terminal context → send that answer
-6. Question where the operator cannot determine what keystrokes to send → escalate: `"{change}: can't determine answer for '{summary}'. Please respond."`
+6. Question where the operator cannot determine what keystrokes to send → escalate
 
-No cooldown or retry limit — each question is evaluated independently. Rationale: worktree isolation and human PR merge provide the safety gate, not the operator withholding answers.
+No cooldown or retry limit — each question is evaluated independently. Worktree isolation and human PR merge provide the safety gate.
 
-#### Improved Question Detection
+**Re-capture before send**: Before sending an auto-answer via `tmux send-keys`, MUST re-capture the terminal. If output changed since initial capture, abort — the agent is no longer waiting. Eliminates the race condition between detection and send.
 
-**Capture window**: Increased from `-l 10` to `-l 20` — compensates for line wrapping and verbose preambles that push prompts off the 10-line window. Command: `tmux capture-pane -t <pane> -p -l 20`.
+**Logging**: Every auto-answer: `"{change}: auto-answered '{summary}' -> {answer}"`. Escalated (item 6): `"{change}: can't determine answer for '{summary}'. Please respond."`.
 
-**Claude turn boundary guard**: If a Claude Code `>` prompt cursor (`^\s*>\s*$`) appears in the last 2 lines of the captured output, question detection is skipped. The agent is at a normal human-turn boundary, not a blocking prompt. This prevents false positives from Claude's own conversational output (e.g., "Would you like me to run the tests?").
+#### Modes of Operation
 
-**Tightened `?` pattern**: Matches only on the **last non-empty line** (not any of the 20 lines). The matching line must be <120 characters. Lines starting with `#`, `//`, `*`, `>`, or timestamp patterns are skipped as comments, log output, or search results. Idle-only guard and bottom-most indicator rule are integrated into the detection steps (not separate sections).
+Every mode follows the same rhythm: interpret user intent → refresh state → validate preconditions → execute → report → enroll in monitoring (if work dispatched).
 
-**New question indicator patterns** (additions to operator3's list):
-- Lines ending with `:` or `:\s*$` (CLI input prompts)
-- Enumerated options (`[1-9]\)` patterns)
-- `Press.*key`, `press.*enter`, `hit.*enter` (case-insensitive)
+| Mode | Description |
+|------|-------------|
+| **Broadcast** | Send command to all idle agents. Filter pane map, announce targets, send to each, enroll all |
+| **Sequenced rebase** | "When X finishes, rebase Y on main." Enroll trigger change. When monitoring detects target stage, send rebase, enroll target |
+| **Merge PRs** | Merge completed PRs at ship/review-pr stage. Retrieve URLs, confirm (destructive), merge from operator's shell |
+| **Spawn agent** | New worktree + agent from backlog idea. Look up idea, create worktree, open tmux tab with Claude session running `/fab-new` |
+| **Status dashboard** | Concise summary of all agents: change name, tab, stage, agent state. Include monitored set if active |
+| **Unstick agent** | Nudge a stuck agent with `/fab-continue`. Verify idle first. If second nudge for same agent, warn. Send only on explicit insistence |
+| **Notification** | "Tell me when X finishes." Enroll in monitoring. Loop handles notification automatically |
+| **Autopilot** | Drive a queue of changes through the full pipeline. See below |
 
-**Blank capture guard**: If captured output is entirely blank or whitespace, question detection is skipped for that tick (treated as "cannot determine", not "no question").
+#### Autopilot
 
-#### Re-Capture Before Send
+Drives a queue of changes through the full pipeline — spawning agents, monitoring progress, merging PRs, and rebasing downstream changes. Confirm queue before starting (destructive — merges PRs).
 
-Before sending an auto-answer via `tmux send-keys`, the operator re-captures the terminal (`tmux capture-pane -t <pane> -p -l 20`). If the output changed since the initial capture, the send is aborted — the agent is no longer waiting. This eliminates the race condition between idle check and send that existed in operator3.
+**Queue ordering**: User-provided (exact order given), confidence-based (descending score), or hybrid (partial user constraints, confidence tiebreaker).
 
-#### Per-Answer Logging
+**Per-change loop**: Spawn worktree (`--reuse` for respawns, `--base <prev-change>` for user-provided ordering) → open agent tab with `/fab-switch <change>` → gate check confidence (if >= gate, send `/fab-fff`; if < gate, flag to user) → monitor → merge PR from operator's shell → rebase next → optional cleanup (`wt delete`) → report progress.
 
-Every auto-answer is reported inline in the operator's terminal output: `"{change}: auto-answered '{summary}' → {answer}"`. For escalated questions (decision list item 6): `"{change}: can't determine answer for '{summary}'. Please respond."`. This provides the reconstruction path for debugging — no persistent audit trail file in v1.
+**Failure matrix**:
 
-#### Autopilot Pipeline Override
+| Failure | Action | Resume? |
+|---------|--------|---------|
+| Confidence below gate | Flag to user: run `/fab-fff` or skip | Wait for user input |
+| Review fails (rework exhausted) | Flag, skip to next | Yes |
+| Rebase conflict | Flag, skip to next | Yes |
+| Agent pane dies | 1 respawn attempt, then flag and skip | Yes |
+| Stage timeout (>30 min same stage) | Flag regardless of retry state | Yes |
+| Total timeout (>2 hr per change) | Flag for review | Yes |
 
-Operator4 uses `/fab-fff` instead of `/fab-ff` for autopilot gate checks and pipeline invocations. All other autopilot behavior (inherited from operator2) is unchanged. Rationale: `/fab-fff` is the more autonomous pipeline variant, fitting for operator-driven autopilot where human interaction is minimized.
+**Interruptibility**: `"stop after current"` (finish active, halt queue), `"skip <change>"`, `"pause"` (stop new commands, running agents continue), `"resume"`. Interrupts acknowledged immediately.
 
-#### Structure Optimization
+**Resumability**: If the operator session restarts, state is reconstructable from `fab pane-map`. Resume from first non-completed change.
 
-The skill file uses delta-only description for the monitoring tick (only the two modifications to operator2's tick, not the full 6-step listing), a reduced Key Properties table (~4 rows covering novel/modified properties), a condensed Purpose section (no redundant "Key difference" paragraph, launcher info inlined), and integrated guards (idle-only guard and bottom-most indicator rule are part of the detection steps, not separate paragraphs). This achieves ~26% token reduction from operator3.
+#### Configuration
+
+| Setting | Default | Override |
+|---------|---------|----------|
+| Monitoring interval | 5m | "check every {N}m" |
+| Stuck threshold | 15m | "flag agents stuck for more than {N} minutes" |
+| Autopilot tick interval | 2m | "autopilot check every {N}m" |
+
+All settings are session-scoped — they reset when the operator session restarts.
 
 #### Design Constraints
 
-- **Inherits all operator2/operator3 constraints**: Pane-map only, no change artifacts, one operator at a time
+- **Pane-map only**: Uses `fab pane-map` as its sole observation primitive — no `fab runtime is-idle`
+- **No change artifacts**: Never reads intakes, specs, or tasks — context window reserved for coordination state
 - **No persistent audit trail for v1**: Per-answer logging is inline only — no file-backed log
 - **Hardcoded patterns**: Question indicator patterns embedded in skill file, not configurable via config.yaml
-- **Independent from operator3**: Operator4 is a new skill file, not a modification to operator3. All operators remain independent (no shared base extraction)
+
+#### Launcher Script
+
+`fab-operator4.sh` launches operator4. Uses a singleton tmux tab named `operator`. Only one operator session runs at a time. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator2.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator2'`. Only one operator (1 or 2) runs at a time in the shared `operator` tab.
 
 ## Design Decisions
 
@@ -498,40 +418,41 @@ The skill file uses delta-only description for the monitoring tick (only the two
 **Rejected**: Extending `/git-pr-fix` to support humans (name implies Copilot-only, awkward evolution), keeping Copilot logic inline in `/git-pr` (bloats shipping skill), separate skills per reviewer type (duplication, same API shape).
 *Introduced by*: 260303-i58g-extract-pr-review-skill
 
-### All-Auto-Answer Over Two-Tier Classification (operator4)
-**Decision**: Operator4 replaces operator3's two-tier confidence model (auto-answer vs escalate) with an all-auto-answer model. All questions are auto-answered unless the operator literally cannot determine what keystrokes to send.
-**Why**: Worktree isolation and human PR merge provide the safety gate. The operator should not be a bottleneck — operator3's escalation tier stalls the pipeline for questions that are safe to answer.
-**Rejected**: Multi-tier confidence model — adds complexity without meaningful safety improvement given the PR safety net.
+### All-Auto-Answer Model
+**Decision**: All detected questions are auto-answered unless the operator cannot determine what keystrokes to send. A numbered decision list (items 1-6, evaluated in priority order) provides a consistent, deterministic answer selection process.
+**Why**: Worktree isolation and human PR merge provide the safety gate. The operator should not be a bottleneck. A priority-ordered list ensures consistent processing of answer patterns.
+**Rejected**: Two-tier auto-answer/escalate classification — adds complexity without meaningful safety improvement given the PR safety net. Prose heuristic — harder to reason about edge cases and priority conflicts.
 *Introduced by*: 260314-007n-redesign-operator-auto-nudge
 
-### Decision List Over Prose Heuristic for Answer Selection (operator4)
-**Decision**: A numbered decision list (items 1-6, evaluated in priority order) replaces operator3's prose heuristic for determining what to send.
-**Why**: Prose heuristics are ambiguous; a priority-ordered list ensures the operator processes answer patterns in a consistent, deterministic order.
-**Rejected**: Prose heuristic (operator3 style) — harder to reason about edge cases and priority conflicts.
-*Introduced by*: 260314-007n-redesign-operator-auto-nudge
-
-### Re-Capture Before Send Over Grace Period (operator4)
+### Re-Capture Before Send
 **Decision**: The operator re-captures terminal output immediately before sending an auto-answer. If the output changed, the send is aborted.
 **Why**: Eliminates the race condition between idle check and send. Single-tick grace period was rejected — it adds latency without fully solving the race.
 **Rejected**: Single-tick grace period — delays answers by one full monitoring cycle and doesn't guarantee safety.
 *Introduced by*: 260314-007n-redesign-operator-auto-nudge
 
-### Claude Turn Boundary Guard (operator4)
+### Claude Turn Boundary Guard
 **Decision**: If a Claude Code `>` prompt cursor (`^\s*>\s*$`) appears in the last 2 lines of captured output, question detection is skipped.
 **Why**: Claude's output often contains question-like phrasing ("Would you like me to...?") that triggers detection. The `>` cursor indicates the agent is at a normal human-turn boundary, not a blocking prompt.
 **Rejected**: Excluding all question-mark lines from Claude — too broad, would miss genuine blocking prompts from Claude.
 *Introduced by*: 260314-007n-redesign-operator-auto-nudge
 
-### Operator4 Uses /fab-fff for Autopilot
+### Operator Uses /fab-fff for Autopilot
 **Decision**: Operator4 uses `/fab-fff` instead of `/fab-ff` for autopilot gate checks and pipeline invocations.
 **Why**: `/fab-fff` is the more autonomous pipeline variant, fitting for operator-driven autopilot where human interaction is minimized.
 **Rejected**: Keeping `/fab-ff` — its interactive fallback on review failure conflicts with the operator's autonomous mode.
 *Introduced by*: 260314-007n-redesign-operator-auto-nudge
 
+### Standalone Operator Over Inheritance Chain
+**Decision**: Operator4 is a fully self-contained skill file. Previous iterations (operator1, operator2, operator3) were deleted — their behavior is inlined into operator4. The skill file loads `_cli-external.md` (operator-only) for external tool references (`wt`, `tmux`, `/loop`).
+**Why**: Understanding the operator previously required reading 4 files in sequence (operator1 -> 2 -> 3 -> 4), mentally applying overrides. The standalone version is readable from a single file plus standard `_` files. Dead operator files in the skills directory risked ghost triggers via sync.
+**Rejected**: Keeping operator1/2/3 as archived files — git history preserves them; dead files risk agents loading them. Extracting a shared base — adds indirection for a single-consumer pattern.
+*Introduced by*: 260315-a2b2-standalone-operator4-rewrite
+
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260315-a2b2-standalone-operator4-rewrite | 2026-03-15 | Rewrote operator documentation: replaced operator1/2/3/4 inheritance chain with standalone `/fab-operator4`. Removed all references to operator1, operator2, operator3 as separate skills. Operator4 is now documented as the single operator skill with all behavior inlined (principles, startup, safety model, monitoring, auto-nudge, modes of operation, autopilot, configuration). Loads `_cli-external.md` (operator-only) for wt/tmux/loop references. Consolidated design decisions (merged "All-Auto-Answer" + "Decision List" into single DD, renamed "operator4"-specific DDs to generic names). Added "Standalone Operator Over Inheritance Chain" design decision. |
 | 260314-q5p9-redesign-ff-fff-scopes | 2026-03-14 | Updated pipeline invocation overview: `/fab-ff` now runs intake → hydrate (6 stages), `/fab-fff` runs intake → review-pr (8 stages). Both have identical confidence gates and autonomous rework. Updated review failure rework descriptions: both `/fab-ff` and `/fab-fff` now use identical auto-loop + stop behavior (was: `/fab-ff` had interactive fallback, `/fab-fff` had bail). |
 | 260314-007n-redesign-operator-auto-nudge | 2026-03-14 | Added `/fab-operator4` standalone coordination skill — workflow iteration of operator3 with redesigned auto-nudge. Replaces two-tier confidence model with all-auto-answer (decision list items 1-6). Improved question detection: `-l 20` capture window, Claude turn boundary guard (`>` cursor in last 2 lines), tightened `?` pattern (last non-empty line only, <120 chars, skip comment prefixes), new indicator patterns (`:` endings, enumerated options, `Press.*key`), blank capture guard. Re-capture before send eliminates detection-to-send race condition. Per-answer inline logging for debugging reconstruction. Routing discipline (operator must route instructions to agents, never execute directly). Autopilot uses `/fab-fff` instead of `/fab-ff`. ~26% token reduction via delta-only tick description, reduced key properties table, condensed purpose, integrated guards. New launcher `fab-operator4.sh`. New spec `SPEC-fab-operator4.md`. Updated "one operator at a time" constraint to include operator4. |
 | 260312-9r3t-pr-change-metadata | 2026-03-12 | `/git-pr` gains "Change" section in PR body (above Stats), conditional on `{has_fab}`. Three-column table (ID, Name, Issue) shows change identity and linked Linear issues. Issue IDs rendered as hyperlinks when `linear_workspace` is configured in `fab/project/config.yaml`, bare text otherwise. Missing fields show `—`. Section omitted entirely when no active fab change. |
