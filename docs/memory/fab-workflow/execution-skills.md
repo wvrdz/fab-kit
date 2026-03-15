@@ -328,7 +328,7 @@ All settings are session-scoped — they reset when the operator session restart
 
 #### Launcher Script
 
-`fab-operator4.sh` launches operator4. Uses a singleton tmux tab named `operator`. Only one operator session runs at a time. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator2.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator2'`. Only one operator (1 or 2) runs at a time in the shared `operator` tab.
+`fab-operator4.sh` launches operator4. Uses a singleton tmux tab named `operator`. Only one operator session runs at a time. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator4.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator4'`. Only one operator runs at a time in the shared `operator` tab.
 
 ## Design Decisions
 

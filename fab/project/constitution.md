@@ -28,7 +28,7 @@ Tests MUST conform to the implementation spec — never the other way around. Wh
 - Research documentation SHOULD maintain clear attribution to source projects (SpecKit, OpenSpec)
 - Cross-cutting findings SHOULD reference the specific analyses they synthesize
 - All markdown MUST use standard CommonMark syntax for maximum compatibility
-- Changes to the `fab` CLI (Go binary) MUST include corresponding test updates and MUST update `fab/.kit/skills/_scripts.md` with any new or changed command signatures
+- Changes to the `fab` CLI (Go binary) MUST include corresponding test updates and MUST update `fab/.kit/skills/_cli-fab.md` with any new or changed command signatures
 - Changes to skill files (`fab/.kit/skills/*.md`) MUST update the corresponding `docs/specs/skills/SPEC-*.md` file
 
 ## Governance
