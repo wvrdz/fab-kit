@@ -19,7 +19,7 @@ The skill is organized into 9 sections:
 3. **Safety Model** — confirmation tiers (read-only / recoverable / destructive), pre-send validation (pane exists + agent idle), bounded retries & escalation table
 4. **Monitoring System** — monitored set (fields, enrollment triggers, removal triggers), `/loop` lifecycle (start/extend/stop, one-loop invariant), monitoring tick with 6 steps
 5. **Auto-Nudge** — question detection (capture -l 20, guards, pattern matching), answer model (simplified decision list items 1-6), re-capture before send, per-answer logging
-6. **Modes of Operation** — shared rhythm + compact table: broadcast, sequenced rebase, merge PRs, spawn agent, status dashboard, unstick agent, notification, autopilot
+6. **Modes of Operation** — shared rhythm + compact table: broadcast, sequenced rebase, merge PRs, spawn agent, status dashboard, unstick agent, notification, rebase all, autopilot
 7. **Autopilot** — queue ordering (user-provided / confidence-based / hybrid), per-change loop, failure matrix, interruptibility, resumability. Pipeline uses `/fab-fff`
 8. **Configuration** — monitoring interval (5m), stuck threshold (15m), autopilot tick (2m), session-scoped
 9. **Key Properties** — standard properties table

@@ -193,6 +193,7 @@ Every mode follows the same rhythm: **interpret user intent -> refresh state -> 
 | **Status dashboard** | Concise summary of all agents: change name, tab, stage, agent state. Include monitored set if active |
 | **Unstick agent** | Nudge a stuck agent with `/fab-continue`. Verify idle first. If second nudge requested for same agent, warn: "Already nudged once. Manual investigation recommended." Send only on explicit insistence |
 | **Notification** | "Tell me when X finishes." Enroll in monitoring. Loop handles notification automatically on terminal stage detection |
+| **Rebase all** | "Make sure all PRs are mergeable." Filter pane map for idle agents at ship or review-pr stage. Send each: "rebase on main, resolve any conflicts, and push." Single broadcast — no enrollment, no monitoring. Agents handle autonomously |
 | **Autopilot** | Drive a queue of changes through the full pipeline. See section 7 |
 
 ---
