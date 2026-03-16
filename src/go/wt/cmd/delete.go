@@ -33,10 +33,7 @@ Positional arguments are interpreted as worktree names to delete.
 Resolution order: --delete-all, positional args, --worktree-name (deprecated), current worktree, interactive selection.`,
 		Args: cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Apply defaults
-			if deleteBranch == "" {
-				deleteBranch = "true"
-			}
+			// Apply defaults (deleteBranch "" = auto mode, handled by handleBranchCleanup)
 			if deleteRemote == "" {
 				deleteRemote = "true"
 			}
@@ -99,7 +96,7 @@ Resolution order: --delete-all, positional args, --worktree-name (deprecated), c
 	}
 
 	cmd.Flags().StringVar(&worktreeName, "worktree-name", "", "Worktree to delete")
-	cmd.Flags().StringVar(&deleteBranch, "delete-branch", "", "Delete associated branch: true (default) or false")
+	cmd.Flags().StringVar(&deleteBranch, "delete-branch", "", "Delete associated branch: true, false, or auto (default: auto — deletes only when branch matches worktree name)")
 	cmd.Flags().StringVar(&deleteRemote, "delete-remote", "", "Delete remote branch: true (default) or false")
 	cmd.Flags().BoolVar(&deleteAll, "delete-all", false, "Delete all worktrees")
 	cmd.Flags().BoolVarP(&stashFlag, "stash", "s", false, "Stash uncommitted changes before deleting")
@@ -597,23 +594,43 @@ func handleUnpushedCommits(branch string, nonInteractive bool) error {
 }
 
 func handleBranchCleanup(branch, wtName, deleteBranch, deleteRemote string) {
-	if deleteBranch != "true" || branch == "" {
+	if branch == "" {
 		return
 	}
 
-	if err := wt.DeleteLocalBranch(branch, true); err == nil {
-		fmt.Printf("Deleted branch: %s (local)\n", branch)
-	}
-
-	if deleteRemote == "true" && wt.BranchExistsRemotely(branch) {
-		if err := wt.DeleteRemoteBranch(branch); err == nil {
-			fmt.Printf("Deleted branch: %s (remote)\n", branch)
+	// Tri-state logic for deleteBranch:
+	//   ""      = auto mode: delete only if branch == wtName
+	//   "true"  = force delete regardless of name match
+	//   "false" = skip deletion
+	shouldDelete := false
+	switch deleteBranch {
+	case "true":
+		shouldDelete = true
+	case "false":
+		shouldDelete = false
+	default: // "" = auto mode
+		if branch == wtName {
+			shouldDelete = true
 		} else {
-			fmt.Printf("%sNote:%s Could not delete remote branch\n", wt.ColorYellow, wt.ColorReset)
+			fmt.Printf("Skipped branch deletion: %s ≠ worktree name (%s). Use --delete-branch true to force.\n", branch, wtName)
 		}
 	}
 
-	// Clean up orphaned wt/ branch
+	if shouldDelete {
+		if err := wt.DeleteLocalBranch(branch, true); err == nil {
+			fmt.Printf("Deleted branch: %s (local)\n", branch)
+		}
+
+		if deleteRemote == "true" && wt.BranchExistsRemotely(branch) {
+			if err := wt.DeleteRemoteBranch(branch); err == nil {
+				fmt.Printf("Deleted branch: %s (remote)\n", branch)
+			} else {
+				fmt.Printf("%sNote:%s Could not delete remote branch\n", wt.ColorYellow, wt.ColorReset)
+			}
+		}
+	}
+
+	// Clean up orphaned wt/ branch (always runs regardless of deleteBranch)
 	wtOriginBranch := "wt/" + wtName
 	if wtOriginBranch != branch {
 		if err := wt.DeleteLocalBranch(wtOriginBranch, true); err == nil {
