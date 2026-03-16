@@ -6,12 +6,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
 	wt "github.com/wvrdz/fab-kit/src/go/wt/internal/worktree"
 )
+
+// ansiPattern matches ANSI escape sequences for display width calculation.
+var ansiPattern = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
 // listEntry holds enriched worktree info for the list command.
 type listEntry struct {
@@ -114,16 +118,39 @@ func handleJSONOutput(entries []listEntry) error {
 	return nil
 }
 
+// displayWidth returns the visible width of s, excluding ANSI escape sequences.
+func displayWidth(s string) int {
+	return len(ansiPattern.ReplaceAllString(s, ""))
+}
+
+// relativePath computes a short relative path for display.
+// Main worktree: "{repoName}/"
+// Other worktrees: "{repoName}.worktrees/{wtName}/"
+func relativePath(entryPath string, ctx *wt.RepoContext) string {
+	parent := filepath.Dir(ctx.WorktreesDir)
+	rel, err := filepath.Rel(parent, entryPath)
+	if err != nil {
+		return entryPath
+	}
+	return rel + "/"
+}
+
 func handleFormattedOutput(entries []listEntry, ctx *wt.RepoContext) error {
 	fmt.Printf("Worktrees for: %s%s%s\n", wt.ColorBold, ctx.RepoName, wt.ColorReset)
 	fmt.Printf("Location: %s\n\n", ctx.WorktreesDir)
 
-	for _, e := range entries {
-		marker := "  "
-		if e.IsCurrent {
-			marker = wt.ColorGreen + "*" + wt.ColorReset + " "
-		}
+	// Headers
+	headers := [4]string{"Name", "Branch", "Status", "Path"}
 
+	// Pre-compute display values for each entry
+	type displayRow struct {
+		name   string
+		branch string
+		status string
+		path   string
+	}
+	rows := make([]displayRow, len(entries))
+	for i, e := range entries {
 		name := e.Name
 		if e.IsMain {
 			name = wt.ColorBold + "(main)" + wt.ColorReset
@@ -147,7 +174,62 @@ func handleFormattedOutput(entries []listEntry, ctx *wt.RepoContext) error {
 			status = unpushedMarker
 		}
 
-		fmt.Printf("%s%-14s %-22s %-6s %s\n", marker, name, e.Branch, status, e.Path)
+		rows[i] = displayRow{
+			name:   name,
+			branch: e.Branch,
+			status: status,
+			path:   relativePath(e.Path, ctx),
+		}
+	}
+
+	// Compute dynamic column widths (minimum = header label length)
+	colWidths := [4]int{len(headers[0]), len(headers[1]), len(headers[2]), len(headers[3])}
+	for _, r := range rows {
+		if w := displayWidth(r.name); w > colWidths[0] {
+			colWidths[0] = w
+		}
+		if w := displayWidth(r.branch); w > colWidths[1] {
+			colWidths[1] = w
+		}
+		if w := displayWidth(r.status); w > colWidths[2] {
+			colWidths[2] = w
+		}
+		if w := displayWidth(r.path); w > colWidths[3] {
+			colWidths[3] = w
+		}
+	}
+
+	// Print header row (2-char prefix for alignment with marker column)
+	fmt.Printf("  %-*s  %-*s  %-*s  %s\n",
+		colWidths[0], headers[0],
+		colWidths[1], headers[1],
+		colWidths[2], headers[2],
+		headers[3])
+
+	// Print separator row (dashes match header label length)
+	fmt.Printf("  %s  %s  %s  %s\n",
+		strings.Repeat("-", len(headers[0])),
+		strings.Repeat("-", len(headers[1])),
+		strings.Repeat("-", len(headers[2])),
+		strings.Repeat("-", len(headers[3])))
+
+	// Print data rows
+	for i, r := range rows {
+		marker := "  "
+		if entries[i].IsCurrent {
+			marker = wt.ColorGreen + "*" + wt.ColorReset + " "
+		}
+
+		// Pad name and status accounting for ANSI escape codes
+		namePad := colWidths[0] - displayWidth(r.name)
+		statusPad := colWidths[2] - displayWidth(r.status)
+
+		fmt.Printf("%s%s%s  %-*s  %s%s  %s\n",
+			marker,
+			r.name, strings.Repeat(" ", namePad),
+			colWidths[1], r.branch,
+			r.status, strings.Repeat(" ", statusPad),
+			r.path)
 	}
 
 	fmt.Printf("\nTotal: %d worktree(s)\n", len(entries))
