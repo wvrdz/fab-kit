@@ -98,7 +98,7 @@ The fetching strategy depends on the detection path from Step 2.
 Fetch all review comments on the PR:
 
 ```bash
-gh api --paginate repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | {path: .path, line: .line, body: .body, user: .user.login, in_reply_to_id: .in_reply_to_id}'
+gh api --paginate repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | {id: .id, path: .path, line: .line, body: .body, user: .user.login, in_reply_to_id: .in_reply_to_id}'
 ```
 
 This captures comments from all submitted reviews regardless of reviewer. Track the set of unique `user` values for the commit message in Step 5. Skip reply comments (`in_reply_to_id` is non-null) — these are conversational follow-ups, not new review findings.
@@ -112,7 +112,7 @@ This captures comments from all submitted reviews regardless of reviewer. Track 
 Fetch comments from the specific Copilot review:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/reviews/{review_id}/comments --jq '.[] | {path: .path, line: .line, body: .body, user: .user.login}'
+gh api repos/{owner}/{repo}/pulls/{number}/reviews/{review_id}/comments --jq '.[] | {id: .id, path: .path, line: .line, body: .body, user: .user.login}'
 ```
 
 Reply filtering is not needed for Path B — the review-specific endpoint returns only comments from that review, not cross-review replies.
@@ -151,7 +151,25 @@ After all actionable comments are processed:
 
 Print: `Fixed {N} comment(s) across {M} file(s)`
 
-### Step 6: Update Review-PR Stage
+### Step 6: Reply to Fixed Comments
+
+After a successful push in Step 5, reply to each actionable comment that was fixed. Skip this step entirely if Step 5 resulted in "No changes needed" or all comments were informational.
+
+For each fixed comment, post a one-sentence reply describing what was done:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/comments/{id}/replies -f body="<reply>"
+```
+
+The reply should be a brief, specific description of the fix applied (e.g., "Fixed — renamed variable to `userId`.", "Fixed — added null check before accessing `response.data`.").
+
+Replies are best-effort: if a reply fails, log the error but continue with remaining replies. Do not stop or fail the workflow because of a reply error.
+
+Print: `Replied to {R}/{N} comment(s)`
+
+Where `{R}` is the number of successful replies and `{N}` is the total number of actionable comments that were fixed.
+
+### Step 7: Update Review-PR Stage
 
 If an active change was resolved in Step 0:
 
@@ -172,6 +190,7 @@ When an active change is resolved, update `stage_metrics.review-pr.phase` at key
 | `triaging` | Before classifying comments (Step 4 start) |
 | `fixing` | Before applying fixes (Step 4, actionable comments found) |
 | `pushed` | After commit and push (Step 5 success) |
+| `replying` | Before posting replies to comments (Step 6 start) |
 
 Phase updates are written via `yq -i ".stage_metrics.\"review-pr\".phase = \"<phase>\"" <status_file>`. Best-effort — failures silently ignored.
 
