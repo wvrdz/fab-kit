@@ -6,15 +6,15 @@
 
 ## Functional Completeness
 
-- [x] CHK-001 Three-Disposition Classification: Each non-informational comment is classified as `fixed`, `deferred`, or `skipped`
+- [x] CHK-001 Three-Disposition Classification: Each non-informational comment is classified with intent `fix`, `defer`, or `skip`
 - [x] CHK-002 Disposition Reply Format: Reply text matches spec format (`Fixed — {desc}. ({sha})`, `Deferred — {reason}.`, `Skipped — {reason}.`)
 - [x] CHK-003 Comment ID Capture: Path A and Path B projections include `id` and `node_id`
 - [x] CHK-004 Reply Posting: Step 5.5 posts replies via `gh api` REST with `in_reply_to` field
 - [x] CHK-005 Reply Deduplication: Existing disposition replies prevent re-posting
-- [x] CHK-006 Reply When No Code Changes: Deferred/skipped-only runs still post replies
+- [x] CHK-006 Reply When No Code Changes: defer/skip-only runs still post replies
 - [x] CHK-007 Best-Effort Replies: Failed reply POST logs error and continues to next comment
-- [x] CHK-008 Reply Summary Output: Prints `Replied to {N} comment(s): {F} fixed, {D} deferred, {S} skipped`
-- [x] CHK-009 Expanded Triage Summary: Uses `{F} fixed, {D} deferred, {S} skipped, {I} informational (no reply)` format
+- [x] CHK-008 Reply Summary Output: Prints `Replied to {N} comment(s): {F} fix, {D} defer, {S} skip`
+- [x] CHK-009 Expanded Triage Summary: Uses `{F} fix, {D} defer, {S} skip, {I} informational (no reply)` format
 - [x] CHK-010 Replying Phase: Phase sub-state `replying` set before posting replies
 - [x] CHK-011 Disposition Reference Table: `## Disposition Reference` section exists after `## Rules` in skill file
 
@@ -25,7 +25,7 @@
 
 ## Scenario Coverage
 
-- [x] CHK-014 Fixed reply includes correct short SHA and description
+- [x] CHK-014 Fix reply includes correct short SHA and description
 - [x] CHK-015 Re-run with previous replies skips already-replied comments
 - [x] CHK-016 Mixed re-run: skips replied, posts to new comments
 - [x] CHK-017 Phase transitions: `replying` set when Step 5.5 begins (with or without prior push)

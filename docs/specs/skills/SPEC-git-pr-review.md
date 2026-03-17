@@ -2,7 +2,7 @@
 
 ## Summary
 
-Processes PR review comments from any reviewer (human or Copilot). Fully autonomous — detects reviews, requests Copilot if none exist, triages comments with disposition assignment (fixed/deferred/skipped), applies fixes, commits, pushes, and posts reply comments.
+Processes PR review comments from any reviewer (human or Copilot). Fully autonomous — detects reviews, requests Copilot if none exist, triages comments with disposition intent (fix/defer/skip), applies fixes, commits, pushes, and posts reply comments confirming outcomes.
 
 ## Flow
 
@@ -36,7 +36,7 @@ Processes PR review comments from any reviewer (human or Copilot). Fully autonom
 │  └─ Path B: Bash: gh api .../reviews/{id}/comments
 │
 ├─ Step 4: Triage Comments
-│  ├─ Classify: fixed, deferred, skipped, or informational
+│  ├─ Classify intent: fix, defer, skip, or informational
 │  ├─ Read: source files at {path}
 │  └─ Edit: source files (targeted fixes for "fixed" comments)
 │
@@ -61,11 +61,13 @@ Phase tracking (via yq directly on .status.yaml):
 
 ### Disposition taxonomy
 
-| Disposition | Reply format |
-|-------------|--------------|
-| `fixed` | `Fixed — {description}. ({sha})` |
-| `deferred` | `Deferred — {reason}.` |
-| `skipped` | `Skipped — {reason}.` |
+Triage assigns **intent** (action verb); replies confirm **outcome** (past-tense).
+
+| Intent (triage) | Reply (outcome) |
+|-----------------|-----------------|
+| `fix` | `Fixed — {description}. ({sha})` |
+| `defer` | `Deferred — {reason}.` |
+| `skip` | `Skipped — {reason}.` |
 
 Informational comments receive no reply.
 

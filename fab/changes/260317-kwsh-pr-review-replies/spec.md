@@ -14,28 +14,28 @@
 
 ### Requirement: Three-Disposition Classification
 
-The skill SHALL classify each non-informational review comment into exactly one of three dispositions: `fixed`, `deferred`, or `skipped`. The disposition SHALL be assigned during triage (Step 4) alongside the existing actionable/informational classification.
+The skill SHALL classify each non-informational review comment into exactly one of three disposition intents: `fix`, `defer`, or `skip`. The intent SHALL be assigned during triage (Step 4) alongside the existing actionable/informational classification. Replies posted in Step 5.5 confirm outcomes using past-tense (`Fixed —`, `Deferred —`, `Skipped —`).
 
-#### Scenario: Comment with code fix applied
+#### Scenario: Comment with code fix to apply
 
 - **GIVEN** a review comment identifying a specific code issue
-- **WHEN** the skill applies a targeted fix for that comment
-- **THEN** the comment SHALL be assigned disposition `fixed`
-- **AND** the disposition SHALL include a brief description of the change and the commit SHA
+- **WHEN** the skill triages the comment and determines a fix will be applied
+- **THEN** the comment SHALL be assigned disposition intent `fix`
+- **AND** after the fix is applied and pushed, the reply SHALL include a brief description of the change and the commit SHA
 
 #### Scenario: Comment valid but out of scope
 
 - **GIVEN** a review comment raising a valid concern
 - **WHEN** the concern is outside the scope of this PR's changes
-- **THEN** the comment SHALL be assigned disposition `deferred`
-- **AND** the disposition SHALL include a reason explaining why it was deferred
+- **THEN** the comment SHALL be assigned disposition intent `defer`
+- **AND** the reply SHALL include a reason explaining why it was deferred
 
 #### Scenario: Comment is nitpick, stale, or not applicable
 
 - **GIVEN** a review comment that is a nitpick, references stale code, or does not apply to the current code path
 - **WHEN** the skill triages the comment
-- **THEN** the comment SHALL be assigned disposition `skipped`
-- **AND** the disposition SHALL include a reason (e.g., "nitpick", "stale reference", "not applicable to this code path")
+- **THEN** the comment SHALL be assigned disposition intent `skip`
+- **AND** the reply SHALL include a reason (e.g., "nitpick", "stale reference", "not applicable to this code path")
 
 #### Scenario: Informational comment
 
@@ -46,31 +46,31 @@ The skill SHALL classify each non-informational review comment into exactly one 
 
 ### Requirement: Disposition Reply Format
 
-Each disposition SHALL produce a reply comment with a specific text format.
+Each disposition intent SHALL produce a reply comment with a specific text format. Replies use past-tense to confirm the outcome.
 
-| Disposition | Reply format |
-|-------------|--------------|
-| `fixed` | `Fixed — {description}. ({sha})` |
-| `deferred` | `Deferred — {reason}.` |
-| `skipped` | `Skipped — {reason}.` |
+| Intent (triage) | Reply (outcome) |
+|-----------------|-----------------|
+| `fix` | `Fixed — {description}. ({sha})` |
+| `defer` | `Deferred — {reason}.` |
+| `skip` | `Skipped — {reason}.` |
 
-The `{sha}` in `fixed` replies SHALL be the short SHA (7 characters) of the commit that contains the fix. The `{description}` SHALL be a concise summary of what was changed (e.g., "added null check for empty input"). The `{reason}` in `deferred` and `skipped` SHALL be free-text determined by the agent per comment.
+The `{sha}` in `fix` replies SHALL be the short SHA (7 characters) of the commit that contains the fix. The `{description}` SHALL be a concise summary of what was changed (e.g., "added null check for empty input"). The `{reason}` in `defer` and `skip` replies SHALL be free-text determined by the agent per comment.
 
 #### Scenario: Fixed reply format
 
-- **GIVEN** a comment with disposition `fixed` and description "added null check" and SHA `a3f2b1c`
+- **GIVEN** a comment with disposition intent `fix` and description "added null check" and SHA `a3f2b1c`
 - **WHEN** the reply is composed
 - **THEN** the reply body SHALL be `Fixed — added null check. (a3f2b1c)`
 
 #### Scenario: Deferred reply format
 
-- **GIVEN** a comment with disposition `deferred` and reason "requires broader refactor outside this PR's scope"
+- **GIVEN** a comment with disposition intent `defer` and reason "requires broader refactor outside this PR's scope"
 - **WHEN** the reply is composed
 - **THEN** the reply body SHALL be `Deferred — requires broader refactor outside this PR's scope.`
 
 #### Scenario: Skipped reply format
 
-- **GIVEN** a comment with disposition `skipped` and reason "nitpick"
+- **GIVEN** a comment with disposition intent `skip` and reason "nitpick"
 - **WHEN** the reply is composed
 - **THEN** the reply body SHALL be `Skipped — nitpick.`
 
@@ -110,7 +110,7 @@ The `id` field is the REST comment ID, used as `in_reply_to_id` when posting rep
 
 A new Step 5.5 SHALL be added after Step 5 (Commit and Push) and before Step 6 (Update Review-PR Stage). This step posts reply comments to the PR for each comment that received a disposition.
 
-For each comment with a disposition (`fixed`, `deferred`, or `skipped`) that passes the deduplication check:
+For each comment with a disposition intent (`fix`, `defer`, or `skip`) that passes the deduplication check:
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/comments \
@@ -122,29 +122,29 @@ The field name SHALL be `in_reply_to` (not `in_reply_to_id`) per the GitHub REST
 
 #### Scenario: Post reply for fixed comment
 
-- **GIVEN** a comment with `id=12345` and disposition `fixed` with description "added null check" and SHA `a3f2b1c`
+- **GIVEN** a comment with `id=12345` and disposition intent `fix` with description "added null check" and SHA `a3f2b1c`
 - **WHEN** Step 5.5 executes
 - **THEN** the skill SHALL POST a reply with body `Fixed — added null check. (a3f2b1c)` and `in_reply_to=12345`
 
 #### Scenario: Post reply for deferred comment
 
-- **GIVEN** a comment with `id=12345` and disposition `deferred` with reason "out of scope"
+- **GIVEN** a comment with `id=12345` and disposition intent `defer` with reason "out of scope"
 - **WHEN** Step 5.5 executes
 - **THEN** the skill SHALL POST a reply with body `Deferred — out of scope.` and `in_reply_to=12345`
 
 #### Scenario: Post reply for skipped comment
 
-- **GIVEN** a comment with `id=12345` and disposition `skipped` with reason "stale reference"
+- **GIVEN** a comment with `id=12345` and disposition intent `skip` with reason "stale reference"
 - **WHEN** Step 5.5 executes
 - **THEN** the skill SHALL POST a reply with body `Skipped — stale reference.` and `in_reply_to=12345`
 
 ### Requirement: Reply When No Code Changes
 
-When all comments are deferred or skipped (zero `fixed` dispositions), the current skill stops at Step 5 with "No changes needed." Instead, the skill SHALL proceed to Step 5.5 to post replies. The communication loop MUST close even when no code was changed.
+When all comments are defer or skip (zero `fix` intents), the current skill stops at Step 5 with "No changes needed." Instead, the skill SHALL proceed to Step 5.5 to post replies. The communication loop MUST close even when no code was changed.
 
-#### Scenario: All comments deferred or skipped
+#### Scenario: All comments defer or skip
 
-- **GIVEN** 3 review comments, all classified as `deferred` or `skipped`
+- **GIVEN** 3 review comments, all classified as `defer` or `skip`
 - **WHEN** Step 5 finds no modifications (`git status --porcelain` is empty)
 - **THEN** the skill SHALL skip the commit/push but proceed to Step 5.5
 - **AND** reply to each comment with its disposition
@@ -166,16 +166,16 @@ Reply posting SHALL be best-effort. If a reply POST fails for a specific comment
 After all replies are posted, Step 5.5 SHALL print:
 
 ```
-Replied to {N} comment(s): {F} fixed, {D} deferred, {S} skipped
+Replied to {N} comment(s): {F} fix, {D} defer, {S} skip
 ```
 
-Where `{N}` is the total replies posted, `{F}` is fixed count, `{D}` deferred count, `{S}` skipped count.
+Where `{N}` is the total replies posted, `{F}` is fix count, `{D}` defer count, `{S}` skip count.
 
 #### Scenario: Reply summary
 
-- **GIVEN** 5 comments triaged: 2 fixed, 1 deferred, 2 skipped
+- **GIVEN** 5 comments triaged: 2 fix, 1 defer, 2 skip
 - **WHEN** all replies are posted successfully
-- **THEN** the output SHALL be `Replied to 5 comment(s): 2 fixed, 1 deferred, 2 skipped`
+- **THEN** the output SHALL be `Replied to 5 comment(s): 2 fix, 1 defer, 2 skip`
 
 ## Skill: Reply Deduplication
 
@@ -211,13 +211,13 @@ The triage summary line in Step 4 SHALL be expanded to include disposition count
 
 Current: `{N} comments triaged: {A} actionable, {I} skipped`
 
-New: `{N} comments triaged: {F} fixed, {D} deferred, {S} skipped, {I} informational (no reply)`
+New: `{N} comments triaged: {F} fix, {D} defer, {S} skip, {I} informational (no reply)`
 
 #### Scenario: Mixed triage results
 
 - **GIVEN** 8 review comments fetched
-- **WHEN** triage classifies 3 as fixed, 1 as deferred, 2 as skipped, 2 as informational
-- **THEN** the output SHALL be `8 comments triaged: 3 fixed, 1 deferred, 2 skipped, 2 informational (no reply)`
+- **WHEN** triage classifies 3 as fix, 1 as defer, 2 as skip, 2 as informational
+- **THEN** the output SHALL be `8 comments triaged: 3 fix, 1 defer, 2 skip, 2 informational (no reply)`
 
 ## Skill: Phase Sub-State
 
@@ -242,7 +242,7 @@ The Phase Sub-State Tracking table SHALL add a `replying` phase, set before post
 
 #### Scenario: Phase when no code changes but replies needed
 
-- **GIVEN** all comments are deferred or skipped (no push)
+- **GIVEN** all comments are defer or skip (no push)
 - **WHEN** Step 5.5 begins
 - **THEN** the phase SHALL be set to `replying` (skipping `pushed` since no push occurred)
 
@@ -255,11 +255,13 @@ A `## Disposition Reference` section SHALL be added at the bottom of `git-pr-rev
 ```markdown
 ## Disposition Reference
 
-| Disposition | Description | Reply format |
-|-------------|-------------|--------------|
-| `fixed` | Code changed to address the comment | `Fixed — {description}. ({sha})` |
-| `deferred` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
-| `skipped` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
+Triage assigns **intent** (action verb); replies confirm **outcome** (past-tense).
+
+| Intent (triage) | Description | Reply (outcome) |
+|-----------------|-------------|-----------------|
+| `fix` | Code will be changed to address the comment | `Fixed — {description}. ({sha})` |
+| `defer` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
+| `skip` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
 
 Informational comments (praise, summaries, questions without code implications) receive no reply.
 ```
@@ -277,9 +279,9 @@ Informational comments (praise, summaries, questions without code implications) 
    - *Why*: GraphQL is not used anywhere in the kit. Introducing it for a single cosmetic operation violates the "Pure Prompt Play" principle of minimal external dependencies and adds a new API pattern.
    - *Rejected*: GraphQL `resolveReviewThread` — would resolve threads automatically but introduces a new API surface for marginal benefit. Replies communicate disposition clearly; thread resolution is one click for the reviewer.
 
-2. **Disposition assigned during triage, replies posted after push**: Dispositions are determined in Step 4 (when the agent has full code context) but replies are batched and posted in Step 5.5 (after push succeeds).
-   - *Why*: If push fails, no orphaned replies exist. The `fixed` disposition needs the commit SHA, which is only available after commit.
-   - *Rejected*: Reply-per-comment during triage — would create orphaned replies if push fails, and `fixed` replies wouldn't have a SHA.
+2. **Disposition intent assigned during triage, replies posted after push**: Disposition intents are determined in Step 4 (when the agent has full code context) but replies are batched and posted in Step 5.5 (after push succeeds).
+   - *Why*: If push fails, no orphaned replies exist. The `fix` intent needs the commit SHA for its reply, which is only available after commit.
+   - *Rejected*: Reply-per-comment during triage — would create orphaned replies if push fails, and `fix` replies wouldn't have a SHA.
 
 3. **Deduplication via disposition prefix matching**: Check existing replies for `Fixed —`/`Deferred —`/`Skipped —` prefixes rather than tracking reply state externally.
    - *Why*: Stateless — no extra files, no status.yaml fields. Uses the same comment data already fetched in Step 3. Consistent with the skill's existing idempotency model.
@@ -289,7 +291,7 @@ Informational comments (praise, summaries, questions without code implications) 
 
 | # | Grade | Decision | Rationale | Scores |
 |---|-------|----------|-----------|--------|
-| 1 | Certain | Three dispositions: fixed, deferred, skipped | Confirmed from intake #1 — user explicitly chose these three | S:95 R:85 A:90 D:95 |
+| 1 | Certain | Three disposition intents: fix, defer, skip (replies use past-tense: Fixed/Deferred/Skipped) | Confirmed from intake #1 — user explicitly chose these three; refined to separate intent from outcome | S:95 R:85 A:90 D:95 |
 | 2 | Certain | Reply format: `Fixed — {desc}. ({sha})`, `Deferred — {reason}.`, `Skipped — {reason}.` | Confirmed from intake #2 — agreed format with free-text reason | S:90 R:90 A:85 D:90 |
 | 3 | Certain | Informational comments get no reply | Confirmed from intake #3 — "nothing you can do" for informational | S:95 R:90 A:90 D:95 |
 | 4 | Certain | Replies posted after push, not per-comment during triage | Confirmed from intake #5 — batch-after-push avoids orphaned replies | S:85 R:85 A:90 D:90 |
@@ -298,7 +300,7 @@ Informational comments (praise, summaries, questions without code implications) 
 | 7 | Certain | Reply and resolve are best-effort (don't fail the skill) | Confirmed from intake #7 — code already pushed, reply failure is non-fatal | S:85 R:90 A:85 D:85 |
 | 8 | Certain | Disposition Reference table mirrors PR Type Reference from /git-pr | Confirmed from intake #8 — user requested parallel structure | S:80 R:90 A:85 D:85 |
 | 9 | Certain | Add `replying` phase to sub-state tracking after `pushed` | Confirmed from intake #10 — consistency with existing phase tracking | S:95 R:90 A:90 D:95 |
-| 10 | Certain | Post replies even when no code changes (all deferred/skipped) | Confirmed from intake #11 — communication loop must close | S:95 R:85 A:90 D:95 |
+| 10 | Certain | Post replies even when no code changes (all defer/skip) | Confirmed from intake #11 — communication loop must close | S:95 R:85 A:90 D:95 |
 | 11 | Certain | Deduplicate replies by checking existing reply prefixes | Confirmed from intake #12 — stateless deduplication using fetched data | S:95 R:85 A:90 D:90 |
 | 12 | Confident | `in_reply_to` is the correct REST API field name for reply comments | GitHub REST API docs indicate `in_reply_to` for creating pull request review comment replies | S:75 R:85 A:80 D:85 |
 | 13 | Certain | `node_id` captured for forward compat but unused in this change | Thread resolution dropped; node_id retained to avoid re-fetching if GraphQL is added later | S:90 R:85 A:85 D:90 |

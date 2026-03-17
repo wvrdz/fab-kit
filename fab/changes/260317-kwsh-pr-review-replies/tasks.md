@@ -10,13 +10,13 @@
 
 ## Phase 2: Core Implementation
 
-- [x] T002 Update Step 4 triage in `fab/.kit/skills/git-pr-review.md` to assign dispositions (`fixed`, `deferred`, `skipped`) to each non-informational comment and expand the triage summary line
+- [x] T002 Update Step 4 triage in `fab/.kit/skills/git-pr-review.md` to assign disposition intents (`fix`, `defer`, `skip`) to each non-informational comment and expand the triage summary line
 - [x] T003 Add Step 5.5 (Post Replies) to `fab/.kit/skills/git-pr-review.md` — post reply comments via REST API after push, with best-effort error handling and summary output
 - [x] T004 Add reply deduplication logic to Step 5.5 in `fab/.kit/skills/git-pr-review.md` — check existing replies for disposition prefixes before posting
 
 ## Phase 3: Integration & Edge Cases
 
-- [x] T005 Update Step 5 flow in `fab/.kit/skills/git-pr-review.md` to proceed to Step 5.5 when no code changes (all deferred/skipped), instead of stopping at "No changes needed."
+- [x] T005 Update Step 5 flow in `fab/.kit/skills/git-pr-review.md` to proceed to Step 5.5 when no code changes (all defer/skip), instead of stopping at "No changes needed."
 - [x] T006 Add `replying` phase to Phase Sub-State Tracking table in `fab/.kit/skills/git-pr-review.md` and document when it is set
 
 ## Phase 4: Polish

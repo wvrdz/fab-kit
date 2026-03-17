@@ -22,13 +22,15 @@ Conversational mode — extended discussion preceded this intake. Key decisions 
 
 Add a three-state classification for how each review comment is handled. This mirrors the PR Type Reference pattern in `/git-pr` — a documented taxonomy with clear definitions.
 
-| Disposition | Description | Reply format |
-|-------------|-------------|--------------|
-| `fixed` | Code changed to address the comment | `Fixed — {description}. ({sha})` |
-| `deferred` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
-| `skipped` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
+Triage assigns **intent** (action verb); replies confirm **outcome** (past-tense).
 
-The `{description}` in `fixed` is a brief summary of what was changed (e.g., "added null check for empty input"). The `{reason}` in `deferred` and `skipped` explains why (e.g., "requires broader refactor outside this PR's scope", "stale reference, code already changed", "nitpick", "not applicable to this code path").
+| Intent (triage) | Description | Reply (outcome) |
+|-----------------|-------------|-----------------|
+| `fix` | Code will be changed to address the comment | `Fixed — {description}. ({sha})` |
+| `defer` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
+| `skip` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
+
+The `{description}` in `fix` replies is a brief summary of what was changed (e.g., "added null check for empty input"). The `{reason}` in `defer` and `skip` replies explains why (e.g., "requires broader refactor outside this PR's scope", "stale reference, code already changed", "nitpick", "not applicable to this code path").
 
 **Informational comments** (praise, summaries, "LGTM", general questions without code implications) receive **no reply** — they are filtered out before disposition applies, same as the current "informational" classification in Step 4.
 
@@ -51,16 +53,16 @@ New projection:
 
 ### 3. Disposition Assignment in Triage (Step 4)
 
-The current Step 4 classifies comments as **actionable** or **informational**. Extend this to assign one of three dispositions to each non-informational comment:
+The current Step 4 classifies comments as **actionable** or **informational**. Extend this to assign one of three disposition intents to each non-informational comment:
 
-1. **`fixed`** — the comment identifies a specific code issue and a fix was applied
-2. **`deferred`** — the comment raises a valid concern but it's out of scope for this PR
-3. **`skipped`** — the comment is a nitpick, stale, or not applicable
+1. **`fix`** — the comment identifies a specific code issue and a fix will be applied
+2. **`defer`** — the comment raises a valid concern but it's out of scope for this PR
+3. **`skip`** — the comment is a nitpick, stale, or not applicable
 
-The agent determines disposition and reason text per comment based on the comment body, code context, and whether a fix was applied. The triage summary line expands:
+The agent determines disposition intent and reason text per comment based on the comment body, code context, and whether a fix will be applied. The triage summary line expands:
 
 Current: `{N} comments triaged: {A} actionable, {I} skipped`
-New: `{N} comments triaged: {F} fixed, {D} deferred, {S} skipped, {I} informational (no reply)`
+New: `{N} comments triaged: {F} fix, {D} defer, {S} skip, {I} informational (no reply)`
 
 ### 4. Reply Deduplication (Idempotency)
 
@@ -76,11 +78,11 @@ Add a `replying` phase to the Phase Sub-State Tracking table, set before posting
 
 ### 6. New Step 5.5: Post Replies (after push, or when no code changes)
 
-After the successful commit and push in Step 5, add a new step that posts reply comments. This step runs **after push** to ensure all `fixed` replies reference a real commit SHA.
+After the successful commit and push in Step 5, add a new step that posts reply comments. This step runs **after push** to ensure all `fix` replies reference a real commit SHA.
 
-**When no code changes were made** (all comments are deferred or skipped, zero `fixed` dispositions): the current skill stops at Step 5 with "No changes needed." Instead of stopping, the skill should proceed to this reply step — deferred and skipped replies don't reference a SHA, so they work without a push. The communication loop must still close even when no code was changed.
+**When no code changes were made** (all comments are defer or skip, zero `fix` intents): the current skill stops at Step 5 with "No changes needed." Instead of stopping, the skill should proceed to this reply step — defer and skip replies don't reference a SHA, so they work without a push. The communication loop must still close even when no code was changed.
 
-**For each comment with a disposition** (fixed, deferred, or skipped) **that doesn't already have a disposition reply**:
+**For each comment with a disposition intent** (fix, defer, or skip) **that doesn't already have a disposition reply**:
 
 **Post reply comment** via REST API:
 ```bash
@@ -93,7 +95,7 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments \
 
 **Output**: After all replies, print:
 ```
-Replied to {N} comment(s): {F} fixed, {D} deferred, {S} skipped
+Replied to {N} comment(s): {F} fix, {D} defer, {S} skip
 ```
 
 ### 7. Disposition Reference Table
@@ -103,11 +105,13 @@ Add a `## Disposition Reference` section at the bottom of the skill file, mirror
 ```markdown
 ## Disposition Reference
 
-| Disposition | Description | Reply format |
-|-------------|-------------|--------------|
-| `fixed` | Code changed to address the comment | `Fixed — {description}. ({sha})` |
-| `deferred` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
-| `skipped` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
+Triage assigns **intent** (action verb); replies confirm **outcome** (past-tense).
+
+| Intent (triage) | Description | Reply (outcome) |
+|-----------------|-------------|-----------------|
+| `fix` | Code will be changed to address the comment | `Fixed — {description}. ({sha})` |
+| `defer` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
+| `skip` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
 
 Informational comments (praise, summaries, questions without code implications) receive no reply.
 ```
@@ -137,7 +141,7 @@ Informational comments (praise, summaries, questions without code implications) 
 
 | # | Grade | Decision | Rationale | Scores |
 |---|-------|----------|-----------|--------|
-| 1 | Certain | Three dispositions: fixed, deferred, skipped | Discussed — user explicitly chose these three after rejecting alternatives (noted, dismissed, wrong) | S:95 R:85 A:90 D:95 |
+| 1 | Certain | Three disposition intents: fix, defer, skip (replies use past-tense: Fixed/Deferred/Skipped) | Discussed — user explicitly chose these three after rejecting alternatives; refined to separate intent from outcome | S:95 R:85 A:90 D:95 |
 | 2 | Certain | Reply format: `Fixed — {desc}. ({sha})`, `Deferred — {reason}.`, `Skipped — {reason}.` | Discussed — user agreed on disposition + reason format with free-text reason per comment | S:90 R:90 A:85 D:90 |
 | 3 | Certain | Informational comments get no reply | Discussed — user said "there's nothing like what you can do" for informational comments | S:95 R:90 A:90 D:95 |
 | 4 | Certain | Replies posted after push, not per-comment during triage | Discussed — agreed batch-after-push is safer (avoids orphaned replies if push fails) | S:85 R:85 A:90 D:90 |
@@ -145,7 +149,7 @@ Informational comments (praise, summaries, questions without code implications) 
 | 6 | Certain | Reply posting is best-effort (don't fail the skill) | Code is already pushed; failing to comment shouldn't be treated as a skill failure | S:85 R:90 A:85 D:85 |
 | 7 | Confident | Disposition Reference table mirrors PR Type Reference pattern from /git-pr | Discussed — user asked to check /git-pr for parallel structure | S:80 R:90 A:85 D:85 |
 | 8 | Certain | Add `replying` phase to sub-state tracking after `pushed` | Clarified — user chose recommended approach for consistency with existing phase tracking | S:95 R:90 A:90 D:95 |
-| 9 | Certain | Post replies even when no code changes (all deferred/skipped) | Clarified — user chose recommended approach; communication loop must close regardless | S:95 R:85 A:90 D:95 |
+| 9 | Certain | Post replies even when no code changes (all defer/skip) | Clarified — user chose recommended approach; communication loop must close regardless | S:95 R:85 A:90 D:95 |
 | 10 | Certain | Deduplicate replies on re-run by checking for existing disposition prefix replies | Clarified — user raised idempotency concern; check for `Fixed —`/`Deferred —`/`Skipped —` prefixes | S:95 R:85 A:90 D:90 |
 
 10 assumptions (9 certain, 1 confident, 0 tentative, 0 unresolved).

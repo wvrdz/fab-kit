@@ -112,7 +112,7 @@ This captures comments from all submitted reviews regardless of reviewer. Track 
 Fetch comments from the specific Copilot review:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/reviews/{review_id}/comments --jq '.[] | {id: .id, node_id: .node_id, path: .path, line: .line, body: .body, user: .user.login}'
+gh api repos/{owner}/{repo}/pulls/{number}/reviews/{review_id}/comments --jq '.[] | {id: .id, node_id: .node_id, path: .path, line: .line, body: .body, user: .user.login, in_reply_to_id: .in_reply_to_id}'
 ```
 
 Reply filtering is not needed for Path B — the review-specific endpoint returns only comments from that review, not cross-review replies.
@@ -123,11 +123,11 @@ For each fetched comment:
 
 1. **Classify**: Determine if the comment is **fixable** (identifies a specific code issue with an implied or explicit fix — e.g., "This variable is unused", "Missing null check", "Should use `const` instead of `let`"), **deferrable** (valid concern but out of scope for this PR — e.g., "This whole module needs better error handling"), **skippable** (nitpick, stale reference, or not applicable — e.g., "I'd name this differently", references code already changed), or **informational** (summary, praise, general observation, question without a clear fix action — e.g., "Looks good overall", "Why was this approach chosen?")
 2. **Skip** informational comments — no disposition, no reply
-3. **Assign disposition** to each non-informational comment:
-   - **`fixed`** — the comment identifies a specific code issue and a fix will be applied
-   - **`deferred`** — the comment raises a valid concern but it's out of scope for this PR
-   - **`skipped`** — the comment is a nitpick, stale, or not applicable
-4. **For `fixed` comments**:
+3. **Assign disposition intent** to each non-informational comment:
+   - **`fix`** — the comment identifies a specific code issue and a fix will be applied
+   - **`defer`** — the comment raises a valid concern but it's out of scope for this PR
+   - **`skip`** — the comment is a nitpick, stale, or not applicable
+4. **For `fix` comments**:
    - Read the file at `{path}`
    - Understand the issue described in `{body}`
    - If `{line}` is non-null, focus on that area of the file
@@ -135,13 +135,13 @@ For each fetched comment:
    - Apply a targeted fix — do NOT make unrelated changes beyond what the comment addresses
    - Record a brief description of the change for the reply
 
-Print: `{N} comments triaged: {F} fixed, {D} deferred, {S} skipped, {I} informational (no reply)`
+Print: `{N} comments triaged: {F} fix, {D} defer, {S} skip, {I} informational (no reply)`
 
 If all comments are informational → print `No actionable comments.` and STOP.
 
 ### Step 5: Commit and Push
 
-After all `fixed` comments are processed:
+After all `fix` comments are processed:
 
 1. Check for modifications: `git status --porcelain`
 2. If no modifications → print `No changes needed.` and proceed to Step 5.5 (do NOT stop here)
@@ -160,14 +160,20 @@ Print: `Fixed {N} comment(s) across {M} file(s)`
 
 After Step 5 (whether or not code was pushed), post reply comments for each comment that received a disposition. This step also runs when no code changes were made (all deferred/skipped) — the communication loop must close regardless.
 
-**Deduplication**: Before posting a reply to a comment, check if any existing reply in the fetched comments (those with `in_reply_to_id` matching the target comment's `id`) starts with `Fixed —`, `Deferred —`, or `Skipped —`. If a disposition reply already exists, skip that comment.
+**Deduplication**: Before posting replies, do a fresh fetch of all review comments to capture any existing disposition replies (Step 3 excludes replies, so those results cannot be used here):
+
+```bash
+gh api --paginate repos/{owner}/{repo}/pulls/{number}/comments --jq '.[] | select(.in_reply_to_id != null) | {id: .id, in_reply_to_id: .in_reply_to_id, body: .body}'
+```
+
+For each comment about to receive a reply, check if any fetched reply (where `in_reply_to_id` matches the target comment's `id`) starts with `Fixed —`, `Deferred —`, or `Skipped —`. If a disposition reply already exists, skip that comment.
 
 **For each comment with a disposition** that passes deduplication:
 
-1. Compose reply text based on disposition:
-   - `fixed`: `Fixed — {description}. ({sha})` where `{sha}` is the short (7-char) commit SHA and `{description}` is the brief change summary recorded during triage
-   - `deferred`: `Deferred — {reason}.`
-   - `skipped`: `Skipped — {reason}.`
+1. Compose reply text based on disposition intent (replies use past-tense to confirm the outcome):
+   - `fix` → `Fixed — {description}. ({sha})` where `{sha}` is the short (7-char) commit SHA and `{description}` is the brief change summary recorded during triage
+   - `defer` → `Deferred — {reason}.`
+   - `skip` → `Skipped — {reason}.`
 
 2. Post reply via REST API:
    ```bash
@@ -178,7 +184,7 @@ After Step 5 (whether or not code was pushed), post reply comments for each comm
 
 **Error handling**: Reply posting is best-effort. If a reply POST fails for a specific comment, log the error and continue to the next comment. A failed reply does not cause the skill to abort or mark the stage as failed.
 
-Print: `Replied to {N} comment(s): {F} fixed, {D} deferred, {S} skipped`
+Print: `Replied to {N} comment(s): {F} fix, {D} defer, {S} skip`
 
 ### Step 6: Update Review-PR Stage
 
@@ -199,7 +205,7 @@ When an active change is resolved, update `stage_metrics.review-pr.phase` at key
 | `waiting` | After requesting Copilot review (Step 2, Phase 2 success) |
 | `received` | Reviews detected or Copilot review arrived (Step 2, Phase 1 hit or Phase 3 success) |
 | `triaging` | Before classifying comments (Step 4 start) |
-| `fixing` | Before applying fixes (Step 4, `fixed` comments found) |
+| `fixing` | Before applying fixes (Step 4, `fix` comments found) |
 | `pushed` | After commit and push (Step 5 success) |
 | `replying` | Before posting reply comments (Step 5.5 start) |
 
@@ -223,10 +229,12 @@ The `reviewer` field is set when reviews are detected: `yq -i ".stage_metrics.\"
 
 ## Disposition Reference
 
-| Disposition | Description | Reply format |
-|-------------|-------------|--------------|
-| `fixed` | Code changed to address the comment | `Fixed — {description}. ({sha})` |
-| `deferred` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
-| `skipped` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
+Triage assigns an **intent** (action verb); replies confirm the **outcome** (past-tense).
+
+| Intent (triage) | Description | Reply (outcome) |
+|-----------------|-------------|-----------------|
+| `fix` | Code will be changed to address the comment | `Fixed — {description}. ({sha})` |
+| `defer` | Valid concern, out of scope for this PR | `Deferred — {reason}.` |
+| `skip` | Nitpick, stale, or not applicable | `Skipped — {reason}.` |
 
 Informational comments (praise, summaries, questions without code implications) receive no reply.
