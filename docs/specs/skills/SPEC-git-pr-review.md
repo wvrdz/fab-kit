@@ -43,7 +43,7 @@ Processes PR review comments from any reviewer (human or Copilot). Fully autonom
 ├─ Step 5: Commit and Push
 │  ├─ Bash: git add {files}
 │  ├─ Bash: git commit -m "fix: address review feedback"
-│  └─ Bash: git push
+│  ├─ Bash: git push
 │  └─ [no modifications] → proceed to Step 5.5 (don't stop)
 │
 ├─ Step 5.5: Post Replies
