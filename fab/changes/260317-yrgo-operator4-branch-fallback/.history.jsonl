@@ -1,0 +1,23 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-17T08:51:10Z"}
+{"args":"Operator4 branch fallback: when resolve fails, search git branch names as fallback","cmd":"fab-new","event":"command","ts":"2026-03-17T08:51:10Z"}
+{"delta":"+3.4","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:51:52Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:52:00Z"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-17T08:53:16Z"}
+{"cmd":"fab-clarify","event":"command","ts":"2026-03-17T08:53:31Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:55:41Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:55:46Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:55:58Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:56:04Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:56:12Z"}
+{"cmd":"fab-clarify","event":"command","ts":"2026-03-17T08:57:24Z"}
+{"delta":"+0.0","event":"confidence","score":3.4,"trigger":"calc-score","ts":"2026-03-17T08:58:30Z"}
+{"delta":"+1.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:58:36Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:58:46Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:58:58Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:59:08Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:59:23Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:59:32Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:59:38Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T08:59:43Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T09:00:29Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-17T09:00:35Z"}
