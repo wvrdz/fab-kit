@@ -90,12 +90,11 @@ brew install yq jq gh direnv
 In addition to the above:
 
 ```bash
-brew install parallel go
+brew install go
 ```
 
 | Tool | Purpose |
 |------|---------|
-| [parallel](https://www.gnu.org/software/parallel/) | Parallel execution for test suites and batch operations |
 | [Go](https://go.dev/) | Required for building the `fab` binary from source (`src/go/fab/`) |
 
 ### 1. Install

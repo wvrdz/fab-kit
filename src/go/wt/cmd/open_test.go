@@ -45,8 +45,6 @@ func TestOpen_ErrorUnknownApp(t *testing.T) {
 }
 
 // NOTE: Testing actual app opening (code, cursor, etc.) requires mock binaries
-// on PATH that log their invocations. The bats tests used mock scripts for this.
-// We test the error paths here; the open-by-name success path is tested via the
-// worktree resolution logic (which is shared with other commands).
-
-// TODO: When wt pr is implemented in Go, port tests from wt-pr.bats here.
+// on PATH that log their invocations. We test the error paths here; the
+// open-by-name success path is tested via the worktree resolution logic
+// (which is shared with other commands).

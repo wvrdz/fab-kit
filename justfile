@@ -4,12 +4,7 @@ fab_ldflags := "-X main.version=" + fab_version
 
 # Run all tests with summary
 test:
-    just test-scripts
     just test-go
-
-# Run script tests (bats)
-test-scripts:
-    {{scripts}}/test-scripts.sh
 
 # Run Go unit tests (all modules)
 test-go:

@@ -9,7 +9,7 @@ set -euo pipefail
 # Usage: src/scripts/just/dev-doctor.sh
 
 failures=0
-total=3
+total=1
 
 echo "dev-doctor: checking development prerequisites..."
 
@@ -22,27 +22,7 @@ fail() {
 
 hint() { echo "    $1"; }
 
-# ── 1. bats ──────────────────────────────────────────────────────────
-
-if command -v bats &>/dev/null; then
-  ver=$(bats --version | sed 's/.*Bats //' | sed 's/ .*//')
-  pass "bats $ver"
-else
-  fail "bats — not found"
-  hint "Install: brew install bats-core"
-fi
-
-# ── 2. parallel ──────────────────────────────────────────────────────
-
-if command -v parallel &>/dev/null; then
-  ver=$(parallel --version | head -1 | sed 's/.*parallel //' | sed 's/ .*//')
-  pass "parallel $ver"
-else
-  fail "parallel — not found"
-  hint "Install: brew install parallel"
-fi
-
-# ── 3. go ────────────────────────────────────────────────────────────
+# ── 1. go ────────────────────────────────────────────────────────────
 
 if command -v go &>/dev/null; then
   ver=$(go version | sed 's/go version go//' | sed 's/ .*//')
