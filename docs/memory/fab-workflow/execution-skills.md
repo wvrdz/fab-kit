@@ -330,6 +330,30 @@ All settings are session-scoped — they reset when the operator session restart
 
 `fab-operator4.sh` launches operator4. Uses a singleton tmux tab named `operator`. Only one operator session runs at a time. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator4.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running `claude --dangerously-skip-permissions '/fab-operator4'`. Only one operator runs at a time in the shared `operator` tab.
 
+### `/fab-operator5` (Use Case Registry + Branch Fallback)
+
+`/fab-operator5` is operator4's successor — a standalone coordination skill that adds a **use case registry**, **branch fallback resolution**, and three built-in proactive monitoring use cases. All operator4 behavior (principles, safety model, auto-nudge, autopilot) is carried forward unchanged. Launch via the same `fab-operator4.sh` launcher (singleton `operator` tab).
+
+#### Key Differences from Operator4
+
+**Use case registry** replaces operator4's single-purpose monitoring. Operator4's `/loop` ran only when the monitored set was non-empty; operator5's `/loop` is the operator's heartbeat — it runs as long as **any use case is enabled**. Use cases are toggleable via natural language and persisted in `.fab-operator.yaml` (repo root, hidden). Each `/loop` tick begins with a status roster showing enabled/disabled use cases with one-line summaries.
+
+**Three built-in use cases**:
+
+| Use Case | Description | Default |
+|----------|-------------|---------|
+| `monitor-changes` | Operator4's existing monitoring system (monitored set, 6-step tick, auto-nudge, stuck detection) reframed as a use case. Behavior identical | Enabled |
+| `linear-inbox` | Watches Linear for new assigned issues via MCP, offers to spawn agents. Deduplicates against `.status.yaml` issue IDs across active and archived changes | Disabled |
+| `pr-freshness` | Detects stale PRs via `gh pr list` `mergeStateStatus` (`BEHIND`/`DIRTY`), routes rebase instructions to agents in tabs. Does NOT rebase directly — consistent with "coordinate, don't execute" | Disabled |
+
+**Branch fallback resolution** (in Safety Model, user-initiated only — not monitoring ticks): when `fab resolve` fails, scans local and remote branch names via `git for-each-ref`. Single match with read-only intent uses `git show` to read `.status.yaml` from the branch; action intent offers worktree creation. Multiple matches show disambiguation; no match reports failure.
+
+**Tab preparation procedure**: shared pre-dispatch sequence used by playbooks and use cases that send commands to agent tabs. Extends pre-send validation (verify pane, check idle) with two new steps: check active change matches target (send `/fab-switch` if not), check branch alignment (send `/git-branch` if misaligned). Then dispatch.
+
+**Playbooks** (renamed from operator4's "Modes of Operation"): on-demand, user-triggered coordination patterns. Same 9 playbooks carried from operator4 (broadcast, sequenced rebase, merge PRs, spawn agent, status dashboard, unstick agent, notification, rebase all, autopilot). All playbooks that dispatch work use the tab preparation procedure.
+
+**Legacy cleanup**: deleted `fab/.kit/scripts/fab-operator{1,2,3}.sh` — obsolete launcher scripts from the operator inheritance chain. `fab-operator4.sh` remains as the active launcher.
+
 ## Design Decisions
 
 ### Checklist Tests Implementation Fidelity and Code Quality
@@ -448,10 +472,23 @@ All settings are session-scoped — they reset when the operator session restart
 **Rejected**: Keeping operator1/2/3 as archived files — git history preserves them; dead files risk agents loading them. Extracting a shared base — adds indirection for a single-consumer pattern.
 *Introduced by*: 260315-a2b2-standalone-operator4-rewrite
 
+### Use Case Registry Over Single-Purpose Monitoring
+**Decision**: Operator5 replaces operator4's single-purpose monitoring with a use case registry — named, toggleable concerns checked on each `/loop` tick. The loop is the operator's heartbeat (runs while any use case is enabled), not tied to the monitored set.
+**Why**: Real workflows have multiple concurrent monitoring concerns (change progress, Linear inbox, PR staleness) that all need periodic attention. A registry model lets users toggle concerns without operator restarts. Three built-in use cases ship with operator5 (fixed set, not user-extensible).
+**Rejected**: CLI-level branch resolution (`fab resolve --search-branches`) — fab operates on change folders, not git branches; branch awareness belongs in the operator skill.
+*Introduced by*: 260317-yrgo-operator5-branch-fallback
+
+### Branch Fallback in Operator, Not CLI
+**Decision**: Branch fallback resolution lives in the operator skill (user-initiated only), not in the `fab` CLI. When `fab resolve` fails, the operator scans branch names as a fallback before reporting failure.
+**Why**: `fab` is orthogonal to git — it operates on change folders (filesystem/YAML). Branch name scanning is a coordination concern (finding where a change lives), not a CLI concern. The operator already has the context to decide between read-only (`git show`) and action (worktree creation) responses.
+**Rejected**: `fab resolve --search-branches`, `--branch` output mode, automatic fallback in CLI — all rejected because they couple the CLI to git branch semantics.
+*Introduced by*: 260317-yrgo-operator5-branch-fallback
+
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260317-yrgo-operator5-branch-fallback | 2026-03-17 | Added `/fab-operator5` as operator4's successor with three new capabilities: (1) use case registry — toggleable named concerns (`monitor-changes`, `linear-inbox`, `pr-freshness`) persisted in `.fab-operator.yaml`, with conversational toggling and tick-start status roster; (2) branch fallback resolution — scans local/remote branch names when `fab resolve` fails (user-initiated only), with read-only `git show` path and action worktree-creation path; (3) tab preparation procedure — shared pre-dispatch sequence (verify pane, check idle, check active change, check branch alignment) used by all playbooks and use cases. Operator4's "Modes of Operation" renamed to "Playbooks". Deleted legacy `fab-operator{1,2,3}.sh` launcher scripts. |
 | 260315-a2b2-standalone-operator4-rewrite | 2026-03-15 | Rewrote operator documentation: replaced operator1/2/3/4 inheritance chain with standalone `/fab-operator4`. Removed all references to operator1, operator2, operator3 as separate skills. Operator4 is now documented as the single operator skill with all behavior inlined (principles, startup, safety model, monitoring, auto-nudge, modes of operation, autopilot, configuration). Loads `_cli-external.md` (operator-only) for wt/tmux/loop references. Consolidated design decisions (merged "All-Auto-Answer" + "Decision List" into single DD, renamed "operator4"-specific DDs to generic names). Added "Standalone Operator Over Inheritance Chain" design decision. |
 | 260314-q5p9-redesign-ff-fff-scopes | 2026-03-14 | Updated pipeline invocation overview: `/fab-ff` now runs intake → hydrate (6 stages), `/fab-fff` runs intake → review-pr (8 stages). Both have identical confidence gates and autonomous rework. Updated review failure rework descriptions: both `/fab-ff` and `/fab-fff` now use identical auto-loop + stop behavior (was: `/fab-ff` had interactive fallback, `/fab-fff` had bail). |
 | 260314-007n-redesign-operator-auto-nudge | 2026-03-14 | Added `/fab-operator4` standalone coordination skill — workflow iteration of operator3 with redesigned auto-nudge. Replaces two-tier confidence model with all-auto-answer (decision list items 1-6). Improved question detection: `-l 20` capture window, Claude turn boundary guard (`>` cursor in last 2 lines), tightened `?` pattern (last non-empty line only, <120 chars, skip comment prefixes), new indicator patterns (`:` endings, enumerated options, `Press.*key`), blank capture guard. Re-capture before send eliminates detection-to-send race condition. Per-answer inline logging for debugging reconstruction. Routing discipline (operator must route instructions to agents, never execute directly). Autopilot uses `/fab-fff` instead of `/fab-ff`. ~26% token reduction via delta-only tick description, reduced key properties table, condensed purpose, integrated guards. New launcher `fab-operator4.sh`. New spec `SPEC-fab-operator4.md`. Updated "one operator at a time" constraint to include operator4. |
