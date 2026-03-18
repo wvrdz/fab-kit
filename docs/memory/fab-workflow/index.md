@@ -8,7 +8,7 @@
 | [context-loading](context-loading.md) | Smart context loading convention — 7-file always-load layer, selective domain loading, SRAD protocol, state-keyed Next Steps Convention | 2026-02-20 |
 | [planning-skills](planning-skills.md) | `/fab-new`, `/fab-continue`, `/fab-ff`, `/fab-clarify` — the planning pipeline from intake through tasks, shared `_generation.md` partial | 2026-02-16 |
 | [clarify](clarify.md) | `/fab-clarify` skill — dual modes (suggest/auto), taxonomy scan, structured questions, coverage reports, audit trail, grade reclassification | 2026-02-16 |
-| [execution-skills](execution-skills.md) | Apply, review, hydrate, archive, and operator behavior — `/fab-continue` for pipeline stages, `/fab-archive` for housekeeping, `/fab-operator4` for cross-agent coordination (standalone, single operator skill) | 2026-03-15 |
+| [execution-skills](execution-skills.md) | Apply, review, hydrate, archive, and operator behavior — `/fab-continue` for pipeline stages, `/fab-archive` for housekeeping, `/fab-operator4` for cross-agent coordination, `/fab-operator5` for use case registry + branch fallback | 2026-03-17 |
 | [change-lifecycle](change-lifecycle.md) | Change naming, folder structure, `.status.yaml`, `.fab-status.yaml` symlink, git integration, `/fab-status`, `/fab-switch`, backlog scanning | 2026-03-07 |
 | [templates](templates.md) | Artifact templates (intake, spec, tasks, checklist), skill frontmatter, and memory file format | 2026-02-27 |
 | [distribution](distribution.md) | How `fab/.kit/` is distributed — bootstrap, update, release workflow | 2026-03-10 |
