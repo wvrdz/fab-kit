@@ -40,9 +40,9 @@ The template should specify that the dispatching agent instructs the subagent to
 
 Replace the ad-hoc file list at line 153 with a reference to the preamble's standard context. The review-specific context (spec.md, tasks.md, checklist.md, relevant source files, target memory files) remains listed explicitly — only the `fab/project/**` portion is replaced with a reference.
 
-### 3. Update `fab-continue.md` Apply Behavior `code-quality.md` reference
+### 3. No change to `fab-continue.md` Apply Behavior `code-quality.md` reference
 
-Apply Behavior (line 113) currently says "If `fab/project/code-quality.md` exists, load its `## Principles`..." — this is now redundant since the standard context already loads it. Add a note that this file is available via standard subagent context, keeping the specific section reference (`## Principles`, `## Test Strategy`) for what to extract from it.
+Apply Behavior (line 113) currently says "If `fab/project/code-quality.md` exists, load its `## Principles`..." — this remains as-is. The standard subagent context ensures the file is loaded; the Apply Behavior reference tells the agent *what to extract from it*. No annotation needed.
 
 ## Affected Memory
 
@@ -52,7 +52,7 @@ Apply Behavior (line 113) currently says "If `fab/project/code-quality.md` exist
 ## Impact
 
 - `fab/.kit/skills/_preamble.md` — primary change: new subsection in Subagent Dispatch
-- `fab/.kit/skills/fab-continue.md` — simplify Review Behavior context list, note in Apply Behavior
+- `fab/.kit/skills/fab-continue.md` — simplify Review Behavior context list (Apply Behavior unchanged)
 - `docs/specs/skills/SPEC-preamble.md` — create new (no existing spec for the internal partial)
 - `docs/specs/skills/SPEC-fab-continue.md` — update (exists)
 
