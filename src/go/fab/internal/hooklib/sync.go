@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // HookMapping defines a mapping from a hook script to a Claude Code event.
@@ -68,7 +69,7 @@ func Sync(hooksDir, settingsPath string) (*SyncResult, error) {
 		if !existingScripts[m.Script] {
 			continue
 		}
-		cmd := "bash fab/.kit/hooks/" + m.Script
+		cmd := `bash "$CLAUDE_PROJECT_DIR"/fab/.kit/hooks/` + m.Script
 		desired = append(desired, desiredEntry{event: m.Event, matcher: m.Matcher, command: cmd})
 	}
 
@@ -95,6 +96,24 @@ func Sync(hooksDir, settingsPath string) (*SyncResult, error) {
 		if err := json.Unmarshal(raw, &existingHooks); err != nil {
 			// If hooks section is malformed, start fresh
 			existingHooks = make(map[string][]hookEntry)
+		}
+	}
+
+	// Migrate old-format commands (relative path) to new format ($CLAUDE_PROJECT_DIR)
+	migrated := 0
+	for event, eventEntries := range existingHooks {
+		for i, entry := range eventEntries {
+			for j, h := range entry.Hooks {
+				if strings.HasPrefix(h.Command, "bash fab/.kit/hooks/") {
+					existingHooks[event][i].Hooks[j].Command = strings.Replace(
+						h.Command,
+						"bash fab/.kit/hooks/",
+						`bash "$CLAUDE_PROJECT_DIR"/fab/.kit/hooks/`,
+						1,
+					)
+					migrated++
+				}
+			}
 		}
 	}
 
@@ -144,7 +163,7 @@ func Sync(hooksDir, settingsPath string) (*SyncResult, error) {
 		newCount += len(entries)
 	}
 
-	if added == 0 {
+	if added == 0 && migrated == 0 {
 		return &SyncResult{
 			Status:  "ok",
 			Message: ".claude/settings.local.json hooks: OK",
@@ -158,9 +177,16 @@ func Sync(hooksDir, settingsPath string) (*SyncResult, error) {
 		}, nil
 	}
 
+	var parts []string
+	if added > 0 {
+		parts = append(parts, fmt.Sprintf("added %d hook entries", added))
+	}
+	if migrated > 0 {
+		parts = append(parts, fmt.Sprintf("migrated %d to absolute paths", migrated))
+	}
 	return &SyncResult{
 		Status:  "updated",
-		Message: fmt.Sprintf("Updated: .claude/settings.local.json hooks (added %d hook entries)", added),
+		Message: fmt.Sprintf("Updated: .claude/settings.local.json hooks (%s)", strings.Join(parts, ", ")),
 	}, nil
 }
 
