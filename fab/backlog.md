@@ -9,3 +9,5 @@
 - [ ] [02eh] 2026-03-18: When operator5 works in branch mode for matching a change, it asks for confirmation. Don't do so, just proceed
 - [ ] [tm9h] 2026-03-19: When starting to creat PRs - create drafts. fab-kit should always create draft PRs. The devs generally need to check the implementation before marking it ok for code review
 - [ ] [heht] 2026-03-19: Ensure randomness in worktree names is actually getting following - inrease the name universe even further
+- [ ] [gogt] 2026-03-19: Write operator6 from hand
+- [ ] [p4ki] 2026-03-19: Allow 'idea <text of idea>' format once again
