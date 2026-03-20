@@ -14,3 +14,4 @@
 - [ ] [m1ef] 2026-03-18: The PRs created by fab-kit, should be draft by default. Right now ready PRs are getting created
 - [ ] [rd3u] 2026-03-19: operator should mention on each tick the current timestamp
 - [ ] [djkp] 2026-03-19: operator's instuction of rebase to latest is misleading. Should mention - rebase to latest origin/main
+- [ ] [1tch] 2026-03-20: Change fab-switch --blank to fab-switch --none or just fab-switch. --blank isn't easy to remember
