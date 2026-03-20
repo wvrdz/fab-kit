@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# src/scripts/release.sh — Bump VERSION, commit, tag, and push.
+# scripts/release.sh — Bump VERSION, commit, tag, and push.
 #
 # CI takes over from the tag push to cross-compile, package, and create
 # the GitHub Release (see .github/workflows/release.yml).

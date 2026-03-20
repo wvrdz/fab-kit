@@ -97,7 +97,7 @@ Release is split across three components: `release.sh` handles version managemen
 
 #### Release Script (`release.sh`)
 
-`src/scripts/release.sh` handles version bumping, migration validation, and git commit/tag/push. It does NOT cross-compile, package archives, or create GitHub Releases — those responsibilities moved to the justfile and CI workflow.
+`scripts/release.sh` handles version bumping, migration validation, and git commit/tag/push. It does NOT cross-compile, package archives, or create GitHub Releases — those responsibilities moved to the justfile and CI workflow.
 
 The script accepts a bump type argument (`patch`, `minor`, or `major`) that is required to perform a release. When invoked with no arguments, the script displays usage and exits successfully. Unknown arguments produce an error.
 
@@ -213,7 +213,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 | Change | Date | Summary |
 |--------|------|---------|
 | 260312-96nf-remove-rust-implementation | 2026-03-12 | Removed all Rust references from distribution docs. Removed Rust recipes from build recipes section, Rust CI steps (toolchain, Zig, cargo-zigbuild), Rust from archive descriptions (3→2 binaries per platform, 12→8 total). Updated backend override to Go-only. Removed "Transition Period: Dual Backends" section. Updated bootstrap descriptions, packaging scenarios, and CI workflow steps. Removed cargo-zigbuild design decision. |
-| 260310-8m3k-port-wt-tests-cleanup-legacy | 2026-03-10 | Removed `src/packages/` (legacy shell wt package and bats tests), `src/tests/` (bats submodule libs), and `.gitmodules` (bats submodule refs only). Ported 73 behavioral tests from bats to Go in `src/go/wt/cmd/*_test.go`. Removed `bats` from prerequisites description (already absent from actual sync scripts). Removed `test-setup` and `test-packages` justfile targets and their backing scripts (`src/scripts/just/test-setup.sh`, `test-packages.sh`). |
+| 260310-8m3k-port-wt-tests-cleanup-legacy | 2026-03-10 | Removed `src/packages/` (legacy shell wt package and bats tests), `src/tests/` (bats submodule libs), and `.gitmodules` (bats submodule refs only). Ported 73 behavioral tests from bats to Go in `src/go/wt/cmd/*_test.go`. Removed `bats` from prerequisites description (already absent from actual sync scripts). Removed `test-setup` and `test-packages` justfile targets and their backing scripts (`scripts/just/test-setup.sh`, `test-packages.sh`). |
 | 260310-qbiq-go-wt-binary | 2026-03-10 | Per-platform archives now include `wt` binary at `.kit/bin/wt` alongside `fab-go` and `fab-rust` (3 binaries per platform, 12 total cross-compiled). Added justfile recipes: `build-wt`, `build-wt-target`, `build-wt-all`. Updated `build-all` to include wt. Updated `package-kit` to verify and include wt binary. `fab/.kit/packages/wt/` removed — wt is a binary, not a shell package. `env-packages.sh` already adds `$KIT_DIR/bin` to PATH — no change needed for wt binary availability. |
 | 260310-pl72-port-idea-to-go | 2026-03-10 | `idea` is now available as `fab idea` via the Go binary (in per-platform archives), in addition to the shell package at `.kit/packages/idea/bin/idea`. Both coexist — shell package retained for rollback safety and generic-archive users. |
 | 260307-buf0-4-rust-ci-build | 2026-03-10 | Releases now ship both Go and Rust binaries. Added Rust cross-compilation recipes to justfile (`build-rust-target`, `build-rust-all`, `build-all`, `_rust-target`). Updated `package-kit` to include both `fab-go` and `fab-rust` in per-platform archives and exclude both from generic archive. CI workflow updated with Rust toolchain (`dtolnay/rust-toolchain`), Zig (`pip install ziglang`), `cargo-zigbuild`, and cached tool installations. `build-go-all` → `build-all` in CI. Linux Rust targets use musl for fully static binaries. |
@@ -237,7 +237,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 | 260216-b1k9-DEV-1028-rename-scaffold-add-kit-tests | 2026-02-16 | Renamed `init-scaffold.sh` → `sync-workspace.sh` throughout (bootstrap description, update script references, symlink repair) |
 | 260213-k7m2-kit-version-migrations | 2026-02-14 | Added version drift scenarios to update section; added `fab/VERSION` to preserved files list; added migration chain validation to release section |
 | 260213-3njv-scaffold-dir | 2026-02-13 | Updated bootstrap description to mention `fab-sync.sh` reads from `scaffold/` files for index templates, envrc, and gitignore entries |
-| 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_init_scaffold.sh` → `fab-sync.sh` throughout; moved `release.sh` from `fab/.kit/scripts/` to `src/scripts/` (dev-only, not shipped in kit) |
+| 260214-q7f2-reorganize-src | 2026-02-14 | Renamed `_init_scaffold.sh` → `fab-sync.sh` throughout; moved `release.sh` from `fab/.kit/scripts/` to `scripts/` (dev-only, not shipped in kit) |
 | 260213-iq2l-rename-setup-scripts | 2026-02-13 | Renamed script references: `fab-setup.sh` → `_init_scaffold.sh`, `fab-update.sh` → `fab-upgrade.sh` |
 | 260212-emcb-clarify-fab-setup | 2026-02-12 | Updated bootstrap description to include `docs/specs/` directory and `design/index.md` in `fab-sync.sh` output |
 | 260210-h7r3-kit-distribution-update | 2026-02-10 | Initial creation — bootstrap, update, release, and repo rename requirements |

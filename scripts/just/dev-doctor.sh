@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# src/scripts/just/dev-doctor.sh — Validate fab-kit development prerequisites
+# scripts/just/dev-doctor.sh — Validate fab-kit development prerequisites
 #
 # Checks tools needed for developing fab-kit itself (not needed by end users).
 # Accumulates all failures before reporting. Exit code = failure count.
 #
-# Usage: src/scripts/just/dev-doctor.sh
+# Usage: scripts/just/dev-doctor.sh
 
 failures=0
 total=1

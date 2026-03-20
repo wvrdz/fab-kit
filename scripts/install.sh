@@ -4,7 +4,7 @@ set -euo pipefail
 # install.sh — One-liner installer for Fab Kit
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/wvrdz/fab-kit/main/src/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/wvrdz/fab-kit/main/scripts/install.sh | bash
 #
 # Downloads the latest kit archive from GitHub Releases into fab/.kit/ in the
 # current directory. Tries the platform-specific archive (includes Go binaries)

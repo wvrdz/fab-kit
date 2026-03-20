@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# src/scripts/download-count.sh — Show download counts for GitHub Releases
+# scripts/download-count.sh — Show download counts for GitHub Releases
 #
 # Usage: download-count.sh [--all | --total | <tag>]
 #   (no args) — show latest release downloads

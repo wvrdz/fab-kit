@@ -1,4 +1,4 @@
-scripts := "src/scripts/just"
+scripts := "scripts/just"
 fab_version := `cat fab/.kit/VERSION`
 fab_ldflags := "-X main.version=" + fab_version
 
