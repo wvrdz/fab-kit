@@ -2,7 +2,7 @@
 
 Fab Kit ships two standalone CLI tools alongside the skill-based pipeline. Unlike skills (which are Claude Code prompts invoked via `/`), these are compiled Go binaries that run directly in the terminal — no AI agent required.
 
-Both binaries live inside `fab/.kit/bin/` and are added to PATH via `env-packages.sh` during workspace setup. They complement the fab pipeline: **wt** provides the worktree isolation that enables parallel changes, and **idea** provides the backlog that feeds `/fab-new`.
+Both binaries live inside `fab/.kit/bin/` and are added to PATH via `.envrc` during workspace setup. They complement the fab pipeline: **wt** provides the worktree isolation that enables parallel changes, and **idea** provides the backlog that feeds `/fab-new`.
 
 ---
 
@@ -97,7 +97,7 @@ wt-cd() {
 
 A shell function wrapper like Option 3 works because functions execute in the calling shell's process, not as a child. The function delegates path resolution to `wt list --path` (which runs as a child) but executes `cd` in the parent shell's context.
 
-**Why we don't ship a shell function**: Shipping a `wt-cd` function would require users to `source` a file from their shell rc (`.bashrc`/`.zshrc`), which is a different distribution model than the current PATH-based approach. `env-packages.sh` adds `bin/` directories to PATH — it doesn't define shell functions. Mixing the two models adds complexity for a convenience that can be achieved with a 4-line function in the user's own rc file.
+**Why we don't ship a shell function**: Shipping a `wt-cd` function would require users to `source` a file from their shell rc (`.bashrc`/`.zshrc`), which is a different distribution model than the current PATH-based approach. `.envrc` adds `bin/` directories to PATH — it doesn't define shell functions. Mixing the two models adds complexity for a convenience that can be achieved with a 4-line function in the user's own rc file.
 
 ---
 
@@ -105,7 +105,7 @@ A shell function wrapper like Option 3 works because functions execute in the ca
 
 The idea command manages a per-repo backlog stored in `fab/backlog.md`. It's a lightweight CRUD tool for capturing, triaging, and tracking ideas before they become fab changes.
 
-**Binary**: `fab/.kit/bin/idea` (Go binary, included in per-platform release archives; added to PATH as `idea` by `env-packages.sh` during workspace setup).
+**Binary**: `fab/.kit/bin/idea` (Go binary, included in per-platform release archives; added to PATH as `idea` via `.envrc` during workspace setup).
 
 **Worktree behavior**: By default, `idea` operates on the **current worktree's** `fab/backlog.md` (resolved via `git rev-parse --show-toplevel`). Pass `--main` to target the main worktree's backlog instead; internally, `idea` resolves the main worktree root by running `git rev-parse --path-format=absolute --git-common-dir` and taking its parent directory. In the main worktree, both behave identically. This ensures that users in a linked worktree get predictable local behavior unless they explicitly opt into the shared backlog.
 
@@ -154,7 +154,7 @@ batch-fab-new-backlog --all   # Create changes from all open ideas
 
 ## Package Architecture
 
-The `fab/.kit/bin/` directory contains the shell dispatcher and compiled Go binaries, all added to PATH by `env-packages.sh`:
+The `fab/.kit/bin/` directory contains the shell dispatcher and compiled Go binaries, all added to PATH via `.envrc`:
 
 ```
 fab/.kit/bin/
@@ -165,7 +165,7 @@ fab/.kit/bin/
 └── .gitkeep
 ```
 
-**PATH setup**: `fab/.kit/scripts/lib/env-packages.sh` adds `$KIT_DIR/bin` to PATH (making the `fab` dispatcher, `wt`, and `idea` binaries available), then iterates `$KIT_DIR/packages/*/bin` and adds each existing directory to PATH (for any future shell packages). This script is sourced by `.envrc` (for direnv-based projects) and can be sourced from shell rc files.
+**PATH setup**: `.envrc` uses `PATH_add fab/.kit/bin` (via direnv) to make the `fab` dispatcher, `wt`, and `idea` binaries available.
 
 **Distribution**: Go binaries are included in per-platform release archives (`kit-{os}-{arch}.tar.gz`). The generic `kit.tar.gz` is source-only: it contains skills, templates, and supporting scripts/configuration, but no compiled binaries. `fab-upgrade.sh` updates kit content atomically alongside skills and templates.
 

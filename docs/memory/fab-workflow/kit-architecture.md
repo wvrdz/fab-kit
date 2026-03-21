@@ -102,7 +102,6 @@ fab/.kit/
     ├── fab-sync.sh         # Single entry point — thin orchestrator iterating sync/*.sh then fab/sync/*.sh
     ├── fab-upgrade.sh      # Update .kit/ from GitHub Releases
     └── lib/                # Utility scripts (not user-facing)
-        ├── env-packages.sh     # Add fab/.kit/bin and package bin/ dirs to PATH (sourced by .envrc and rc-init.sh)
         ├── frontmatter.sh      # Shared frontmatter parser — YAML (frontmatter_field) and shell-comment (shell_frontmatter_field)
         └── spawn.sh            # Shared spawn command reader — fab_spawn_cmd() reads agent.spawn_command from config.yaml with fallback
 ```
@@ -140,10 +139,6 @@ Standalone prerequisite checker, sibling of `fab-help.sh`. Validates 5 required 
 #### `fab-help.sh`
 
 Prints the Fab Kit help overview and skill catalog. Dynamically reads skill names and descriptions from YAML frontmatter in `fab/.kit/skills/` at runtime via the shared `lib/frontmatter.sh` library. Also scans `batch-*.sh` scripts for shell-comment frontmatter (`# ---` delimited) via `shell_frontmatter_field()`, rendering discovered batch scripts under a "Batch Operations" group without `/` prefix (they are shell commands, not slash-commands). Excludes `_*` (partials) and `internal-*` (internal tooling) prefixed skill files. Maintains centralized group mappings (associative arrays `skill_to_group` and `batch_to_group`) for display organization — skills not in any group appear under an "Other" catch-all at the end. Computes column alignment dynamically from the longest display name across both skills and batch scripts. Includes `fab-sync.sh` as a hardcoded non-skill entry in the "Setup" group. Appends a static `PACKAGES` section after `TYPICAL FLOW` listing bundled tools (wt binary and idea) with one-liner descriptions — static because packages are stable and few, unlike skills which change frequently. The `wt` entry reflects the Go binary (`wt create`, `wt list`, `wt open`, `wt delete`, `wt init`) rather than the removed shell scripts. Adding a new skill file to `fab/.kit/skills/` with valid frontmatter, or a new `batch-*.sh` script with shell-comment frontmatter and a `batch_to_group` mapping, automatically includes it in help output.
-
-#### `lib/env-packages.sh`
-
-Sourceable script that adds `fab/.kit/bin` and any existing `fab/.kit/packages/*/bin` directories to PATH. Used by `scaffold/fragment-.envrc` (for direnv-based projects). Self-contained: resolves `KIT_DIR` relative to its own location (two levels up from `scripts/lib/` to `.kit/`), adds `$KIT_DIR/bin` to PATH first (making the `fab` dispatcher, `wt` Go binary, and `idea` Go binary available), then iterates `$KIT_DIR/packages/*/bin` and adds each directory that actually exists to PATH (for any future shell packages). Both `wt` and `idea` are Go binaries in `$KIT_DIR/bin/` — they are available via the first PATH addition, not the packages iteration. Lives in `lib/` because it is a sourceable helper, not a user-callable command — keeping it off PATH prevents it from appearing in tab completion.
 
 #### `lib/spawn.sh`
 
@@ -343,7 +338,7 @@ Backlog idea management — CRUD operations for `fab/backlog.md`. Ported from th
 
 A separate Go binary for git worktree management, built from `src/go/fab/cmd/wt/main.go`. Operates on any git repo — does not require a `fab/` directory. Different concern domain from `fab` (worktree management vs workflow pipeline), so users type `wt create`, not `fab wt create`.
 
-**Binary location**: `fab/.kit/bin/wt` — included in per-platform release archives (`kit-{os}-{arch}.tar.gz`), absent from the generic `kit.tar.gz`. Available on PATH via `env-packages.sh` (which adds `$KIT_DIR/bin` to PATH).
+**Binary location**: `fab/.kit/bin/wt` — included in per-platform release archives (`kit-{os}-{arch}.tar.gz`), absent from the generic `kit.tar.gz`. Available on PATH via `.envrc` (`PATH_add fab/.kit/bin`).
 
 **Module**: Same Go module as `fab-go` (`github.com/wvrdz/fab-kit/src/go/fab`). Dependencies: cobra (subcommand dispatch). Does NOT depend on any `fab`-specific packages — only `internal/worktree/` and shared utilities in `internal/`.
 
@@ -438,8 +433,8 @@ Outputs the tmux pane ID for a change's worktree. Signature: `fab resolve <chang
 
 ### No cd-in-Current-Shell for wt open
 **Decision**: `wt open` does not and cannot offer a "cd here" option that changes the calling shell's working directory.
-**Why**: Unix process model constraint — child processes cannot modify the parent shell's environment. The `wt` binary runs as a child process of the calling shell. When the child exits, the parent's working directory is unchanged. Only shell builtins and shell functions (which run in the caller's process) can `cd`. A shell function wrapper (e.g., `wt-cd() { cd "$(wt list --path "$1")"; }`) is the standard workaround but would require users to source a file from their rc, which is a different distribution model than the current PATH-based `env-packages.sh` approach. Users who want this can define a 4-line function in their own `.bashrc`/`.zshrc`.
-**Rejected**: Adding a `cd` app type to `wt open` that prints the path for `eval` — adds complexity to `wt open` for something `wt list --path` already provides. Shipping a shell function in `env-packages.sh` — mixes PATH setup with function definitions, different sourcing semantics.
+**Why**: Unix process model constraint — child processes cannot modify the parent shell's environment. The `wt` binary runs as a child process of the calling shell. When the child exits, the parent's working directory is unchanged. Only shell builtins and shell functions (which run in the caller's process) can `cd`. A shell function wrapper (e.g., `wt-cd() { cd "$(wt list --path "$1")"; }`) is the standard workaround but would require users to source a file from their rc, which is a different distribution model than the current PATH-based `.envrc` approach. Users who want this can define a 4-line function in their own `.bashrc`/`.zshrc`.
+**Rejected**: Adding a `cd` app type to `wt open` that prints the path for `eval` — adds complexity to `wt open` for something `wt list --path` already provides. Shipping a shell function in `.envrc` — mixes PATH setup with function definitions, different sourcing semantics.
 *Source*: 260223-ufk6-wt-open-cd-current-shell (abandoned — documented as design constraint)
 
 ### Non-Interactive Porcelain Output Contract
