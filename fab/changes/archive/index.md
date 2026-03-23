@@ -1,5 +1,19 @@
 # Archive Index
 
+- **260321-nq8j-pin-github-actions-sha** — Pinned all external GitHub Actions to commit SHAs for supply chain safety, part of org-wide hardening after npm worm and trivy tag-poisoning incidents.
+- **260320-tm9h-draft-prs-by-default** — Changed /git-pr to create draft PRs by default, giving developers a chance to verify agent-generated implementations before code review.
+- **260320-t13m-configurable-agent-spawn-command** — Centralized the agent spawn command in config.yaml so all scripts and operators read from one place instead of hardcoding in 5+ locations.
+- **260320-9tqo-fix-idea-docs-main-flag** — Fixed idea CLI docs (moved to _cli-external.md as standalone binary) and added --main flag to opt into main-worktree backlog resolution.
+- **260318-dzze-standard-subagent-context** — Added standard subagent context template to _preamble.md ensuring all subagents receive fab/project/** files at every nesting depth.
+- **260317-yrgo-operator5-branch-fallback** — Created operator5 with use case registry model, branch fallback resolution, and proactive monitoring (change progress, Linear inbox, PR staleness).
+- **260317-mogj-resilient-hooks-cwd** — Made hooks resilient to CWD changes — hooks now resolve the repo root dynamically instead of relying on relative paths that break in subdirectories.
+- **260317-kwsh-pr-review-replies** — Added reply comments to /git-pr-review — posts fix/defer/dismiss disposition replies on PR threads after processing each review comment for full autonomy.
+- **260316-mvcv-improve-wt-list-delete** — Improved wt list output with headers and dynamic column widths; made wt delete only auto-delete the branch when it matches the worktree name for safety.
+- **260316-ez49-expand-wt-name-lists** — Expanded wt name word lists from 48→120 entries (~14,400 combinations) and fixed wt list column alignment by removing misaligned dash separators.
+- **260316-euw2-multi-worktree-delete** — Added multi-worktree delete support — accept multiple positional args in wt delete to remove several worktrees at once instead of one-at-a-time or all.
+- **260315-a2b2-standalone-operator4-rewrite** — Rewrote operator4 as a standalone skill (no inheritance chain), inlining all behavior into one self-contained file and creating shared convention files (_cli-external.md, _naming.md).
+- **260314-q5p9-redesign-ff-fff-scopes** — Redesigned fab-ff and fab-fff pipeline scopes to differ on a single axis (scope, not gating) — ff stops at hydrate, fff extends through ship+review-pr, both share identical confidence gates.
+- **260314-o1tu-remove-legacy-pipeline-orchestrator** — Removed the legacy batch-pipeline orchestrator (7 files, ~400 lines of bash, tests, scaffold, memory) superseded by operator skills for multi-change coordination.
 - **260314-007n-redesign-operator-auto-nudge** — Redesigned operator auto-nudge skill (operator4) with simplified answer model, improved question detection, routing discipline, re-capture guard, and per-answer logging.
 - **260313-wrt4-pane-map-json-session-flags** — Enhance fab pane-map with --json, --session, and --all-sessions flags plus window_index output, enabling run-kit to use pane-map as the per-window fab state data source.
 - **260312-ngew-add-operator3-auto-nudge** — Add operator3 skill extending operator2 with auto-nudge capability — detects agents waiting on user input via terminal heuristics and auto-answers routine questions while escalating judgment calls.

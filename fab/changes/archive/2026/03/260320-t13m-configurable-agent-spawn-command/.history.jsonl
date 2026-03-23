@@ -12,3 +12,4 @@
 {"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"hydrate","ts":"2026-03-20T22:20:00Z"}
 {"event":"review","result":"passed","ts":"2026-03-20T22:20:00Z"}
 {"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"ship","ts":"2026-03-20T22:24:26Z"}
+{"cmd":"fab-archive","event":"command","ts":"2026-03-23T08:48:35Z"}

@@ -4,8 +4,6 @@
 - [ ] [02eh] 2026-03-18: When operator5 works in branch mode for matching a change, it asks for confirmation. Don't do so, just proceed
 - [ ] [rd3u] 2026-03-19: operator should mention on each tick the current timestamp
 - [ ] [djkp] 2026-03-19: operator's instuction of rebase to latest is misleading. Should mention - rebase to latest origin/main
-- [ ] [t13m] 2026-03-18: Configurable agent spawn command in config.yaml — centralize the agent binary/flags so all spawn scripts and operator read from one place. Default: `claude --dangerously-skip-permissions --effort max -n "$(basename "$(pwd)")"`. Currently hardcoded in 4+ locations.
-
 ## Open
 
 - [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
@@ -15,3 +13,7 @@
 - [ ] [heht] 2026-03-19: Ensure randomness in worktree names is actually getting followed - inrease the name universe even further
 - [ ] [p4ki] 2026-03-19: Allow 'idea <text of idea>' format once again
 - [ ] [1tch] 2026-03-20: Change fab-switch --blank to fab-switch --none or just fab-switch. --blank isn't easy to remember
+
+## Done
+
+- [x] [t13m] 2026-03-18: Configurable agent spawn command in config.yaml — centralize the agent binary/flags so all spawn scripts and operator read from one place. Default: `claude --dangerously-skip-permissions --effort max -n "$(basename "$(pwd)")"`. Currently hardcoded in 4+ locations.
