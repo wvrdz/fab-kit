@@ -1,6 +1,6 @@
 ---
 name: fab-operator6
-description: "Use when coordinating multiple fab agents across tmux panes — monitoring progress, auto-answering prompts, routing commands, and driving autopilot queues."
+description: "Use when coordinating multiple fab agents across tmux panes — multi-agent monitoring, auto-answering prompts, routing commands, and driving autopilot queues."
 ---
 
 # /fab-operator6
@@ -15,7 +15,7 @@ Start via `fab/.kit/scripts/fab-operator6.sh` (singleton tmux tab named `operato
 
 ## 1. Principles
 
-**Coordinate, don't execute.** The operator routes instructions to the right agent — it never implements work directly. When the user says "fix the tests," the operator determines which agent owns that work and sends the instruction there. If ambiguous, ask.
+**Coordinate, don't execute.** The operator routes instructions to the right agent — it never implements work directly. If ambiguous, ask. Exception: operational maintenance (merge PR, archive, delete worktree) is executed directly by the operator since these are coordination-level actions, not pipeline work.
 
 **Automate the routine.** The operator exists to take work off the user's hands. Auto-answer prompts, nudge stuck agents, rebase stale PRs, spawn agents from backlog — act on the user's behalf for routine operational decisions. The PR review stage is the safety net.
 
@@ -61,8 +61,8 @@ Error: operator requires tmux. Start a tmux session first.
 1. Read `.fab-operator.yaml` from the repo root. If missing, create with empty `monitored: {}` and `autopilot: null`
 2. Restore monitored set and autopilot queue from the file (supports `/clear` recovery)
 3. Run `fab pane-map` and display the output
-4. Start the loop: `/loop 3m "operator tick"`
-5. Output: `Operator running. Loop active (3m).`
+4. If monitored set is non-empty or autopilot is active, start the loop: `/loop 3m "operator tick"`
+5. Output: `Operator ready.` (+ `Loop active (3m).` if loop started)
 
 ---
 
@@ -91,7 +91,7 @@ When `fab resolve` fails during a **user-initiated** action (not monitoring tick
 
 1. Scan branches: `git for-each-ref --format='%(refname:short)' refs/heads/ refs/remotes/ | grep -iF "<query>"`
 2. **Single match, read-only**: read `.status.yaml` via `git show <branch>:fab/changes/<folder>/.status.yaml`
-3. **Single match, action**: offer to create a worktree (`wt create --non-interactive --worktree-name <name> <branch>`)
+3. **Single match, action**: create a worktree and proceed (`wt create --non-interactive --worktree-name <name> <branch>`)
 4. **Multiple matches**: disambiguate. **No match**: report not found.
 
 ### Bounded Retries
@@ -107,7 +107,7 @@ When `fab resolve` fails during a **user-initiated** action (not monitoring tick
 
 ## 4. The Loop
 
-The loop is the operator's heartbeat — a `/loop 3m "operator tick"` that runs as long as the monitored set is non-empty or an autopilot queue is active. When both are empty, stop the loop. A user prompt restarts it.
+The loop is the operator's heartbeat — a `/loop 3m "operator tick"` that runs as long as the monitored set is non-empty or an autopilot queue is active. When both are empty, stop the loop. The loop starts when the first change is enrolled or an autopilot queue begins. A user prompt can also restart it.
 
 ### `.fab-operator.yaml`
 
@@ -146,6 +146,7 @@ Each entry tracks: change ID, pane, last-known stage, last-known agent state, en
 
 On each tick:
 
+0. **Timestamp** — output the current time: `── Operator tick (17:32) ──`
 1. **Refresh** — run `fab pane-map`, read `.fab-operator.yaml`
 2. **Stage advance** — compare current stage to last-known. Report: `"{change}: {old} → {new}"`. Update baseline.
 3. **Completion** — stage is hydrate/ship/review-pr. Report: `"{change}: reached {stage} — pipeline complete"`. Remove from set.
@@ -191,9 +192,9 @@ Evaluate in order:
 5. Open-ended, answer determinable from visible context → send that answer
 6. Cannot determine keystrokes → escalate to user
 
-### Re-Capture Before Send
+### Sending Auto-Answers
 
-Before `tmux send-keys`, re-capture the terminal. If output changed, abort — agent is no longer waiting.
+Before `tmux send-keys`: verify pane exists and agent is still idle (§3 steps 1-2), then re-capture the terminal. If output changed since detection, abort — agent is no longer waiting.
 
 ### Logging
 
@@ -214,7 +215,7 @@ intake → spec → tasks → apply → review → hydrate → ship
 
 **Setup commands**: `/fab-new` (create change), `/fab-switch` (activate), `/git-branch` (align branch)
 **Pipeline commands**: `/fab-continue` (one stage), `/fab-fff` (full pipeline), `/fab-ff` (fast-forward to hydrate)
-**Maintenance**: rebase, merge PR (`gh pr merge`), `/fab-archive`
+**Maintenance**: rebase onto `origin/main`, merge PR (`gh pr merge`), `/fab-archive`
 
 ### Spawning an Agent
 
@@ -239,25 +240,45 @@ The operator determines which steps are needed from the change's current state. 
 
 ### Autopilot
 
-User provides a queue of changes. Confirm upfront (merges PRs). The operator works each sequentially:
+User provides a queue of changes. Confirm upfront (merges PRs). Queue ordering:
 
-1. **Spawn** — create worktree, open agent tab
+| Strategy | Description |
+|----------|-------------|
+| User-provided | Run in the exact order given. Use `--base <prev-change-folder-name>` for sequential chaining |
+| Confidence-based | Sort by confidence score descending. Highest-confidence first (independent changes) |
+| Hybrid | User provides constraints (partial order); operator sorts unconstrained by confidence |
+
+The operator works each change through the pipeline, applying pre-send validation (§3) before dispatching:
+
+1. **Spawn** — create worktree (`--reuse` for respawns), open agent tab
 2. **Gate** — check confidence score. If below threshold, flag and wait
 3. **Dispatch** — send `/fab-fff` (or appropriate command based on current stage)
 4. **Monitor** — normal tick detection handles progress
 5. **Merge** — on completion, merge PR from operator's shell
-6. **Rebase next** — send rebase to next queued change. On conflict: flag, skip
-7. **Report** — `"ab12: merged. 1 of 3 complete. Starting cd34."`
+6. **Rebase next** — rebase next queued change onto latest `origin/main`. On conflict: flag, skip
+7. **Cleanup** — optionally delete worktree after merge
+8. **Report** — `"ab12: merged. 1 of 3 complete. Starting cd34."`
 
-Autopilot state (queue, position, completed) persists in `.fab-operator.yaml`.
+Autopilot state (queue, current, completed) persists in `.fab-operator.yaml`.
 
-**Failures**: review exhausted → skip. Rebase conflict → skip. Pane dies → 1 respawn, then skip. Stage timeout (>30m) → flag. Total timeout (>2h) → flag.
+**Failures**: review exhausted → skip. Rebase conflict → skip. Pane dies → 1 respawn (`--reuse`), then skip. Stage timeout (>30m) → flag. Total timeout (>2h) → flag.
 
 **Interrupts**: "stop after current", "skip <change>", "pause", "resume" — acknowledged immediately.
 
 ---
 
-## 7. Key Properties
+## 7. Configuration
+
+| Setting | Default | Override via natural language |
+|---------|---------|------------------------------|
+| Loop interval | 3m | "check every {N}m" |
+| Stuck threshold | 15m | "flag agents stuck for more than {N}m" |
+
+Session-scoped — resets on `/clear` or session restart.
+
+---
+
+## 8. Key Properties
 
 | Property | Value |
 |----------|-------|

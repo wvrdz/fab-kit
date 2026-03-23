@@ -10,9 +10,9 @@ source "$SCRIPT_DIR/lib/spawn.sh"
 
 TAB_NAME="operator"
 
-# Must be inside tmux/byobu
+# Must be inside tmux
 if [[ -z "${TMUX:-}" ]]; then
-  echo "Error: not inside a tmux/byobu session." >&2
+  echo "Error: not inside a tmux session." >&2
   exit 1
 fi
 
