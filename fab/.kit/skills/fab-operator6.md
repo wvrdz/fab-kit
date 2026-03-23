@@ -146,17 +146,33 @@ Each entry tracks: change ID, pane, last-known stage, last-known agent state, en
 
 On each tick:
 
-0. **Timestamp** — output the current time: `── Operator tick (17:32) ──`
-1. **Refresh** — run `fab pane-map`, read `.fab-operator.yaml`
-2. **Stage advance** — compare current stage to last-known. Report: `"{change}: {old} → {new}"`. Update baseline.
-3. **Completion** — stage is hydrate/ship/review-pr. Report: `"{change}: reached {stage} — pipeline complete"`. Remove from set.
-4. **Review failure** — stage went from review back to apply. Report: `"{change}: review failed, reworking"`. Update baseline.
-5. **Pane death** — change not in pane map. Report: `"{change}: pane gone"`. Remove from set.
-6. **Auto-nudge** — for each idle agent, run question detection (§5). If a newly-spawned agent advances past intake, send `/git-branch` to align the branch.
-7. **Stuck detection** — idle at non-terminal stage for >15m (and not input-waiting per §5). Advisory: `"{change}: idle at {stage} for {duration} — may be stuck."`
-8. **Autopilot step** — if an autopilot queue is active, run the next autopilot action (§6).
-9. **Persist** — write updated state to `.fab-operator.yaml`
-10. **Loop lifecycle** — if monitored set is empty and no autopilot, stop the loop.
+1. **Snapshot** — run `fab pane-map`, read `.fab-operator.yaml`. Compute status for each monitored change: stage advances, completions, review failures, pane deaths. Output the status frame:
+
+```
+── Operator ── 17:32 ── 3 monitored · autopilot 1/3 ──────
+
+  r3m7  🟢 apply → review
+  k8ds  🟡 review · idle 18m ⚠
+  ab12  🟢 hydrate ✓
+
+───────────────────────────────────────────────────────────
+```
+
+Stage indicators: 🟢 active, 🟡 idle, 🔴 stuck (>15m idle at non-terminal), ✓ complete.
+
+2. **Auto-nudge** — for each idle agent, run question detection (§5). If a newly-spawned agent advances past intake, send `/git-branch` to align the branch.
+3. **Autopilot step** — if an autopilot queue is active, run the next autopilot action (§6).
+4. **Removals** — remove completed changes and dead panes from the monitored set.
+5. **Persist** — write updated state to `.fab-operator.yaml`
+6. **Loop lifecycle** — if monitored set is empty and no autopilot (and no watches), stop the loop.
+
+Actions (nudges, removals, autopilot progress) print as plain lines below the frame as they happen:
+
+```
+k8ds: auto-answered 'Allow Bash: npm test?' → y
+Removed ab12 (complete), ef56 (pane gone)
+Autopilot: cd34 in progress · next: ef56
+```
 
 ---
 
