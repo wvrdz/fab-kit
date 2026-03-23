@@ -258,15 +258,23 @@ tmux new-window -n "fab-<id>" -c <worktree-path> "<spawn_cmd> '<command>'"
 
 ### Working a Change
 
-To take a change from backlog through the pipeline:
+The operator accepts work in three forms:
 
-1. Look up the idea (`idea show <id>`)
+**From backlog ID or Linear issue** (structured):
+1. Look up the idea (`idea show <id>`) or resolve the Linear issue
 2. Create worktree (`wt create --non-interactive --worktree-name <name>`)
 3. Spawn agent: `tmux new-window -n "fab-<id>" -c <worktree-path> "<spawn_cmd> '/fab-new <id>'"`
 4. Agent runs `/fab-new <id>` → `/fab-switch` → `/git-branch` → `/fab-fff`
 5. Enroll in monitored set
 6. On completion: merge PR, optionally archive
 
+**From raw text** (e.g., "fix login after password reset"):
+1. Create backlog entry: `idea add "<description>"` — captures the ID
+2. Proceed with the structured flow above using the new ID
+
+This ensures every change gets a proper intake artifact with traceability, even for ad-hoc requests. The operator handles `idea add` internally — the user just says "fix [description]" and the operator does the rest.
+
+**From existing change** (already has intake or further):
 The operator determines which steps are needed from the change's current state. If intake already exists, skip `/fab-new`. If branch already matches, skip `/git-branch`.
 
 ### Autopilot
