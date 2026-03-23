@@ -61,7 +61,7 @@ Error: operator requires tmux. Start a tmux session first.
 1. Read `.fab-operator.yaml` from the repo root. If missing, create with empty `monitored: {}` and `autopilot: null`
 2. Restore monitored set and autopilot queue from the file (supports `/clear` recovery)
 3. Run `fab pane-map` and display the output
-4. If monitored set is non-empty or autopilot is active, start the loop: `/loop 3m "operator tick"`
+4. If monitored set is non-empty, autopilot is active, or watches exist, start the loop: `/loop 3m "operator tick"`
 5. Output: `Operator ready.` (+ `Loop active (3m).` if loop started)
 
 ---
@@ -114,25 +114,31 @@ The loop is the operator's heartbeat — a `/loop 3m "operator tick"` that runs 
 Persistent state at the repo root. Read on startup and every tick. Written after every state change.
 
 ```yaml
+tick_count: 47
 monitored:
   r3m7:
     pane: "%3"
     stage: apply
     agent: active
-    stop_stage: null     # null = full pipeline, or a stage name to park at
+    stop_stage: null       # null = full pipeline, or a stage name to park at
+    spawned_by: null       # watch name if spawned by a watch, null otherwise
     enrolled_at: "2026-03-23T17:30:00Z"
     last_transition: "2026-03-23T17:32:00Z"
 autopilot:
   queue: [ab12, cd34, ef56]
   current: cd34
   completed: [ab12]
-  state: running  # running | paused | null
+  state: running           # running | paused | null
 watches:
   linear-bugs:
+    enabled: true
     source: linear
     query: { project: "DEV", status: [Backlog, Todo], assignee: "@me" }
     stop_stage: intake
-    known: [DEV-988, DEV-992]
+    known: [DEV-988, DEV-992]  # capped at 200, oldest pruned first
+    completed: [DEV-985]       # items that reached stop_stage
+    last_checked: "2026-03-23T17:29:00Z"
+    last_error: null
     instructions: >
       Spawn agents for issues older than 1 hour with label 'bug'.
       Max 2 concurrent agents from this watch.
@@ -140,7 +146,7 @@ watches:
 
 ### Monitored Set
 
-Each entry tracks: change ID, pane, last-known stage, last-known agent state, enrolled-at, last-transition-at.
+Each entry tracks: change ID, pane, last-known stage, last-known agent state, stop_stage, spawned_by (watch name or null), enrolled-at, last-transition-at.
 
 **Enrollment**: operator sends a command to a change, user requests monitoring, or operator triggers an automatic action. Read-only actions do not enroll.
 
@@ -152,16 +158,16 @@ Each entry tracks: change ID, pane, last-known stage, last-known agent state, en
 
 On each tick:
 
-1. **Snapshot** — run `fab pane-map`, read `.fab-operator.yaml`. Compute status for each monitored change: stage advances, completions, review failures, pane deaths. Output the status frame:
+1. **Snapshot** — increment `tick_count`, run `fab pane-map`, read `.fab-operator.yaml`. Compute status for each monitored change: stage advances, completions, review failures, pane deaths. Output the status frame:
 
 ```
-── Operator ── 17:32 ── 3 monitored · autopilot 1/3 · 1 watch ──
+── Operator ── 17:32 ── tick #47 ── 3 monitored · autopilot 1/3 · 1 watch ──
 
   r3m7  🟢 apply → review
   k8ds  🟡 review · idle 18m ⚠
   ab12  🟢 hydrate ✓
 
-  👁 linear-bugs  2 known · last check 17:29
+  👁 linear-bugs  2 known · 1 completed · last check 17:29
 
 ───────────────────────────────────────────────────────────
 ```
@@ -302,32 +308,42 @@ Each watch in `.fab-operator.yaml` has:
 
 | Field | Description |
 |-------|-------------|
+| `enabled` | `true` or `false` — paused watches retain config but skip tick evaluation |
 | `source` | `linear` or `slack` — determines which MCP tool to query |
 | `query` | Source-specific API filter (project, status, assignee, channel) — passed to MCP |
 | `stop_stage` | How far to go: `intake`, `spec`, `hydrate`, or `null` (full pipeline) |
-| `known` | List of already-handled item IDs (prevents re-spawn) — managed automatically |
-| `instructions` | Free-form natural language — trigger conditions, concurrency limits, label filters, action details, anything else |
+| `known` | Already-handled item IDs — managed automatically, capped at 200 (oldest pruned first) |
+| `completed` | Items that reached `stop_stage` — lets users query "what did this watch produce?" |
+| `last_checked` | ISO timestamp of last successful query |
+| `last_error` | Last error message, or `null`. Shown in status frame when set |
+| `instructions` | Free-form natural language — trigger conditions, concurrency limits, label filters, anything else |
 
-The operator interprets `instructions` on each tick. Structured fields (`source`, `query`, `known`) handle machine-readable concerns; `instructions` handles everything the operator evaluates as an LLM.
+Structured fields handle machine-readable concerns; `instructions` handles everything the operator evaluates as an LLM. Concurrency limits in `instructions` are enforced by counting monitored entries where `spawned_by` matches the watch name.
 
 ### Tick Behavior
 
-On each tick (step 3), for each watch:
+On each tick (step 3), for each enabled watch:
 
-1. **Query source** — Linear via MCP (`mcp__claude_ai_Linear__list_issues`), Slack via MCP (`mcp__claude_ai_Slack__slack_read_channel`), using `query` as the API filter
-2. **Deduplicate** — skip items in `known` list
-3. **Evaluate instructions** — apply trigger conditions, label filters, concurrency limits, and any other criteria from `instructions` to each remaining item
+1. **Query source** — Linear via MCP (`mcp__claude_ai_Linear__list_issues`), Slack via MCP (`mcp__claude_ai_Slack__slack_read_channel`), using `query` as the API filter. On failure: set `last_error`, skip this watch for this tick. After 3 consecutive failures: disable the watch, alert user.
+2. **Deduplicate** — skip items in `known` list. Update `last_checked`.
+3. **Evaluate instructions** — apply trigger conditions, label filters, concurrency limits (count monitored entries with `spawned_by: <watch-name>`), and any other criteria from `instructions`
 4. **Act** — for each item that passes:
    - Spawn worktree, open agent tab, send appropriate command (e.g., `/fab-new DEV-123`)
-   - Enroll in monitored set with `stop_stage` from the watch
-   - Add item ID to `known`
+   - Enroll in monitored set with `stop_stage` and `spawned_by` from the watch
+   - Add item ID to `known` (only after successful spawn)
+   - Prune `known` if over 200 entries (drop oldest)
 5. **Report** — `"Watch linear-bugs: DEV-1024 — Fix auth redirect (72m old). Spawning."`
+
+When a watch-spawned agent reaches its `stop_stage`, move the item ID from `known` to `completed` and report: `"Watch linear-bugs: DEV-1024 completed intake."`
 
 ### Conversational Management
 
 - "Watch Linear project DEV for bugs older than 1 hour, spawn agents, stop at intake" → creates watch
+- "Pause the Linear watch" / "Resume the Linear watch" → toggles `enabled`
 - "Stop watching Linear" → removes watch
-- "What are you watching?" → lists active watches with instructions
+- "What are you watching?" → lists active watches with instructions and completed items
+- "What did linear-bugs produce?" → lists `completed` items
+- "Test watch linear-bugs" → dry-run: query, deduplicate, evaluate instructions, report what *would* happen without spawning or updating state
 - "Change the Linear watch to go through full pipeline" → updates `stop_stage` to null
 - "Also limit to 2 concurrent agents" → appends to `instructions`
 
