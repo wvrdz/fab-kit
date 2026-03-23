@@ -355,11 +355,16 @@ Grades aggregate into a **confidence score** that gates `/fab-ff`. If ambiguity 
 
 ### Multi-Agent Coordination
 
-| Command | Purpose |
-|---------|---------|
-| `/fab-operator1` | Observe and interact with agents across tmux panes |
-| `/fab-operator2` | Operator1 + proactive monitoring after every action |
-| `/fab-operator3` | Operator2 + auto-nudge for agents waiting on user input |
+The operator is a long-running coordination layer that sits in its own tmux pane, observing and directing agents across other panes.
+
+| Command | Purpose | Status |
+|---------|---------|--------|
+| `/fab-operator1` | Observe and interact with agents across tmux panes | Retired |
+| `/fab-operator2` | Operator1 + proactive monitoring after every action | Retired |
+| `/fab-operator3` | Operator2 + auto-nudge for agents waiting on user input | Retired |
+| `/fab-operator4` | Operator3 + `/loop`-driven monitoring, auto-nudge answer model, playbook catalog | Retired |
+| `/fab-operator5` | Operator4 + use case registry (Linear inbox, PR freshness), branch fallback, autopilot queues | Available |
+| `/fab-operator6` | Clean rewrite — principles-driven inference, persistent state via `.fab-operator.yaml`, generic watches (Linear/Slack/any MCP source), `stop_stage`, tick count, framed status output | **Current** |
 
 ### Shell Utilities
 
