@@ -281,27 +281,41 @@ The spawn sequence is:
 
 ### Dependency Resolution
 
-For each change ID in `depends_on`, before opening the agent tab:
+Before opening the agent tab, given this change's `depends_on` list:
 
-1. **Look up branch** — from the monitored entry's `branch` field (if the dep is still active) or from `branch_map` (if the dep has left the monitored set). If the branch is not found in either location: log `"{change}: dependency {dep} branch not found. Escalating."`, escalate to user, do not spawn.
+1. **Resolve all dependency branches** — For each change ID in `depends_on`, look up its branch:
+   - First from the monitored entry's `branch` field (if the dep is still active).
+   - Otherwise from `branch_map` (if the dep has left the monitored set).
 
-2. **Prune redundant deps** — if dep A's branch is an ancestor of dep B's branch (both in `depends_on`), skip A. Check via `git merge-base --is-ancestor <A-branch> <B-branch>`. This prevents duplicate cherry-picks in chains where B's branch already carries A's content transitively.
+   Build a mapping `dep_change_id -> dep_branch` for the entire `depends_on` set. If any dependency branch is not found in either location: log `"{change}: dependency {dep} branch not found. Escalating."`, escalate to the user, and do **not** spawn the agent.
 
-3. **Check if already present** — `git merge-base --is-ancestor <dep-branch> HEAD` in the worktree. If the dep branch is already an ancestor of HEAD, skip the cherry-pick.
+2. **Prune redundant deps across the full set** — Using the resolved `dep_change_id -> dep_branch` mapping, remove dependencies whose branches are ancestors of other dependency branches in the same set:
+   - If dep A's branch is an ancestor of dep B's branch (both listed in `depends_on`), drop A from the effective dependency set.
+   - Check via: `git merge-base --is-ancestor <A-branch> <B-branch>`.
 
-4. **Cherry-pick** — in the worktree directory:
-   ```bash
-   git cherry-pick --no-commit origin/main..<dep-branch> && \
-   git commit -m "operator: cherry-pick <dep-change> dependency"
-   ```
-   This cherry-picks all commits unique to the dependency branch since it diverged from `origin/main`, stages them without individual commits, and squashes into a single operator commit.
+   This pruning is done *across the full set* of dependency branches before any cherry-picks, to prevent duplicate cherry-picks in chains where B's branch already carries A's content transitively.
 
-5. **On conflict** — abort immediately, do not spawn:
-   ```bash
-   git cherry-pick --abort
-   ```
-   Log: `"{change}: cherry-pick conflict with dependency {dep-change}. Escalating."`
-   Escalate to user. Do not proceed without the dependency content. Bounded retry: 0 (§3).
+3. **For each remaining (pruned) dependency** in the effective set, in the target worktree:
+
+   a. **Check if already present** — run:
+      ```bash
+      git merge-base --is-ancestor <dep-branch> HEAD
+      ```
+      If the dep branch is already an ancestor of `HEAD`, skip this dependency's cherry-pick.
+
+   b. **Cherry-pick** — if not already present, in the worktree directory:
+      ```bash
+      git cherry-pick --no-commit origin/main..<dep-branch> && \
+      git commit -m "operator: cherry-pick <dep-change> dependency"
+      ```
+      This cherry-picks all commits unique to the dependency branch since it diverged from `origin/main`, stages them without individual commits, and squashes into a single operator commit.
+
+   c. **On conflict** — abort immediately, do not spawn:
+      ```bash
+      git cherry-pick --abort
+      ```
+      Log: `"{change}: cherry-pick conflict with dependency {dep-change}. Escalating."`
+      Escalate to user. Do not proceed without the dependency content. Bounded retry: 0 (§3).
 
 **Why `origin/main` as base**: Each dependency branch carries its full transitive dependency content. When the operator spawned dep B, it cherry-picked dep A into B's worktree first. B's branch therefore contains A's commits. So `origin/main..<B-branch>` gives the complete transitive closure — no need to chase transitive deps manually. This is why only direct/leaf dependencies need cherry-picking.
 
@@ -346,8 +360,8 @@ User provides a queue of changes. Confirm upfront (merges PRs). Queue ordering:
 
 The operator works each change through the pipeline, applying pre-send validation (§3) before dispatching:
 
-1. **Spawn** — create worktree (`--reuse` for respawns), open agent tab
-2. **Resolve dependencies** — cherry-pick `depends_on` entries into the worktree
+1. **Spawn** — create worktree (`--reuse` for respawns)
+2. **Resolve dependencies** — cherry-pick `depends_on` entries into the worktree, then open agent tab and enroll
 3. **Gate** — check confidence score. If below threshold, flag and wait
 4. **Dispatch** — send `/fab-fff` (or appropriate command based on current stage)
 5. **Monitor** — normal tick detection handles progress
