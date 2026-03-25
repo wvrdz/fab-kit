@@ -5,7 +5,9 @@ description: "Context-aware orchestrator — detects state, runs prefix steps (f
 
 # /fab-proceed
 
-> This skill does NOT load `_preamble.md` or run preflight — it delegates all pipeline context loading to `/fab-fff`.
+Read `fab/.kit/skills/_preamble.md` first (path is relative to repo root). Then follow its instructions before proceeding.
+
+> `/fab-proceed` follows `_preamble.md` conventions but skips preflight/context loading itself — it delegates all pipeline context loading to `/fab-fff`.
 
 ---
 
@@ -48,11 +50,13 @@ If the current branch matches the change folder name, the branch is already set 
 If no active change was found in Step 1, scan for unactivated intakes:
 
 ```bash
-ls -d fab/changes/*/intake.md 2>/dev/null | grep -v archive/
+ls -d fab/changes/*/intake.md 2>/dev/null | grep -v archive/ | sed 's|fab/changes/||;s|/intake.md||' | sort -t- -k1,1r | head -1
 ```
 
+This pipeline lists change folders with intakes, excludes archived changes, extracts folder names, and sorts by `YYMMDD` date prefix in descending order to select the most recent.
+
 - If exactly one non-archived change folder exists, use it.
-- If multiple exist, select the most recently created by folder date prefix (`YYMMDD` — higher date wins; on tie, any is acceptable).
+- If multiple exist, the sort selects the most recently created by folder date prefix (`YYMMDD` — higher date wins; on tie, lexicographic order breaks it deterministically).
 - If none exist, proceed to Step 4.
 
 ### Step 4: Conversation Context Check
