@@ -330,6 +330,37 @@ When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fa
 
 ---
 
+## `/fab-proceed`
+
+**Purpose**: Context-aware orchestrator — detects the current pipeline state (active change, branch, unactivated intake, conversation context) and automatically runs whatever prefix steps are needed (fab-new, fab-switch, git-branch) before delegating to `/fab-fff` for the full pipeline.
+
+**Prerequisite**: None — can bootstrap from conversation context alone.
+
+**Context**: No direct context loading — delegates all pipeline context loading to `/fab-fff`.
+
+**Example**:
+```
+/fab-proceed
+→ /fab-proceed — detecting state...
+→ Activated: 260325-kxw7-fab-proceed-orchestrator
+→ Branch: 260325-kxw7-fab-proceed-orchestrator (created)
+→ Handing off to /fab-fff...
+→ {fab-fff output follows}
+```
+
+**Behavior**:
+1. **State detection** — 4-step pipeline: active change check (`fab resolve --folder`), branch check (`git branch --show-current`), unactivated intake scan (`fab/changes/`), conversation context evaluation
+2. **Prefix dispatch** — subagent dispatch for prefix steps (fab-new, fab-switch, git-branch) per `_preamble.md` § Subagent Dispatch
+3. **Terminal delegation** — invoke `/fab-fff` via the Skill tool (not subagent) for full user visibility
+
+**Key properties**:
+- No arguments, no flags — infers everything from context
+- Idempotent — re-running detects completed steps and skips them
+- Does not run preflight or load `_preamble.md` context — delegates to `/fab-fff`
+- Errors on empty context: "Nothing to proceed with — start a discussion or run /fab-new first."
+
+---
+
 ## `/fab-clarify`
 
 **Purpose**: Deepen and refine the current stage artifact without advancing to the next stage.
