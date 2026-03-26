@@ -1,0 +1,42 @@
+id: 4r2p
+name: 260326-4r2p-add-proceed-to-cli-fab
+created: 2026-03-26T06:08:22Z
+created_by: sahil-weaver
+change_type: docs
+issues: []
+progress:
+    intake: done
+    spec: done
+    tasks: done
+    apply: done
+    review: done
+    hydrate: done
+    ship: active
+    review-pr: pending
+checklist:
+    generated: true
+    path: checklist.md
+    completed: 11
+    total: 11
+confidence:
+    certain: 6
+    confident: 0
+    tentative: 0
+    unresolved: 0
+    score: 5.0
+    fuzzy: true
+    dimensions:
+        signal: 91.7
+        reversibility: 93.3
+        competence: 92.5
+        disambiguation: 91.7
+stage_metrics:
+    intake: {started_at: "2026-03-26T06:08:22Z", driver: fab-new, iterations: 1, completed_at: "2026-03-26T06:12:12Z"}
+    spec: {started_at: "2026-03-26T06:12:12Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T06:12:47Z"}
+    tasks: {started_at: "2026-03-26T06:12:47Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T06:12:47Z"}
+    apply: {started_at: "2026-03-26T06:12:47Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T06:14:22Z"}
+    review: {started_at: "2026-03-26T06:14:22Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T06:15:35Z"}
+    hydrate: {started_at: "2026-03-26T06:15:35Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T06:16:35Z"}
+    ship: {started_at: "2026-03-26T06:16:35Z", driver: fab-fff, iterations: 1}
+prs: []
+last_updated: 2026-03-26T06:16:35Z
