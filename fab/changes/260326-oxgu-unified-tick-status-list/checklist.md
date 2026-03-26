@@ -32,7 +32,7 @@
 - [ ] CHK-017 §6 Autopilot description consistent with §4 frame format
 
 ## Cross References
-- [ ] CHK-018 Deployed copy synced: `.claude/skills/fab-operator7.md` matches source after sync
+- [ ] CHK-018 Deployed copy synced: `.claude/skills/fab-operator7/SKILL.md` matches source after sync
 
 ## Notes
 

@@ -41,9 +41,9 @@ This SHALL be replaced with a single unified list where every tracked item is an
   [change]  k8ds         ▶ 🟡 review · idle 18m ⚠
   [change]  ab12           🟢 hydrate ✓
   [change]  ef56           🔴 spec · idle 32m ⚠
+  [watch]   gmail-deploys  🟡 1 new · 2m ago
   [watch]   linear-bugs    🟢 2 known · 1 completed · 3m ago
   [watch]   slack-alerts   🟢 0 new · 1m ago
-  [watch]   gmail-deploys  🟡 1 new · 2m ago
 
 ───────────────────────────────────────────────────────────
 ```
@@ -92,8 +92,8 @@ The `autopilot` field in `.fab-operator.yaml` header summary and the §6 Autopil
 ## Impact
 
 - `fab/.kit/skills/fab-operator7.md` — primary change (§4 Tick Behavior example + description)
-- `.claude/skills/fab-operator7.md` — deployed copy (updated by fab-sync)
-- `docs/specs/skills/SPEC-fab-operator7.md` — spec update if it documents the frame format (per constitution)
+- `.claude/skills/fab-operator7/SKILL.md` — deployed copy (updated by fab-sync)
+- Skill SPEC for `fab-operator7` — update (or add) if the constitution requires a SPEC documenting the tick status frame format
 
 ## Open Questions
 

@@ -170,7 +170,7 @@ The top-level `branch_map` persists change ID → branch name mappings. Entries 
 
 On each tick:
 
-1. **Snapshot** — increment `tick_count`, run `fab pane-map`, read `.fab-operator.yaml`. Compute status for all tracked items: stage advances, completions, review failures, pane deaths, watch query results. Output the status frame:
+1. **Snapshot** — increment `tick_count`, run `fab pane-map`, read `.fab-operator.yaml`. Compute status for all tracked items: stage advances, completions, review failures, pane deaths, and watch statuses from the last persisted check (`last_checked` / `last_error` / last counts). Output the status frame:
 
 ```
 ── Operator ── 17:32 ── tick #47 ── 7 tracked ──
@@ -179,9 +179,9 @@ On each tick:
   [change]  k8ds         ▶ 🟡 review · idle 18m ⚠
   [change]  ab12           🟢 hydrate ✓
   [change]  ef56           🔴 spec · idle 32m ⚠
+  [watch]   gmail-deploys  🟡 1 new · 2m ago
   [watch]   linear-bugs    🟢 2 known · 1 completed · 3m ago
   [watch]   slack-alerts   🟢 0 new · 1m ago
-  [watch]   gmail-deploys  🟡 1 new · 2m ago
 
 ───────────────────────────────────────────────────────────
 ```

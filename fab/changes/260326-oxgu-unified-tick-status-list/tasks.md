@@ -17,7 +17,7 @@
 
 ## Phase 3: Sync
 
-- [x] T006 Run `fab/.kit/scripts/fab-sync.sh` to update the deployed copy at `.claude/skills/fab-operator7.md`
+- [x] T006 Run `fab/.kit/scripts/fab-sync.sh` to update the deployed copy at `.claude/skills/fab-operator7/SKILL.md`
 
 ---
 
