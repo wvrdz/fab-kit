@@ -95,7 +95,7 @@ func TestBareShorthand_EmptyTextErrors(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for empty text")
 	}
-	if !strings.Contains(string(out), "idea text cannot be empty") {
+	if !strings.Contains(string(out), "text is required") {
 		t.Errorf("expected empty text error, got: %s", out)
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wvrdz/fab-kit/src/go/idea/internal/idea"
 )
 
 var fileFlag string
@@ -26,20 +25,13 @@ Shorthand: "idea <text>" is equivalent to "idea add <text>".`,
 			if len(args) == 0 {
 				return cmd.Help()
 			}
-			text := strings.TrimSpace(strings.Join(args, " "))
-			if text == "" {
-				return fmt.Errorf("idea text cannot be empty")
-			}
-			path, err := resolveFile()
-			if err != nil {
-				return err
-			}
-			i, err := idea.Add(path, text, "", "")
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Added: [%s] %s: %s\n", i.ID, i.Date, i.Text)
-			return nil
+			// Delegate to the "add" subcommand to keep behavior consistent.
+			add := addCmd()
+			add.SetIn(cmd.InOrStdin())
+			add.SetOut(cmd.OutOrStdout())
+			add.SetErr(cmd.ErrOrStderr())
+			// addCmd expects exactly 1 arg; join multiple positional args.
+			return add.RunE(add, []string{strings.Join(args, " ")})
 		},
 	}
 
