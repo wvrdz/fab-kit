@@ -342,7 +342,7 @@ The operator accepts work in three forms:
 **From raw text** (e.g., "fix login after password reset"):
 1. Create worktree (`wt create --non-interactive`)
 2. Resolve dependencies (cherry-pick `depends_on` entries — see above)
-3. Spawn agent: `tmux new-window -n "fab-<wt>" -c <worktree-path> "<spawn_cmd> '/fab-new <description>'"` — where `<description>` is the raw text as provided
+3. Spawn agent: `tmux new-window -n "fab-<wt>" -c <worktree-path> "<spawn_cmd> '/fab-new <shell_escaped_description>'"` — where `<shell_escaped_description>` is the raw description text safely shell-escaped for inclusion in a single-quoted shell argument (do not insert unescaped raw text directly)
 4. Enroll in monitored set
 5. On completion: merge PR, optionally archive
 
