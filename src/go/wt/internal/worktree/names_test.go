@@ -26,7 +26,7 @@ func TestGenerateRandomName_Variety(t *testing.T) {
 		name := GenerateRandomName()
 		seen[name] = true
 	}
-	// With 120*120=14400 combos, 100 draws should produce at least 50 unique names
+	// With 200*200=40000 combos, 100 draws should produce at least 50 unique names
 	if len(seen) < 50 {
 		t.Errorf("GenerateRandomName() produced only %d unique names in 100 draws, expected more variety", len(seen))
 	}
@@ -50,15 +50,28 @@ func TestGenerateUniqueName_Success(t *testing.T) {
 func TestGenerateUniqueName_RetryExhaustion(t *testing.T) {
 	dir := t.TempDir()
 
-	// Create directories for all possible name combinations
+	// Temporarily replace word lists with a tiny set so we can exhaust all
+	// combinations without creating 40,000+ directories.
+	origAdj := adjectives
+	origNoun := nouns
+	adjectives = []string{"alpha", "beta"}
+	nouns = []string{"one", "two"}
+	t.Cleanup(func() {
+		adjectives = origAdj
+		nouns = origNoun
+	})
+
+	// Create directories for all 2*2=4 combinations
 	for _, adj := range adjectives {
 		for _, noun := range nouns {
 			name := adj + "-" + noun
-			os.MkdirAll(filepath.Join(dir, name), 0755)
+			if err := os.MkdirAll(filepath.Join(dir, name), 0755); err != nil {
+				t.Fatalf("failed to create directory %s: %v", name, err)
+			}
 		}
 	}
 
-	_, err := GenerateUniqueName(dir, 10)
+	_, err := GenerateUniqueName(dir, 100)
 	if err == nil {
 		t.Error("GenerateUniqueName() should fail when all names collide")
 	}
@@ -71,10 +84,10 @@ func TestWordListsNonEmpty(t *testing.T) {
 	if len(nouns) == 0 {
 		t.Error("nouns list is empty")
 	}
-	if len(adjectives) < 120 {
-		t.Errorf("adjectives list has only %d entries, expected >= 120", len(adjectives))
+	if len(adjectives) < 200 {
+		t.Errorf("adjectives list has only %d entries, expected >= 200", len(adjectives))
 	}
-	if len(nouns) < 120 {
-		t.Errorf("nouns list has only %d entries, expected >= 120", len(nouns))
+	if len(nouns) < 200 {
+		t.Errorf("nouns list has only %d entries, expected >= 200", len(nouns))
 	}
 }
