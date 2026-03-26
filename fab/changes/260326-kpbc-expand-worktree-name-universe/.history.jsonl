@@ -1,0 +1,14 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-26T06:01:00Z"}
+{"args":"Ensure randomness in worktree names is actually getting followed - increase the name universe even further","cmd":"fab-new","event":"command","ts":"2026-03-26T06:01:00Z"}
+{"delta":"+4.4","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-26T06:01:37Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-03-26T06:01:48Z"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-26T12:18:44Z"}
+{"cmd":"fab-fff","event":"command","ts":"2026-03-26T12:19:37Z"}
+{"delta":"+0.3","event":"confidence","score":4.7,"trigger":"calc-score","ts":"2026-03-26T12:20:41Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"spec","ts":"2026-03-26T12:20:44Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"tasks","ts":"2026-03-26T12:21:22Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"apply","ts":"2026-03-26T12:21:22Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"review","ts":"2026-03-26T12:25:59Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"hydrate","ts":"2026-03-26T12:27:37Z"}
+{"event":"review","result":"passed","ts":"2026-03-26T12:27:37Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"ship","ts":"2026-03-26T12:28:00Z"}

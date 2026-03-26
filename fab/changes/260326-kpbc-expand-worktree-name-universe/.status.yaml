@@ -1,0 +1,42 @@
+id: kpbc
+name: 260326-kpbc-expand-worktree-name-universe
+created: 2026-03-26T06:01:00Z
+created_by: sahil-weaver
+change_type: feat
+issues: []
+progress:
+    intake: done
+    spec: done
+    tasks: done
+    apply: done
+    review: done
+    hydrate: done
+    ship: active
+    review-pr: pending
+checklist:
+    generated: true
+    path: checklist.md
+    completed: 19
+    total: 19
+confidence:
+    certain: 7
+    confident: 1
+    tentative: 0
+    unresolved: 0
+    score: 4.7
+    fuzzy: true
+    dimensions:
+        signal: 87.5
+        reversibility: 90.0
+        competence: 86.9
+        disambiguation: 88.1
+stage_metrics:
+    intake: {started_at: "2026-03-26T06:01:00Z", driver: fab-new, iterations: 1, completed_at: "2026-03-26T12:20:44Z"}
+    spec: {started_at: "2026-03-26T12:20:44Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T12:21:22Z"}
+    tasks: {started_at: "2026-03-26T12:21:22Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T12:21:22Z"}
+    apply: {started_at: "2026-03-26T12:21:22Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T12:25:59Z"}
+    review: {started_at: "2026-03-26T12:25:59Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T12:27:37Z"}
+    hydrate: {started_at: "2026-03-26T12:27:37Z", driver: fab-fff, iterations: 1, completed_at: "2026-03-26T12:28:00Z"}
+    ship: {started_at: "2026-03-26T12:28:00Z", driver: fab-fff, iterations: 1}
+prs: []
+last_updated: 2026-03-26T12:28:00Z
