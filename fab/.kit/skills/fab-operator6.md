@@ -277,7 +277,7 @@ The operator accepts work in three forms:
 This ensures every change gets a proper intake artifact with traceability, even for ad-hoc requests. The operator handles `idea add` internally — the user just says "fix [description]" and the operator does the rest.
 
 **From existing change** (already has intake or further):
-The operator determines which steps are needed from the change's current state. If intake already exists, skip `/fab-new`. If branch already matches, skip `/git-branch`.
+Send `/fab-proceed` to the agent — it auto-detects the change's current state and runs only the needed steps (`/fab-switch`, `/git-branch`, then `/fab-fff`).
 
 ### Autopilot
 

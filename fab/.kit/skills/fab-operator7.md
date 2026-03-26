@@ -377,7 +377,7 @@ The operator accepts work in three forms:
 This ensures every change gets a proper intake artifact with traceability, even for ad-hoc requests. `/fab-new` captures the raw input in the intake's Origin section — the user just says "fix [description]" and the operator does the rest.
 
 **From existing change** (already has intake or further):
-The operator determines which steps are needed from the change's current state. If intake already exists, skip `/fab-new`. If branch already matches, skip `/git-branch`. Dependency resolution still applies if `depends_on` is set.
+Send `/fab-proceed` to the agent — it auto-detects the change's current state and runs only the needed steps (`/fab-switch`, `/git-branch`, then `/fab-fff`). Dependency resolution still applies if `depends_on` is set.
 
 ### Autopilot
 
