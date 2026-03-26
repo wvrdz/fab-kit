@@ -1,7 +1,3 @@
-## Operator
-
-- [ ] [02eh] 2026-03-18: When operator5 works in branch mode for matching a change, it asks for confirmation. Don't do so, just proceed
-
 ## Open
 
 - [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
