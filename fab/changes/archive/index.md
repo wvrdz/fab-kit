@@ -1,5 +1,15 @@
 # Archive Index
 
+- **260323-1arx-create-operator-six** — Clean rewrite of the operator skill as operator6 — cut prompt bloat, removed rigid playbooks and config overhead in favor of principle-driven coordination.
+- **260326-u3un-operator-enforce-pipeline-routing** — Add explicit pipeline-first routing principle to operator7 — operator must always route new work through fab-new then fab-fff, never dispatch raw inline task instructions.
+- **260326-p4ki-allow-idea-shorthand** — Restore bare 'idea <text>' shorthand for 'idea add <text>' that was lost during the Go port — Cobra's root command now falls through to add when positional args don't match a subcommand.
+- **260326-oxgu-unified-tick-status-list** — Unify operator7 tick status frame into a single flat list with type indicators for monitored changes, watches, and other tracked sources.
+- **260326-kpbc-expand-worktree-name-universe** — Expand worktree adjective and noun word lists from 120 to ~200+ each, increasing the name universe from 14,400 to 40,000+ combinations to reduce collision risk in multi-agent workflows.
+- **260326-4r2p-add-proceed-to-cli-fab** — Add /fab-proceed to operator6 and operator7 Pipeline Reference sections so operators can use the new orchestrator instead of manually chaining fab-new/switch/branch/fff.
+- **260326-1tch-rename-blank-to-none** — Rename fab-switch --blank flag to --none for better memorability — 'switch to none' reads naturally as deactivating the current change.
+- **260326-13ro-operator7-direct-fab-new-spawn** — Simplify operator7 spawn path by passing task descriptions directly to fab-new instead of creating intermediate backlog entries via idea add.
+- **260325-kxw7-fab-proceed-orchestrator** — Add /fab-proceed orchestrator — a single command that detects pipeline state and runs fab-switch, git-branch, and fab-fff in sequence, eliminating repetitive ceremony.
+- **260324-prtv-operator7-dep-aware-spawning** — Add dependency-aware agent spawning to operator7 — cherry-picks leaf dependency commits into worktrees before spawning agents, enabling reliable concurrent execution of dependent changes.
 - **260321-nq8j-pin-github-actions-sha** — Pinned all external GitHub Actions to commit SHAs for supply chain safety, part of org-wide hardening after npm worm and trivy tag-poisoning incidents.
 - **260320-tm9h-draft-prs-by-default** — Changed /git-pr to create draft PRs by default, giving developers a chance to verify agent-generated implementations before code review.
 - **260320-t13m-configurable-agent-spawn-command** — Centralized the agent spawn command in config.yaml so all scripts and operators read from one place instead of hardcoding in 5+ locations.
