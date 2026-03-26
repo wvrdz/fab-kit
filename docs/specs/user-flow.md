@@ -365,3 +365,85 @@ sequenceDiagram
     Dev->>P: fab-fff (full pipeline)
     end
 ```
+
+---
+
+## 7. Stage Coverage by Command
+
+Which pipeline stages each command covers. Taller bars = more automation. Read left-to-right from most manual to most automated. Git operations (git-branch, git-pr) are interleaved where they naturally occur in the flow.
+
+```mermaid
+block-beta
+    columns 8
+
+    space:1 header1["fab-discuss"] header2["fab-switch"] header3["fab-continue"] header4["fab-ff"] header5["fab-fff"] header6["fab-proceed"] space:1
+
+    space:8
+
+    s01["context"]:1 d_ctx["project context"]:1 space:6
+    s02["activate"]:1 space:1 sw_act["fab-switch"]:1 space:3 p_sw["fab-switch"]:1 space:1
+    s03["branch"]:1 space:1 space:1 space:1 space:1 space:1 p_br["git-branch"]:1 space:1
+    s04["spec"]:1 space:1 space:1 c_stg["one stage ▾"]:1 ff_sp["spec"]:1 fff_sp["spec"]:1 p_sp["spec"]:1 space:1
+    s05["tasks"]:1 space:1 space:2 ff_ta["tasks"]:1 fff_ta["tasks"]:1 p_ta["tasks"]:1 space:1
+    s06["apply"]:1 space:1 space:2 ff_ap["apply"]:1 fff_ap["apply"]:1 p_ap["apply"]:1 space:1
+    s07["review"]:1 space:1 space:2 ff_rv["review"]:1 fff_rv["review"]:1 p_rv["review"]:1 space:1
+    s08["hydrate"]:1 space:1 space:2 ff_hy["hydrate"]:1 fff_hy["hydrate"]:1 p_hy["hydrate"]:1 space:1
+    s09["ship"]:1 space:1 space:2 space:1 fff_pr["git-pr"]:1 p_pr["git-pr"]:1 space:1
+    s10["review-pr"]:1 space:1 space:2 space:1 fff_rp["review-pr"]:1 p_rp["review-pr"]:1 space:1
+
+    %% Header styles
+    style header1 fill:#e0e0e0,stroke:#999
+    style header2 fill:#f3e5f5,stroke:#9C27B0
+    style header3 fill:#f3e5f5,stroke:#9C27B0
+    style header4 fill:#e8f4f8,stroke:#2196F3
+    style header5 fill:#e8f5e9,stroke:#4CAF50
+    style header6 fill:#fff3e0,stroke:#FF9800
+
+    %% Row labels
+    style s01 fill:#f5f5f5,stroke:#ccc
+    style s02 fill:#f5f5f5,stroke:#ccc
+    style s03 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    style s04 fill:#f5f5f5,stroke:#ccc
+    style s05 fill:#f5f5f5,stroke:#ccc
+    style s06 fill:#f5f5f5,stroke:#ccc
+    style s07 fill:#f5f5f5,stroke:#ccc
+    style s08 fill:#f5f5f5,stroke:#ccc
+    style s09 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    style s10 fill:#f5f5f5,stroke:#ccc
+
+    %% fab-discuss
+    style d_ctx fill:#e0e0e0,stroke:#999,stroke-dasharray: 5 5
+
+    %% fab-switch
+    style sw_act fill:#f3e5f5,stroke:#9C27B0
+
+    %% fab-continue
+    style c_stg fill:#f3e5f5,stroke:#9C27B0
+
+    %% fab-ff
+    style ff_sp fill:#e8f4f8,stroke:#2196F3
+    style ff_ta fill:#e8f4f8,stroke:#2196F3
+    style ff_ap fill:#e8f4f8,stroke:#2196F3
+    style ff_rv fill:#e8f4f8,stroke:#2196F3
+    style ff_hy fill:#e8f4f8,stroke:#2196F3
+
+    %% fab-fff
+    style fff_sp fill:#e8f5e9,stroke:#4CAF50
+    style fff_ta fill:#e8f5e9,stroke:#4CAF50
+    style fff_ap fill:#e8f5e9,stroke:#4CAF50
+    style fff_rv fill:#e8f5e9,stroke:#4CAF50
+    style fff_hy fill:#e8f5e9,stroke:#4CAF50
+    style fff_pr fill:#e8f5e9,stroke:#4CAF50
+    style fff_rp fill:#e8f5e9,stroke:#4CAF50
+
+    %% fab-proceed
+    style p_sw fill:#fff3e0,stroke:#FF9800
+    style p_br fill:#fff3e0,stroke:#FF9800
+    style p_sp fill:#fff3e0,stroke:#FF9800
+    style p_ta fill:#fff3e0,stroke:#FF9800
+    style p_ap fill:#fff3e0,stroke:#FF9800
+    style p_rv fill:#fff3e0,stroke:#FF9800
+    style p_hy fill:#fff3e0,stroke:#FF9800
+    style p_pr fill:#fff3e0,stroke:#FF9800
+    style p_rp fill:#fff3e0,stroke:#FF9800
+```
