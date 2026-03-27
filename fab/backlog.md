@@ -18,3 +18,4 @@
 - [x] [heht] 2026-03-19: Ensure randomness in worktree names is actually getting followed - inrease the name universe even further
 - [x] [p4ki] 2026-03-19: Allow 'idea <text of idea>' format once again
 - [ ] [gwg9] 2026-03-27: fab-operator7: Default to --base chaining for multi-phase autopilot queues instead of merge-as-you-go. When the operator runs a queue of dependent changes, it should stack branches (cherry-pick deps) and let the user review all PRs before merging — not auto-merge each PR on completion. Only merge-as-you-go when the user explicitly requests it. This prevents rebase conflicts and gives the user review control. Current behavior: operator merges each PR immediately on completion then rebases the next change onto origin/main.
+- [ ] [7rnu] 2026-03-27: Earlier wt couldn't show 'open here' as one of the options because of a shell limitation. Now wt-create is no longer a shell script but a go binary. Can this be done now?
