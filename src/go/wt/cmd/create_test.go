@@ -508,13 +508,13 @@ func TestCreate_BaseDoesNotAffectExistingBehavior(t *testing.T) {
 func TestCreate_OpenHereSuppressesPath(t *testing.T) {
 	repo := createTestRepo(t)
 
-	r := runWtSuccess(t, repo, nil, "create", "--non-interactive",
+	r := runWtSuccess(t, repo, []string{"HOME=" + t.TempDir()}, "create", "--non-interactive",
 		"--worktree-name", "open-here-test",
 		"--worktree-init", "false",
 		"--worktree-open", "open_here")
 
 	// stdout should contain the cd line
-	assertContains(t, r.Stdout, `cd "`)
+	assertContains(t, r.Stdout, `cd -- "`)
 
 	// stdout should NOT contain a trailing bare path line (the suppressed fmt.Println)
 	lines := strings.Split(strings.TrimSpace(r.Stdout), "\n")
@@ -522,9 +522,9 @@ func TestCreate_OpenHereSuppressesPath(t *testing.T) {
 		t.Errorf("expected exactly 1 stdout line (the cd command), got %d: %q", len(lines), r.Stdout)
 	}
 
-	// The single line should start with "cd "
-	if !strings.HasPrefix(lines[0], "cd ") {
-		t.Errorf("expected stdout line to start with 'cd ', got %q", lines[0])
+	// The single line should start with "cd -- "
+	if !strings.HasPrefix(lines[0], "cd -- ") {
+		t.Errorf("expected stdout line to start with 'cd -- ', got %q", lines[0])
 	}
 
 	// stderr should still contain the creation message

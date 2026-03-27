@@ -167,7 +167,7 @@ func DetectDefaultApp(apps []AppInfo) int {
 func OpenInApp(appCmd, path, repoName, wtName string) error {
 	switch appCmd {
 	case "open_here":
-		fmt.Printf("cd %q\n", path)
+		fmt.Printf("cd -- %q\n", path)
 		return nil
 	case "code":
 		return runCommand("code", path)

@@ -49,22 +49,27 @@ func TestOpenInApp_OpenHere(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.Pipe: %v", err)
 	}
+	t.Cleanup(func() {
+		os.Stdout = origStdout
+		_ = r.Close()
+		_ = w.Close()
+	})
 	os.Stdout = w
 
 	openErr := OpenInApp("open_here", path, "repo", "wt-name")
 
 	w.Close()
-	os.Stdout = origStdout
 
 	if openErr != nil {
 		t.Fatalf("OpenInApp returned error: %v", openErr)
 	}
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
-	r.Close()
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("io.Copy: %v", err)
+	}
 
-	expected := fmt.Sprintf("cd %q\n", path)
+	expected := fmt.Sprintf("cd -- %q\n", path)
 	if buf.String() != expected {
 		t.Errorf("expected stdout %q, got %q", expected, buf.String())
 	}

@@ -19,13 +19,14 @@ Shell wrapper (recommended):
   shell), add this function to your shell profile (~/.bashrc or ~/.zshrc):
 
     wt() {
-      local output
-      output="$(command wt "$@")"
-      local rc=$?
-      if [[ "$output" == cd\ * ]]; then
-        eval "$output"
-      else
-        printf '%s\n' "$output"
+      local line last rc
+      while IFS= read -r line; do
+        printf '%s\n' "$line"
+        last=$line
+      done < <(command wt "$@")
+      rc=$?
+      if [[ "$last" == cd\ * ]]; then
+        eval "$last"
       fi
       return $rc
     }`,
