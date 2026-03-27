@@ -203,6 +203,75 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 - Old URLs (`github.com/wvrdz/docs-sddr`) redirect to the current repo URL
 - Existing clones with old remote URL continue to work via redirect
 
+### Homebrew Distribution (System-Level Install)
+
+#### Homebrew Formula (`fab-kit`)
+
+`brew install wvrdz/tap/fab-kit` SHALL install three binaries to the system PATH:
+
+- **`fab`** — a version-aware shim/dispatcher (see below)
+- **`wt`** — the worktree management binary (standalone, not version-coupled)
+- **`idea`** — the backlog management binary (standalone, not version-coupled)
+
+The formula is named `fab-kit` (avoiding collision with Python Fabric's `fabric` formula) and hosted in the `wvrdz/homebrew-tap` repository. It builds all three binaries from source using Go (`src/go/shim/cmd` → `fab`, `src/go/wt/cmd` → `wt`, `src/go/idea/cmd` → `idea`).
+
+#### The `fab` Shim (Version-Aware Dispatcher)
+
+The system-installed `fab` binary acts as a thin shim implemented in Go (`src/go/shim/`). When invoked:
+
+1. Walk up from CWD to find `fab/project/config.yaml`
+2. Read `fab_version` from `config.yaml` (e.g., `fab_version: "0.39.0"`)
+   - If `config.yaml` found but `fab_version` absent: error with actionable message
+3. Check the local cache for the matching version (`~/.fab-kit/versions/0.39.0/`)
+4. If not cached, download the release from GitHub (`wvrdz/fab-kit` releases) and cache it
+5. Exec `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab <original args>` — full passthrough
+
+If no `config.yaml` is found (not in a fab-managed repo), the shim serves non-repo commands: `fab init` (primary use case — scaffolds a new project), `fab --version`, `fab --help`.
+
+The shim intercepts only `--version`, `--help`, and `init`. All other arguments pass through verbatim to the resolved per-repo runtime via `exec`. Minimal dependencies: standard library + `gopkg.in/yaml.v3`. No Cobra.
+
+#### Version Cache
+
+Cached versions live at `~/.fab-kit/versions/` with one subdirectory per version:
+
+```
+~/.fab-kit/
+  versions/
+    0.39.0/
+      fab/.kit/bin/fab      # the versioned runtime
+      fab/.kit/bin/fab-go   # the Go backend
+      fab/.kit/skills/      # skill files for this version
+      fab/.kit/templates/   # templates for this version
+      fab/.kit/VERSION
+    0.40.0/
+      ...
+```
+
+No automatic eviction — versions accumulate until manually cleaned. Downloads use atomic extraction (temp dir + rename) to prevent corruption from concurrent worktrees.
+
+#### `fab init` (Primary Use Case)
+
+`fab init` scaffolds a new fab-kit project: fetches the latest release version from GitHub, downloads and caches it, runs `fab-sync.sh` from the cached version, and creates `fab/project/config.yaml` with `fab_version` set to the latest release.
+
+**Scenarios**:
+- Fresh project (no `fab/` directory) — creates config with `fab_version`, runs sync
+- Existing config without `fab_version` — adds `fab_version` without overwriting other fields
+- Already initialized (has `fab_version`) — reports current version, no changes
+
+#### `fab_version` Config Field
+
+A new optional field in `fab/project/config.yaml`. When present, the shim uses it for version resolution. When absent, the shim errors with guidance to run `fab init`. The per-repo runtime (`fab/.kit/bin/fab`) does not read this field — it only affects shim behavior.
+
+#### Transition: wt and idea in Kit Archives
+
+During transition, `wt` and `idea` continue to ship in per-repo kit archives alongside the Homebrew installation. Removal from archives is deferred to a future change once Homebrew adoption is sufficient.
+
+**Scenarios**:
+- Installation via Homebrew (`brew install wvrdz/tap/fab-kit`) — installs `fab` shim, `wt`, `idea` to system PATH
+- Shim dispatches to cached version — `fab status` in a repo with `fab_version: "0.39.0"` execs the cached runtime
+- First use of a new version — shim downloads, caches, then execs
+- Direct invocation still works — `fab/.kit/bin/fab` is unchanged, independent of shim
+
 ## Design Decisions
 
 - **CI/local parity via justfile (260307-ma7o-1)**: Build recipes live in the `justfile` so CI and local development use identical commands (`just build-all`, `just package-kit`). No CI-only build scripts or logic. This makes CI behavior fully reproducible locally.
@@ -210,11 +279,15 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 - **GitHub semver ordering replaces `--no-latest` (260307-ma7o-1)**: GitHub automatically determines "latest" release based on semver. Backport releases (e.g., `v0.34.2` when `v0.35.0` exists) are not marked latest. The `--no-latest` flag was removed from `release.sh` — no flag to remember, no CI mechanism to pass it through. For edge cases, `gh release edit` can be used post-creation.
 - **Commit-level release notes with minor cumulation**: CI generates release notes from `git log --oneline` with linked commit SHAs. Minor releases (x.y.0) cumulate all commits since the previous minor tag, giving a complete picture of the release cycle. Patch releases show commits since the previous release only. Major releases use the same patch-style diff (manual curation expected for milestone releases).
 - **Backend override via env var + file (260307-bmp3-3)**: `FAB_BACKEND` env var and `.fab-backend` file provide a way to select the backend. Env var for per-command overrides, file for persistent project-level preference. Invalid/unavailable values fall through to the default (no lockout). Rejected: CLI flag (would require dispatcher to parse args before delegating).
+- **Shim as separate Go module (260325-lhhk)**: The shim (`src/go/shim/`) is a distinct binary from the per-repo runtime (`fab-go`). Different concerns (config discovery, HTTP download, version resolution vs. workflow engine commands) warrant separate modules. This prevents dependency bleed and keeps the shim minimal (~500 lines, no Cobra). Rejected: adding shim as a subcommand of `fab-go` — coupling the shim to the per-repo binary defeats version management.
+- **Atomic version caching via temp dir + rename (260325-lhhk)**: Downloads extract to a temp directory, then rename to the cache path. Prevents corruption when multiple worktrees trigger the same download concurrently. Rejected: file locking — more complex, platform-dependent, and rename is sufficient.
+- **Transition period for wt/idea in kit archives (260325-lhhk)**: Rather than immediately removing `wt` and `idea` from kit archives, keep them during a transition period. Gradual migration avoids breaking repos that haven't adopted Homebrew. Rejected: immediate removal — too disruptive, no way to know adoption status.
 
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260325-lhhk-brew-install-system-shim | 2026-03-27 | Added Homebrew distribution model: `brew install wvrdz/tap/fab-kit` installs `fab` (version-aware shim), `wt`, and `idea` to system PATH. New shim binary at `src/go/shim/` walks up for `config.yaml`, reads `fab_version`, caches kit releases at `~/.fab-kit/versions/`, and execs the per-repo runtime. `fab init` scaffolds new projects. New `fab_version` field in `config.yaml`. Homebrew formula at `Formula/fab-kit.rb`. Justfile recipe `build-shim`. Transition: `wt`/`idea` remain in kit archives. |
 | 260320-9tqo-fix-idea-docs-main-flag | 2026-03-20 | Corrected `idea` documentation: moved Backlog section from `_cli-fab.md` to `_cli-external.md`, fixed invocation from `fab idea` to standalone `fab/.kit/bin/idea`. Added `--main` persistent flag — default now uses current worktree (`--show-toplevel`), `--main` opts into main worktree (`--git-common-dir`). Renamed `GitRepoRoot()` to `MainRepoRoot()`, added `WorktreeRoot()`. Updated `_cli-external.md` frontmatter and `docs/specs/packages.md`. |
 | 260312-96nf-remove-rust-implementation | 2026-03-12 | Removed all Rust references from distribution docs. Removed Rust recipes from build recipes section, Rust CI steps (toolchain, Zig, cargo-zigbuild), Rust from archive descriptions (3→2 binaries per platform, 12→8 total). Updated backend override to Go-only. Removed "Transition Period: Dual Backends" section. Updated bootstrap descriptions, packaging scenarios, and CI workflow steps. Removed cargo-zigbuild design decision. |
 | 260310-8m3k-port-wt-tests-cleanup-legacy | 2026-03-10 | Removed `src/packages/` (legacy shell wt package and bats tests), `src/tests/` (bats submodule libs), and `.gitmodules` (bats submodule refs only). Ported 73 behavioral tests from bats to Go in `src/go/wt/cmd/*_test.go`. Removed `bats` from prerequisites description (already absent from actual sync scripts). Removed `test-setup` and `test-packages` justfile targets and their backing scripts (`scripts/just/test-setup.sh`, `test-packages.sh`). |

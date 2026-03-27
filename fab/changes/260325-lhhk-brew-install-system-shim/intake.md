@@ -41,11 +41,12 @@ The system-installed `fab` binary acts as a thin shim. When invoked:
 
 1. Walk up from CWD to find `fab/project/config.yaml`
 2. Read `fab_version` from `config.yaml` (e.g., `fab_version: "0.39.0"`)
+   - If `config.yaml` found but `fab_version` absent: error with actionable message (e.g., `"No fab_version in config.yaml. Run 'fab init' to set one."`)
 3. Check the local cache for the matching version (`~/.fab-kit/versions/0.39.0/`)
 4. If not cached, download the release from GitHub (`wvrdz/fab-kit` releases) and cache it
 5. Exec `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab <original args>` — full passthrough of all arguments
 
-If no `config.yaml` is found (not in a fab-managed repo), the shim can still serve non-repo commands (e.g., `fab init` to scaffold a new project, `fab --version`).
+If no `config.yaml` is found (not in a fab-managed repo), the shim serves non-repo commands: `fab init` (primary use case — scaffolds a new project), `fab --version`, etc.
 
 ```yaml
 # fab/project/config.yaml — new field
@@ -76,7 +77,11 @@ The per-repo binary at `fab/.kit/bin/fab` remains unchanged. It is the versioned
 
 ### New `config.yaml` field: `fab_version`
 
-A new optional field in `fab/project/config.yaml` that declares the fab-kit version the repo expects. When present, the system shim uses it for version resolution. When absent, the shim falls back to the latest cached version (or latest release).
+A new optional field in `fab/project/config.yaml` that declares the fab-kit version the repo expects. When present, the system shim uses it for version resolution. When absent, the shim errors with an actionable message directing the user to run `fab init`.
+
+### `fab init` (primary use case)
+
+The shim's main onboarding command. When run outside a fab-managed repo (or in a repo without `fab_version`), `fab init` scaffolds the `fab/project/` structure and sets `fab_version` to the latest release. This completes the "zero to working" story: `brew install fab-kit` → `fab init` → repo is fab-managed.
 
 ## Affected Memory
 
@@ -92,12 +97,17 @@ A new optional field in `fab/project/config.yaml` that declares the fab-kit vers
 - **GitHub releases**: Release artifacts must be structured for the shim to download and cache
 - **Existing repos**: No breaking change — repos without the shim continue to work via direct `fab/.kit/bin/fab` invocation
 
-## Open Questions
+## Clarifications
 
-- Should the shim support `fab init` for scaffolding new repos (downloading latest `.kit/` into a fresh project)?
-- What's the cache eviction policy? Keep all versions indefinitely, or prune versions not used in N days?
-- Should there be a `fab self-update` for updating the shim itself (separate from per-repo version)?
-- How should the Homebrew tap be structured? `wvrdz/homebrew-tap` with a `fab-kit.rb` formula?
+### Session 2026-03-27
+
+| # | Action | Detail |
+|---|--------|--------|
+| 7 | Confirmed | `wvrdz/homebrew-tap` (org-level tap) |
+| 8 | Changed | Error with actionable message when `fab_version` absent |
+| 9 | Resolved | `fab init` in scope — primary use case |
+| 10 | Resolved | No automatic cache eviction |
+| 11 | Resolved | No `fab self-update` — rely on `brew upgrade` |
 
 ## Assumptions
 
@@ -109,9 +119,10 @@ A new optional field in `fab/project/config.yaml` that declares the fab-kit vers
 | 4 | Certain | Version pinned per-repo via `config.yaml` field | Discussed — user chose version-manager pattern (option 1) over wrapper pattern (option 2) | S:90 R:70 A:85 D:85 |
 | 5 | Confident | Cache lives at `~/.fab-kit/versions/` | Standard XDG-style user cache location; could also be `~/.cache/fab-kit/` | S:60 R:90 A:70 D:60 |
 | 6 | Confident | Shim downloads from GitHub releases | Natural fit given existing `wvrdz/fab-kit` repo; alternative would be a separate artifact store | S:65 R:85 A:75 D:70 |
-| 7 | Tentative | Homebrew tap at `wvrdz/homebrew-tap` | Common pattern for org taps; could also be `wvrdz/homebrew-fab-kit` or attempt core homebrew | S:40 R:90 A:50 D:50 |
-<!-- assumed: Homebrew tap naming — defaulting to org-level tap, could be project-specific -->
-| 8 | Tentative | Fallback to latest cached version when `fab_version` absent | Reasonable default for repos not yet pinned; alternative is to error | S:50 R:70 A:50 D:45 |
-<!-- assumed: Fallback behavior — could be stricter (require explicit version) or looser (always use latest) -->
+| 7 | Certain | Homebrew tap at `wvrdz/homebrew-tap` | Clarified — user confirmed org-level tap | S:95 R:90 A:50 D:50 |
+| 8 | Certain | Error when `fab_version` absent from `config.yaml` | Clarified — user chose strict mode; shim errors with actionable message directing user to set `fab_version` | S:95 R:70 A:50 D:45 |
+| 9 | Certain | `fab init` is in scope as a primary use case | Clarified — user confirmed this is the main use case for the shim | S:95 R:70 A:80 D:90 |
+| 10 | Certain | No automatic cache eviction — manual cleanup only | Clarified — user confirmed; versions are small, a cleanup command can be added later | S:95 R:90 A:80 D:90 |
+| 11 | Certain | No `fab self-update` — rely on `brew upgrade fab-kit` | Clarified — user confirmed; don't reinvent the package manager | S:95 R:90 A:85 D:90 |
 
-8 assumptions (4 certain, 2 confident, 2 tentative, 0 unresolved). Run /fab-clarify to review.
+11 assumptions (9 certain, 2 confident, 0 tentative, 0 unresolved).

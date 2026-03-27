@@ -20,8 +20,8 @@ fab/.kit/
 ├── bin/                    # Dispatcher + compiled Go backend
 │   ├── fab                 # Shell dispatcher — sole entry point, delegates to fab-go
 │   ├── fab-go              # Go binary (optional, platform-specific from per-platform archives)
-│   ├── wt                  # Go binary — git worktree management (optional, platform-specific from per-platform archives)
-│   ├── idea                # Go binary — IDE integration helper (optional, platform-specific from per-platform archives)
+│   ├── wt                  # Go binary — git worktree management (optional; also available via Homebrew system install)
+│   ├── idea                # Go binary — backlog management (optional; also available via Homebrew system install)
 │   └── .gitkeep            # Ensures directory exists even in generic archive (no binary)
 ├── skills/                 # Skill definitions (markdown prompts)
 │   ├── _preamble.md         # Shared context loading convention
@@ -486,6 +486,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260325-lhhk-brew-install-system-shim | 2026-03-27 | Added Homebrew system-level distribution: `brew install wvrdz/tap/fab-kit` installs `fab` (version-aware shim), `wt`, and `idea` to system PATH. New `src/go/shim/` Go module implements the shim — walks up for `config.yaml`, reads `fab_version`, caches kit releases at `~/.fab-kit/versions/`, execs per-repo runtime. `wt` and `idea` now also available as standalone system binaries (not version-coupled). Updated `bin/` directory tree descriptions. Transition: per-repo archives still include `wt`/`idea`. |
 | 260320-t13m-configurable-agent-spawn-command | 2026-03-20 | Added `lib/spawn.sh` (shared `fab_spawn_cmd` helper reading `agent.spawn_command` from `config.yaml` with fallback). Updated 5 scripts (`fab-operator4.sh`, `fab-operator5.sh`, `batch-fab-new-backlog.sh`, `batch-fab-switch-change.sh`, `batch-fab-archive-change.sh`) to read spawn command from config via `lib/spawn.sh` instead of hardcoding `claude --dangerously-skip-permissions`. Added `fab-operator5.sh` and `lib/spawn.sh` to directory tree. Updated batch script and launcher script descriptions. |
 | 260317-mogj-resilient-hooks-cwd | 2026-03-17 | Made hook shell scripts cwd-resilient. Replaced `dirname "$0"` relative path resolution with `git rev-parse --show-toplevel` in all 4 hook scripts (`on-session-start.sh`, `on-stop.sh`, `on-user-prompt.sh`, `on-artifact-write.sh`). Scripts now find the fab binary from any subdirectory within the repo. No Go code or settings.local.json changes needed — the Go binary already handled cwd via `resolve.FabRoot()` upward walk. Updated directory tree comment from "thin wrappers" to "cwd-resilient wrappers". |
 | 260315-a2b2-standalone-operator4-rewrite | 2026-03-15 | Updated `_` file ecosystem: renamed `_scripts.md` to `_cli-fab.md`, added `_cli-external.md` (operator-only load for wt/tmux/loop), added `_naming.md` (always-load for naming conventions). Updated directory tree: removed operator1/2/3 skill files, added new `_` files, added missing skills (fab-archive, fab-discuss, git-branch, git-pr-review). Updated launcher script from `fab-operator.sh` to `fab-operator4.sh`. Added "Underscore File Ecosystem" section documenting load strategies for all `_` files. Updated `_scripts.md` references to `_cli-fab.md` in kit-architecture and related docs. Updated agent deployment section to list all current underscore partials. |

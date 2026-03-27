@@ -9,18 +9,28 @@ test:
     cd src/go/fab && go test ./... -count=1
     cd src/go/idea && go test ./... -count=1
     cd src/go/wt && go test ./... -count=1
+    cd src/go/shim && go test ./... -count=1
 
 # Run all tests (verbose)
 test-v:
     cd src/go/fab && go test ./... -v -count=1
     cd src/go/idea && go test ./... -v -count=1
     cd src/go/wt && go test ./... -v -count=1
+    cd src/go/shim && go test ./... -v -count=1
 
 # Build all binaries for current platform (fab, wt, idea)
 build:
     cd src/go/fab && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../fab/.kit/bin/fab-go ./cmd/fab
     cd src/go/idea && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/idea ./cmd
     cd src/go/wt && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/wt ./cmd
+
+# Build the fab shim binary for current platform
+build-shim:
+    cd src/go/shim && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../.release-build/fab-shim ./cmd
+
+# Cross-compile the fab shim for a specific target
+build-shim-target os arch:
+    just _build-binary src/go/shim ./cmd fab-shim {{os}} {{arch}} '{{fab_ldflags}}'
 
 # Check prerequisites and environment health
 doctor:
