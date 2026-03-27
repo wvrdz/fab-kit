@@ -7,13 +7,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var fileFlag string
-var mainFlag bool
+var (
+	version  = "dev"
+	fileFlag string
+	mainFlag bool
+)
 
 func main() {
 	root := &cobra.Command{
-		Use:   "idea",
-		Short: "Backlog idea management (current worktree; use --main for main worktree)",
+		Use:     "idea",
+		Short:   "Backlog idea management (current worktree; use --main for main worktree)",
+		Version: version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

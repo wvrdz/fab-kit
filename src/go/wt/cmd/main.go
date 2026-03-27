@@ -8,10 +8,13 @@ import (
 	wt "github.com/wvrdz/fab-kit/src/go/wt/internal/worktree"
 )
 
+var version = "dev"
+
 func main() {
 	root := &cobra.Command{
-		Use:   "wt",
-		Short: "Git worktree management — create, list, open, delete worktrees",
+		Use:     "wt",
+		Short:   "Git worktree management — create, list, open, delete worktrees",
+		Version: version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

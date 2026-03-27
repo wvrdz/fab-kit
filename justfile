@@ -21,8 +21,8 @@ test-v:
 # Build all binaries for current platform (fab, wt, idea)
 build:
     cd src/go/fab && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../fab/.kit/bin/fab-go ./cmd/fab
-    cd src/go/idea && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/idea ./cmd
-    cd src/go/wt && CGO_ENABLED=0 go build -o ../../../fab/.kit/bin/wt ./cmd
+    cd src/go/idea && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../fab/.kit/bin/idea ./cmd
+    cd src/go/wt && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../fab/.kit/bin/wt ./cmd
 
 # Build the fab shim binary for current platform
 build-shim:
@@ -51,8 +51,8 @@ _build-binary src_dir cmd_path name os arch ldflags="":
 # Cross-compile all binaries for a specific target
 build-target os arch:
     just _build-binary src/go/fab ./cmd/fab fab {{os}} {{arch}} '{{fab_ldflags}}'
-    just _build-binary src/go/idea ./cmd idea {{os}} {{arch}}
-    just _build-binary src/go/wt ./cmd wt {{os}} {{arch}}
+    just _build-binary src/go/idea ./cmd idea {{os}} {{arch}} '{{fab_ldflags}}'
+    just _build-binary src/go/wt ./cmd wt {{os}} {{arch}} '{{fab_ldflags}}'
 
 # Cross-compile all binaries for all release targets
 build-all:

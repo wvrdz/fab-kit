@@ -224,7 +224,7 @@ The system-installed `fab` binary acts as a thin shim implemented in Go (`src/go
    - If `config.yaml` found but `fab_version` absent: error with actionable message
 3. Check the local cache for the matching version (`~/.fab-kit/versions/0.39.0/`)
 4. If not cached, download the release from GitHub (`wvrdz/fab-kit` releases) and cache it
-5. Exec `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab <original args>` — full passthrough
+5. Exec `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab-go <original args>` — full passthrough
 
 If no `config.yaml` is found (not in a fab-managed repo), the shim serves non-repo commands: `fab init` (primary use case — scaffolds a new project), `fab --version`, `fab --help`.
 
@@ -238,7 +238,7 @@ Cached versions live at `~/.fab-kit/versions/` with one subdirectory per version
 ~/.fab-kit/
   versions/
     0.39.0/
-      fab/.kit/bin/fab      # the versioned runtime
+      fab/.kit/bin/fab-go   # the Go backend (per-repo runtime)
       fab/.kit/bin/fab-go   # the Go backend
       fab/.kit/skills/      # skill files for this version
       fab/.kit/templates/   # templates for this version
@@ -260,7 +260,7 @@ No automatic eviction — versions accumulate until manually cleaned. Downloads 
 
 #### `fab_version` Config Field
 
-A new optional field in `fab/project/config.yaml`. When present, the shim uses it for version resolution. When absent, the shim errors with guidance to run `fab init`. The per-repo runtime (`fab/.kit/bin/fab`) does not read this field — it only affects shim behavior.
+A new optional field in `fab/project/config.yaml`. When present, the shim uses it for version resolution. When absent, the shim errors with guidance to run `fab init`. The per-repo runtime (`fab-go`) does not read this field — it only affects shim behavior.
 
 #### Transition: wt and idea in Kit Archives
 
@@ -270,7 +270,7 @@ During transition, `wt` and `idea` continue to ship in per-repo kit archives alo
 - Installation via Homebrew (`brew install wvrdz/tap/fab-kit`) — installs `fab` shim, `wt`, `idea` to system PATH
 - Shim dispatches to cached version — `fab status` in a repo with `fab_version: "0.39.0"` execs the cached runtime
 - First use of a new version — shim downloads, caches, then execs
-- Direct invocation still works — `fab/.kit/bin/fab` is unchanged, independent of shim
+- Direct invocation still works — `fab/.kit/bin/fab-go` is unchanged, independent of shim
 
 ## Design Decisions
 

@@ -17,18 +17,18 @@ class FabKit < Formula
 
     # Build wt (worktree management).
     cd "src/go/wt" do
-      system "go", "build", *std_go_args(output: bin/"wt"), "./cmd"
+      system "go", "build", *std_go_args(ldflags:, output: bin/"wt"), "./cmd"
     end
 
     # Build idea (backlog management).
     cd "src/go/idea" do
-      system "go", "build", *std_go_args(output: bin/"idea"), "./cmd"
+      system "go", "build", *std_go_args(ldflags:, output: bin/"idea"), "./cmd"
     end
   end
 
   test do
     assert_match "fab-shim", shell_output("#{bin}/fab --version")
-    assert_match "wt", shell_output("#{bin}/wt --help 2>&1", 0).downcase
-    assert_match "idea", shell_output("#{bin}/idea --help 2>&1", 0).downcase
+    assert_match version.to_s, shell_output("#{bin}/wt --version")
+    assert_match version.to_s, shell_output("#{bin}/idea --version")
   end
 end

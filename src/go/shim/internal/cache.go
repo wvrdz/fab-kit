@@ -9,7 +9,7 @@ import (
 const (
 	cacheDir        = ".fab-kit"
 	versionsSubdir  = "versions"
-	runtimeRelPath  = "fab/.kit/bin/fab"
+	runtimeRelPath  = "fab/.kit/bin/fab-go"
 )
 
 // CacheDir returns the root cache directory (~/.fab-kit/versions/).

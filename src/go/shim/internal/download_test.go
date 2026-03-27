@@ -24,7 +24,6 @@ func TestExtractTarGz(t *testing.T) {
 	// Create a tar.gz in memory with a .kit/ rooted file.
 	archive := createTestArchive(t, map[string]string{
 		".kit/VERSION":     "0.42.0\n",
-		".kit/bin/fab":     "#!/bin/sh\necho fab\n",
 		".kit/bin/fab-go":  "binary-placeholder",
 	})
 
@@ -43,9 +42,9 @@ func TestExtractTarGz(t *testing.T) {
 		t.Errorf("unexpected VERSION content: %q", string(data))
 	}
 
-	fabBin := filepath.Join(destDir, "fab", ".kit", "bin", "fab")
-	if _, err := os.Stat(fabBin); err != nil {
-		t.Errorf("fab binary not found: %v", err)
+	fabGoBin := filepath.Join(destDir, "fab", ".kit", "bin", "fab-go")
+	if _, err := os.Stat(fabGoBin); err != nil {
+		t.Errorf("fab-go binary not found: %v", err)
 	}
 }
 

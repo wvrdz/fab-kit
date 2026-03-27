@@ -36,13 +36,13 @@ Also read `fab/.kit/skills/_cli-external.md` — the external tool reference for
 After context loading, log the command invocation:
 
 ```bash
-fab/.kit/bin/fab log command "fab-operator5" 2>/dev/null || true
+fab log command "fab-operator5" 2>/dev/null || true
 ```
 
 ### Orientation
 
 1. Read `.fab-operator.yaml` from the repo root. If missing, create it with defaults (see Section 4).
-2. Run `fab/.kit/bin/fab pane-map` and display the output
+2. Run `fab pane-map` and display the output
 3. Display the use case status roster (see Section 4)
 4. Output: `Ready for coordination commands.`
 

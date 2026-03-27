@@ -6,7 +6,7 @@
 
 ## Non-Goals
 
-- Removing `fab/.kit/bin/fab` (the per-repo shell dispatcher) — it stays as the versioned runtime
+- Renaming the per-repo Go binary — it stays `fab-go` at `fab/.kit/bin/fab-go`
 - Automatic cache eviction — versions accumulate until manually cleaned
 - `fab self-update` — rely on `brew upgrade fab-kit`
 - Core Homebrew submission — using a tap (`wvrdz/homebrew-tap`)
@@ -42,7 +42,7 @@ The shim SHALL read the `fab_version` field from `config.yaml` and resolve it to
 - **GIVEN** `config.yaml` contains `fab_version: "0.39.0"`
 - **AND** `~/.fab-kit/versions/0.39.0/` exists with a valid kit
 - **WHEN** the user runs `fab status`
-- **THEN** the shim execs `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab status`
+- **THEN** the shim execs `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab-go status`
 
 #### Scenario: fab_version present but not cached
 - **GIVEN** `config.yaml` contains `fab_version: "0.40.0"`
@@ -62,7 +62,7 @@ The shim SHALL pass all arguments verbatim to the per-repo runtime via `exec`. N
 #### Scenario: Full argument passthrough
 - **GIVEN** a resolved version at `~/.fab-kit/versions/0.39.0/`
 - **WHEN** the user runs `fab status finish mychange intake`
-- **THEN** the shim execs `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab status finish mychange intake` with identical arguments
+- **THEN** the shim execs `~/.fab-kit/versions/0.39.0/fab/.kit/bin/fab-go status finish mychange intake` with identical arguments
 
 ### Requirement: Version Download
 
@@ -73,7 +73,7 @@ The shim SHALL download kit releases from `github.com/wvrdz/fab-kit` using platf
 - **WHEN** version `0.40.0` is not cached
 - **THEN** the shim downloads `https://github.com/wvrdz/fab-kit/releases/download/v0.40.0/kit-darwin-arm64.tar.gz`
 - **AND** extracts it to `~/.fab-kit/versions/0.40.0/`
-- **AND** the cached version contains `fab/.kit/bin/fab` (the per-repo runtime)
+- **AND** the cached version contains `fab/.kit/bin/fab-go` (the per-repo runtime)
 
 #### Scenario: Download failure
 - **GIVEN** the network is unavailable or the release tag does not exist
@@ -205,7 +205,7 @@ The formula SHALL install `fab` (shim), `wt`, and `idea` to the Homebrew bin dir
 - **THEN** the shim errors with guidance to run `fab init`
 
 #### Scenario: Field absent (direct invocation — no shim)
-- **GIVEN** a user invokes `fab/.kit/bin/fab` directly (no shim)
+- **GIVEN** a user invokes `fab/.kit/bin/fab-go` directly (no shim)
 - **WHEN** `config.yaml` has no `fab_version`
 - **THEN** behavior is unchanged — the per-repo runtime does not read this field
 
@@ -262,11 +262,11 @@ New justfile recipes SHALL be added for building the shim locally.
 
 ### Requirement: No Breaking Changes
 
-Existing repos that invoke `fab/.kit/bin/fab` directly SHALL continue to work without modification. The shim is additive — it does not replace or modify the per-repo runtime.
+Existing repos that invoke `fab/.kit/bin/fab-go` directly SHALL continue to work without modification. The shim is additive — it does not replace or modify the per-repo runtime. The shell dispatcher (`fab/.kit/bin/fab`) is removed; the Go binary `fab-go` is the sole per-repo entry point.
 
 #### Scenario: Direct invocation still works
-- **GIVEN** a repo with `fab/.kit/bin/fab` and `fab/.kit/bin/fab-go`
-- **WHEN** the user runs `fab/.kit/bin/fab status`
+- **GIVEN** a repo with `fab/.kit/bin/fab-go`
+- **WHEN** the user runs `fab/.kit/bin/fab-go status`
 - **THEN** it works exactly as before, regardless of whether the shim is installed
 
 ### Requirement: wt and idea Remain in Kit Archives (Transition)
@@ -302,7 +302,7 @@ During the transition period, `wt` and `idea` SHALL continue to be included in p
 |---|-------|----------|-----------|--------|
 | 1 | Certain | Homebrew formula name is `fab-kit`, binary name is `fab` | Confirmed from intake #1 — user explicitly chose this split | S:95 R:90 A:95 D:95 |
 | 2 | Certain | `wt` and `idea` are system-only, not per-repo | Confirmed from intake #2 — standalone utilities | S:95 R:80 A:90 D:95 |
-| 3 | Certain | Per-repo binary stays named `fab` at `fab/.kit/bin/fab` | Confirmed from intake #3 — shim dispatches by absolute path | S:90 R:85 A:90 D:90 |
+| 3 | Certain | Per-repo binary stays named `fab-go` at `fab/.kit/bin/fab-go` | Confirmed from intake #3 — shim dispatches to `fab-go` by absolute path, shell dispatcher deleted | S:90 R:85 A:90 D:90 |
 | 4 | Certain | Version pinned per-repo via `config.yaml` field | Confirmed from intake #4 — version-manager pattern | S:90 R:70 A:85 D:85 |
 | 5 | Confident | Cache lives at `~/.fab-kit/versions/` | Carried from intake #5 — standard user cache location; could also be `~/.cache/fab-kit/` | S:60 R:90 A:70 D:60 |
 | 6 | Confident | Shim downloads from GitHub releases | Carried from intake #6 — natural fit for existing release infrastructure | S:65 R:85 A:75 D:70 |
