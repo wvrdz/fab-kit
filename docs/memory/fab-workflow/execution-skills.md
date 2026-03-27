@@ -318,7 +318,7 @@ Drives a queue of changes through the full pipeline — spawning agents, monitor
 |---------|--------|---------|
 | Confidence below gate | Flag to user: run `/fab-fff` or skip | Wait for user input |
 | Review fails (rework exhausted) | Flag, skip to next | Yes |
-| Cherry-pick conflict (stack-then-review) | Escalate, do not spawn | Yes (skip to next) |
+| Cherry-pick conflict (stack-then-review) | Escalate, do not spawn | No — queue halts, wait for user input |
 | Rebase conflict (merge-on-complete) | Flag, skip to next | Yes |
 | Agent pane dies | 1 respawn attempt, then flag and skip | Yes |
 | Stage timeout (>30 min same stage) | Flag regardless of retry state | Yes |

@@ -399,7 +399,7 @@ Queue ordering:
 | Confidence-based | Sort by confidence score descending. Highest-confidence first (independent changes) |
 | Hybrid | User provides constraints (partial order); operator sorts unconstrained by confidence |
 
-**`--merge-on-complete`** — opt-in flag that reverts to the previous merge-as-you-go behavior: merge each PR on completion, rebase next change onto `origin/main`. Natural language equivalents: "merge as you go", "merge on complete", "merge each when done". Without this flag, the default is stack-then-review: PRs are created but not merged until the user explicitly requests merging.
+**`--merge-on-complete`** — opt-in flag that reverts to the previous merge-as-you-go behavior: merge each PR on completion, rebase next change onto `origin/main`. Implicit `--base` chaining is disabled under this flag — each change rebases onto `origin/main` independently instead of stacking on the previous change's branch. Natural language equivalents: "merge as you go", "merge on complete", "merge each when done". Without this flag, the default is stack-then-review: PRs are created but not merged until the user explicitly requests merging, and implicit `--base` chaining is active (every change after the first gets `depends_on: [<prev-change-id>]`).
 
 The operator works each change through the pipeline, applying pre-send validation (§3) before dispatching:
 
