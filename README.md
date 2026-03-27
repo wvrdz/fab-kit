@@ -72,7 +72,8 @@ fab/changes/260101-abcd-add-spinner/
 Install with [Homebrew](https://brew.sh/) (macOS and Linux):
 
 ```bash
-brew install yq jq gh direnv
+brew install wvrdz/tap/fab-kit    # installs fab (shim), wt, idea
+brew install yq jq gh direnv      # required tools
 ```
 
 * After installing `gh`, authenticate with `gh auth login`.
@@ -80,9 +81,10 @@ brew install yq jq gh direnv
 
 | Tool | Purpose |
 |------|---------|
+| [fab-kit](https://github.com/wvrdz/fab-kit) | Installs `fab` (version-aware shim), `wt` (worktree manager), `idea` (backlog manager) |
 | [yq](https://github.com/mikefarah/yq) | YAML processing for status files and schemas |
 | [jq](https://jqlang.github.io/jq/) | JSON processing for settings merge during sync |
-| [gh](https://cli.github.com/) | GitHub CLI - used for installation and releases |
+| [gh](https://cli.github.com/) | GitHub CLI - used for releases and PR workflows |
 | [direnv](https://direnv.net/) | Auto-loads `.envrc` to put fab scripts on PATH |
 
 #### Developing Fab Kit
@@ -90,30 +92,23 @@ brew install yq jq gh direnv
 In addition to the above:
 
 ```bash
-brew install go
+brew install go just
 ```
 
 | Tool | Purpose |
 |------|---------|
-| [Go](https://go.dev/) | Required for building the `fab` binary from source (`src/go/fab/`) |
+| [Go](https://go.dev/) | Required for building binaries from source (`src/go/`) |
+| [just](https://github.com/casey/just) | Task runner for build, test, and release recipes |
 
 ### 1. Install
 
 #### New project
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wvrdz/fab-kit/main/scripts/install.sh | bash
+fab init
 ```
 
-#### Initialize
-
-**In your terminal:**
-
-```bash
-fab/.kit/scripts/fab-sync.sh            # creates directories, symlinks, docs/memory/, .gitignore
-# direnv allow                          # Done by fab-sync.sh automatically. approve .envrc (adds scripts to PATH)
-# No direnv? export PATH="$PWD/fab/.kit/scripts:$PATH"
-```
+The `fab` shim (installed via Homebrew above) handles everything: fetches the latest kit release, caches it locally at `~/.fab-kit/versions/`, runs setup, and creates `fab/project/config.yaml` with the pinned version.
 
 **Then in your AI agent:**
 
@@ -122,9 +117,18 @@ fab/.kit/scripts/fab-sync.sh            # creates directories, symlinks, docs/me
 $fab-setup    # Codex
 ```
 
-This generates `fab/project/config.yaml` and `fab/project/constitution.md` (your project's architectural rules).
+This generates `fab/project/constitution.md` (your project's architectural rules) and completes the project configuration.
+
+#### Alternative: curl install (without Homebrew)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wvrdz/fab-kit/main/scripts/install.sh | bash
+fab/.kit/scripts/fab-sync.sh
+```
 
 #### Updating from a previous version
+
+To update the pinned version, edit `fab_version` in `fab/project/config.yaml` — the shim downloads the new version on next invocation. Or update the kit in-place:
 
 ```bash
 fab-upgrade.sh           # downloads latest kit, replaces fab/.kit/, auto-runs fab-sync.sh
@@ -132,12 +136,6 @@ fab-upgrade.sh v0.24.0   # downloads a specific version instead of latest
 ```
 
 If the upgrade reports a version mismatch, run `/fab-setup migrations` in your AI agent to apply migrations. Safe to re-run.
-
-To repair symlinks and scaffold structure without downloading a new release (useful when developing fab-kit itself):
-
-```bash
-bash fab/.kit/scripts/fab-sync.sh
-```
 
 ### 2. Your first change
 
@@ -380,23 +378,25 @@ The operator is a long-running coordination layer that sits in its own tmux pane
 
 ## Packages
 
-Fab Kit ships standalone shell CLI tools in `fab/.kit/packages/`. These are general-purpose developer workflow utilities - independent of the fab pipeline - and are distributed automatically via `kit.tar.gz`.
+Fab Kit includes standalone CLI tools — general-purpose developer workflow utilities independent of the fab pipeline.
 
 | Package | Purpose |
 |---------|---------|
-| **idea** | Per-repo idea backlog in `fab/backlog.md` - add, list, edit, complete, remove |
 | **wt** | Git worktree management - create, open, list, delete worktrees with random naming |
+| **idea** | Per-repo idea backlog in `fab/backlog.md` - add, list, edit, complete, remove |
 
 ### Setup
 
-Projects using direnv get CLI tools (`wt`, `idea`) on PATH automatically via `.envrc`. The Go binaries are distributed in `fab/.kit/bin/`.
+`brew install wvrdz/tap/fab-kit` installs `wt` and `idea` as system-level binaries alongside the `fab` shim. They are standalone — not version-coupled to any per-repo fab-kit version.
 
 ### Development
 
 After cloning, run Go tests:
 
 ```bash
-just test               # run all tests
+just test               # run all tests (fab, wt, idea, shim)
+just build              # build all binaries for current platform
+just build-shim         # build the fab shim separately
 ```
 
 ## Learn More
