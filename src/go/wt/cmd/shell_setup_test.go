@@ -39,7 +39,7 @@ func TestShellSetup_EmptyShell(t *testing.T) {
 	if r.ExitCode == 0 {
 		t.Error("expected non-zero exit code for empty SHELL")
 	}
-	assertContains(t, r.Stderr, "unsupported shell")
+	assertContains(t, r.Stderr, "SHELL environment variable is not set")
 }
 
 func TestShellSetup_WrapperContainsCdDetection(t *testing.T) {
