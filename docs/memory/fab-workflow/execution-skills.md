@@ -302,11 +302,15 @@ Every mode follows the same rhythm: interpret user intent → refresh state → 
 
 #### Autopilot
 
-Drives a queue of changes through the full pipeline — spawning agents, monitoring progress, merging PRs, and rebasing downstream changes. Confirm queue before starting (destructive — merges PRs).
+Drives a queue of changes through the full pipeline — spawning agents, monitoring progress, and collecting PRs for review. The default mode is **stack-then-review**: all queued changes build on each other via implicit `depends_on` chaining, PRs are created but NOT merged until the user explicitly requests merging. Confirm queue before starting (destructive tier). Default confirmation: "Confirm upfront (creates PRs — merge after review)."
 
-**Queue ordering**: User-provided (exact order given), confidence-based (descending score), or hybrid (partial user constraints, confidence tiebreaker).
+**Queue ordering**: User-provided (exact order given), confidence-based (descending score), or hybrid (partial user constraints, confidence tiebreaker). User-provided ordering implies implicit `--base` chaining — each queued change after the first gets `depends_on: [<prev-change-id>]` automatically.
 
-**Per-change loop**: Spawn worktree (`--reuse` for respawns, `--base <prev-change>` for user-provided ordering) → open agent tab with `/fab-switch <change>` → gate check confidence (if >= gate, send `/fab-fff`; if < gate, flag to user) → monitor → merge PR from operator's shell → rebase next → optional cleanup (`wt delete`) → report progress.
+**Per-change loop (stack-then-review, default)**: Spawn worktree (`--reuse` for respawns, `--base <prev-change>` for user-provided ordering) → resolve dependencies (cherry-pick `depends_on` entries into worktree) → open agent tab with `/fab-switch <change>` → gate check confidence (if >= gate, send `/fab-fff`; if < gate, flag to user) → monitor → on completion, record branch in `branch_map`, collect PR URL → dispatch next change (with implicit `depends_on`) → report `"ab12: PR ready. 1 of 3 complete. Starting cd34."`.
+
+**Queue completion summary**: When all changes in a stack-then-review queue complete, the operator displays a summary with all PR links and suggested merge order (base-first). The user can merge individually, or ask the operator to merge all in dependency order. When merging in order, the operator merges each PR sequentially, waiting for CI to pass before proceeding to the next. CI failure halts the merge sequence.
+
+**`--merge-on-complete` opt-in**: Reverts to the previous merge-as-you-go behavior — merge each PR on completion, rebase next change onto `origin/main`. Confirmation text changes to "Confirm upfront (merges PRs on completion)." Natural language equivalent: "merge as you go".
 
 **Failure matrix**:
 
@@ -314,7 +318,8 @@ Drives a queue of changes through the full pipeline — spawning agents, monitor
 |---------|--------|---------|
 | Confidence below gate | Flag to user: run `/fab-fff` or skip | Wait for user input |
 | Review fails (rework exhausted) | Flag, skip to next | Yes |
-| Rebase conflict | Flag, skip to next | Yes |
+| Cherry-pick conflict (stack-then-review) | Escalate, do not spawn | No — queue halts, wait for user input |
+| Rebase conflict (merge-on-complete) | Flag, skip to next | Yes |
 | Agent pane dies | 1 respawn attempt, then flag and skip | Yes |
 | Stage timeout (>30 min same stage) | Flag regardless of retry state | Yes |
 | Total timeout (>2 hr per change) | Flag for review | Yes |
@@ -526,10 +531,17 @@ All settings are session-scoped — they reset when the operator session restart
 **Why**: Without an explicit prohibition, an operator (especially after `/clear` or under time pressure) could shortcut by sending freeform implementation instructions directly to an agent pane — bypassing intake generation, confidence scoring, and the full pipeline. This violates the fab workflow's core value: specification-driven development with traceability (Constitution §II).
 *Introduced by*: 260326-u3un-operator-enforce-pipeline-routing
 
+### Stack-Then-Review Autopilot Default (operator7)
+**Decision**: The autopilot queue defaults to **stack-then-review** mode. All queued changes after the first implicitly get `depends_on: [<prev-change-id>]` (equivalent to implicit `--base` chaining). PRs are created but not merged until the user reviews and explicitly requests merging. The previous merge-as-you-go behavior is preserved via `--merge-on-complete` opt-in flag. Queue completion produces a summary with all PR links and suggested merge order (base-first). Ordered merge waits for CI on each PR before proceeding to next.
+**Why**: The previous merge-as-you-go default caused two problems: (1) rebase conflicts when rebasing dependent changes onto freshly-merged `origin/main` re-linearized commits that cherry-pick resolution had already handled, and (2) no opportunity for holistic review of the full change set before any code merged to `main`. Stack-then-review gives the user full review control over the entire queue.
+**Rejected**: Keeping merge-as-you-go as default — too many rebase conflicts and no review control. Available as opt-in for users who want it.
+*Introduced by*: 260327-gwg9-operator-base-chaining-default
+
 ## Changelog
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260327-gwg9-operator-base-chaining-default | 2026-03-27 | Changed `/fab-operator7` autopilot default from merge-as-you-go to **stack-then-review**: queued changes get implicit `depends_on` chaining (implicit `--base`), PRs created but not merged until user reviews. Queue completion summary with ordered merge support. Previous behavior preserved via `--merge-on-complete` opt-in. Confirmation prompt updated. Failure matrix updated: cherry-pick conflict replaces rebase conflict in default mode. |
 | 260326-oxgu-unified-tick-status-list | 2026-03-26 | Updated `/fab-operator7` tick status frame: replaced two-block layout (changes + 👁 watches) with a single unified list. Every entry gets `[type]` prefix (`[change]`/`[watch]`), consistent column layout (Type, ID, Autopilot, Health, Detail). Autopilot moved from header (`autopilot 1/3`) to per-entry `▶` symbol. Watches gain health emojis (🟢 healthy, 🟡 new items, 🔴 errored, ⏸ paused) matching change emoji column. Watch timestamps use relative format (`3m ago`). Header simplified to `N tracked` total count. |
 | 260326-13ro-operator7-direct-fab-new-spawn | 2026-03-26 | Updated operator7 "From raw text" spawn path: removed `idea add` intermediate step, operator now passes description directly to `/fab-new`. Spawn sequence aligned with structured flow (worktree → deps → spawn → enroll → completion). Explanatory paragraph updated to attribute traceability to `/fab-new` Origin section instead of `idea add`. |
 | 260326-u3un-operator-enforce-pipeline-routing | 2026-03-26 | Added "Pipeline-first routing" principle to `/fab-operator7` §1: operator MUST route all new work through `/fab-new` then pipeline commands, MUST NOT dispatch raw inline implementation instructions to agent panes, MUST NOT use `/fab-continue` to skip intake. Operational maintenance exempt. Reinforcing blockquote added to §6 "Working a Change" referencing the §1 principle. |
