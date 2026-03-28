@@ -22,7 +22,7 @@ Standardizing to `⚡{worktree-name}` gives a visually distinct, consistent nami
 
 ### Update `fab/.kit/skills/fab-operator7.md`
 
-Three `tmux new-window -n` invocations need their tab name argument updated:
+Four `tmux new-window -n` invocations need their tab name argument updated:
 
 1. **Line ~305** (generic "Open agent tab" reference):
    - From: `tmux new-window -n "fab-<id>" -c <worktree-path> ...`
