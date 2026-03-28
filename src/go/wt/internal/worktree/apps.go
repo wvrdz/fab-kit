@@ -168,6 +168,9 @@ func OpenInApp(appCmd, path, repoName, wtName string) error {
 	switch appCmd {
 	case "open_here":
 		fmt.Printf("cd -- %q\n", path)
+		if os.Getenv("WT_WRAPPER") == "" {
+			fmt.Fprintln(os.Stderr, `hint: run "wt shell-setup" for setup instructions`)
+		}
 		return nil
 	case "code":
 		return runCommand("code", path)
