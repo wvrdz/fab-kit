@@ -1,0 +1,17 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-03-28T08:32:25Z"}
+{"args":"Bug fix: wt open Open Here option prints cd command as text instead of changing directory","cmd":"fab-new","event":"command","ts":"2026-03-28T08:32:25Z"}
+{"delta":"+3.1","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-03-28T08:33:26Z"}
+{"delta":"+0.0","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-03-28T08:33:30Z"}
+{"cmd":"fab-switch","event":"command","ts":"2026-03-28T08:33:51Z"}
+{"cmd":"fab-fff","event":"command","ts":"2026-03-28T08:34:53Z"}
+{"delta":"-0.3","event":"confidence","score":2.8,"trigger":"calc-score","ts":"2026-03-28T08:36:04Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"spec","ts":"2026-03-28T08:36:08Z"}
+{"delta":"+0.0","event":"confidence","score":2.8,"trigger":"calc-score","ts":"2026-03-28T08:37:01Z"}
+{"delta":"+1.0","event":"confidence","score":3.8,"trigger":"calc-score","ts":"2026-03-28T08:37:07Z"}
+{"delta":"+0.0","event":"confidence","score":3.8,"trigger":"calc-score","ts":"2026-03-28T08:37:10Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"tasks","ts":"2026-03-28T08:38:10Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"apply","ts":"2026-03-28T08:38:10Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"review","ts":"2026-03-28T08:41:35Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"hydrate","ts":"2026-03-28T08:43:55Z"}
+{"event":"review","result":"passed","ts":"2026-03-28T08:43:55Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"ship","ts":"2026-03-28T08:44:35Z"}
