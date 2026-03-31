@@ -258,7 +258,7 @@ Read `agent.spawn_command` from `config.yaml` (loaded at startup). Default: `cla
 tmux new-window -n "fab-<id>" -c <worktree-path> "<spawn_cmd> '<command>'"
 ```
 
-> **Auto-enroll is mandatory.** Every spawned agent MUST be enrolled in the monitored set immediately. The operator MUST NOT ask the user whether to monitor — this decision is already made by the act of spawning.
+> **Auto-enroll is mandatory.** Every spawned agent MUST be enrolled in the monitored set immediately. The operator MUST NOT ask the user whether to monitor a spawned agent — this decision is already made by the act of spawning.
 
 ### Working a Change
 
