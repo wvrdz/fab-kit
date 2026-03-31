@@ -193,11 +193,13 @@ Steps execute 1→3 for safety. If interrupted, re-run detects folder already in
 - Restore mode requires explicit `<change-name>` — no "restore most recent" convenience
 - Restore mode optionally activates via `--switch` flag
 
-### `/fab-operator4` (Standalone Coordination Skill)
+### `/fab-operator4` (Standalone Coordination Skill) — *superseded by `/fab-operator7`*
 
-`/fab-operator4` is a standalone, self-contained coordination skill — NOT a pipeline stage. It runs as a long-lived Claude session in a dedicated tmux pane, observing agents via `fab pane-map`, routing commands via `tmux send-keys`, monitoring progress via `/loop`, and auto-answering idle agent prompts. Launch via `fab/.kit/scripts/fab-operator4.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running the spawn command from `config.yaml` `agent.spawn_command` (via `lib/spawn.sh`) with `'/fab-operator4'`.
+> **Note**: Operator4 has been superseded by `/fab-operator7`. The skill file and launcher script have been removed. This section is preserved as historical context for the design decisions that evolved into operator7. The current operator is `/fab-operator7` — see its skill file for authoritative behavior.
 
-Operator4 is the single operator skill. Previous iterations (operator1, operator2, operator3) have been removed — their behavior is fully inlined into operator4 as a standalone file. An agent reading operator4 has complete knowledge of all operator behavior from this single file plus the standard `_` files loaded via `_preamble.md`.
+`/fab-operator4` was a standalone, self-contained coordination skill — NOT a pipeline stage. It ran as a long-lived Claude session in a dedicated tmux pane, observing agents via `fab pane-map`, routing commands via `tmux send-keys`, monitoring progress via `/loop`, and auto-answering idle agent prompts.
+
+Operator4 was the first standalone operator skill. Previous iterations (operator1, operator2, operator3) were removed — their behavior was fully inlined into operator4 as a standalone file.
 
 #### Principles
 
@@ -345,33 +347,9 @@ All settings are session-scoped — they reset when the operator session restart
 - **No persistent audit trail for v1**: Per-answer logging is inline only — no file-backed log
 - **Hardcoded patterns**: Question indicator patterns embedded in skill file, not configurable via config.yaml
 
-#### Launcher Script
+#### Launcher Script (removed)
 
-`fab-operator4.sh` launches operator4. Uses a singleton tmux tab named `operator`. Only one operator session runs at a time. It has full capability parity with operator1 — all eight use cases (UC1-UC8), same confirmation model, same pre-send validation, same bounded retries, same context discipline — but replaces operator1's fire-and-forget pattern with proactive monitoring after every action that dispatches work to another agent. Launch via `fab/.kit/scripts/fab-operator4.sh` — a singleton launcher that creates (or switches to) a tmux tab named `operator` running the spawn command from `config.yaml` `agent.spawn_command` (via `lib/spawn.sh`) with `'/fab-operator4'`. Only one operator runs at a time in the shared `operator` tab.
-
-### `/fab-operator5` (Use Case Registry + Branch Fallback)
-
-`/fab-operator5` is operator4's successor — a standalone coordination skill that adds a **use case registry**, **branch fallback resolution**, and three built-in proactive monitoring use cases. All operator4 behavior (principles, safety model, auto-nudge, autopilot) is carried forward unchanged. Launch via `fab/.kit/scripts/fab-operator5.sh` (singleton `operator` tab, reads spawn command from `config.yaml` `agent.spawn_command` via `lib/spawn.sh`).
-
-#### Key Differences from Operator4
-
-**Use case registry** replaces operator4's single-purpose monitoring. Operator4's `/loop` ran only when the monitored set was non-empty; operator5's `/loop` is the operator's heartbeat — it runs as long as **any use case is enabled**. Use cases are toggleable via natural language and persisted in `.fab-operator.yaml` (repo root, hidden). Each `/loop` tick begins with a status roster showing enabled/disabled use cases with one-line summaries.
-
-**Three built-in use cases**:
-
-| Use Case | Description | Default |
-|----------|-------------|---------|
-| `monitor-changes` | Operator4's existing monitoring system (monitored set, 6-step tick, auto-nudge, stuck detection) reframed as a use case. Behavior identical | Enabled |
-| `linear-inbox` | Watches Linear for new assigned issues via MCP, offers to spawn agents. Deduplicates against `.status.yaml` issue IDs across active and archived changes | Disabled |
-| `pr-freshness` | Detects stale PRs via `gh pr list` `mergeStateStatus` (`BEHIND`/`DIRTY`), routes rebase instructions to agents in tabs. Does NOT rebase directly — consistent with "coordinate, don't execute" | Disabled |
-
-**Branch fallback resolution** (in Safety Model, user-initiated only — not monitoring ticks): when `fab resolve` fails, scans local and remote branch names via `git for-each-ref`. Single match with read-only intent uses `git show` to read `.status.yaml` from the branch; action intent offers worktree creation. Multiple matches show disambiguation; no match reports failure.
-
-**Tab preparation procedure**: shared pre-dispatch sequence used by playbooks and use cases that send commands to agent tabs. Extends pre-send validation (verify pane, check idle) with two new steps: check active change matches target (send `/fab-switch` if not), check branch alignment (send `/git-branch` if misaligned). Then dispatch.
-
-**Playbooks** (renamed from operator4's "Modes of Operation"): on-demand, user-triggered coordination patterns. Same 9 playbooks carried from operator4 (broadcast, sequenced rebase, merge PRs, spawn agent, status dashboard, unstick agent, notification, rebase all, autopilot). All playbooks that dispatch work use the tab preparation procedure.
-
-**Legacy cleanup**: deleted `fab/.kit/scripts/fab-operator{1,2,3}.sh` — obsolete launcher scripts from the operator inheritance chain. `fab-operator4.sh` remains as the active launcher.
+The `fab-operator4.sh` launcher has been removed. The current operator launcher is `fab-operator7.sh`.
 
 ## Design Decisions
 
@@ -498,8 +476,8 @@ All settings are session-scoped — they reset when the operator session restart
 *Introduced by*: 260315-a2b2-standalone-operator4-rewrite
 
 ### Use Case Registry Over Single-Purpose Monitoring
-**Decision**: Operator5 replaces operator4's single-purpose monitoring with a use case registry — named, toggleable concerns checked on each `/loop` tick. The loop is the operator's heartbeat (runs while any use case is enabled), not tied to the monitored set.
-**Why**: Real workflows have multiple concurrent monitoring concerns (change progress, Linear inbox, PR staleness) that all need periodic attention. A registry model lets users toggle concerns without operator restarts. Three built-in use cases ship with operator5 (fixed set, not user-extensible).
+**Decision**: The operator uses a use case registry instead of single-purpose monitoring — named, toggleable concerns checked on each `/loop` tick. The loop is the operator's heartbeat (runs while any use case is enabled), not tied to the monitored set.
+**Why**: Real workflows have multiple concurrent monitoring concerns (change progress, Linear inbox, PR staleness) that all need periodic attention. A registry model lets users toggle concerns without operator restarts. Three built-in use cases (fixed set, not user-extensible).
 **Rejected**: CLI-level branch resolution (`fab resolve --search-branches`) — fab operates on change folders, not git branches; branch awareness belongs in the operator skill.
 *Introduced by*: 260317-yrgo-operator5-branch-fallback
 
@@ -510,7 +488,7 @@ All settings are session-scoped — they reset when the operator session restart
 *Introduced by*: 260317-yrgo-operator5-branch-fallback
 
 ### Dependency-Aware Agent Spawning (operator7)
-**Decision**: `/fab-operator7` extends operator6 with pre-spawn dependency resolution. When spawning an agent for a change with `depends_on` entries, the operator cherry-picks dependency content into the worktree before opening the agent tab. Uses `git cherry-pick --no-commit origin/main..<dep-branch> && git commit -m "operator: cherry-pick <dep> dependency"`. On conflict: abort, escalate, do not spawn.
+**Decision**: `/fab-operator7` adds pre-spawn dependency resolution to the operator. When spawning an agent for a change with `depends_on` entries, the operator cherry-picks dependency content into the worktree before opening the agent tab. Uses `git cherry-pick --no-commit origin/main..<dep-branch> && git commit -m "operator: cherry-pick <dep> dependency"`. On conflict: abort, escalate, do not spawn.
 **Why**: Without dependency awareness, agents working on dependent changes start from a baseline missing the dependency code, causing build failures, spec divergence, and manual intervention. This defeats the operator's "automate the routine" principle.
 **Rejected**: `git merge --squash` — rejected for unattended sessions where merge machinery introduces risk. Transitive dependency resolution — rejected because leaf dependency branches already carry transitive content via the operator's own cherry-picking when those deps were spawned; `origin/main..<dep-branch>` gives the complete transitive closure.
 *Introduced by*: 260324-prtv-operator7-dep-aware-spawning
