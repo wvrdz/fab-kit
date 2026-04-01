@@ -12,7 +12,7 @@ progress:
     review: done
     hydrate: done
     ship: done
-    review-pr: active
+    review-pr: done
 checklist:
     generated: true
     path: checklist.md
@@ -38,7 +38,7 @@ stage_metrics:
     review: {started_at: "2026-04-01T04:46:55Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-01T04:49:02Z"}
     hydrate: {started_at: "2026-04-01T04:49:02Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-01T04:52:09Z"}
     ship: {started_at: "2026-04-01T04:52:09Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-01T04:54:24Z"}
-    review-pr: {started_at: "2026-04-01T04:54:24Z", driver: git-pr, iterations: 1}
+    review-pr: {started_at: "2026-04-01T04:54:24Z", driver: git-pr, iterations: 1, completed_at: "2026-04-01T05:03:09Z"}
 prs:
     - https://github.com/wvrdz/fab-kit/pull/294
-last_updated: 2026-04-01T04:54:24Z
+last_updated: 2026-04-01T05:03:09Z
