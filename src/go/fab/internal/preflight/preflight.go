@@ -133,12 +133,12 @@ func checkSyncStaleness(fabRoot string) {
 		syncVersion = strings.TrimSpace(string(data))
 	} else {
 		if kitVersion != "" {
-			fmt.Fprintf(os.Stderr, "⚠ Skills may be out of sync — run fab-sync.sh to refresh\n")
+			fmt.Fprintf(os.Stderr, "⚠ Skills may be out of sync — run fab sync to refresh\n")
 		}
 		return
 	}
 
 	if kitVersion != "" && syncVersion != "" && kitVersion != syncVersion {
-		fmt.Fprintf(os.Stderr, "⚠ Skills out of sync — run fab-sync.sh to refresh (engine %s, last synced %s)\n", kitVersion, syncVersion)
+		fmt.Fprintf(os.Stderr, "⚠ Skills out of sync — run fab sync to refresh (engine %s, last synced %s)\n", kitVersion, syncVersion)
 	}
 }

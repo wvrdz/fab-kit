@@ -119,13 +119,26 @@ func CreateExploratoryWorktree(name string, ctx *RepoContext, rb *Rollback, star
 	return wtPath, nil
 }
 
-// RunWorktreeSetup runs the init script in the worktree directory.
+// RunWorktreeSetup runs the init script/command in the worktree directory.
 // mode: "force" runs without prompting, "" prompts for confirmation.
-// initScript is the relative path from repo root (e.g., "fab/.kit/worktree-init.sh").
+// initScript is either a relative path from repo root (e.g., "fab/.kit/worktree-init.sh")
+// or a command invocation (e.g., "fab-kit sync").
 func RunWorktreeSetup(wtPath, mode, initScript string, repoRoot string) error {
-	scriptPath := filepath.Join(repoRoot, initScript)
-	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
-		return nil // No init script, silently skip
+	// Determine if it's a command (contains spaces) or a file path
+	var cmd *exec.Cmd
+	if strings.Contains(initScript, " ") {
+		// Command invocation: check if the command is available
+		parts := strings.Fields(initScript)
+		if _, err := exec.LookPath(parts[0]); err != nil {
+			return nil // Command not available, silently skip
+		}
+		cmd = exec.Command(parts[0], parts[1:]...)
+	} else {
+		scriptPath := filepath.Join(repoRoot, initScript)
+		if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
+			return nil // No init script, silently skip
+		}
+		cmd = exec.Command("bash", scriptPath)
 	}
 
 	if mode != "force" {
@@ -135,7 +148,6 @@ func RunWorktreeSetup(wtPath, mode, initScript string, repoRoot string) error {
 	}
 
 	fmt.Fprintln(os.Stderr, "Running worktree init...")
-	cmd := exec.Command("bash", scriptPath)
 	cmd.Dir = wtPath
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr

@@ -135,11 +135,14 @@ func runWt(t *testing.T, dir string, env []string, args ...string) wtResult {
 	t.Helper()
 	cmd := exec.Command(wtBinary, args...)
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), env...)
-	// Always set NO_COLOR to simplify output matching
-	cmd.Env = append(cmd.Env, "NO_COLOR=1")
-	// Clear WORKTREE_INIT_SCRIPT so user's env doesn't leak into tests
-	cmd.Env = append(cmd.Env, "WORKTREE_INIT_SCRIPT=")
+	cmd.Env = append(os.Environ(),
+		// Always set NO_COLOR to simplify output matching
+		"NO_COLOR=1",
+		// Clear WORKTREE_INIT_SCRIPT so user's env doesn't leak into tests
+		"WORKTREE_INIT_SCRIPT=",
+	)
+	// Append test-provided env vars last so they can override defaults above
+	cmd.Env = append(cmd.Env, env...)
 
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout

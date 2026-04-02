@@ -4,7 +4,7 @@
 
 ## Overview
 
-`fab/.kit/` is the portable engine directory that contains all workflow logic: skill definitions, artifact templates, utility shell scripts, and version tracking. It is content-only — no binaries. The system `fab` shim (installed via `brew install fab-kit`) provides version-aware execution; `fab/.kit/` provides content (skills, templates, configuration). This doc covers the `.kit/` directory structure, the system shim and Go backend, agent integration, distribution, updating, and monorepo guidance.
+`fab/.kit/` is the portable engine directory that contains all workflow logic: skill definitions, artifact templates, utility shell scripts, and version tracking. It is content-only — no binaries. The system provides three binaries: `fab` (router), `fab-kit` (workspace lifecycle), and `fab-go` (workflow engine), all installed via `brew install fab-kit`. The `fab` router dispatches to either `fab-kit` or the version-resolved `fab-go`. `fab/.kit/` provides content (skills, templates, configuration). This doc covers the `.kit/` directory structure, the three-binary architecture, agent integration, distribution, updating, and monorepo guidance.
 
 > **CLI Command Reference**: For calling conventions and full command signatures, see `fab/.kit/skills/_cli-fab.md` (the canonical CLI reference, loaded by every skill via `_preamble.md`).
 
@@ -81,10 +81,7 @@ fab/.kit/
 │   ├── on-session-start.sh # SessionStart hook — delegates to fab hook session-start
 │   ├── on-stop.sh          # Stop hook — delegates to fab hook stop
 │   └── on-user-prompt.sh   # UserPromptSubmit hook — delegates to fab hook user-prompt
-├── sync/                   # Kit-level sync scripts (iterated by fab-sync.sh)
-│   ├── 1-prerequisites.sh  # Validate required tools (git, bash, yq, gh, direnv, fab) — fatal on missing
-│   ├── 2-sync-workspace.sh # Workspace sync logic (directories, symlinks, agents, .envrc, .gitignore, settings)
-│   ├── 3-direnv.sh         # Run direnv allow (idempotent)
+├── sync/                   # Kit-level sync scripts (remaining after fab-kit sync absorption)
 │   └── 5-sync-hooks.sh     # Thin wrapper delegating to fab hook sync via system shim (registers hooks into .claude/settings.local.json)
 └── scripts/                # Shell utilities
     ├── batch-fab-archive-change.sh  # Batch archive completed changes via tmux + Claude
@@ -93,7 +90,6 @@ fab/.kit/
     ├── fab-operator7.sh    # Launch operator7 in singleton tmux tab ("operator")
     ├── fab-doctor.sh       # Prerequisite checker (7 tools: git, fab, bash, yq v4+, jq, gh, direnv+hook)
     ├── fab-help.sh         # Print help overview
-    ├── fab-sync.sh         # Single entry point — thin orchestrator iterating sync/*.sh then fab/sync/*.sh
     └── lib/                # Utility scripts (not user-facing)
         ├── frontmatter.sh      # Shared frontmatter parser — YAML (frontmatter_field) and shell-comment (shell_frontmatter_field)
         └── spawn.sh            # Shared spawn command reader — fab_spawn_cmd() reads agent.spawn_command from config.yaml with fallback
@@ -101,25 +97,21 @@ fab/.kit/
 
 ### Shell Scripts
 
-#### `fab-sync.sh`
+#### `fab-sync.sh` (Removed)
 
-Single entry point for workspace sync — a thin orchestrator (~30 lines) that iterates `fab/.kit/sync/*.sh` in sorted order (kit-level scripts), then `fab/sync/*.sh` (project-specific scripts, if the directory exists). Uses `set -euo pipefail` so any script failure halts the pipeline. Prints each script name before execution. Contains no sync logic itself — all logic lives in the iterated scripts.
+Replaced by `fab-kit sync` — a Go binary subcommand. See the `fab-kit` binary section below for the sync implementation. The `$WORKTREE_INIT_SCRIPT` env var in `.envrc` now points to `fab-kit sync`.
 
-Replaces the previous three-step chain (`worktree-init.sh` → `2-rerun-sync-workspace.sh` → `fab-sync.sh`) with a direct iteration model. The `$WORKTREE_INIT_SCRIPT` env var in `.envrc` points to this script, making it the entry point for both new worktree setup and workspace re-sync.
+#### `sync/1-prerequisites.sh` (Removed)
 
-#### `sync/1-prerequisites.sh`
+Prerequisites check absorbed into `fab-kit sync`. The Go implementation validates required tools (git, bash, yq v4+, jq, gh, direnv) before performing sync operations.
 
-Kit-level sync script. Thin delegate that `exec`s `fab/.kit/scripts/fab-doctor.sh`. Preserves the `fab-sync.sh` iteration model (`sync/*.sh` in sorted order) while delegating all tool checking to the standalone doctor script. Doctor's non-zero exit propagates directly (process replacement via `exec`), halting the sync pipeline. The script body is 3 lines: shebang, `set -euo pipefail`, and the `exec` call.
+#### `sync/3-direnv.sh` (Removed)
 
-#### `sync/3-direnv.sh`
+`direnv allow` absorbed into `fab-kit sync` as an idempotent step.
 
-Kit-level sync script. Runs `direnv allow` (idempotent, no guard needed). Executes on every sync.
+#### `sync/2-sync-workspace.sh` (Removed)
 
-#### `sync/2-sync-workspace.sh`
-
-Kit-level sync script (the largest sync step) containing the full workspace sync logic. Organized into 4 sections: (1) directories, (1b) fab/.kit-migration-version, (2) scaffold tree-walk, (3+3b+4) skill symlinks and agent files. Cleans up stale artifacts from previous kit versions. Creates directories (`fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/`) with `.gitkeep` files in `fab/changes/` and `fab/changes/archive/`. Creates `fab/.kit-migration-version` using the dual-version model: new projects get the engine version, existing projects (detected via `config.yaml` presence) get `0.1.0` base version, existing `fab/.kit-migration-version` is preserved.
-
-The scaffold tree-walk (section 2) generically processes all files under `scaffold/` using the overlay tree convention: each file's path relative to `scaffold/` mirrors its destination relative to the repo root. Strategy dispatch is based on the `fragment-` filename prefix: `fragment-` + `.json` → `json_merge_permissions` (merge `permissions.allow` arrays via jq), `fragment-` + other → `line_ensure_merge` (append non-duplicate, non-comment lines), no prefix → copy-if-absent. Both merge helpers are defined in the same file. `line_ensure_merge` absorbs the legacy `.envrc` symlink-to-file migration (resolves symlink targets before line-ensuring). Template files (`config.yaml`, `constitution.md`) are copied by the tree-walk via copy-if-absent; `/fab-setup` detects raw templates at runtime by checking for placeholder strings (`{PROJECT_NAME}`, `{Project Name}`) and overwrites them interactively. It is the single source of truth for structural setup. `/fab-setup` delegates to `fab-sync.sh` (the orchestrator) and adds the interactive parts (config, constitution).
+All workspace sync logic absorbed into `fab-kit sync` (Go binary). The Go implementation replicates all behavior: directory scaffolding, scaffold tree-walk with fragment-merge and copy-if-absent strategies, multi-agent skill deployment, stale skill cleanup, version stamp tracking, and `fab/.kit-migration-version` creation. `/fab-setup` delegates to `fab-kit sync` (instead of `fab-sync.sh`) and adds the interactive parts (config, constitution).
 
 #### Removed: `lib/` shell scripts (statusman.sh, logman.sh, calc-score.sh, changeman.sh, archiveman.sh)
 
@@ -163,7 +155,7 @@ Batch scripts follow the `batch-fab-{verb}-{entity}.sh` naming pattern. Each cre
 
 ### Agent Skill Deployment
 
-`sync/2-sync-workspace.sh` deploys skills to each agent using the `sync_agent_skills` function. Deployment is **conditional** — by default, each agent's CLI command is checked via `command -v` before syncing. If an agent's CLI is not found in PATH, its sync is skipped with a message, and existing dot folders are preserved. When no agents are detected, a warning is printed but the script continues (exit 0). The `FAB_AGENTS` environment variable (space-separated list of CLI command names, e.g., `claude opencode gemini`) can override PATH detection for testing and CI — when set, only the listed agents are synced.
+`fab-kit sync` deploys skills to each agent. Deployment is **conditional** — by default, each agent's CLI command is checked via PATH lookup before syncing. If an agent's CLI is not found in PATH, its sync is skipped with a message, and existing dot folders are preserved. When no agents are detected, a warning is printed but sync continues. The `FAB_AGENTS` environment variable (space-separated list of CLI command names, e.g., `claude opencode gemini`) can override PATH detection for testing and CI — when set, only the listed agents are synced.
 
 All `*.md` files in `fab/.kit/skills/` are deployed, including underscore partials (`_preamble.md`, `_generation.md`, `_cli-fab.md`, `_cli-external.md`, `_naming.md`) which have `user-invocable: false` frontmatter to prevent direct invocation. The skill prompt files are agent-agnostic markdown; only the deployment locations and formats differ per agent:
 
@@ -193,7 +185,7 @@ All `*.md` files in `fab/.kit/skills/` are deployed, including underscore partia
 
 ### Distribution & Bootstrapping
 
-`.kit/` is a content-only directory — no binaries. The system `fab` shim (installed via `brew install fab-kit`) provides version-aware execution. `.kit/` provides content (skills, templates, configuration).
+`.kit/` is a content-only directory — no binaries. The system binaries (`fab`, `fab-kit`, installed via `brew install fab-kit`) provide version-aware execution and workspace lifecycle management. `.kit/` provides content (skills, templates, configuration).
 
 #### Bootstrap Sequence
 
@@ -204,7 +196,7 @@ cd <repo>
 fab init
 ```
 
-`fab init` populates `fab/.kit/` from the shim's version cache, sets `fab_version` in `config.yaml`, and runs `fab-sync.sh`.
+`fab init` populates `fab/.kit/` from the version cache, sets `fab_version` in `config.yaml`, and calls `Sync()` directly (the same logic as `fab-kit sync`).
 
 **Legacy method** (curl one-liner, for environments without Homebrew):
 ```
@@ -238,16 +230,16 @@ All contain a bare semver string (`MAJOR.MINOR.PATCH`). See [migrations.md](migr
 
 ### Updating `.kit/`
 
-Run `fab upgrade` to update to the latest release. The shim subcommand downloads the new version to the cache (if not present), atomically replaces `fab/.kit/` with content from the cache, updates `fab_version` in `config.yaml`, and re-runs `fab-sync.sh` to repair directories and agents. After the upgrade, if `fab/.kit-migration-version` is behind the new engine version, the output includes a migration reminder. See [distribution.md](distribution.md) for full upgrade details.
+Run `fab upgrade` to update to the latest release. The fab-kit subcommand downloads the new version to the cache (if not present), atomically replaces `fab/.kit/` with content from the cache, updates `fab_version` in `config.yaml`, and calls `Sync()` directly to repair directories and agents. After the upgrade, if `fab/.kit-migration-version` is behind the new engine version, the output includes a migration reminder. See [distribution.md](distribution.md) for full upgrade details.
 
-Skill deployments in `.claude/skills/`, `.opencode/commands/`, `.agents/skills/`, and `.gemini/skills/` are refreshed by `fab-sync.sh` after the update. OpenCode symlinks resolve automatically; copies for Claude Code, Codex, and Gemini are re-copied.
+Skill deployments in `.claude/skills/`, `.opencode/commands/`, `.agents/skills/`, and `.gemini/skills/` are refreshed by `fab-kit sync` after the update. OpenCode symlinks resolve automatically; copies for Claude Code, Codex, and Gemini are re-copied.
 
 **Preserved** (lives outside `.kit/`): `config.yaml`, `constitution.md`, `docs/memory/`, `docs/specs/`, `changes/`, `.fab-status.yaml`, `.kit-migration-version`, `.kit-sync-version`
 **Replaced** (lives inside `.kit/`): `templates/`, `skills/`, `scripts/`, `sync/`, `migrations/`, `packages/` (idea shell package), `bin/` (`.gitkeep` only), `VERSION`
 
 ### Portability
 
-The `.kit/` directory MUST work in any project via `cp -r`, given the system `fab` binary is installed (`brew install fab-kit`). The system binary provides version-aware execution; `fab/.kit/` provides content (skills, templates, configuration). It SHALL have no assumptions about the host project's structure, language, or toolchain beyond the presence of a `fab/` directory. Project-specific configuration belongs in `fab/project/config.yaml` and `fab/project/constitution.md`, not in `.kit/`.
+The `.kit/` directory MUST work in any project via `cp -r`, given the system binaries are installed (`brew install fab-kit` installs `fab`, `fab-kit`, `wt`, `idea`). The system binaries provide version-aware routing and workspace lifecycle management; `fab/.kit/` provides content (skills, templates, configuration). It SHALL have no assumptions about the host project's structure, language, or toolchain beyond the presence of a `fab/` directory. Project-specific configuration belongs in `fab/project/config.yaml` and `fab/project/constitution.md`, not in `.kit/`.
 
 ### Monorepo Guidance
 
@@ -261,23 +253,42 @@ A monorepo is one Fab project. Place a single `fab/` at the repository root — 
 
 For mixed tech stacks, use labeled sections in `config.yaml`'s `context` field so skills can load relevant context per package.
 
-### System Shim (`fab`)
+### Three-Binary Architecture
 
-The system `fab` binary (installed via `brew install fab-kit`) is a version-aware shim that serves as the sole entry point for all fab CLI operations. On every invocation it:
+The system provides three distinct binaries, each independently executable with its own `--help`:
 
+#### `fab` (Router)
+
+The `fab` binary (installed via `brew install fab-kit`) is the user-facing entry point. It uses negative-match routing: a static allowlist of fab-kit commands (`init`, `upgrade`, `sync`, `--version`, `-v`, `--help`, `-h`, `help`) is dispatched to `fab-kit` via `syscall.Exec`; all other commands are dispatched to the version-resolved `fab-go` via `syscall.Exec`.
+
+For fab-go dispatch, the router:
 1. Walks up from CWD to find `fab/project/config.yaml`
 2. Reads `fab_version` from `config.yaml`
 3. Resolves the matching `fab-go` binary from the local cache at `~/.fab-kit/versions/{version}/fab-go`
 4. If not cached, auto-fetches from GitHub releases and caches it
 5. Execs the cached `fab-go` with full argument passthrough
 
-When not in a fab-managed repo (no `config.yaml`), the shim handles non-repo commands directly: `fab init`, `fab upgrade`, `fab --version`, `fab --help`.
+When not in a fab-managed repo (no `config.yaml`) and a non-fab-kit command is issued, the router exits with: "Not in a fab-managed repo. Run 'fab init' to set one up."
+
+`fab help` composes help from both sub-binaries: workspace commands (from fab-kit) are always shown; workflow commands (from fab-go) are shown only when inside a fab-managed repo.
+
+#### `fab-kit` (Workspace Lifecycle)
+
+The `fab-kit` binary (installed via `brew install fab-kit`) owns workspace lifecycle operations:
+
+- `fab-kit init` — initialize fab in a repo (resolve latest version, cache it, populate `fab/.kit/`, set `fab_version`, run sync)
+- `fab-kit upgrade [version]` — upgrade to a different version (download to cache, atomic replace `fab/.kit/`, update `fab_version`, run sync)
+- `fab-kit sync` — reconcile workspace with pinned version (prerequisites check, directory scaffolding, scaffold tree-walk, multi-agent skill deployment, stale cleanup, version stamp, project-level scripts, direnv allow)
+
+`fab-kit sync` replaces `fab-sync.sh` and the `sync/{1,2,3}-*.sh` scripts as a clean cut. It replicates all sync behavior in Go: directory scaffolding (creates `fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/` with `.gitkeep` files), scaffold tree-walk with three strategies (fragment JSON merge, fragment line-ensure merge, copy-if-absent), multi-agent skill deployment (conditional on agent CLI availability, per-agent format: copies for Claude Code/Codex/Gemini, symlinks for OpenCode), stale skill cleanup, version stamp (`fab/.kit-sync-version`), and project-level `fab/sync/*.sh` script execution. Prerequisites (git, bash, yq v4+, jq, gh, direnv) are validated before sync.
+
+**Source layout**: Both `fab` (router) and `fab-kit` share a single Go module at `src/go/fab-kit/` with two `cmd/` entries: `cmd/fab/main.go` and `cmd/fab-kit/main.go`. Both import shared `internal/` packages for cache, download, and config resolution. This avoids Go workspace complexity and keeps infrastructure code importable by both without duplication.
 
 The shell dispatcher at `fab/.kit/bin/fab` has been removed. The `FAB_BACKEND` env var and `.fab-backend` file override mechanism has been removed — Go is the only backend.
 
 ### Go Binary (`fab-go`)
 
-The sole backend for all fab CLI operations. Source: `src/go/fab/`.
+The workflow engine backend for all fab CLI operations. Source: `src/go/fab/`.
 
 **Module**: `github.com/sahil87/fab-kit/src/go/fab` (Go 1.22+, dependencies: cobra, gopkg.in/yaml.v3, no CGo)
 
@@ -352,7 +363,7 @@ The `_cli-fab.md` partial (renamed from `_scripts.md`, loaded by every skill via
 
 #### Underscore File Ecosystem
 
-The `_` (underscore) prefix denotes internal partial files that are loaded by skills but not user-invocable. These files have `user-invocable: false` frontmatter and are deployed alongside regular skills via `sync/2-sync-workspace.sh`. The ecosystem consists of:
+The `_` (underscore) prefix denotes internal partial files that are loaded by skills but not user-invocable. These files have `user-invocable: false` frontmatter and are deployed alongside regular skills via `fab-kit sync`. The ecosystem consists of:
 
 | File | Load strategy | Purpose |
 |------|--------------|---------|
@@ -380,17 +391,17 @@ Outputs the tmux pane ID for a change's worktree. Signature: `fab resolve <chang
 
 ## Design Decisions
 
-### All Logic in Markdown and Shell (with System Shim + Go Backend)
-**Decision**: Workflow logic lives in markdown skill files and shell scripts. The system `fab` shim (installed via `brew install fab-kit`) serves as the sole entry point, reading `fab_version` from `config.yaml` and dispatching to the cached Go backend (`fab-go`). No runtime dependencies for end users; the Go toolchain is only needed for building from source.
-**Why**: Constitution I (Pure Prompt Play) and Constitution V (Portability). Any AI agent that can read markdown and execute shell commands can drive the workflow. The Go backend is a pre-compiled static binary (no runtime dependencies via `CGO_ENABLED=0`), cached per-version at `~/.fab-kit/versions/`. The shim pattern provides version management without storing binaries in the repo.
-**Rejected**: CLI tool, npm package, or Python script — all introduce system dependencies. Also rejected: binary in repo (redundant when the shim manages versions). Also rejected: `FAB_BACKEND` override mechanism (Go is the only backend). Also rejected: shell dispatcher in repo (replaced by system shim with version awareness).
-*Source*: doc/fab-spec/README.md, fab/project/constitution.md, 260401-46hw-brew-install-system-shim
+### All Logic in Markdown and Shell (with Three-Binary Go Architecture)
+**Decision**: Workflow logic lives in markdown skill files and shell scripts. Three system binaries (`fab` router, `fab-kit` workspace lifecycle, `fab-go` workflow engine) are installed via `brew install fab-kit`. The `fab` router dispatches to `fab-kit` (for workspace commands) or the version-resolved `fab-go` (for workflow commands). No runtime dependencies for end users; the Go toolchain is only needed for building from source.
+**Why**: Constitution I (Pure Prompt Play) and Constitution V (Portability). Any AI agent that can read markdown and execute shell commands can drive the workflow. All Go binaries are pre-compiled static binaries (no runtime dependencies via `CGO_ENABLED=0`). `fab-go` is cached per-version at `~/.fab-kit/versions/`. The three-binary split enables independent testability (`fab-kit -h`, `fab-go -h`, `fab -h` each work independently) and clean separation of concerns (workspace lifecycle vs workflow engine).
+**Rejected**: CLI tool, npm package, or Python script — all introduce system dependencies. Also rejected: binary in repo (redundant when the router manages versions). Also rejected: `FAB_BACKEND` override mechanism (Go is the only backend). Also rejected: two-binary shim model (shim was untestable in isolation, blurred workspace and workflow concerns).
+*Source*: doc/fab-spec/README.md, fab/project/constitution.md, 260401-46hw-brew-install-system-shim, 260402-3ac3-three-binary-architecture
 
 ### Agent Skill Deployment Strategy
-**Decision**: Agent skill directories are deployed via copies (Claude Code, Codex, Gemini CLI) or symlinks (OpenCode). Deployment is conditional on agent CLI availability in PATH via `command -v`.
-**Why**: Copies ensure each agent has a self-contained skill file regardless of symlink support. Conditional deployment avoids creating dot folders for agents the developer doesn't use, keeping workspaces clean. The `FAB_AGENTS` env var enables deterministic testing without PATH manipulation.
+**Decision**: Agent skill directories are deployed via copies (Claude Code, Codex, Gemini CLI) or symlinks (OpenCode). Deployment is conditional on agent CLI availability in PATH. Deployment is performed by `fab-kit sync` (Go binary), replacing the previous shell implementation in `sync/2-sync-workspace.sh`.
+**Why**: Copies ensure each agent has a self-contained skill file regardless of symlink support. Conditional deployment avoids creating dot folders for agents the developer doesn't use, keeping workspaces clean. The `FAB_AGENTS` env var enables deterministic testing without PATH manipulation. Moving to Go enables consistent cross-platform behavior and testability.
 **Rejected**: Unconditional deployment to all agents — creates workspace clutter for unused agents. Also rejected: symlinks for all agents — Claude Code and Codex don't reliably follow symlinks.
-*Source*: 260303-l6nk-gemini-cli-agent-aware-sync, 260219-d2y2-copy-template-skills-drop-agents
+*Source*: 260303-l6nk-gemini-cli-agent-aware-sync, 260219-d2y2-copy-template-skills-drop-agents, 260402-3ac3-three-binary-architecture
 
 ### lib/ Subfolder for Internal Scripts
 **Decision**: Internal scripts (`statusman.sh`, `changeman.sh`, `calc-score.sh`, `preflight.sh`) live in `fab/.kit/scripts/lib/` without underscore prefix. User-facing scripts (`fab-doctor.sh`, `fab-help.sh`, `fab-sync.sh`, `fab-upgrade.sh`, batch scripts) remain in the parent `scripts/` directory.
@@ -404,9 +415,40 @@ Outputs the tmux pane ID for a change's worktree. Signature: `fab resolve <chang
 *Source*: 260218-09fa-scaffold-overlay-tree
 
 ### Single Entry Point for Workspace Sync
-**Decision**: `fab-sync.sh` is a thin orchestrator that iterates `fab/.kit/sync/*.sh` then `fab/sync/*.sh`. All sync logic lives in the iterated scripts, not in the orchestrator.
-**Why**: Eliminates the previous circular chain (`worktree-init.sh` → `2-rerun-sync-workspace.sh` → `fab-sync.sh`). Single entry point serves both new worktree setup and re-sync. Scripts self-locate via `$0` — the orchestrator passes no context.
-**Rejected**: Passing `$repo_root` as `$1` to iterated scripts — breaks independent runnability, requires argument parsing in every script.
+**Decision**: `fab-kit sync` (Go binary) is the single entry point for workspace sync, replacing the previous `fab-sync.sh` shell orchestrator. All sync logic (prerequisites, directory scaffolding, scaffold tree-walk, skill deployment, stale cleanup, version stamp, direnv allow) is implemented in Go. Project-level `fab/sync/*.sh` scripts are still executed after kit-level sync. `fab/.kit/sync/5-sync-hooks.sh` remains as the sole kit-level sync script (delegates to `fab hook sync`).
+**Why**: Go implementation enables testability, cross-platform consistency, and eliminates the shell dependency chain. Clean cut — no transition period with dual implementations.
+**Rejected**: Keeping `fab-sync.sh` alongside `fab-kit sync` (duplication, testing burden). Also rejected: absorbing `5-sync-hooks.sh` into `fab-kit sync` (would create cross-binary dependency on fab-go).
+*Source*: 260402-3ac3-three-binary-architecture
+
+### Three-Binary Split for Testability
+**Decision**: The system `fab` shim is split into `fab` (router) and `fab-kit` (workspace lifecycle) as separate binaries. Together with `fab-go` (workflow engine), there are three independently-invocable binaries.
+**Why**: The two-binary shim model was untestable in isolation — `fab init --help` could trigger dispatch to fab-go. Three binaries means `fab-kit -h`, `fab-go -h`, and `fab -h` each work independently. Clean separation: workspace lifecycle (init, upgrade, sync) is a different concern from workflow execution (status, resolve, preflight).
+**Rejected**: Keeping two binaries (shim + fab-go) — untestable, blurred concerns. Also rejected: prefix-based routing (e.g., `fab kit sync`) — changes user-facing CLI surface.
+*Source*: 260402-3ac3-three-binary-architecture
+
+### Negative-Match Router Dispatch
+**Decision**: The `fab` router maintains a static allowlist of fab-kit commands and dispatches everything else to fab-go. The fab-kit command set is small and stable; fab-go commands change with every release.
+**Why**: Negative match means the router doesn't need updating when fab-go adds subcommands. Same pattern as the previous `nonRepoCommands` map.
+**Rejected**: Positive match (router would need fab-go's command list, requiring updates on every new subcommand). Also rejected: prefix-based routing (changes CLI surface).
+*Source*: 260402-3ac3-three-binary-architecture
+
+### Single Go Module for fab + fab-kit
+**Decision**: Both `fab` (router) and `fab-kit` binaries share a single Go module at `src/go/fab-kit/` with two `cmd/` entries (`cmd/fab/`, `cmd/fab-kit/`) sharing `internal/` packages.
+**Why**: Both binaries need `EnsureCached()`, `CachedKitDir()`, `Download()`, and `ResolveConfig()`. A shared `internal/` package is the standard Go pattern. No Go workspace complexity or published shared modules needed.
+**Rejected**: Separate Go modules (requires Go workspaces or a published shared module). Code duplication (maintenance burden).
+*Source*: 260402-3ac3-three-binary-architecture
+
+### Clean Cut for Sync Migration
+**Decision**: Shell scripts (`fab-sync.sh`, `1-prerequisites.sh`, `2-sync-workspace.sh`, `3-direnv.sh`) are removed immediately when `fab-kit sync` ships — no deprecation period.
+**Why**: Both implementations would need to coexist and be tested if phased, adding complexity for no benefit since this is a version-gated change. User explicitly decided clean cut.
+**Rejected**: Phased migration (`fab-sync.sh` delegates to `fab-kit sync` as intermediate step) — unnecessary complexity.
+*Source*: 260402-3ac3-three-binary-architecture
+
+### 5-sync-hooks.sh Retained
+**Decision**: The hook sync script (`5-sync-hooks.sh`) is kept as a shell script delegating to `fab hook sync` (fab-go), not absorbed into `fab-kit sync`.
+**Why**: Hook registration is a runtime configuration concern (`.claude/settings.local.json`), not a workspace structure concern. Moving it into `fab-kit sync` would create a dependency on fab-go from fab-kit, violating the binary separation.
+**Rejected**: Absorbing hook sync into fab-kit (cross-binary dependency, different concern domain).
+*Source*: 260402-3ac3-three-binary-architecture
 
 ### Single fab/ Per Repository
 **Decision**: Even in monorepos, use one `fab/` at the repo root.
@@ -559,3 +601,4 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 | — | 2026-02-07 | Generated from doc/fab-spec/ (ARCHITECTURE.md, README.md) |
 | 260401-46hw-brew-install-system-shim | 2026-04-02 | Binary-free `.kit/`: removed `fab`, `fab-go`, `wt`, `idea` from `fab/.kit/bin/` (only `.gitkeep` remains). System `fab` shim (Homebrew) dispatches to cached `fab-go` at `~/.fab-kit/versions/`. `wt` and `idea` are system-only Homebrew binaries. Removed shell dispatcher, backend override mechanism (`FAB_BACKEND`, `.fab-backend`). Removed `fab-upgrade.sh` (replaced by `fab upgrade` shim subcommand). Removed `4-get-fab-binary.sh` from sync pipeline. Updated `5-sync-hooks.sh` to call `fab hook sync` via system shim. Updated `fab-doctor.sh` to check for `fab` system binary. All skill invocations changed from `fab/.kit/bin/fab` to `fab`. Updated Portability section to require system shim. Updated bootstrap sequence (primary: `brew install fab-kit` + `fab init`). |
 | 260401-ixzv-org-migrate-mit-license | 2026-04-02 | Migrated GitHub org references from wvrdz to sahil87. License changed from PolyForm Internal Use to MIT (root LICENSE). |
+| 260402-3ac3-three-binary-architecture | 2026-04-02 | Three-binary architecture: split shim into `fab` (router) and `fab-kit` (workspace lifecycle), alongside `fab-go` (workflow engine). Source at `src/go/fab-kit/` with two `cmd/` entries sharing `internal/`. `fab-kit sync` replaces `fab-sync.sh` and `sync/{1,2,3}-*.sh` (clean cut removal). Router uses negative-match dispatch (fab-kit commands allowlisted, everything else to fab-go). `fab help` composes output from both sub-binaries. Added 5 design decisions (three-binary split, negative-match routing, single Go module, clean cut sync migration, 5-sync-hooks retained). Updated directory tree, agent deployment, bootstrap, updating, and portability sections. |

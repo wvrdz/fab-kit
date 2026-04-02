@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -97,17 +96,10 @@ func Upgrade(targetVersion string) error {
 		return fmt.Errorf("cannot update config.yaml: %w", err)
 	}
 
-	// Run fab-sync.sh
-	syncScript := filepath.Join(kitDst, "scripts", "fab-sync.sh")
-	if _, err := os.Stat(syncScript); err == nil {
-		fmt.Println("Running fab-sync.sh...")
-		cmd := exec.Command("bash", syncScript)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = cfg.RepoRoot
-		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: fab-sync.sh failed: %s\n", err)
-		}
+	// Run sync
+	fmt.Println("Running sync...")
+	if err := Sync(); err != nil {
+		fmt.Fprintf(os.Stderr, "WARNING: sync failed: %s\n", err)
 	}
 
 	// Display result

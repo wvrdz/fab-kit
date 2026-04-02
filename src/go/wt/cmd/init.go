@@ -51,17 +51,6 @@ func runInitScript() error {
 	}
 
 	repoRoot := strings.TrimSuffix(resolved, string(filepath.Separator)+".git")
-	initScriptRel := wt.InitScriptPath()
-	initScript := filepath.Join(repoRoot, initScriptRel)
-
-	if _, err := os.Stat(initScript); os.IsNotExist(err) {
-		fmt.Printf("No init script found at: %s\n", initScript)
-		fmt.Println()
-		fmt.Println("To add an init script:")
-		fmt.Printf("  mkdir -p %s\n", filepath.Dir(initScriptRel))
-		fmt.Printf("  touch %s\n", initScriptRel)
-		return nil
-	}
 
 	// Get current toplevel (worktree or main repo)
 	topOut, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
@@ -70,10 +59,36 @@ func runInitScript() error {
 	}
 	currentRoot := strings.TrimSpace(string(topOut))
 
+	initScriptRel := wt.InitScriptPath()
+
 	fmt.Println("Running worktree init...")
 	fmt.Println()
 
-	cmd := exec.Command("bash", initScript)
+	// Determine if it's a command (contains spaces) or a file path
+	var cmd *exec.Cmd
+	if strings.Contains(initScriptRel, " ") {
+		// Command invocation: check if the command is available
+		parts := strings.Fields(initScriptRel)
+		if _, err := exec.LookPath(parts[0]); err != nil {
+			fmt.Printf("Warning: %q not found on PATH, skipping init\n", parts[0])
+			fmt.Println("Install fab-kit or set WORKTREE_INIT_SCRIPT to a custom script.")
+			return nil
+		}
+		cmd = exec.Command(parts[0], parts[1:]...)
+	} else {
+		// File path: resolve relative to repo root
+		initScript := filepath.Join(repoRoot, initScriptRel)
+		if _, err := os.Stat(initScript); os.IsNotExist(err) {
+			fmt.Printf("No init script found at: %s\n", initScript)
+			fmt.Println()
+			fmt.Println("To add an init script:")
+			fmt.Printf("  mkdir -p %s\n", filepath.Dir(initScriptRel))
+			fmt.Printf("  touch %s\n", initScriptRel)
+			return nil
+		}
+		cmd = exec.Command("bash", initScript)
+	}
+
 	cmd.Dir = currentRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

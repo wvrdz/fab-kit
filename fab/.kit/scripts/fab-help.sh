@@ -124,7 +124,7 @@ for name in "${discovered_batches[@]}"; do
 done
 
 # Also account for hardcoded non-skill entries
-hardcoded_name="fab-sync.sh"
+hardcoded_name="fab sync"
 if [ ${#hardcoded_name} -gt "$max_len" ]; then
   max_len=${#hardcoded_name}
 fi
@@ -177,7 +177,7 @@ for group in "${group_order[@]}"; do
 
   # Render hardcoded non-skill entries for Setup group
   if [ "$group" = "Setup" ]; then
-    format_entry "fab-sync.sh" "Repair directories and agents (no LLM needed)"
+    format_entry "fab sync" "Repair directories and agents (no LLM needed)"
   fi
 done
 

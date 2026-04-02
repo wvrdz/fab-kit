@@ -269,7 +269,7 @@ func TestCreate_InitScriptRuns(t *testing.T) {
 	gitRun(t, repo, "add", "fab/.kit/worktree-init.sh")
 	gitRun(t, repo, "commit", "-q", "-m", "Add init script")
 
-	r := runWtSuccess(t, repo, nil, "create", "--non-interactive", "--worktree-name", "init-run-test")
+	r := runWtSuccess(t, repo, []string{"WORKTREE_INIT_SCRIPT=fab/.kit/worktree-init.sh"}, "create", "--non-interactive", "--worktree-name", "init-run-test")
 
 	wtPath := strings.TrimSpace(r.Stdout)
 	assertFileExists(t, filepath.Join(wtPath, ".init-script-ran"))

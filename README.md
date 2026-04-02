@@ -108,7 +108,7 @@ brew install go just
 fab init
 ```
 
-This scaffolds `fab/.kit/` from the latest release, sets `fab_version` in `fab/project/config.yaml`, and runs `fab-sync.sh`.
+This scaffolds `fab/.kit/` from the latest release, sets `fab_version` in `fab/project/config.yaml`, and runs `fab sync`.
 
 **Then in your AI agent:**
 
@@ -131,7 +131,7 @@ If the upgrade reports a version mismatch, run `/fab-setup migrations` in your A
 To repair symlinks and scaffold structure without downloading a new release (useful when developing fab-kit itself):
 
 ```bash
-bash fab/.kit/scripts/fab-sync.sh
+fab sync
 ```
 
 ### 2. Your first change
@@ -177,7 +177,7 @@ Each change is a self-contained folder - multiple AI sessions run in parallel wi
 ### Troubleshooting
 
 - `direnv allow` doesn't work - reload your shell or run `eval "$(direnv export zsh)"`
-- `/fab-setup` not recognized - re-run `fab/.kit/scripts/fab-sync.sh` to repair symlinks
+- `/fab-setup` not recognized - re-run `fab sync` to repair symlinks
 
 ## Why Fab Kit
 
@@ -366,7 +366,7 @@ The operator is a long-running coordination layer that sits in its own tmux pane
 
 | Script | Purpose |
 |--------|---------|
-| `fab-sync.sh` | Repair symlinks, scaffold structure, deploy skills |
+| `fab sync` | Repair symlinks, scaffold structure, deploy skills |
 | `fab-doctor.sh` | Diagnose common setup issues |
 | `fab-help.sh` | Print workflow overview to terminal |
 | `batch-fab-new-backlog.sh` | Create changes from multiple backlog entries |
