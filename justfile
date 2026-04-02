@@ -21,20 +21,24 @@ test-v:
 
 local_cache := env("HOME", "") / ".fab-kit/local-versions" / fab_version
 
-# Build fab-go + copy .kit content to local cache (shim auto-discovers)
+# Build all binaries for native platform → dist/bin/
 build:
-    mkdir -p {{local_cache}}/kit
-    cd src/go/fab && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o {{local_cache}}/fab-go ./cmd/fab
-    rsync -a --delete --exclude='bin/' fab/.kit/ {{local_cache}}/kit/
-    @echo "Built fab-go → {{local_cache}}/fab-go"
+    #!/usr/bin/env bash
+    case "$(uname -s)" in Linux) goos=linux;; Darwin) goos=darwin;; *) echo "unsupported OS"; exit 1;; esac
+    case "$(uname -m)" in x86_64) goarch=amd64;; arm64|aarch64) goarch=arm64;; *) echo "unsupported arch"; exit 1;; esac
+    suffix="$goos-$goarch"
+    just build-target "$goos" "$goarch"
+    for bin in fab-go idea wt fab-kit fab; do
+        [ -f "dist/bin/${bin}-${suffix}" ] && mv "dist/bin/${bin}-${suffix}" "dist/bin/${bin}"
+    done
+    echo "Built all binaries → dist/bin/"
 
-# Build fab-kit and fab router to dist/bin/ (install to PATH or test directly)
-build-fab-kit:
-    mkdir -p dist/bin
-    cd src/go/fab-kit && CGO_ENABLED=0 go build -ldflags '{{fab_kit_ldflags}}' -o ../../../dist/bin/fab-kit ./cmd/fab-kit
-    cd src/go/fab-kit && CGO_ENABLED=0 go build -ldflags '{{fab_kit_ldflags}}' -o ../../../dist/bin/fab ./cmd/fab
-    @echo "Built fab-kit → dist/bin/fab-kit"
-    @echo "Built fab (router) → dist/bin/fab"
+# Build + populate ~/.fab-kit/local-versions/{VERSION}/ (shim auto-discovers)
+install: build
+    mkdir -p {{local_cache}}/kit
+    cp dist/bin/fab-go {{local_cache}}/fab-go
+    rsync -a --delete --exclude='bin/' fab/.kit/ {{local_cache}}/kit/
+    @echo "Installed fab-go + kit → {{local_cache}}/"
 
 # Check prerequisites and environment health
 doctor:
