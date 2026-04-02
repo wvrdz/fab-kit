@@ -81,8 +81,8 @@ fab/.kit/
 │   ├── on-session-start.sh # SessionStart hook — delegates to fab hook session-start
 │   ├── on-stop.sh          # Stop hook — delegates to fab hook stop
 │   └── on-user-prompt.sh   # UserPromptSubmit hook — delegates to fab hook user-prompt
-├── sync/                   # Kit-level sync scripts (remaining after fab-kit sync absorption)
-│   └── 5-sync-hooks.sh     # Thin wrapper delegating to fab hook sync via system shim (registers hooks into .claude/settings.local.json)
+├── sync/                   # Kit-level sync scripts (empty after full fab-kit sync absorption)
+│   └── .gitkeep            # All sync scripts absorbed into fab-kit Go binary
 └── scripts/                # Shell utilities
     ├── batch-fab-archive-change.sh  # Batch archive completed changes via tmux + Claude
     ├── batch-fab-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
@@ -99,11 +99,11 @@ fab/.kit/
 
 #### `fab-sync.sh` (Removed)
 
-Replaced by `fab-kit sync` — a Go binary subcommand. See the `fab-kit` binary section below for the sync implementation. The `$WORKTREE_INIT_SCRIPT` env var in `.envrc` now points to `fab-kit sync`.
+Replaced by `fab-kit sync` — a Go binary subcommand. See the `fab-kit` binary section below for the sync implementation. The `$WORKTREE_INIT_SCRIPT` env var in `.envrc` now points to `fab sync`.
 
 #### `sync/1-prerequisites.sh` (Removed)
 
-Prerequisites check absorbed into `fab-kit sync`. The Go implementation validates required tools (git, bash, yq v4+, jq, gh, direnv) before performing sync operations.
+Prerequisites check absorbed into `fab-kit sync`. The Go implementation validates required tools (git, bash, yq v4+, direnv) before performing sync operations.
 
 #### `sync/3-direnv.sh` (Removed)
 
@@ -278,9 +278,9 @@ The `fab-kit` binary (installed via `brew install fab-kit`) owns workspace lifec
 
 - `fab-kit init` — initialize fab in a repo (resolve latest version, cache it, populate `fab/.kit/`, set `fab_version`, run sync)
 - `fab-kit upgrade [version]` — upgrade to a different version (download to cache, atomic replace `fab/.kit/`, update `fab_version`, run sync)
-- `fab-kit sync` — reconcile workspace with pinned version (prerequisites check, directory scaffolding, scaffold tree-walk, multi-agent skill deployment, stale cleanup, version stamp, project-level scripts, direnv allow)
+- `fab-kit sync` — reconcile workspace with pinned version (6-step pipeline: prerequisites, version guard, ensure cache, scaffolding, direnv, project scripts). Supports `--shim` (steps 1-5) and `--project` (step 6) flags.
 
-`fab-kit sync` replaces `fab-sync.sh` and the `sync/{1,2,3}-*.sh` scripts as a clean cut. It replicates all sync behavior in Go: directory scaffolding (creates `fab/changes/`, `fab/changes/archive/`, `docs/memory/`, `docs/specs/` with `.gitkeep` files), scaffold tree-walk with three strategies (fragment JSON merge, fragment line-ensure merge, copy-if-absent), multi-agent skill deployment (conditional on agent CLI availability, per-agent format: copies for Claude Code/Codex/Gemini, symlinks for OpenCode), stale skill cleanup, version stamp (`fab/.kit-sync-version`), and project-level `fab/sync/*.sh` script execution. Prerequisites (git, bash, yq v4+, jq, gh, direnv) are validated before sync.
+`fab-kit sync` resolves all kit content from the system cache at `~/.fab-kit/versions/{version}/kit/` (via `CachedKitDir(fab_version)`) rather than from `fab/.kit/` in the repo. The 6-step pipeline: (1) prerequisites check (git, bash, yq v4+, direnv), (2) version guard (ensures `fab_version` <= system `fab-kit` version, auto-runs `fab update` if behind), (3) ensure cache (calls `EnsureCached(fab_version)`, downloads if needed), (4) workspace scaffolding from cache (directory creation, scaffold tree-walk with fragment-merge and copy-if-absent, multi-agent skill deployment, hook sync, version stamp, legacy cleanup), (5) direnv allow, (6) project-level `fab/sync/*.sh` script execution. Hook sync (previously delegated to `5-sync-hooks.sh` and `fab hook sync`) is absorbed directly into step 4 — `fab-kit` replicates the hooklib sync logic internally rather than shelling out to the `fab` binary.
 
 **Source layout**: Both `fab` (router) and `fab-kit` share a single Go module at `src/go/fab-kit/` with two `cmd/` entries: `cmd/fab/main.go` and `cmd/fab-kit/main.go`. Both import shared `internal/` packages for cache, download, and config resolution. This avoids Go workspace complexity and keeps infrastructure code importable by both without duplication.
 
@@ -415,10 +415,10 @@ Outputs the tmux pane ID for a change's worktree. Signature: `fab resolve <chang
 *Source*: 260218-09fa-scaffold-overlay-tree
 
 ### Single Entry Point for Workspace Sync
-**Decision**: `fab-kit sync` (Go binary) is the single entry point for workspace sync, replacing the previous `fab-sync.sh` shell orchestrator. All sync logic (prerequisites, directory scaffolding, scaffold tree-walk, skill deployment, stale cleanup, version stamp, direnv allow) is implemented in Go. Project-level `fab/sync/*.sh` scripts are still executed after kit-level sync. `fab/.kit/sync/5-sync-hooks.sh` remains as the sole kit-level sync script (delegates to `fab hook sync`).
-**Why**: Go implementation enables testability, cross-platform consistency, and eliminates the shell dependency chain. Clean cut — no transition period with dual implementations.
-**Rejected**: Keeping `fab-sync.sh` alongside `fab-kit sync` (duplication, testing burden). Also rejected: absorbing `5-sync-hooks.sh` into `fab-kit sync` (would create cross-binary dependency on fab-go).
-*Source*: 260402-3ac3-three-binary-architecture
+**Decision**: `fab-kit sync` (Go binary) is the single entry point for workspace sync, replacing the previous `fab-sync.sh` shell orchestrator. All sync logic — including hook sync — is implemented in Go. The 6-step pipeline reads kit content from the system cache (`~/.fab-kit/versions/{version}/kit/`), not from `fab/.kit/` in the repo. Project-level `fab/sync/*.sh` scripts are still executed after kit-level sync (step 6). No kit-level sync scripts remain (`fab/.kit/sync/` contains only `.gitkeep`).
+**Why**: Go implementation enables testability, cross-platform consistency, and eliminates the shell dependency chain. Cache-based resolution is consistent with how `fab-go` already runs from the cache, and is a step toward removing `fab/.kit/` from repos entirely. Clean cut — no transition period with dual implementations.
+**Rejected**: Keeping `fab-sync.sh` alongside `fab-kit sync` (duplication, testing burden). Also rejected (initially): absorbing `5-sync-hooks.sh` into `fab-kit sync` — this was later reversed in 260402-ktbg when hooklib replication proved simpler than the cross-binary concern.
+*Source*: 260402-3ac3-three-binary-architecture, 260402-ktbg-sync-from-cache
 
 ### Three-Binary Split for Testability
 **Decision**: The system `fab` shim is split into `fab` (router) and `fab-kit` (workspace lifecycle) as separate binaries. Together with `fab-go` (workflow engine), there are three independently-invocable binaries.
@@ -444,11 +444,12 @@ Outputs the tmux pane ID for a change's worktree. Signature: `fab resolve <chang
 **Rejected**: Phased migration (`fab-sync.sh` delegates to `fab-kit sync` as intermediate step) — unnecessary complexity.
 *Source*: 260402-3ac3-three-binary-architecture
 
-### 5-sync-hooks.sh Retained
-**Decision**: The hook sync script (`5-sync-hooks.sh`) is kept as a shell script delegating to `fab hook sync` (fab-go), not absorbed into `fab-kit sync`.
-**Why**: Hook registration is a runtime configuration concern (`.claude/settings.local.json`), not a workspace structure concern. Moving it into `fab-kit sync` would create a dependency on fab-go from fab-kit, violating the binary separation.
-**Rejected**: Absorbing hook sync into fab-kit (cross-binary dependency, different concern domain).
-*Source*: 260402-3ac3-three-binary-architecture
+### 5-sync-hooks.sh Removed (Hook Sync Absorbed)
+**Decision**: The hook sync script (`5-sync-hooks.sh`) is removed. Hook sync logic (~100 lines) is replicated directly in `fab-kit`'s internal package, running as part of step 4 (workspace scaffolding). `fab-kit` no longer shells out to `fab hook sync`.
+**Why**: Absorbing hook sync eliminates a shell-out to `fab` during sync, simplifying the pipeline. The hooklib logic is small (~100 lines) and self-contained, making replication cheaper than creating a shared Go module between the two separate `go.mod` files. The `fab hook sync` CLI command continues to exist in `fab-go` for standalone use.
+**Rejected**: Shared Go module (over-engineering for ~100 lines, requires workspace complexity). Shelling out to `fab hook sync` (extra process spawn, reintroduces `fab` binary dependency during sync).
+**Supersedes**: "5-sync-hooks.sh Retained" decision from 260402-3ac3.
+*Source*: 260402-ktbg-sync-from-cache
 
 ### Single fab/ Per Repository
 **Decision**: Even in monorepos, use one `fab/` at the repo root.
@@ -519,6 +520,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 |--------|------|---------|
 | 260320-t13m-configurable-agent-spawn-command | 2026-03-20 | Added `lib/spawn.sh` (shared `fab_spawn_cmd` helper reading `agent.spawn_command` from `config.yaml` with fallback). Updated 5 scripts (`fab-operator4.sh`, `fab-operator5.sh`, `batch-fab-new-backlog.sh`, `batch-fab-switch-change.sh`, `batch-fab-archive-change.sh`) to read spawn command from config via `lib/spawn.sh` instead of hardcoding `claude --dangerously-skip-permissions`. Added `fab-operator5.sh` and `lib/spawn.sh` to directory tree. Updated batch script and launcher script descriptions. |
 | 260317-mogj-resilient-hooks-cwd | 2026-03-17 | Made hook shell scripts cwd-resilient. Replaced `dirname "$0"` relative path resolution with `git rev-parse --show-toplevel` in all 4 hook scripts (`on-session-start.sh`, `on-stop.sh`, `on-user-prompt.sh`, `on-artifact-write.sh`). Scripts now find the fab binary from any subdirectory within the repo. No Go code or settings.local.json changes needed — the Go binary already handled cwd via `resolve.FabRoot()` upward walk. Updated directory tree comment from "thin wrappers" to "cwd-resilient wrappers". |
+| 260402-ktbg-sync-from-cache | 2026-04-02 | Rewrote `fab-kit sync` to resolve kit content from system cache (`~/.fab-kit/versions/{version}/kit/`) instead of `fab/.kit/`. 6-step pipeline with version guard and cache-first resolution. Absorbed hook sync into step 4 — replicated hooklib logic in `fab-kit` internal package, removed `5-sync-hooks.sh` from `sync/` directory (now `.gitkeep` only). Added `--shim` and `--project` flags. Updated `$WORKTREE_INIT_SCRIPT` from `fab-kit sync` to `fab sync`. Superseded "5-sync-hooks.sh Retained" design decision. Updated "Single Entry Point" design decision with cache-based resolution. Updated prerequisites (removed jq, gh). |
 | 260315-a2b2-standalone-operator4-rewrite | 2026-03-15 | Updated `_` file ecosystem: renamed `_scripts.md` to `_cli-fab.md`, added `_cli-external.md` (operator-only load for wt/tmux/loop), added `_naming.md` (always-load for naming conventions). Updated directory tree: removed operator1/2/3 skill files, added new `_` files, added missing skills (fab-archive, fab-discuss, git-branch, git-pr-review). Updated launcher script from `fab-operator.sh` to `fab-operator4.sh`. Added "Underscore File Ecosystem" section documenting load strategies for all `_` files. Updated `_scripts.md` references to `_cli-fab.md` in kit-architecture and related docs. Updated agent deployment section to list all current underscore partials. |
 | 260312-96nf-remove-rust-implementation | 2026-03-12 | Removed Rust binary (`fab-rust`) and all Rust-related infrastructure. Deleted `src/rust/` directory tree, `scripts/just/rust-target.sh`. Removed `rust_src` variable and all Rust recipes (`test-rust`, `build-rust`, `_rust-target`, `build-rust-target`, `build-rust-all`) from justfile. Simplified dispatcher to Go-only (removed `fab-rust` from version handler, backend override, default priority, error message). Removed `fab-rust` from directory tree. Removed Rust Binary section. Updated overview, dispatcher, distribution, design decisions, and benchmark sections to reflect Go-only architecture. |
 | 260312-kvng-resolve-pane-evolve-panemap | 2026-03-12 | Added `--pane` flag to `fab resolve` — outputs tmux pane ID for a change's worktree, composable with `tmux send-keys`. Removed `fab send-keys` subcommand entirely (replaced by `fab resolve --pane` + raw `tmux send-keys`). Moved `matchPanesByFolder` and `resolvePaneChange` from `sendkeys.go` to `panemap.go`; deleted `sendkeys.go` and `sendkeys_test.go`. Updated `pane-map` to show all tmux panes (not just fab worktrees) — non-fab panes display em-dash fallbacks for Change/Stage/Agent columns, non-git panes show `basename/` for Worktree. Empty message changed to `"No tmux panes found."`. Updated Rust binary docs (removed `sendkeys.rs`, 9→8 subcommands). |
