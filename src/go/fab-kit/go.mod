@@ -1,4 +1,4 @@
-module github.com/sahil87/fab-kit/src/go/shim
+module github.com/sahil87/fab-kit/src/go/fab-kit
 
 go 1.22
 

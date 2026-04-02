@@ -4,8 +4,8 @@ set -euo pipefail
 # Package kit archives for release (per-platform with fab-go binary)
 # Called by: just package-kit
 #
-# fab (shim), wt, and idea are distributed via Homebrew, not kit archives.
-# Only fab-go goes into the per-platform archives for shim auto-fetch.
+# fab (router), fab-kit, wt, and idea are distributed via Homebrew, not kit archives.
+# Only fab-go goes into the per-platform archives for auto-fetch.
 
 platforms=("darwin/arm64" "darwin/amd64" "linux/arm64" "linux/amd64")
 build_dir=".release-build"
@@ -14,9 +14,9 @@ build_dir=".release-build"
 for platform in "${platforms[@]}"; do
   os="${platform%%/*}"
   arch="${platform##*/}"
-  binary="$build_dir/fab-${os}-${arch}"
+  binary="$build_dir/fab-go-${os}-${arch}"
   if [ ! -f "$binary" ]; then
-    echo "ERROR: Missing fab binary $binary — run 'just build-all' first."
+    echo "ERROR: Missing fab-go binary $binary — run 'just build-all' first."
     exit 1
   fi
 done
@@ -30,8 +30,8 @@ for platform in "${platforms[@]}"; do
   rm -rf "$staging"
   mkdir -p "$staging"
   cp -a fab/.kit "$staging/"
-  # Only fab-go goes in the archive (wt, idea, shim are Homebrew-only)
-  cp "$build_dir/fab-${os}-${arch}" "$staging/.kit/bin/fab-go"
+  # Only fab-go goes in the archive (fab, fab-kit, wt, idea are Homebrew-only)
+  cp "$build_dir/fab-go-${os}-${arch}" "$staging/.kit/bin/fab-go"
   chmod +x "$staging/.kit/bin/fab-go"
   COPYFILE_DISABLE=1 tar czf "$archive_name" -C "$staging" .kit
   echo "  $archive_name ($(wc -c < "$archive_name") bytes)"

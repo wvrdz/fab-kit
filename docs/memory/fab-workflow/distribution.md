@@ -4,7 +4,7 @@
 
 ## Overview
 
-How `fab/.kit/` is distributed to new and existing projects. Covers the Homebrew distribution model (system shim + standalone utilities), the bootstrap process (getting `.kit/` into a project for the first time — primary method is `brew install fab-kit` + `fab init`), the update mechanism (`fab upgrade` replaces the old `fab-upgrade.sh`), the release workflow (version management via `release.sh`, build recipes via `justfile`, CI orchestration via `.github/workflows/release.yml` — producing per-platform archives with Go binaries), and the repo rename from `docs-sddr` to `fab-kit`.
+How `fab/.kit/` is distributed to new and existing projects. Covers the Homebrew distribution model (three-binary architecture: `fab` router + `fab-kit` workspace lifecycle + standalone utilities), the bootstrap process (getting `.kit/` into a project for the first time — primary method is `brew install fab-kit` + `fab init`), the update mechanism (`fab upgrade` replaces the old `fab-upgrade.sh`), the release workflow (version management via `release.sh`, build recipes via `justfile`, CI orchestration via `.github/workflows/release.yml` — producing per-platform archives with Go binaries), and the repo rename from `docs-sddr` to `fab-kit`.
 
 ## Requirements
 
@@ -12,15 +12,17 @@ How `fab/.kit/` is distributed to new and existing projects. Covers the Homebrew
 
 #### Homebrew Formula
 
-A Homebrew formula named `fab-kit` SHALL be published to the `wvrdz/homebrew-tap` tap. The formula SHALL install three binaries to the system PATH: `fab` (version-aware shim/dispatcher), `wt` (worktree management), and `idea` (backlog management). Users add the tap via `brew tap wvrdz/tap`.
+A Homebrew formula named `fab-kit` SHALL be published to the `wvrdz/homebrew-tap` tap. The formula SHALL install four binaries to the system PATH: `fab` (router/dispatcher), `fab-kit` (workspace lifecycle), `wt` (worktree management), and `idea` (backlog management). Users add the tap via `brew tap wvrdz/tap`.
 
 **Scenarios**:
-- Fresh install (`brew tap wvrdz/tap && brew install fab-kit`) — installs `fab`, `wt`, and `idea` to the Homebrew bin directory; all respond to `--version`
-- Upgrade via Homebrew (`brew upgrade fab-kit`) — updates the shim, `wt`, and `idea` to latest formula version; per-version cache is unaffected
+- Fresh install (`brew tap wvrdz/tap && brew install fab-kit`) — installs `fab`, `fab-kit`, `wt`, and `idea` to the Homebrew bin directory; all respond to `--version`
+- Upgrade via Homebrew (`brew upgrade fab-kit`) — updates the router, fab-kit, `wt`, and `idea` to latest formula version; per-version cache is unaffected
 
-#### Shim Architecture (System `fab` Binary)
+#### Router Architecture (System `fab` Binary)
 
-The system `fab` binary acts as a version-aware shim. On every invocation it SHALL:
+The system `fab` binary acts as a router using negative-match dispatch. It maintains a static allowlist of fab-kit commands (`init`, `upgrade`, `sync`, `--version`, `-v`, `--help`, `-h`, `help`). Commands matching this list are dispatched to `fab-kit` via `syscall.Exec`. All other commands are dispatched to the version-resolved `fab-go`.
+
+For fab-go dispatch, the router SHALL:
 
 1. Walk up from CWD to find `fab/project/config.yaml`
 2. Read `fab_version` from `config.yaml` (e.g., `fab_version: "0.43.0"`)
@@ -28,19 +30,20 @@ The system `fab` binary acts as a version-aware shim. On every invocation it SHA
 4. If not cached, download the release from GitHub (`wvrdz/fab-kit` releases) and cache it
 5. Exec the cached `fab-go` with full argument passthrough
 
-If no `config.yaml` is found (not in a fab-managed repo), the shim serves non-repo commands: `fab init`, `fab --version`, `fab --help`.
+`fab help` composes help from both sub-binaries: workspace commands (from fab-kit) are always shown; workflow commands (from fab-go) are shown only inside a fab-managed repo.
 
 **Scenarios**:
-- Normal dispatch — shim reads `fab_version`, resolves cached `fab-go`, execs with all args passed through
-- Version not cached — shim auto-fetches from GitHub releases, caches binary + `.kit/` content, then dispatches
+- fab-kit command dispatch — `fab init`, `fab sync`, `fab upgrade` are routed to `fab-kit` with all args passed through
+- Normal fab-go dispatch — router reads `fab_version`, resolves cached `fab-go`, execs with all args passed through
+- Version not cached — router auto-fetches from GitHub releases, caches binary + `.kit/` content, then dispatches
 - No network during auto-fetch — exits non-zero with version and network hint
 - `config.yaml` found but `fab_version` absent — exits with: `"No fab_version in config.yaml. Run 'fab init' to set one."`
-- Not in a fab-managed repo, non-repo command — `fab init`, `fab --version`, `fab --help` handled directly
-- Not in a fab-managed repo, repo command — exits with: `"Not in a fab-managed repo. Run 'fab init' to set one up."`
+- Not in a fab-managed repo, fab-kit command — `fab init`, `fab --version`, `fab --help` dispatched to `fab-kit` (works without config.yaml)
+- Not in a fab-managed repo, workflow command — exits with: `"Not in a fab-managed repo. Run 'fab init' to set one up."`
 
 #### Cache Layout
 
-The shim stores versioned artifacts at `~/.fab-kit/versions/{version}/`. Each version directory contains:
+The router and fab-kit store versioned artifacts at `~/.fab-kit/versions/{version}/`. Each version directory contains:
 
 - `fab-go` — the Go backend binary for the current platform
 - `kit/` — full `.kit/` content (skills, templates, scripts, hooks, migrations, scaffold, VERSION)
@@ -62,14 +65,14 @@ cd <repo>
 fab init
 ```
 
-`fab init` (a shim subcommand, not dispatched to cached binary) SHALL:
+`fab init` (a fab-kit subcommand, routed via the `fab` router, not dispatched to fab-go) SHALL:
 1. Resolve the latest release version from GitHub
 2. Ensure the version is cached (download if not)
 3. Copy `~/.fab-kit/versions/{latest}/kit/` to the repo's `fab/.kit/`
 4. Set `fab_version: "{latest}"` in `fab/project/config.yaml` (creating the file if needed)
-5. Run `fab-sync.sh` to deploy skills and set up the workspace
+5. Call `Sync()` directly (the same logic as `fab-kit sync`) to deploy skills and set up the workspace
 
-`fab-sync.sh` validates prerequisites (`yq`, `gh`, `direnv`), creates directories (`changes/`, `memory/`, `specs/`), skeleton files (copied from `scaffold/memory-index.md` and `scaffold/specs-index.md`), deploys skills conditionally to detected agents (copies for Claude Code, Codex, and Gemini CLI; symlinks for OpenCode — only when the agent's CLI is found in PATH), `.envrc` entries (from `scaffold/envrc`, line-ensuring), `.gitignore` entries (from `scaffold/gitignore-entries`), and registers Claude Code hooks from `fab/.kit/hooks/` into `.claude/settings.local.json`.
+`fab-kit sync` validates prerequisites (`git`, `bash`, `yq` v4+, `jq`, `gh`, `direnv`), creates directories (`changes/`, `memory/`, `specs/`), processes the scaffold overlay tree (fragment merges and copy-if-absent), deploys skills conditionally to detected agents (copies for Claude Code, Codex, and Gemini CLI; symlinks for OpenCode — only when the agent's CLI is found in PATH), `.envrc` entries (from `scaffold/envrc`, line-ensuring), `.gitignore` entries (from `scaffold/gitignore-entries`), writes the version stamp, and executes project-level `fab/sync/*.sh` scripts.
 
 **Scenarios**:
 - Init in a new repo (no `fab/` directory) — `fab/.kit/` populated from cache; `config.yaml` created with `fab_version` set to latest; `fab-sync.sh` runs
@@ -97,17 +100,17 @@ The existing `cp -r` distribution method SHALL continue to work, given the syste
 
 #### `fab upgrade` (Shim Subcommand)
 
-`fab upgrade [version]` is a shim subcommand (handled directly by the system `fab` binary, not dispatched to the cached `fab-go`) that replaces the former `fab/.kit/scripts/fab-upgrade.sh`. It SHALL:
+`fab upgrade [version]` is a fab-kit subcommand (routed via the `fab` router to `fab-kit`, not dispatched to `fab-go`) that replaces the former `fab/.kit/scripts/fab-upgrade.sh`. It SHALL:
 
 1. Resolve the target version — latest release if no argument, or the explicit version (e.g., `fab upgrade 0.44.0`)
 2. Download the release to cache if not already present (binary + `.kit/` content)
 3. Copy `~/.fab-kit/versions/{version}/kit/` to the repo's `fab/.kit/` (atomic swap: extract to temp, verify, then replace)
 4. Update `fab_version` in `fab/project/config.yaml` to the new version
-5. Run `fab-sync.sh` to deploy skills to agent directories
+5. Call `Sync()` directly (the same logic as `fab-kit sync`) to deploy skills to agent directories
 6. Display version change and migration reminder if needed
 
 **Scenarios**:
-- Upgrade to latest — downloads new version to cache, replaces `fab/.kit/`, updates `fab_version` in config, runs `fab-sync.sh`, displays "Updated: 0.43.0 → 0.44.0"
+- Upgrade to latest — downloads new version to cache, replaces `fab/.kit/`, updates `fab_version` in config, runs sync, displays "Updated: 0.43.0 → 0.44.0"
 - Upgrade to specific version (`fab upgrade 0.42.1`) — downloads to cache, replaces `fab/.kit/` and updates `fab_version`
 - Already up to date — displays "Already on the latest version (0.43.0). No update needed.", no files modified
 - Migration reminder — when `fab/.kit-migration-version` is behind the new version and a migration exists, output includes a reminder to run `/fab-setup migrations`
@@ -123,12 +126,12 @@ The existing `cp -r` distribution method SHALL continue to work, given the syste
 
 ### Sync Staleness Detection
 
-`fab-sync.sh` writes `fab/.kit-sync-version` after skill deployment — a gitignored stamp file containing the `fab/.kit/VERSION` value at sync time. `lib/preflight.sh` compares this stamp against the current kit VERSION and emits a non-blocking stderr warning when they differ:
+`fab-kit sync` writes `fab/.kit-sync-version` after skill deployment — a gitignored stamp file containing the `fab/.kit/VERSION` value at sync time. `lib/preflight.sh` compares this stamp against the current kit VERSION and emits a non-blocking stderr warning when they differ:
 
-- `⚠ Skills out of sync — run fab-sync.sh to refresh (engine X, last synced Y)` — when stamp is behind
-- `⚠ Skills may be out of sync — run fab-sync.sh to refresh` — when stamp is missing
+- `⚠ Skills out of sync — run fab sync to refresh (engine X, last synced Y)` — when stamp is behind
+- `⚠ Skills may be out of sync — run fab sync to refresh` — when stamp is missing
 
-This detects stale local skill deployments when a developer pulls new `fab/.kit/` source via git but hasn't re-run `fab-sync.sh` (since `.claude/`, `.agents/`, `.opencode/` are gitignored and not updated by git pull).
+This detects stale local skill deployments when a developer pulls new `fab/.kit/` source via git but hasn't re-run `fab sync` (since `.claude/`, `.agents/`, `.opencode/` are gitignored and not updated by git pull).
 
 #### Atomic Update
 
@@ -141,7 +144,7 @@ This detects stale local skill deployments when a developer pulls new `fab/.kit/
 
 #### Skill Deployment Repair After Update
 
-After copying new `.kit/` contents, `fab upgrade` SHALL re-run `fab-sync.sh` to ensure all skill deployments are up to date: copies refreshed (`.claude/skills/`, `.agents/skills/`), symlinks valid (`.opencode/commands/`), and stale agent files cleaned up (`.claude/agents/`).
+After copying new `.kit/` contents, `fab upgrade` SHALL call `Sync()` directly (the same logic as `fab-kit sync`) to ensure all skill deployments are up to date: copies refreshed (`.claude/skills/`, `.agents/skills/`), symlinks valid (`.opencode/commands/`), and stale agent files cleaned up (`.claude/agents/`).
 
 ### Release
 
@@ -175,31 +178,32 @@ Pre-flight checks: clean working tree (error if dirty), `fab/.kit/VERSION` exist
 The `justfile` at repo root provides locally-replicable build recipes using [just](https://github.com/casey/just). These same recipes are invoked by CI.
 
 **Development recipes**:
-- **`build`** — compiles all four binaries (`fab` shim, `fab-go`, `idea`, `wt`) for the current platform using `CGO_ENABLED=0`
+- **`build`** — compiles all five binaries (`fab` router, `fab-kit`, `fab-go`, `idea`, `wt`) for the current platform using `CGO_ENABLED=0`
 - **`test`** — runs all unit tests across all Go modules
 - **`test-v`** — runs all unit tests (verbose)
 - **`doctor`** — checks prerequisites and environment health
 
 **Release recipes**:
 - **`release [bump]`** — bumps VERSION (default: patch), commits, tags, and pushes; CI handles the rest
-- **`build-target os arch`** — cross-compiles all four binaries (`fab` shim, `fab-go`, `idea`, `wt`) for a specific platform, outputs to `.release-build/{name}-{os}-{arch}` using `CGO_ENABLED=0 GOOS={os} GOARCH={arch}`
-- **`build-all`** — cross-compiles for all 4 release targets (`darwin/arm64`, `darwin/amd64`, `linux/arm64`, `linux/amd64`), producing 16 binaries total (4 per platform)
-- **`package-kit`** — creates 5 tar.gz archives: generic `kit.tar.gz` (no binaries) + 4 per-platform `kit-{os}-{arch}.tar.gz` (with `fab-go` only — `fab` shim, `idea`, and `wt` are Homebrew-distributed). Verifies all cross-compiled binaries exist first. Uses `COPYFILE_DISABLE=1` to suppress macOS extended attributes. Archives are rooted at `.kit/`.
+- **`build-target os arch`** — cross-compiles all five binaries (`fab` router, `fab-kit`, `fab-go`, `idea`, `wt`) for a specific platform, outputs to `.release-build/{name}-{os}-{arch}` using `CGO_ENABLED=0 GOOS={os} GOARCH={arch}`
+- **`build-all`** — cross-compiles for all 4 release targets (`darwin/arm64`, `darwin/amd64`, `linux/arm64`, `linux/amd64`), producing 20 binaries total (5 per platform)
+- **`package-kit`** — creates 5 tar.gz archives: generic `kit.tar.gz` (no binaries) + 4 per-platform `kit-{os}-{arch}.tar.gz` (with `fab-go` only — `fab` router, `fab-kit`, `idea`, and `wt` are Homebrew-distributed). Verifies all cross-compiled binaries exist first. Uses `COPYFILE_DISABLE=1` to suppress macOS extended attributes. Archives are rooted at `.kit/`.
 - **`clean`** — removes `.release-build/` directory and all `kit*.tar.gz` files from repo root
 
-**Four Go binaries**:
+**Five Go binaries**:
 
 | Binary | Source | Distribution |
 |--------|--------|-------------|
-| `fab` (shim) | `src/go/shim/` | Homebrew formula |
+| `fab` (router) | `src/go/fab-kit/cmd/fab/` | Homebrew formula |
+| `fab-kit` | `src/go/fab-kit/cmd/fab-kit/` | Homebrew formula |
 | `fab-go` | `src/go/fab/` | Per-version cache via GitHub releases |
 | `wt` | `src/go/wt/` | Homebrew formula |
 | `idea` | `src/go/idea/` | Homebrew formula |
 
 **Scenarios**:
-- Local dev build (`just build`) — compiles all four binaries for current platform
-- Cross-compile for a single target (`just build-target darwin arm64`) — produces 4 binaries in `.release-build/`
-- Build all targets (`just build-all`) — produces 16 binaries in `.release-build/` (4 per platform x 4 platforms)
+- Local dev build (`just build`) — compiles all five binaries for current platform
+- Cross-compile for a single target (`just build-target darwin arm64`) — produces 5 binaries in `.release-build/`
+- Build all targets (`just build-all`) — produces 20 binaries in `.release-build/` (5 per platform x 4 platforms)
 - Package after build (`just package-kit`) — creates 5 archives in repo root; per-platform archives include `.kit/bin/fab-go` only, generic archive includes none
 - Package without prior build (`just package-kit`) — fails with error directing to run `just build-all` first
 - Clean up (`just clean`) — removes `.release-build/` and `kit*.tar.gz`
@@ -212,8 +216,8 @@ Workflow steps:
 1. Checkout repository (`actions/checkout@v4`)
 2. Set up Go toolchain (`actions/setup-go@v5`, Go 1.22)
 3. Install `just` command runner (`extractions/setup-just@v2`)
-4. Run `just build-all` (cross-compiles all 16 targets: 4 binaries x 4 platforms)
-5. Run `just package-kit` (creates 5 archives with `fab-go` per platform — shim, wt, idea are Homebrew-distributed)
+4. Run `just build-all` (cross-compiles all 20 targets: 5 binaries x 4 platforms)
+5. Run `just package-kit` (creates 5 archives with `fab-go` per platform — router, fab-kit, wt, idea are Homebrew-distributed)
 6. Create GitHub Release via `gh release create` with all 5 archives and commit-level changelog (minor releases cumulate all commits since the previous minor; patch releases show commits since the previous release)
 
 The workflow sets `permissions: contents: write` for release creation. `GITHUB_TOKEN` is used implicitly by `gh`.
@@ -223,16 +227,16 @@ GitHub determines "latest" release status based on semver ordering — backport 
 **Scenarios**:
 - Tag push triggers workflow — push of `v0.35.0` tag triggers the release workflow
 - Non-tag push does not trigger — regular commits pushed without a `v*` tag do not run the workflow
-- Full CI release — tag `v0.35.0` triggers workflow, which cross-compiles all Go binaries (16 total: fab shim, fab-go, idea, wt x 4 platforms), packages 5 archives (`fab-go` per platform), and creates a GitHub Release with commit-level changelog
+- Full CI release — tag `v0.35.0` triggers workflow, which cross-compiles all Go binaries (20 total: fab router, fab-kit, fab-go, idea, wt x 4 platforms), packages 5 archives (`fab-go` per platform), and creates a GitHub Release with commit-level changelog
 - Backport release via CI — tag `v0.34.2` triggers workflow; GitHub's semver ordering ensures it is not marked as "latest" since `v0.35.0` exists
 
 #### Release Archive Contents
 
-Each release produces per-platform archives structured for the shim to download and cache. Per-platform archives (`kit-{os}-{arch}.tar.gz`) contain:
+Each release produces per-platform archives structured for the router/fab-kit to download and cache. Per-platform archives (`kit-{os}-{arch}.tar.gz`) contain:
 - `.kit/bin/fab-go` — the versioned Go backend binary
 - `.kit/` — all content (skills, templates, scripts, hooks, migrations, scaffold, VERSION)
 
-The shim extracts `fab-go` to `~/.fab-kit/versions/{version}/fab-go` and the rest to `~/.fab-kit/versions/{version}/kit/`.
+The router (or fab-kit) extracts `fab-go` to `~/.fab-kit/versions/{version}/fab-go` and the rest to `~/.fab-kit/versions/{version}/kit/`.
 
 Per-platform archives:
 - **`kit-darwin-arm64.tar.gz`** — Content + `fab-go` compiled for macOS Apple Silicon.
@@ -241,9 +245,9 @@ Per-platform archives:
 - **`kit-linux-amd64.tar.gz`** — Content + `fab-go` compiled for Linux x86-64 (musl, fully static).
 - **`kit.tar.gz`** — Generic archive containing content only (no binary). Serves as a fallback for unsupported platforms.
 
-No project-specific files (config.yaml, constitution.md, memory/, specs/, changes/) are included in any archive. Package production code (idea only) is included under `.kit/packages/`, hook scripts under `.kit/hooks/`, and sync scripts under `.kit/sync/` — all delivered to downstream projects on upgrade. `idea` is a standalone system binary (installed via Homebrew, not per-repo); the shell package at `.kit/packages/idea/bin/idea` is retained for rollback safety and generic-archive users. Skill files are included in all archives and deployed to agents by `fab-sync.sh`. `fab/.kit/bin/` contains only `.gitkeep` — no binaries are shipped in the repo.
+No project-specific files (config.yaml, constitution.md, memory/, specs/, changes/) are included in any archive. Package production code (idea only) is included under `.kit/packages/`, hook scripts under `.kit/hooks/`, and remaining sync scripts under `.kit/sync/` (only `5-sync-hooks.sh`) — all delivered to downstream projects on upgrade. `idea` is a standalone system binary (installed via Homebrew, not per-repo); the shell package at `.kit/packages/idea/bin/idea` is retained for rollback safety and generic-archive users. Skill files are included in all archives and deployed to agents by `fab-kit sync`. `fab/.kit/bin/` contains only `.gitkeep` — no binaries are shipped in the repo.
 
-**Binary distribution split**: The shim (`fab`), `wt`, and `idea` are Homebrew-only (version-independent, system-level). Only `fab-go` is version-coupled and lives in the per-version cache.
+**Binary distribution split**: The router (`fab`), `fab-kit`, `wt`, and `idea` are Homebrew-only (version-independent, system-level). Only `fab-go` is version-coupled and lives in the per-version cache.
 
 ### Deprecated: Backend Override Mechanism
 
@@ -263,8 +267,8 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 - **Three-way release split (260307-ma7o-1)**: `release.sh` owns version/tag/push, `justfile` owns build/package, `.github/workflows/release.yml` owns orchestration. Each component has a single responsibility and can be tested independently.
 - **GitHub semver ordering replaces `--no-latest` (260307-ma7o-1)**: GitHub automatically determines "latest" release based on semver. Backport releases (e.g., `v0.34.2` when `v0.35.0` exists) are not marked latest. The `--no-latest` flag was removed from `release.sh` — no flag to remember, no CI mechanism to pass it through. For edge cases, `gh release edit` can be used post-creation.
 - **Commit-level release notes with minor cumulation**: CI generates release notes from `git log --oneline` with linked commit SHAs. Minor releases (x.y.0) cumulate all commits since the previous minor tag, giving a complete picture of the release cycle. Patch releases show commits since the previous release only. Major releases use the same patch-style diff (manual curation expected for milestone releases).
-- **Homebrew distribution with system shim (260401-46hw)**: The system `fab` binary is a version-aware shim installed via `brew install fab-kit`. It reads `fab_version` from `config.yaml`, resolves the matching `fab-go` from the cache, and execs it. This decouples binary distribution from the repo — `fab/.kit/` holds content only, the shim manages execution. Rejected: binary-in-repo (redundant when shim manages versions), `fab self-update` (don't reinvent the package manager).
-- **`fab upgrade` as shim subcommand (260401-46hw)**: The shim handles upgrade directly, replacing `fab-upgrade.sh`. The shim already has download/cache logic — upgrade is a natural extension. Rejected: keeping `fab-upgrade.sh` alongside the shim (duplication of download logic).
+- **Homebrew distribution with three-binary architecture (260401-46hw, 260402-3ac3)**: The system `fab` binary is a router installed via `brew install fab-kit`. It dispatches workspace commands to `fab-kit` and workflow commands to the version-resolved `fab-go`. `fab-kit` owns workspace lifecycle (init, upgrade, sync). This decouples binary distribution from the repo — `fab/.kit/` holds content only, the binaries manage execution. Rejected: binary-in-repo (redundant when router manages versions), `fab self-update` (don't reinvent the package manager), two-binary shim model (untestable, blurred concerns).
+- **`fab upgrade` as fab-kit subcommand (260401-46hw, 260402-3ac3)**: `fab-kit` handles upgrade directly, replacing `fab-upgrade.sh`. `fab-kit` already has download/cache logic — upgrade is a natural extension. Rejected: keeping `fab-upgrade.sh` alongside `fab-kit` (duplication of download logic).
 - **Cache stores binary + content (260401-46hw)**: Each cached version includes both `fab-go` and the full `.kit/` content. `fab upgrade` needs the content to populate the repo's `fab/.kit/`. Rejected: binary-only cache (would need separate download for content).
 - **Formula name `fab-kit`, binary name `fab` (260401-46hw)**: Homebrew formula uses `fab-kit` to avoid collision with Python Fabric's `fab` formula, while the installed binary is `fab`. Rejected: `fab` as formula name (collides with Fabric).
 - **~~Backend override via env var + file (260307-bmp3-3)~~**: *Deprecated* — removed with the shim model. Go is the only backend; the shim dispatches to `fab-go` directly.
@@ -306,3 +310,4 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 | 260210-h7r3-kit-distribution-update | 2026-02-10 | Initial creation — bootstrap, update, release, and repo rename requirements |
 | 260401-46hw-brew-install-system-shim | 2026-04-02 | Homebrew distribution model: system `fab` shim installed via `brew install fab-kit` (formula at `wvrdz/homebrew-tap`). Shim reads `fab_version` from `config.yaml`, resolves cached `fab-go` at `~/.fab-kit/versions/`, auto-fetches on miss. `fab init` bootstraps new repos (primary method replaces curl one-liner). `fab upgrade` replaces `fab-upgrade.sh` (shim subcommand). `wt` and `idea` become system-only Homebrew binaries. `fab/.kit/bin/` emptied (binary-free repo). Backend override mechanism (`FAB_BACKEND`, `.fab-backend`) removed. Sync pipeline: `4-get-fab-binary.sh` removed, `5-sync-hooks.sh` calls `fab hook sync` (system shim), `.envrc` scaffold removes `PATH_add fab/.kit/bin`. Release archives restructured for shim cache extraction (`fab-go` + `kit/` content). 4 Go binaries: `fab` (shim, Homebrew), `fab-go` (per-version cache), `wt` (Homebrew), `idea` (Homebrew). |
 | 260401-ixzv-org-migrate-mit-license | 2026-04-02 | Migrated GitHub org references from wvrdz to sahil87. License changed from PolyForm Internal Use to MIT (root LICENSE). |
+| 260402-3ac3-three-binary-architecture | 2026-04-02 | Three-binary architecture: Homebrew formula installs 4 binaries (`fab`, `fab-kit`, `wt`, `idea`). Shim section renamed to "Router Architecture" — `fab` uses negative-match dispatch to `fab-kit` or `fab-go`. Build produces 5 binaries (20 cross-compiled). Binary table updated: `fab` (router) from `src/go/fab-kit/cmd/fab/`, `fab-kit` from `src/go/fab-kit/cmd/fab-kit/`. `fab-sync.sh` references replaced with `fab-kit sync` / `fab sync`. `init` and `upgrade` call `Sync()` directly instead of `fab-sync.sh`. Updated design decisions (Homebrew distribution, fab upgrade). |

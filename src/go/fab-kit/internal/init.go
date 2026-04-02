@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -48,17 +47,10 @@ func Init() error {
 	}
 	fmt.Printf("Set fab_version: %s in config.yaml\n", latest)
 
-	// 6. Run fab-sync.sh
-	syncScript := filepath.Join(kitDst, "scripts", "fab-sync.sh")
-	if _, err := os.Stat(syncScript); err == nil {
-		fmt.Println("Running fab-sync.sh...")
-		cmd := exec.Command("bash", syncScript)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = cwd
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("fab-sync.sh failed: %w", err)
-		}
+	// 6. Run sync
+	fmt.Println("Running sync...")
+	if err := Sync(); err != nil {
+		return fmt.Errorf("sync failed: %w", err)
 	}
 
 	fmt.Printf("\nfab initialized (v%s). Run /fab-setup in your AI agent to configure.\n", latest)

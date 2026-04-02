@@ -58,7 +58,7 @@ This is best-effort — logman resolves the active change via `.fab-status.yaml`
 
 ## Bootstrap Behavior
 
-When invoked with no arguments, perform the full structural bootstrap. `/fab-setup` delegates directory/symlink/skeleton creation to `fab/.kit/scripts/fab-sync.sh` (step 1j) while handling interactive config/constitution generation itself.
+When invoked with no arguments, perform the full structural bootstrap. `/fab-setup` delegates directory/symlink/skeleton creation to `fab sync` (step 1j) while handling interactive config/constitution generation itself.
 
 ### Phase 0: Prerequisite Check
 
@@ -109,7 +109,7 @@ If exists: skip.
 
 #### 1h. `fab/.kit-migration-version`
 
-Handled by `fab-sync.sh` (step 1j). The scaffold script creates `fab/.kit-migration-version` with version logic based on project state:
+Handled by `fab sync` (step 1j). The sync command creates `fab/.kit-migration-version` with version logic based on project state:
 
 - **New project** (no `fab/project/config.yaml`): copies `fab/.kit/VERSION` value (engine version)
 - **Existing project** (has `fab/project/config.yaml`, no `fab/.kit-migration-version`): writes `0.1.0` (base version, run `/fab-setup migrations` to migrate)
@@ -127,7 +127,7 @@ If exists: ensure `fab/changes/archive/` exists, then skip.
 
 #### 1j. `.claude/skills/` Symlinks
 
-Run `fab/.kit/scripts/fab-sync.sh` to create or repair all skill symlinks, directories, and `fab/.kit-migration-version`. The script discovers skills by globbing `fab/.kit/skills/fab-*.md` and creates:
+Run `fab sync` to create or repair all skill copies, directories, and `fab/.kit-migration-version`. The sync command discovers skills by globbing `fab/.kit/skills/fab-*.md` and creates:
 
 ```
 .claude/skills/fab-{name}/SKILL.md → ../../../fab/.kit/skills/fab-{name}.md
@@ -337,7 +337,7 @@ When `[file]` is provided, read and apply that specific migration file directly,
 
 Before attempting any migration, verify:
 
-1. **`fab/.kit-migration-version` exists** — if not: STOP with `fab/.kit-migration-version not found. Run fab-sync.sh to create it.`
+1. **`fab/.kit-migration-version` exists** — if not: STOP with `fab/.kit-migration-version not found. Run fab sync to create it.`
 2. **`fab/.kit/VERSION` exists** — if not: STOP with `fab/.kit/VERSION not found — kit may be corrupted.`
 3. **`fab/project/config.yaml` exists** — if not: STOP with `fab/project/config.yaml not found. Run /fab-setup to create it.`
 4. Read both version strings and parse as `MAJOR.MINOR.PATCH` integers

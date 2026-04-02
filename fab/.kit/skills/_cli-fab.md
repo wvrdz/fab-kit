@@ -14,21 +14,34 @@ metadata:
 
 ## Calling Convention
 
-`fab` is a system shim that serves as the sole entry point for all fab CLI operations. It resolves `fab_version` from `fab/project/config.yaml`, locates the matching `fab-go` binary in the local cache (`~/.fab-kit/versions/{version}/fab-go`), and execs it with full argument passthrough. All commands are implemented in the Go binary via Cobra.
+`fab` is a router that serves as the sole entry point for all fab CLI operations. It dispatches commands to either `fab-kit` (workspace lifecycle) or `fab-go` (workflow engine) via `syscall.Exec`.
 
 ```
 fab <command> <subcommand> [args...]
 ```
 
+### Three-Binary Architecture
+
+| Binary | Role | Installation |
+|--------|------|-------------|
+| `fab` | Router — dispatches to fab-kit or fab-go | Homebrew (system binary) |
+| `fab-kit` | Workspace lifecycle — init, upgrade, sync | Homebrew (system binary) |
+| `fab-go` | Workflow engine — resolve, status, preflight, etc. | Per-version cache (~/.fab-kit/versions/) |
+
+### Routing
+
+- **Workspace commands** (`init`, `upgrade`, `sync`, `--version`, `--help`, `help`): routed to `fab-kit`
+- **Workflow commands** (everything else): routed to `fab-go` after version resolution
+
 ### Backend
 
-1. The system shim reads `fab_version` from `fab/project/config.yaml`
-2. Dispatches to the cached `fab-go` at `~/.fab-kit/versions/{version}/fab-go`
-3. If the version is not cached, the shim auto-fetches it from GitHub releases
+1. For workspace commands: the router finds `fab-kit` on PATH and execs it
+2. For workflow commands: the router reads `fab_version` from `fab/project/config.yaml`, ensures the matching `fab-go` is cached at `~/.fab-kit/versions/{version}/fab-go`, and execs it
+3. If the version is not cached, the router auto-fetches it from GitHub releases
 
 ### Help
 
-`fab -h`, `fab --help`, and `fab <subcommand> --help` work via Cobra's built-in help system.
+`fab -h`, `fab --help`, and `fab help` show composed help from both fab-kit and fab-go. `fab-kit -h` and `fab-go -h` show their own help independently.
 
 ### Command Reference
 

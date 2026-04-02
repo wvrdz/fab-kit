@@ -24,15 +24,15 @@ jobs:
       # Install just command runner
       - uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # v2
 
-      # Cross-compile Go binaries for all release targets
+      # Cross-compile Go binaries for all release targets (5 binaries x 4 platforms)
       - name: Build all targets
         run: just build-all
 
-      # Create kit archives (generic + per-platform with fab-go)
+      # Create kit archives (per-platform with fab-go)
       - name: Package kit archives
         run: just package-kit
 
-      # Create brew archives (per-platform with fab shim, wt, idea)
+      # Create brew archives (per-platform with fab, fab-kit, wt, idea)
       - name: Package brew archives
         run: just package-brew
 
@@ -97,7 +97,7 @@ jobs:
           # Generate updated formula
           cat > Formula/fab-kit.rb << FORMULA
           class FabKit < Formula
-            desc "Specification-driven development toolkit — shim, worktree manager, and backlog tool"
+            desc "Specification-driven development toolkit — router, workspace manager, worktree manager, and backlog tool"
             homepage "https://github.com/sahil87/fab-kit"
             version "${VERSION}"
             license "MIT"
@@ -126,12 +126,14 @@ jobs:
 
             def install
               bin.install "fab"
+              bin.install "fab-kit"
               bin.install "wt"
               bin.install "idea"
             end
 
             test do
               assert_match version.to_s, shell_output("#{bin}/fab --version")
+              assert_match version.to_s, shell_output("#{bin}/fab-kit --version")
               assert_match version.to_s, shell_output("#{bin}/wt --version")
               assert_match version.to_s, shell_output("#{bin}/idea --version")
             end

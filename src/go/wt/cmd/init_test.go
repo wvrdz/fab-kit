@@ -10,7 +10,7 @@ func TestInit_RunsScriptWhenExists(t *testing.T) {
 	repo := createTestRepo(t)
 	createInitScript(t, repo)
 
-	r := runWt(t, repo, nil, "init")
+	r := runWt(t, repo, []string{"WORKTREE_INIT_SCRIPT=fab/.kit/worktree-init.sh"}, "init")
 	assertExitCode(t, r, 0)
 	combined := r.Stdout + r.Stderr
 	assertContains(t, combined, "Running worktree init")
@@ -23,13 +23,25 @@ func TestInit_RunsScriptWhenExists(t *testing.T) {
 func TestInit_GuidanceWhenNoScript(t *testing.T) {
 	repo := createTestRepo(t)
 
-	r := runWt(t, repo, nil, "init")
+	// With WORKTREE_INIT_SCRIPT pointing to a non-existent file, shows guidance
+	r := runWt(t, repo, []string{"WORKTREE_INIT_SCRIPT=fab/.kit/worktree-init.sh"}, "init")
 	assertExitCode(t, r, 0)
 	combined := r.Stdout + r.Stderr
 	assertContains(t, combined, "No init script found")
 	assertContains(t, combined, "To add an init script")
 	assertContains(t, combined, "mkdir -p")
 	assertContains(t, combined, "touch")
+}
+
+func TestInit_SkipsWhenCommandNotOnPath(t *testing.T) {
+	repo := createTestRepo(t)
+
+	// Default init script is "fab-kit sync" which won't be on PATH in test env
+	r := runWt(t, repo, nil, "init")
+	assertExitCode(t, r, 0)
+	combined := r.Stdout + r.Stderr
+	assertContains(t, combined, "not found on PATH")
+	assertContains(t, combined, "skipping init")
 }
 
 func TestInit_ErrorOutsideGitRepo(t *testing.T) {
@@ -45,10 +57,11 @@ func TestInit_Idempotent(t *testing.T) {
 	repo := createTestRepo(t)
 	createInitScript(t, repo)
 
-	r1 := runWt(t, repo, nil, "init")
+	env := []string{"WORKTREE_INIT_SCRIPT=fab/.kit/worktree-init.sh"}
+	r1 := runWt(t, repo, env, "init")
 	assertExitCode(t, r1, 0)
 
-	r2 := runWt(t, repo, nil, "init")
+	r2 := runWt(t, repo, env, "init")
 	assertExitCode(t, r2, 0)
 }
 
@@ -62,7 +75,7 @@ func TestInit_RunsFromWorktree(t *testing.T) {
 
 	wtPath := createWorktreeViaWt(t, repo, "init-wt-test")
 
-	r := runWt(t, wtPath, nil, "init")
+	r := runWt(t, wtPath, []string{"WORKTREE_INIT_SCRIPT=fab/.kit/worktree-init.sh"}, "init")
 	assertExitCode(t, r, 0)
 	combined := r.Stdout + r.Stderr
 	assertContains(t, combined, "Worktree init complete")
@@ -80,7 +93,7 @@ pwd > current-dir.txt
 `
 	os.WriteFile(script, []byte(content), 0755)
 
-	r := runWt(t, repo, nil, "init")
+	r := runWt(t, repo, []string{"WORKTREE_INIT_SCRIPT=fab/.kit/worktree-init.sh"}, "init")
 	assertExitCode(t, r, 0)
 
 	dirContent, err := os.ReadFile(filepath.Join(repo, "current-dir.txt"))
