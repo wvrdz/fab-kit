@@ -72,7 +72,7 @@ fab init
 4. Set `fab_version: "{latest}"` in `fab/project/config.yaml` (creating the file if needed)
 5. Call `Sync()` directly (the same logic as `fab-kit sync`) to deploy skills and set up the workspace
 
-`fab-kit sync` validates prerequisites (`git`, `bash`, `yq` v4+, `jq`, `gh`, `direnv`), creates directories (`changes/`, `memory/`, `specs/`), processes the scaffold overlay tree (fragment merges and copy-if-absent), deploys skills conditionally to detected agents (copies for Claude Code, Codex, and Gemini CLI; symlinks for OpenCode — only when the agent's CLI is found in PATH), `.envrc` entries (from `scaffold/envrc`, line-ensuring), `.gitignore` entries (from `scaffold/gitignore-entries`), writes the version stamp, and executes project-level `fab/sync/*.sh` scripts.
+`fab-kit sync` follows a 6-step pipeline, resolving all kit content from the system cache (`~/.fab-kit/versions/{version}/kit/`) rather than `fab/.kit/` in the repo: (1) validates prerequisites (`git`, `bash`, `yq` v4+, `direnv`), (2) version guard (ensures `fab_version` <= system `fab-kit` version, auto-runs `fab update` if behind), (3) ensures cache (downloads if needed), (4) workspace scaffolding from cache (directories, scaffold tree-walk with fragment merges and copy-if-absent, skill deployment to detected agents, hook sync, version stamp, legacy cleanup), (5) direnv allow, (6) project-level `fab/sync/*.sh` scripts. Supports `--shim` (steps 1-5 only) and `--project` (step 6 only) flags; mutually exclusive.
 
 **Scenarios**:
 - Init in a new repo (no `fab/` directory) — `fab/.kit/` populated from cache; `config.yaml` created with `fab_version` set to latest; `fab-sync.sh` runs
@@ -126,7 +126,7 @@ The existing `cp -r` distribution method SHALL continue to work, given the syste
 
 ### Sync Staleness Detection
 
-`fab-kit sync` writes `fab/.kit-sync-version` after skill deployment — a gitignored stamp file containing the `fab/.kit/VERSION` value at sync time. `lib/preflight.sh` compares this stamp against the current kit VERSION and emits a non-blocking stderr warning when they differ:
+`fab-kit sync` writes `fab/.kit-sync-version` after skill deployment — a gitignored stamp file containing the synced version value at sync time. `lib/preflight.sh` compares this stamp against the current kit VERSION and emits a non-blocking stderr warning when they differ:
 
 - `⚠ Skills out of sync — run fab sync to refresh (engine X, last synced Y)` — when stamp is behind
 - `⚠ Skills may be out of sync — run fab sync to refresh` — when stamp is missing
@@ -250,7 +250,7 @@ Per-platform archives:
 - **`kit-linux-amd64.tar.gz`** — Content + `fab-go` compiled for Linux x86-64 (musl, fully static).
 - **`kit.tar.gz`** — Generic archive containing content only (no binary). Serves as a fallback for unsupported platforms.
 
-No project-specific files (config.yaml, constitution.md, memory/, specs/, changes/) are included in any archive. Package production code (idea only) is included under `.kit/packages/`, hook scripts under `.kit/hooks/`, and remaining sync scripts under `.kit/sync/` (only `5-sync-hooks.sh`) — all delivered to downstream projects on upgrade. `idea` is a standalone system binary (installed via Homebrew, not per-repo); the shell package at `.kit/packages/idea/bin/idea` is retained for rollback safety and generic-archive users. Skill files are included in all archives and deployed to agents by `fab-kit sync`. `fab/.kit/bin/` contains only `.gitkeep` — no binaries are shipped in the repo.
+No project-specific files (config.yaml, constitution.md, memory/, specs/, changes/) are included in any archive. Package production code (idea only) is included under `.kit/packages/`, hook scripts under `.kit/hooks/` — all delivered to downstream projects on upgrade. `fab/.kit/sync/` contains only `.gitkeep` (all sync scripts absorbed into `fab-kit` Go binary). `idea` is a standalone system binary (installed via Homebrew, not per-repo); the shell package at `.kit/packages/idea/bin/idea` is retained for rollback safety and generic-archive users. Skill files are included in all archives and deployed to agents by `fab-kit sync`. `fab/.kit/bin/` contains only `.gitkeep` — no binaries are shipped in the repo.
 
 **Binary distribution split**: The router (`fab`), `fab-kit`, `wt`, and `idea` are Homebrew-only (version-independent, system-level). Only `fab-go` is version-coupled and lives in the per-version cache.
 
@@ -282,6 +282,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260402-ktbg-sync-from-cache | 2026-04-02 | Rewrote `fab-kit sync` to resolve kit content from system cache (`~/.fab-kit/versions/{version}/kit/`) instead of `fab/.kit/` in the repo. 6-step pipeline: prerequisites, version guard, ensure cache, scaffolding, direnv, project scripts. Added `--shim` (steps 1-5) and `--project` (step 6) flags. Absorbed hook sync into step 4 (replicated hooklib in `fab-kit` internal package). Removed `5-sync-hooks.sh`. Fixed `fragment-.envrc` (`fab-kit sync` -> `fab sync`). Updated prerequisites (removed jq, gh — no longer needed by sync). Updated release archive description (sync/ now empty). |
 | 260326-p4ki-allow-idea-shorthand | 2026-03-26 | Restored bare `idea "text"` shorthand (equivalent to `idea add "text"`). Added `RunE` with `cobra.ArbitraryArgs` to root command in `src/go/idea/cmd/main.go`. Multiple args joined with space. Empty text returns error. Persistent flags (`--main`, `--file`) work with shorthand. Updated `_cli-external.md` and `docs/specs/packages.md`. |
 | 260320-9tqo-fix-idea-docs-main-flag | 2026-03-20 | Corrected `idea` documentation: moved Backlog section from `_cli-fab.md` to `_cli-external.md`, fixed invocation from `fab idea` to standalone `fab/.kit/bin/idea`. Added `--main` persistent flag — default now uses current worktree (`--show-toplevel`), `--main` opts into main worktree (`--git-common-dir`). Renamed `GitRepoRoot()` to `MainRepoRoot()`, added `WorktreeRoot()`. Updated `_cli-external.md` frontmatter and `docs/specs/packages.md`. |
 | 260312-96nf-remove-rust-implementation | 2026-03-12 | Removed all Rust references from distribution docs. Removed Rust recipes from build recipes section, Rust CI steps (toolchain, Zig, cargo-zigbuild), Rust from archive descriptions (3→2 binaries per platform, 12→8 total). Updated backend override to Go-only. Removed "Transition Period: Dual Backends" section. Updated bootstrap descriptions, packaging scenarios, and CI workflow steps. Removed cargo-zigbuild design decision. |

@@ -49,7 +49,7 @@ func Init() error {
 
 	// 6. Run sync
 	fmt.Println("Running sync...")
-	if err := Sync(); err != nil {
+	if err := Sync(latest, false, false); err != nil {
 		return fmt.Errorf("sync failed: %w", err)
 	}
 

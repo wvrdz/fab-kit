@@ -4,7 +4,7 @@
 
 ## Overview
 
-`/fab-setup` is the structural bootstrap skill that creates the `fab/` directory layout. It also provides subcommands for managing `config.yaml` and `constitution.md` (with built-in validation), and for running version migrations (absorbed from the former `/fab-update`). It delegates structural setup to `fab-sync.sh`. It does not handle memory hydration — that responsibility belongs to `/docs-hydrate-memory`.
+`/fab-setup` is the structural bootstrap skill that creates the `fab/` directory layout. It also provides subcommands for managing `config.yaml` and `constitution.md` (with built-in validation), and for running version migrations (absorbed from the former `/fab-update`). It delegates structural setup to `fab-kit sync` (which reads kit content from the system cache). It does not handle memory hydration — that responsibility belongs to `/docs-hydrate-memory`.
 
 ## Requirements
 
@@ -18,11 +18,11 @@
 
 - Creates `fab/project/config.yaml` (project configuration)
 - Creates `fab/project/constitution.md` (project principles)
-- Creates `fab/.kit-migration-version` (migration version — via `fab-sync.sh`)
+- Creates `fab/.kit-migration-version` (migration version — via `fab-kit sync`)
 - Creates `docs/memory/index.md` (memory index skeleton)
 - Creates `docs/specs/index.md` (specifications index skeleton — pre-implementation, human-curated)
 - Creates `fab/changes/` directory
-- Creates skill symlinks via `fab-sync.sh` glob pattern
+- Creates skill deployments via `fab-kit sync`
 - Creates `.gitignore` entries
 - Safe to re-run (idempotent — skips existing files)
 
@@ -74,23 +74,23 @@ Each subcommand operates independently — they can be invoked directly without 
 
 ## Delegation Pattern
 
-`/fab-setup` delegates structural setup to `fab/.kit/scripts/fab-sync.sh` and adds interactive configuration on top. This means `fab-sync.sh` can be run independently (e.g., in CI or after a bootstrap download) without requiring `/fab-setup`.
+`/fab-setup` delegates structural setup to `fab-kit sync` (which resolves kit content from the system cache) and adds interactive configuration on top. This means `fab-kit sync` can be run independently (e.g., in CI or after a bootstrap download) without requiring `/fab-setup`.
 
 | Responsibility | Owner | Notes |
 |---|---|---|
-| Directories (`changes/`, `memory/`, `specs/`) | `fab-sync.sh` | Non-interactive, scriptable |
-| `fab/.kit-migration-version` | `fab-sync.sh` | New project → engine version; existing project (has `config.yaml`) → `0.1.0`; existing file → preserved |
-| Skeleton files (`memory/index.md`, `specs/index.md`) | `fab-sync.sh` | Copies from `scaffold/memory-index.md` and `scaffold/specs-index.md`; idempotent — skips if file exists |
-| Skill symlinks (Claude Code, OpenCode, Codex) | `fab-sync.sh` | Discovers skills via glob pattern |
-| `.envrc` symlink | `fab-sync.sh` | Links to `fab/.kit/scaffold/envrc` |
-| `.gitignore` entries | `fab-sync.sh` | Appends entries from `scaffold/gitignore-entries` if not present |
-| Hook registration | `fab-sync.sh` via `5-sync-hooks.sh` | Registers `fab/.kit/hooks/on-*.sh` into `.claude/settings.local.json` hooks; supports tool-name matchers for PostToolUse events; idempotent jq merge |
+| Directories (`changes/`, `memory/`, `specs/`) | `fab-kit sync` | Non-interactive, scriptable |
+| `fab/.kit-migration-version` | `fab-kit sync` | New project → engine version; existing project (has `config.yaml`) → `0.1.0`; existing file → preserved |
+| Skeleton files (`memory/index.md`, `specs/index.md`) | `fab-kit sync` | Copies from `{cache}/kit/scaffold/`; idempotent — skips if file exists |
+| Skill deployment (Claude Code, OpenCode, Codex, Gemini) | `fab-kit sync` | Deploys from `{cache}/kit/skills/`; conditional on agent CLI availability |
+| `.envrc` entries | `fab-kit sync` | Line-ensuring merge from `{cache}/kit/scaffold/fragment-.envrc` |
+| `.gitignore` entries | `fab-kit sync` | Line-ensuring merge from `{cache}/kit/scaffold/fragment-.gitignore` |
+| Hook registration | `fab-kit sync` (step 4) | Registers `{cache}/kit/hooks/on-*.sh` into `.claude/settings.local.json` hooks; supports tool-name matchers for PostToolUse events; idempotent merge (hooklib replicated in fab-kit) |
 | `config.yaml` | `/fab-setup config` (delegated by `/fab-setup`) | Reads `scaffold/config.yaml` template, substitutes placeholders with user-provided values |
 | `constitution.md` | `/fab-setup constitution` (delegated by `/fab-setup`) | Reads `scaffold/constitution.md` skeleton, generates principles from project context |
 
-`/fab-setup` invokes `fab-sync.sh` as step 1g of its bootstrap sequence. Steps 1c–1f in `/fab-setup` have idempotent guards so they gracefully skip artifacts already created by `fab-sync.sh`.
+`/fab-setup` invokes `fab-kit sync` (via `Sync()`) as step 1g of its bootstrap sequence. Steps 1c–1f in `/fab-setup` have idempotent guards so they gracefully skip artifacts already created by `fab-kit sync`.
 
-**Bootstrap path** (without `/fab-setup`): After downloading `fab/.kit/` via curl or `cp -r`, running `fab-sync.sh` alone creates a complete structural scaffold. `/fab-setup` is only needed to generate `config.yaml` and `constitution.md`.
+**Bootstrap path** (without `/fab-setup`): After `brew install fab-kit` and `fab init`, running `fab sync` alone creates a complete structural scaffold. `/fab-setup` is only needed to generate `config.yaml` and `constitution.md`.
 
 ## Design Decisions
 
@@ -170,6 +170,7 @@ Each subcommand operates independently — they can be invoked directly without 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260402-ktbg-sync-from-cache | 2026-04-02 | Updated delegation table: all `fab-sync.sh` references → `fab-kit sync`; scaffold sources now read from `{cache}/kit/` instead of `fab/.kit/`; hook registration absorbed into `fab-kit sync` step 4 (replaces `5-sync-hooks.sh` delegation). Updated overview and bootstrap path to reflect `fab-kit sync` with cache-based resolution. |
 | 260306-6bba-redesign-hooks-strategy | 2026-03-06 | Full removal of Phase 1b-lang (language detection and convention inference) from bootstrap flow — fab-kit stays language-neutral. Supersedes 260306-143f agent-inferred conventions. Added deprecated requirement for agent-inferred conventions. Updated "Agent-Inferred Conventions" design decision as superseded. Updated hook registration delegation table to reflect matcher support. |
 | 260306-143f-setup-language-inference | 2026-03-06 | Replaced template-driven language detection (step 1b-lang) with agent-inferred conventions. Deleted `fab/.kit/templates/constitutions/` and `fab/.kit/templates/configs/` (6 template files). Removed language template advisory (section 2b) from `2-sync-workspace.sh`. Added "Agent-Inferred Conventions Replace Templates" design decision. |
 | 260305-bs5x-orchestrator-idle-hooks | 2026-03-05 | Added hook registration to delegation table: `fab-sync.sh` via `5-sync-hooks.sh` registers `fab/.kit/hooks/on-*.sh` into `.claude/settings.local.json` hooks (idempotent jq merge). |

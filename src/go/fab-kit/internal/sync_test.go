@@ -271,6 +271,82 @@ func TestCleanStaleSkills_Directory(t *testing.T) {
 	}
 }
 
+func TestCompareSemver(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want int
+	}{
+		{"0.44.10", "0.44.10", 0},
+		{"0.44.9", "0.44.10", -1},
+		{"0.44.10", "0.44.9", 1},
+		{"0.45.0", "0.44.10", 1},
+		{"0.44.0", "0.45.0", -1},
+		{"1.0.0", "0.99.99", 1},
+		{"v0.44.10", "0.44.10", 0},
+	}
+	for _, tt := range tests {
+		got := compareSemver(tt.a, tt.b)
+		if got != tt.want {
+			t.Errorf("compareSemver(%q, %q) = %d, want %d", tt.a, tt.b, got, tt.want)
+		}
+	}
+}
+
+func TestVersionGuard_DevBypass(t *testing.T) {
+	if err := versionGuard("0.99.0", "dev"); err != nil {
+		t.Errorf("expected dev build to bypass guard, got: %v", err)
+	}
+}
+
+func TestVersionGuard_SufficientVersion(t *testing.T) {
+	if err := versionGuard("0.44.10", "0.44.10"); err != nil {
+		t.Errorf("expected equal versions to pass, got: %v", err)
+	}
+	if err := versionGuard("0.44.9", "0.45.0"); err != nil {
+		t.Errorf("expected older fab_version to pass, got: %v", err)
+	}
+}
+
+func TestParseSemver(t *testing.T) {
+	tests := []struct {
+		input string
+		want  [3]int
+	}{
+		{"0.44.10", [3]int{0, 44, 10}},
+		{"v1.2.3", [3]int{1, 2, 3}},
+		{"0.0.0", [3]int{0, 0, 0}},
+	}
+	for _, tt := range tests {
+		got := parseSemver(tt.input)
+		if got != tt.want {
+			t.Errorf("parseSemver(%q) = %v, want %v", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestRequiredToolsUpdated(t *testing.T) {
+	// Verify jq and gh are not in the required tools list
+	for _, tool := range requiredTools {
+		if tool == "jq" {
+			t.Error("jq should not be in requiredTools (removed: was used by old shell-based hook sync)")
+		}
+		if tool == "gh" {
+			t.Error("gh should not be in requiredTools (removed: only needed by download)")
+		}
+	}
+
+	// Verify expected tools are present
+	expected := map[string]bool{"git": false, "bash": false, "yq": false, "direnv": false}
+	for _, tool := range requiredTools {
+		expected[tool] = true
+	}
+	for tool, found := range expected {
+		if !found {
+			t.Errorf("expected %s in requiredTools", tool)
+		}
+	}
+}
+
 func TestCleanStaleSkills_Flat(t *testing.T) {
 	baseDir := t.TempDir()
 	repoRoot := filepath.Dir(baseDir)

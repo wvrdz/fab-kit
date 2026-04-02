@@ -7,11 +7,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 // requiredTools lists prerequisites that must be available on PATH.
-var requiredTools = []string{"git", "bash", "yq", "jq", "gh", "direnv"}
+var requiredTools = []string{"git", "bash", "yq", "direnv"}
 
 // agentConfig describes how to deploy skills to a specific AI agent.
 type agentConfig struct {
@@ -22,63 +23,140 @@ type agentConfig struct {
 	Mode    string // "copy" or "symlink"
 }
 
-// Sync performs the full workspace sync: prerequisites, directory scaffolding,
-// scaffold tree-walk, skill deployment, stale cleanup, version stamp,
-// direnv allow, and project-level sync scripts.
-func Sync() error {
+// Sync performs the full workspace sync using the cached kit directory.
+// systemVersion is the embedded version of the fab-kit binary.
+// shimOnly runs steps 1-5 only; projectOnly runs step 6 only.
+func Sync(systemVersion string, shimOnly, projectOnly bool) error {
 	// Resolve repo root via git
 	repoRoot, err := gitRepoRoot()
 	if err != nil {
 		return fmt.Errorf("cannot determine repo root: %w", err)
 	}
 
-	kitDir := filepath.Join(repoRoot, "fab", ".kit")
 	fabDir := filepath.Join(repoRoot, "fab")
 
-	// Pre-flight: verify kit exists
-	versionFile := filepath.Join(kitDir, "VERSION")
-	versionBytes, err := os.ReadFile(versionFile)
+	// Resolve fab_version from config.yaml
+	cfg, err := ResolveConfig()
 	if err != nil {
-		return fmt.Errorf("fab/.kit/VERSION not found — kit may be corrupted")
-	}
-	kitVersion := strings.TrimSpace(string(versionBytes))
-	fmt.Printf("Found fab/.kit/ (v%s). Setting up structure...\n", kitVersion)
-
-	// 0. Prerequisites check
-	if err := checkPrerequisites(); err != nil {
 		return err
 	}
+	if cfg == nil {
+		return fmt.Errorf("not in a fab-managed repo. Run 'fab init' to set one up")
+	}
+	fabVersion := cfg.FabVersion
 
-	// 1. Directory scaffolding
-	scaffoldDirectories(repoRoot, fabDir, kitDir, kitVersion)
-
-	// 2. Scaffold tree-walk
-	scaffoldDir := filepath.Join(kitDir, "scaffold")
-	if dirExists(scaffoldDir) {
-		if err := scaffoldTreeWalk(scaffoldDir, repoRoot); err != nil {
-			return fmt.Errorf("scaffold tree-walk failed: %w", err)
+	if !projectOnly {
+		// Step 1: Prerequisites check
+		if err := checkPrerequisites(); err != nil {
+			return err
 		}
+
+		// Step 2: Version guard
+		if err := versionGuard(fabVersion, systemVersion); err != nil {
+			return err
+		}
+
+		// Step 3: Ensure cache
+		fmt.Printf("Resolving kit v%s from cache...\n", fabVersion)
+		if _, err := EnsureCached(fabVersion); err != nil {
+			return err
+		}
+
+		cachedKitDir := CachedKitDir(fabVersion)
+		kitVersion := fabVersion
+
+		// Step 4: Workspace scaffolding (all from cache)
+		scaffoldDirectories(repoRoot, fabDir, cachedKitDir, kitVersion)
+
+		scaffoldDir := filepath.Join(cachedKitDir, "scaffold")
+		if dirExists(scaffoldDir) {
+			if err := scaffoldTreeWalk(scaffoldDir, repoRoot); err != nil {
+				return fmt.Errorf("scaffold tree-walk failed: %w", err)
+			}
+		}
+
+		deploySkills(repoRoot, cachedKitDir)
+
+		// Hook sync (absorbed from 5-sync-hooks.sh)
+		hooksDir := filepath.Join(cachedKitDir, "hooks")
+		settingsPath := filepath.Join(repoRoot, ".claude", "settings.local.json")
+		if dirExists(hooksDir) {
+			msg, err := syncHooks(hooksDir, settingsPath)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "WARN: hook sync failed: %v\n", err)
+			} else {
+				fmt.Println(msg)
+			}
+		}
+
+		cleanLegacyAgents(repoRoot, cachedKitDir)
+		writeSyncVersionStamp(fabDir, kitVersion)
+
+		// Step 5: Direnv allow
+		runDirenvAllow(repoRoot)
 	}
 
-	// 3. Skill deployment
-	deploySkills(repoRoot, kitDir)
-
-	// 4. Transitional agent cleanup (legacy .claude/agents/ files)
-	cleanLegacyAgents(repoRoot, kitDir)
-
-	// 5. Sync version stamp
-	writeSyncVersionStamp(fabDir, kitVersion)
-
-	// 6. direnv allow
-	runDirenvAllow(repoRoot)
-
-	// 7. Project-level sync scripts
-	if err := runProjectSyncScripts(fabDir, repoRoot); err != nil {
-		return err
+	if !shimOnly {
+		// Step 6: Project-level sync scripts
+		if err := runProjectSyncScripts(fabDir, repoRoot); err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("Done.")
 	return nil
+}
+
+// versionGuard ensures fab_version <= system fab-kit version.
+// If the system version is too old, attempts auto-update via Update().
+func versionGuard(fabVersion, systemVersion string) error {
+	if systemVersion == "dev" {
+		return nil // dev build, skip guard
+	}
+	cmp := compareSemver(fabVersion, systemVersion)
+	if cmp <= 0 {
+		return nil // fab_version <= system version
+	}
+
+	fmt.Printf("Project needs v%s but system has v%s. Attempting update...\n", fabVersion, systemVersion)
+	if err := Update(systemVersion); err != nil {
+		return fmt.Errorf("system fab-kit v%s is older than project fab_version %s. Run 'fab update' manually: %w",
+			systemVersion, fabVersion, err)
+	}
+
+	// After update, we can't re-check the version in-process (the binary hasn't reloaded).
+	// Trust that brew upgraded to latest. If still insufficient, next run will catch it.
+	return nil
+}
+
+// compareSemver compares two semver strings. Returns -1, 0, or 1.
+func compareSemver(a, b string) int {
+	aParts := parseSemver(a)
+	bParts := parseSemver(b)
+	for i := 0; i < 3; i++ {
+		if aParts[i] < bParts[i] {
+			return -1
+		}
+		if aParts[i] > bParts[i] {
+			return 1
+		}
+	}
+	return 0
+}
+
+// parseSemver splits a version string into [major, minor, patch].
+func parseSemver(v string) [3]int {
+	v = strings.TrimPrefix(v, "v")
+	parts := strings.SplitN(v, ".", 3)
+	var result [3]int
+	for i, p := range parts {
+		if i >= 3 {
+			break
+		}
+		n, _ := strconv.Atoi(p)
+		result[i] = n
+	}
+	return result
 }
 
 // gitRepoRoot resolves the repo root via git rev-parse.

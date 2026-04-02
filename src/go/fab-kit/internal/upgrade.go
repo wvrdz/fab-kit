@@ -98,7 +98,7 @@ func Upgrade(targetVersion string) error {
 
 	// Run sync
 	fmt.Println("Running sync...")
-	if err := Sync(); err != nil {
+	if err := Sync(targetVersion, false, false); err != nil {
 		fmt.Fprintf(os.Stderr, "WARNING: sync failed: %s\n", err)
 	}
 

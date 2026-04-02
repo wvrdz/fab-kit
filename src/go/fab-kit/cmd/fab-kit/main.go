@@ -66,13 +66,20 @@ func upgradeCmd() *cobra.Command {
 }
 
 func syncCmd() *cobra.Command {
-	return &cobra.Command{
+	var shimOnly, projectOnly bool
+	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Sync workspace (skills, directories, scaffold)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return internal.Sync()
+			if shimOnly && projectOnly {
+				return fmt.Errorf("--shim and --project are mutually exclusive")
+			}
+			return internal.Sync(version, shimOnly, projectOnly)
 		},
 	}
+	cmd.Flags().BoolVar(&shimOnly, "shim", false, "Run shim steps only (prerequisites, version guard, cache, scaffold, direnv)")
+	cmd.Flags().BoolVar(&projectOnly, "project", false, "Run project sync scripts only")
+	return cmd
 }
 
 func updateCmd() *cobra.Command {
