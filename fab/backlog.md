@@ -2,21 +2,7 @@
 
 - [ ] [ngaw] 2026-02-23: Quality gate - how to decide which PR has had deep thought vs just surface level?
 - [ ] [v34t] 2026-02-23: A timeline or user journey mermaid diagram showing which commands are typed in the main repo vs the worktree
-- [ ] [lc3m] 2026-03-01: Switch fab/.kit/LICENSE from PolyForm Internal Use to MIT. Reasoning: fab-kit is a process (prompts, markdown, shell scripts) — not protectable IP in the copyright sense. The US Copyright Office ruled prompts convey unprotectable ideas. PolyForm Internal Use blocks community contributions and ecosystem growth while providing only illusory control. MIT gives attribution (copyright notice preserved), maximum adoption, zero friction, and lets the community keep the tool evolving — the real moat is speed and opinionation, not licensing restrictions.
 - [ ] [q0lw] 2026-03-11: If fab binary or wt or idea binary not found, stop. Add to preamble?
-
-## Done
-
-- [x] [t13m] 2026-03-18: Configurable agent spawn command in config.yaml — centralize the agent binary/flags so all spawn scripts and operator read from one place. Default: `claude --dangerously-skip-permissions --effort max -n "$(basename "$(pwd)")"`. Currently hardcoded in 4+ locations.
-- [x] [gogt] 2026-03-19: Write operator6 from hand. Remove references to byobu in it.
-- [x] [rd3u] 2026-03-19: operator should mention on each tick the current timestamp
-- [x] [djkp] 2026-03-19: operator's instuction of rebase to latest is misleading. Should mention - rebase to latest origin/main
-- [x] [d0dl] 2026-03-26: Update fab-operator7.md skill: add guidance that the operator must always route new work through the fab pipeline (fab-new then fab-fff) when spawning agents, never dispatch raw inline task instructions. Document the correct spawn sequence: spawn agent with '/fab-new <description>', then after intake lands send /fab-switch + /git-branch + /fab-fff.
-- [x] [pw7f] 2026-03-26: Update fab-operator7.md skill: operator should pass the task description directly to '/fab-new <description>' when spawning agents, not create a backlog entry first with 'idea add'. The backlog detour is unnecessary — fab-new accepts natural language directly. Remove the 'idea add' step from the spawn sequence in §6 "Working a Change".
-- [x] [u8tk] 2026-03-26: Update fab-operator7.md skill: the tick status frame should use a single unified list for all tracked items — monitored changes, watches, and any other tracked sources (Gmail, Slack, etc.) should render as entries in the same list with consistent formatting. Currently §4 treats monitored changes and watches as separate visual sections. They should be peers in one list, each with a type indicator (e.g. 🟢 for changes, 👁 for watches, 📧 for mail, 💬 for slack).
-- [x] [1tch] 2026-03-20: Change fab-switch --blank to fab-switch --none or just fab-switch. --blank isn't easy to remember
-- [x] [heht] 2026-03-19: Ensure randomness in worktree names is actually getting followed - inrease the name universe even further
-- [x] [p4ki] 2026-03-19: Allow 'idea <text of idea>' format once again
-- [ ] [gwg9] 2026-03-27: fab-operator7: Default to --base chaining for multi-phase autopilot queues instead of merge-as-you-go. When the operator runs a queue of dependent changes, it should stack branches (cherry-pick deps) and let the user review all PRs before merging — not auto-merge each PR on completion. Only merge-as-you-go when the user explicitly requests it. This prevents rebase conflicts and gives the user review control. Current behavior: operator merges each PR immediately on completion then rebases the next change onto origin/main.
-- [ ] [7rnu] 2026-03-27: Earlier wt couldn't show 'open here' as one of the options because of a shell limitation. Now wt-create is no longer a shell script but a go binary. Can this be done now?
-- [ ] [iqt8] 2026-03-27: fab-operator7: Standardize tmux tab naming for spawned agents — use ⚡ followed by worktree name (e.g. ⚡fix-restart or ⚡ fix-restart if spaces allowed). Currently the skill says fab-<id> but at spawn time the change ID doesn't exist yet. The worktree name is always known and unique.
+- [ ] [41gc] 2026-04-02: Next step in removing .kit - remove dependency on .kit/scripts folder
+- [ ] [uqy8] 2026-04-02: Should fab sync command be made a part of the shim binary? So the user always does fab sync before working on a freshly cloned repo
+- [ ] [ub2y] 2026-04-02: Make hooks work directly using the fab system command - remove fab/.kit folder dependency
