@@ -72,19 +72,24 @@ fab/changes/260101-abcd-add-spinner/
 Install with [Homebrew](https://brew.sh/) (macOS and Linux):
 
 ```bash
-brew tap wvrdz/tap
-brew install fab-kit yq jq gh direnv
+brew tap sahil87/tap
+brew install fab-kit
+
+# Other utilities fab depends on
+brew install yq jq gh direnv
 ```
+
+This installs the `fab` CLI (router), `fab-kit` (workspace lifecycle), and standalone tools `wt` (worktree manager) and `idea` (backlog manager).
 
 * After installing `gh`, authenticate with `gh auth login`.
 * After installing `direnv`, add the hook [to your shell](https://direnv.net/docs/hook.html).
 
 | Tool | Purpose |
 |------|---------|
-| [fab-kit](https://github.com/sahil87/fab-kit) | The fab CLI shim, worktree manager (`wt`), and backlog manager (`idea`) |
+| [fab-kit](https://github.com/sahil87/fab-kit) | The `fab` CLI router, workspace lifecycle (`init`/`upgrade`/`sync`), `wt`, and `idea` |
 | [yq](https://github.com/mikefarah/yq) | YAML processing for status files and schemas |
 | [jq](https://jqlang.github.io/jq/) | JSON processing for settings merge during sync |
-| [gh](https://cli.github.com/) | GitHub CLI - used for installation and releases |
+| [gh](https://cli.github.com/) | GitHub CLI - used for releases and PR workflows |
 | [direnv](https://direnv.net/) | Auto-loads `.envrc` to put fab scripts on PATH |
 
 #### Developing Fab Kit
@@ -108,7 +113,7 @@ brew install go just
 fab init
 ```
 
-This scaffolds `fab/.kit/` from the latest release, sets `fab_version` in `fab/project/config.yaml`, and runs `fab sync`.
+This downloads the latest release, populates `fab/.kit/`, sets `fab_version` in `fab/project/config.yaml`, and runs `fab sync` — all in one step. No curl scripts or manual downloads.
 
 **Then in your AI agent:**
 
@@ -117,7 +122,7 @@ This scaffolds `fab/.kit/` from the latest release, sets `fab_version` in `fab/p
 $fab-setup    # Codex
 ```
 
-This generates `fab/project/config.yaml` and `fab/project/constitution.md` (your project's architectural rules).
+This generates `fab/project/constitution.md` and other project configuration files.
 
 #### Updating from a previous version
 
@@ -487,16 +492,12 @@ block-beta
 
 ## Packages
 
-Fab Kit ships standalone shell CLI tools in `fab/.kit/packages/`. These are general-purpose developer workflow utilities - independent of the fab pipeline - and are distributed automatically via `kit.tar.gz`. See [packages.md](docs/specs/packages.md) for details.
+Fab Kit includes standalone CLI tools — general-purpose developer workflow utilities independent of the fab pipeline. They're installed system-wide via `brew install fab-kit`. See [packages.md](docs/specs/packages.md) for details.
 
 | Package | Purpose |
 |---------|---------|
 | **idea** | Per-repo idea backlog in `fab/backlog.md` - add, list, edit, complete, remove |
 | **wt** | Git worktree management - create, open, list, delete worktrees with random naming |
-
-### Setup
-
-`wt` and `idea` are installed system-wide via `brew install fab-kit`. No per-repo binary distribution needed.
 
 ### Development
 
@@ -504,6 +505,7 @@ After cloning, run Go tests:
 
 ```bash
 just test               # run all tests
+just build-fab-kit      # build fab + fab-kit to dist/bin/
 ```
 
 ## Learn More
