@@ -91,7 +91,7 @@ fab/.kit/
     ├── batch-fab-new-backlog.sh     # Batch create changes from backlog via tmux + Claude
     ├── batch-fab-switch-change.sh   # Batch switch to changes via tmux + Claude
     ├── fab-operator7.sh    # Launch operator7 in singleton tmux tab ("operator")
-    ├── fab-doctor.sh       # Prerequisite checker (6 tools: git, bash, yq v4+, gh, direnv+hook, fab system shim)
+    ├── fab-doctor.sh       # Prerequisite checker (7 tools: git, fab, bash, yq v4+, jq, gh, direnv+hook)
     ├── fab-help.sh         # Print help overview
     ├── fab-sync.sh         # Single entry point — thin orchestrator iterating sync/*.sh then fab/sync/*.sh
     └── lib/                # Utility scripts (not user-facing)
@@ -127,7 +127,7 @@ These scripts were removed in change `260305-u8t9-clean-break-go-only`. Their op
 
 #### `fab-doctor.sh`
 
-Standalone prerequisite checker, sibling of `fab-help.sh`. Validates 6 required tools in order: `git`, `bash`, `yq` (v4+ gate), `gh`, `direnv` (binary + shell hook), `fab` (system shim — checks for the Homebrew-installed binary on PATH; fails with hint `"Install: brew install fab-kit"` if missing). Each check uses `command -v` for presence detection, tool-specific version extraction, and structured output (`✓`/`✗` with version or error + actionable fix hint). The yq check parses the major version and rejects v3 (Python) with a specific message. The direnv check has two parts: binary presence and shell hook integration — spawns an interactive subshell (`-i` flag) to source rc files, checking for `_direnv_hook` function (zsh) or `PROMPT_COMMAND` containing "direnv" (bash); unsupported shells pass with a "hook check skipped" note. All subshell output suppressed via `&>/dev/null`. Failures are accumulated (no early exit) — the script runs all 5 checks before reporting. Exit code equals the failure count (0 = all pass, 1-5 = number of failures). Output format: header line, per-tool result lines (indented), blank line, summary. Supports `--porcelain` flag for scripted callers (quiet mode: only errors, no passes/hints/summary). Called by: `sync/1-prerequisites.sh` (exec delegate) and `/fab-setup` (Phase 0 early gate).
+Standalone prerequisite checker, sibling of `fab-help.sh`. Validates 7 required tools in order: `git`, `fab` (system shim — checks for the Homebrew-installed binary on PATH; fails with hint `"Install: brew install fab-kit"` if missing), `bash`, `yq` (v4+ gate), `jq`, `gh`, `direnv` (binary + shell hook). Each check uses `command -v` for presence detection, tool-specific version extraction, and structured output (`✓`/`✗` with version or error + actionable fix hint). The yq check parses the major version and rejects v3 (Python) with a specific message. The direnv check has two parts: binary presence and shell hook integration — spawns an interactive subshell (`-i` flag) to source rc files, checking for `_direnv_hook` function (zsh) or `PROMPT_COMMAND` containing "direnv" (bash); unsupported shells pass with a "hook check skipped" note. All subshell output suppressed via `&>/dev/null`. Failures are accumulated (no early exit) — the script runs all 7 checks before reporting. Exit code equals the failure count (0 = all pass, 1-7 = number of failures). Output format: header line, per-tool result lines (indented), blank line, summary. Supports `--porcelain` flag for scripted callers (quiet mode: only errors, no passes/hints/summary). Called by: `sync/1-prerequisites.sh` (exec delegate) and `/fab-setup` (Phase 0 early gate).
 
 #### `fab-help.sh`
 

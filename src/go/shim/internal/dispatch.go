@@ -34,10 +34,6 @@ func Dispatch(args []string) error {
 	}
 
 	if cfg == nil {
-		// No config found — not in a fab-managed repo
-		if len(args) == 0 {
-			return fmt.Errorf("not in a fab-managed repo. Run 'fab init' to set one up")
-		}
 		return fmt.Errorf("not in a fab-managed repo. Run 'fab init' to set one up")
 	}
 
