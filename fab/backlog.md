@@ -5,4 +5,4 @@
 - [ ] [q0lw] 2026-03-11: If fab binary or wt or idea binary not found, stop. Add to preamble?
 - [ ] [41gc] 2026-04-02: Next step in removing .kit - remove dependency on .kit/scripts folder
 - [ ] [uqy8] 2026-04-02: Should fab sync command be made a part of the shim binary? So the user always does fab sync before working on a freshly cloned repo
-- [ ] [ub2y] 2026-04-02: Make hooks work directly using the fab system command - remove fab/.kit folder dependency
+- [ ] [ub2y] 2026-04-02: Make hooks work directly using the fab system command - remove fab/.kit folder dependency from everywhere
