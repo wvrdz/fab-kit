@@ -14,69 +14,116 @@ func TestCacheDir(t *testing.T) {
 	}
 }
 
-func TestCachedBinary(t *testing.T) {
-	bin := CachedBinary("0.43.0")
-	if !strings.HasSuffix(bin, "/0.43.0/fab-go") {
-		t.Errorf("CachedBinary should end with /0.43.0/fab-go, got %s", bin)
+func TestLocalCacheDir(t *testing.T) {
+	dir := LocalCacheDir("0.43.0")
+	if !strings.Contains(dir, ".fab-kit/local-versions/0.43.0") {
+		t.Errorf("LocalCacheDir should contain .fab-kit/local-versions/0.43.0, got %s", dir)
 	}
 }
 
-func TestCachedKitDir(t *testing.T) {
+func TestResolveBinary_LocalPriority(t *testing.T) {
+	tmp := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	defer os.Setenv("HOME", origHome)
+
+	// Create both local and remote binaries
+	for _, dir := range []string{"local-versions", "versions"} {
+		versionDir := filepath.Join(tmp, ".fab-kit", dir, "0.43.0")
+		os.MkdirAll(versionDir, 0755)
+		os.WriteFile(filepath.Join(versionDir, "fab-go"), []byte("#!/bin/sh\n"), 0755)
+	}
+
+	path, found := ResolveBinary("0.43.0")
+	if !found {
+		t.Fatal("expected ResolveBinary to find binary")
+	}
+	if !strings.Contains(path, "local-versions") {
+		t.Errorf("expected local-versions to take priority, got %s", path)
+	}
+}
+
+func TestResolveBinary_FallbackToRemote(t *testing.T) {
+	tmp := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	defer os.Setenv("HOME", origHome)
+
+	// Only remote exists
+	versionDir := filepath.Join(tmp, ".fab-kit", "versions", "0.43.0")
+	os.MkdirAll(versionDir, 0755)
+	os.WriteFile(filepath.Join(versionDir, "fab-go"), []byte("#!/bin/sh\n"), 0755)
+
+	path, found := ResolveBinary("0.43.0")
+	if !found {
+		t.Fatal("expected ResolveBinary to find remote binary")
+	}
+	if !strings.Contains(path, "versions/0.43.0") {
+		t.Errorf("expected versions/ path, got %s", path)
+	}
+}
+
+func TestResolveBinary_NotFound(t *testing.T) {
+	tmp := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	defer os.Setenv("HOME", origHome)
+
+	_, found := ResolveBinary("0.99.0")
+	if found {
+		t.Error("expected ResolveBinary to return false for non-existent version")
+	}
+}
+
+func TestResolveBinary_LocalNotExecutable(t *testing.T) {
+	tmp := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	defer os.Setenv("HOME", origHome)
+
+	// Local exists but not executable; remote is executable
+	localDir := filepath.Join(tmp, ".fab-kit", "local-versions", "0.43.0")
+	os.MkdirAll(localDir, 0755)
+	os.WriteFile(filepath.Join(localDir, "fab-go"), []byte("#!/bin/sh\n"), 0644) // no exec bit
+
+	remoteDir := filepath.Join(tmp, ".fab-kit", "versions", "0.43.0")
+	os.MkdirAll(remoteDir, 0755)
+	os.WriteFile(filepath.Join(remoteDir, "fab-go"), []byte("#!/bin/sh\n"), 0755)
+
+	path, found := ResolveBinary("0.43.0")
+	if !found {
+		t.Fatal("expected ResolveBinary to find remote binary")
+	}
+	if !strings.Contains(path, "versions/0.43.0") {
+		t.Errorf("expected fallback to remote, got %s", path)
+	}
+}
+
+func TestCachedKitDir_LocalPriority(t *testing.T) {
+	tmp := t.TempDir()
+	origHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	defer os.Setenv("HOME", origHome)
+
+	// Create local kit dir
+	localKit := filepath.Join(tmp, ".fab-kit", "local-versions", "0.43.0", "kit")
+	os.MkdirAll(localKit, 0755)
+
 	kit := CachedKitDir("0.43.0")
-	if !strings.HasSuffix(kit, "/0.43.0/kit") {
-		t.Errorf("CachedKitDir should end with /0.43.0/kit, got %s", kit)
+	if !strings.Contains(kit, "local-versions") {
+		t.Errorf("expected local-versions kit, got %s", kit)
 	}
 }
 
-func TestIsCached_Exists(t *testing.T) {
-	// Create a fake cached binary
+func TestCachedKitDir_FallbackToRemote(t *testing.T) {
 	tmp := t.TempDir()
 	origHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmp)
 	defer os.Setenv("HOME", origHome)
 
-	versionDir := filepath.Join(tmp, ".fab-kit", "versions", "0.43.0")
-	if err := os.MkdirAll(versionDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	binPath := filepath.Join(versionDir, "fab-go")
-	if err := os.WriteFile(binPath, []byte("#!/bin/sh\n"), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	if !IsCached("0.43.0") {
-		t.Error("expected IsCached to return true for existing binary")
-	}
-}
-
-func TestIsCached_NotExists(t *testing.T) {
-	tmp := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmp)
-	defer os.Setenv("HOME", origHome)
-
-	if IsCached("0.99.0") {
-		t.Error("expected IsCached to return false for non-existent version")
-	}
-}
-
-func TestIsCached_NotExecutable(t *testing.T) {
-	tmp := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmp)
-	defer os.Setenv("HOME", origHome)
-
-	versionDir := filepath.Join(tmp, ".fab-kit", "versions", "0.43.0")
-	if err := os.MkdirAll(versionDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	binPath := filepath.Join(versionDir, "fab-go")
-	// Write without executable permission
-	if err := os.WriteFile(binPath, []byte("#!/bin/sh\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	if IsCached("0.43.0") {
-		t.Error("expected IsCached to return false for non-executable binary")
+	// No local kit dir exists
+	kit := CachedKitDir("0.43.0")
+	if !strings.Contains(kit, "versions/0.43.0") {
+		t.Errorf("expected remote kit path, got %s", kit)
 	}
 }

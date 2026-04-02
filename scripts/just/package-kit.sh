@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Package kit archives for release (generic + per-platform with fab-go binary)
+# Package kit archives for release (per-platform with fab-go binary)
 # Called by: just package-kit
 #
 # fab (shim), wt, and idea are distributed via Homebrew, not kit archives.
@@ -21,12 +21,7 @@ for platform in "${platforms[@]}"; do
   fi
 done
 
-# Generic archive (no binaries)
-echo "Packaging kit.tar.gz (generic, no binary)..."
-COPYFILE_DISABLE=1 tar czf kit.tar.gz -C fab --exclude='.kit/bin/fab-go' --exclude='.kit/bin/wt' --exclude='.kit/bin/idea' .kit
-echo "  kit.tar.gz ($(wc -c < kit.tar.gz) bytes)"
-
-# Per-platform archives (kit + fab-go binary only)
+# Per-platform archives (kit content + fab-go binary)
 for platform in "${platforms[@]}"; do
   os="${platform%%/*}"
   arch="${platform##*/}"
@@ -42,4 +37,4 @@ for platform in "${platforms[@]}"; do
   echo "  $archive_name ($(wc -c < "$archive_name") bytes)"
   rm -rf "$staging"
 done
-echo "Packaging complete: kit.tar.gz + ${#platforms[@]} platform archives"
+echo "Packaging complete: ${#platforms[@]} platform archives"
