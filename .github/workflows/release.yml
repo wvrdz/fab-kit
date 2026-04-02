@@ -28,9 +28,13 @@ jobs:
       - name: Build all targets
         run: just build-all
 
-      # Create kit archives (generic + per-platform with Go binary)
+      # Create kit archives (generic + per-platform with fab-go)
       - name: Package kit archives
         run: just package-kit
+
+      # Create brew archives (per-platform with fab shim, wt, idea)
+      - name: Package brew archives
+        run: just package-brew
 
       # Create GitHub Release with commit-level changelog
       # Minor releases (x.y.0) cumulate all commits since the previous minor.
@@ -63,10 +67,84 @@ jobs:
           gh release create "$TAG" \
             --title "Fab Kit ${TAG}" \
             --notes-file /tmp/release-body.md \
-            kit.tar.gz \
             kit-darwin-arm64.tar.gz \
             kit-darwin-amd64.tar.gz \
             kit-linux-arm64.tar.gz \
-            kit-linux-amd64.tar.gz
+            kit-linux-amd64.tar.gz \
+            brew-darwin-arm64.tar.gz \
+            brew-darwin-amd64.tar.gz \
+            brew-linux-arm64.tar.gz \
+            brew-linux-amd64.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Update Homebrew tap formula with new version and SHA256 hashes
+      - name: Update Homebrew tap
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+
+          # Compute SHA256 for each brew archive
+          SHA_DARWIN_ARM64=$(shasum -a 256 brew-darwin-arm64.tar.gz | cut -d' ' -f1)
+          SHA_DARWIN_AMD64=$(shasum -a 256 brew-darwin-amd64.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_ARM64=$(shasum -a 256 brew-linux-arm64.tar.gz | cut -d' ' -f1)
+          SHA_LINUX_AMD64=$(shasum -a 256 brew-linux-amd64.tar.gz | cut -d' ' -f1)
+
+          # Clone tap repo
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/sahil87/homebrew-tap.git /tmp/tap
+          cd /tmp/tap
+
+          # Generate updated formula
+          cat > Formula/fab-kit.rb << FORMULA
+          class FabKit < Formula
+            desc "Specification-driven development toolkit — shim, worktree manager, and backlog tool"
+            homepage "https://github.com/sahil87/fab-kit"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/sahil87/fab-kit/releases/download/v#{version}/brew-darwin-arm64.tar.gz"
+                sha256 "${SHA_DARWIN_ARM64}"
+              end
+              on_intel do
+                url "https://github.com/sahil87/fab-kit/releases/download/v#{version}/brew-darwin-amd64.tar.gz"
+                sha256 "${SHA_DARWIN_AMD64}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/sahil87/fab-kit/releases/download/v#{version}/brew-linux-arm64.tar.gz"
+                sha256 "${SHA_LINUX_ARM64}"
+              end
+              on_intel do
+                url "https://github.com/sahil87/fab-kit/releases/download/v#{version}/brew-linux-amd64.tar.gz"
+                sha256 "${SHA_LINUX_AMD64}"
+              end
+            end
+
+            def install
+              bin.install "fab"
+              bin.install "wt"
+              bin.install "idea"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/fab --version")
+              assert_match version.to_s, shell_output("#{bin}/wt --version")
+              assert_match version.to_s, shell_output("#{bin}/idea --version")
+            end
+          end
+          FORMULA
+
+          # Remove leading whitespace from heredoc indentation
+          sed -i 's/^          //' Formula/fab-kit.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/fab-kit.rb
+          git commit -m "fab-kit ${VERSION}"
+          git push
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

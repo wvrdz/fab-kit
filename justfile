@@ -19,16 +19,20 @@ test-v:
     cd src/go/wt && go test ./... -v -count=1
     cd src/go/shim && go test ./... -v -count=1
 
-# Build all binaries for current platform (fab-go, wt, idea, fab shim)
-build:
-    cd src/go/fab && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o ../../../.release-build/fab-go ./cmd/fab
-    cd src/go/idea && CGO_ENABLED=0 go build -o ../../../.release-build/idea ./cmd
-    cd src/go/wt && CGO_ENABLED=0 go build -o ../../../.release-build/wt ./cmd
-    cd src/go/shim && CGO_ENABLED=0 go build -ldflags '{{shim_ldflags}}' -o ../../../.release-build/fab ./cmd
+local_cache := env("HOME", "") / ".fab-kit/local-versions" / fab_version
 
-# Build shim only (for local development)
+# Build fab-go + copy .kit content to local cache (shim auto-discovers)
+build:
+    mkdir -p {{local_cache}}/kit
+    cd src/go/fab && CGO_ENABLED=0 go build -ldflags '{{fab_ldflags}}' -o {{local_cache}}/fab-go ./cmd/fab
+    rsync -a --delete --exclude='bin/' fab/.kit/ {{local_cache}}/kit/
+    @echo "Built fab-go → {{local_cache}}/fab-go"
+
+# Build shim to .release-build/ (install to PATH or test directly)
 build-shim:
+    mkdir -p .release-build
     cd src/go/shim && CGO_ENABLED=0 go build -ldflags '{{shim_ldflags}}' -o ../../../.release-build/fab ./cmd
+    @echo "Built shim → .release-build/fab"
 
 # Check prerequisites and environment health
 doctor:
@@ -60,11 +64,15 @@ build-all:
     just build-target linux arm64
     just build-target linux amd64
 
-# Package kit archives for release (generic + per-platform with binaries)
+# Package kit archives for release (generic + per-platform with fab-go)
 package-kit:
     {{scripts}}/package-kit.sh
+
+# Package brew archives for Homebrew (per-platform with fab shim, wt, idea)
+package-brew:
+    {{scripts}}/package-brew.sh
 
 # Remove build artifacts and kit archives
 clean:
     rm -rf .release-build
-    rm -f kit.tar.gz kit-*.tar.gz
+    rm -f kit-*.tar.gz brew-*.tar.gz

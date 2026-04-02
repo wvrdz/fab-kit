@@ -6,44 +6,69 @@ import (
 	"path/filepath"
 )
 
-const cacheBaseDir = ".fab-kit/versions"
+// Cache directory names under ~/.fab-kit/
+const (
+	localCacheDir  = ".fab-kit/local-versions" // populated by `just build`, always takes priority
+	remoteCacheDir = ".fab-kit/versions"        // populated by shim auto-fetch from GitHub releases
+)
 
-// CacheDir returns the path to ~/.fab-kit/versions/{version}/.
-func CacheDir(version string) string {
+func fabKitHome() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		// Fallback; should not happen in practice
 		home = os.Getenv("HOME")
 	}
-	return filepath.Join(home, cacheBaseDir, version)
+	return home
 }
 
-// CachedBinary returns the path to the cached fab-go binary for a version.
-func CachedBinary(version string) string {
-	return filepath.Join(CacheDir(version), "fab-go")
+// LocalCacheDir returns ~/.fab-kit/local-versions/{version}/.
+func LocalCacheDir(version string) string {
+	return filepath.Join(fabKitHome(), localCacheDir, version)
 }
 
-// CachedKitDir returns the path to the cached kit/ directory for a version.
+// RemoteCacheDir returns ~/.fab-kit/versions/{version}/.
+func RemoteCacheDir(version string) string {
+	return filepath.Join(fabKitHome(), remoteCacheDir, version)
+}
+
+// CacheDir returns the path to ~/.fab-kit/versions/{version}/ (remote cache).
+// Used by Download to know where to extract release archives.
+func CacheDir(version string) string {
+	return RemoteCacheDir(version)
+}
+
+// CachedKitDir returns the kit/ directory for a version, preferring local over remote.
 func CachedKitDir(version string) string {
-	return filepath.Join(CacheDir(version), "kit")
-}
-
-// IsCached checks if a version's fab-go binary exists in the cache.
-func IsCached(version string) bool {
-	info, err := os.Stat(CachedBinary(version))
-	if err != nil {
-		return false
+	localKit := filepath.Join(LocalCacheDir(version), "kit")
+	if dirExists(localKit) {
+		return localKit
 	}
-	// Check executable bit
-	return info.Mode()&0111 != 0
+	return filepath.Join(RemoteCacheDir(version), "kit")
 }
 
-// EnsureCached checks if the version is cached. If not, downloads it.
-// Returns the path to the cached fab-go binary.
+// ResolveBinary returns the path to the fab-go binary for a version,
+// checking local-versions first, then versions.
+func ResolveBinary(version string) (string, bool) {
+	// Local builds take priority
+	localBin := filepath.Join(LocalCacheDir(version), "fab-go")
+	if isExecutable(localBin) {
+		return localBin, true
+	}
+
+	// Fall back to downloaded releases
+	remoteBin := filepath.Join(RemoteCacheDir(version), "fab-go")
+	if isExecutable(remoteBin) {
+		return remoteBin, true
+	}
+
+	return remoteBin, false
+}
+
+// EnsureCached resolves the binary for a version. Checks local-versions first,
+// then versions. If neither exists, downloads from GitHub releases.
+// Returns the path to the fab-go binary.
 func EnsureCached(version string) (string, error) {
-	binary := CachedBinary(version)
-	if IsCached(version) {
-		return binary, nil
+	if path, found := ResolveBinary(version); found {
+		return path, nil
 	}
 
 	fmt.Fprintf(os.Stderr, "Fetching fab-kit v%s...\n", version)
@@ -51,8 +76,24 @@ func EnsureCached(version string) (string, error) {
 		return "", fmt.Errorf("failed to fetch v%s: %w", version, err)
 	}
 
-	if !IsCached(version) {
-		return "", fmt.Errorf("download completed but fab-go binary not found at %s", binary)
+	if path, found := ResolveBinary(version); found {
+		return path, nil
 	}
-	return binary, nil
+	return "", fmt.Errorf("download completed but fab-go binary not found in cache")
+}
+
+func isExecutable(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.Mode()&0111 != 0
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
 }
