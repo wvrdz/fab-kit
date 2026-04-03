@@ -1,0 +1,37 @@
+id: oh82
+name: 260403-oh82-cascading-pr-review-tools
+created: 2026-04-03T09:44:55Z
+created_by: sahil-weaver
+change_type: refactor
+issues: []
+progress:
+    intake: ready
+    spec: pending
+    tasks: pending
+    apply: pending
+    review: pending
+    hydrate: pending
+    ship: pending
+    review-pr: pending
+checklist:
+    generated: false
+    path: checklist.md
+    completed: 0
+    total: 0
+confidence:
+    certain: 7
+    confident: 3
+    tentative: 0
+    unresolved: 0
+    score: 4.1
+    indicative: true
+    fuzzy: true
+    dimensions:
+        signal: 84.5
+        reversibility: 79.5
+        competence: 82.5
+        disambiguation: 84.5
+stage_metrics:
+    intake: {started_at: "2026-04-03T09:44:55Z", driver: fab-new, iterations: 1}
+prs: []
+last_updated: 2026-04-03T09:49:14Z

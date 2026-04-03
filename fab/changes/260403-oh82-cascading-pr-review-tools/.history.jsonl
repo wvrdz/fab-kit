@@ -1,0 +1,16 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-04-03T09:44:55Z"}
+{"args":"Add cascading code review to git-pr-review: try Copilot, then Codex, then Claude for PR reviews with availability detection and fallback","cmd":"fab-new","event":"command","ts":"2026-04-03T09:44:55Z"}
+{"delta":"+2.4","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-04-03T09:45:38Z"}
+{"delta":"+0.0","event":"confidence","score":2.4,"trigger":"calc-score","ts":"2026-04-03T09:45:47Z"}
+{"delta":"+0.7","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-04-03T09:45:53Z"}
+{"delta":"+0.0","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-04-03T09:45:58Z"}
+{"delta":"+0.0","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-04-03T09:46:13Z"}
+{"delta":"+0.0","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-04-03T09:47:48Z"}
+{"delta":"+0.0","event":"confidence","score":3.1,"trigger":"calc-score","ts":"2026-04-03T09:47:57Z"}
+{"delta":"+1.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:48:06Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:48:13Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:48:19Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:48:54Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:49:02Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:49:09Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-03T09:49:14Z"}
