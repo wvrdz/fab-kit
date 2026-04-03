@@ -1,12 +1,14 @@
 ---
 name: git-pr-review
 description: "Process PR review comments — triage and fix feedback from any reviewer (human or bot)."
-allowed-tools: Bash(git:*), Bash(gh:*)
+allowed-tools: Bash(git:*), Bash(gh:*), Bash(command:*), Bash(codex:*), Bash(claude:*)
 ---
 
-# /git-pr-review
+# /git-pr-review [--tool <name>]
 
-Process GitHub PR review comments on the current branch's PR. Handles feedback from any reviewer — human or bot. Fully autonomous — no questions, no prompts.
+Process GitHub PR review comments on the current branch's PR. Handles feedback from any reviewer — human or bot. When no reviews exist, requests an automated review via a cascading tool chain (Copilot → Codex → Claude). Fully autonomous — no questions, no prompts.
+
+**`--tool` flag**: Forces a specific review tool, bypassing the cascade. Valid values: `copilot`, `codex`, `claude`. When provided, only that tool is attempted — no fallthrough.
 
 ---
 
@@ -33,6 +35,14 @@ This is best-effort — failures are silently ignored. The `start` command handl
 4. If the command succeeds, capture `{number}` and `{url}` from the response.
 5. Get owner/repo: `gh repo view --json nameWithOwner -q '.nameWithOwner'`
 
+### Step 1.5: Parse `--tool` Flag
+
+If the invocation includes `--tool <name>`:
+
+1. Validate `<name>` is one of: `copilot`, `codex`, `claude` (case-insensitive, normalize to lowercase)
+2. If invalid → print `Invalid tool: {name}. Valid values: copilot, codex, claude.` and STOP
+3. Store the forced tool name for use in Step 2 Phase 2
+
 ### Step 2: Detect Reviews and Route
 
 Check for existing reviews with comments, then route accordingly.
@@ -51,16 +61,113 @@ If the count is > 0, check for actual inline comments:
 gh api repos/{owner}/{repo}/pulls/{number}/comments --jq 'length'
 ```
 
-If comments exist → proceed directly to Step 3.
-
-If reviews exist but no inline comments → print `No reviews found — nothing to do.` and STOP.
+If comments exist → proceed directly to Step 3 (skip Phase 2 — the cascade does not run when existing reviews with comments are found).
 
 <!-- Note: This checks for inline review comments only. Review-level body comments
      (e.g., "LGTM but please rename that variable") without inline annotations are
      not detected here. If a reviewer only leaves a body comment, the skill will
-     print the no-reviews message and stop. -->
+     fall through to Phase 2 (cascade). -->
 
-If no reviews at all → print `No reviews found — nothing to do.` and STOP.
+If reviews exist but no inline comments, or no reviews at all → proceed to Phase 2.
+
+**Phase 2 — Review Request Cascade**:
+
+Request an automated review via a cascading tool chain. Each tool is attempted in order; the cascade stops on the first success.
+
+**Configuration**: Read `review_tools` from `fab/project/config.yaml`. Each tool may be set to `true` (try) or `false` (skip). When the `review_tools` key is absent, all tools default to `true`.
+
+```yaml
+review_tools:
+  copilot: true
+  codex: true
+  claude: true
+```
+
+**Forced tool override**: If `--tool <name>` was provided (Step 1.5), skip the cascade and attempt only the specified tool, regardless of config settings.
+
+**Cascade order**: Copilot → Codex → Claude
+
+For each tool in order (or just the forced tool):
+
+1. **Check config**: If the tool is set to `false` in `review_tools`, skip it
+2. **Detect availability**: Check if the tool can run (see per-tool details below)
+3. **Run the tool**: Execute the review request
+4. **On success**: Print result and STOP (cascade complete)
+5. **On failure/unavailability**: Fall through to the next tool
+
+**Tool 1 — Copilot (remote)**:
+
+- Attempt: `gh pr edit {number} --add-reviewer copilot`
+- Detection: by attempting the command and checking exit code
+- On success: print `Copilot review requested — re-run /git-pr-review later to process comments.` and STOP
+- On failure (non-zero exit): fall through to Codex
+
+**Tool 2 — Codex (local)**:
+
+- Detection: `command -v codex`
+- If not found: fall through to Claude
+- If found: construct the enriched review prompt (see Step 2a) and run:
+  ```bash
+  codex --quiet "Review this PR diff for bugs, edge cases, and improvements: <enriched_prompt>"
+  ```
+- On success: post output as PR comment (see Step 2b), print output to terminal, and STOP
+- On failure: fall through to Claude
+
+**Tool 3 — Claude (local)**:
+
+- Detection: `command -v claude`
+- If not found: cascade exhausted — print `No review tools available. Install codex or claude, or enable Copilot on this repository.` and STOP
+- If found: construct the enriched review prompt (see Step 2a) and run:
+  ```bash
+  claude -p "Review this PR diff for bugs, edge cases, and improvements: <enriched_prompt>"
+  ```
+- On success: post output as PR comment (see Step 2b), print output to terminal, and STOP
+- On failure: cascade exhausted — print `No review tools available.` and STOP
+
+**All tools disabled**: If all tools are disabled in config (all set to `false`) and no `--tool` flag was provided, print `All review tools are disabled in config. Enable at least one tool in review_tools.` and STOP.
+
+**All tools unavailable**: If all enabled tools fail detection or execution, print `No review tools available. Install codex or claude, or enable Copilot on this repository.` and STOP.
+
+### Step 2a: Context Enrichment
+
+When running a local tool (Codex or Claude), construct an enriched review prompt containing these labeled sections:
+
+1. **Diff**: `git diff main...HEAD`
+2. **Changed files**: `git diff --name-only main...HEAD`
+3. **PR description**: `gh pr view --json body -q .body` (omit section if empty or command fails)
+4. **Test results**: Run the project's test suite and capture output (best-effort — omit section if no test command is configured or tests fail to run)
+
+Format the prompt as:
+
+```
+Review this PR diff for bugs, edge cases, and improvements.
+
+## Changed Files
+{file_list}
+
+## PR Description
+{pr_body}
+
+## Diff
+{diff}
+
+## Test Results
+{test_output}
+```
+
+Missing sections are omitted — the prompt remains valid with whatever context is available.
+
+### Step 2b: Local Review Output Posting
+
+When a local tool (Codex or Claude) produces review output:
+
+1. Attempt to post the output as a PR comment:
+   ```bash
+   gh api repos/{owner}/{repo}/issues/{number}/comments -f body="{review_output}"
+   ```
+2. If posting succeeds: print `Review posted as PR comment.`
+3. If posting fails: log the error and continue — the output is still printed to the terminal
+4. Always print the review output to the terminal regardless of posting outcome
 
 ### Step 3: Fetch Comments
 
