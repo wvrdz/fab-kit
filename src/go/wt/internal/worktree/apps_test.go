@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -73,7 +72,7 @@ func TestOpenInApp_OpenHere(t *testing.T) {
 		t.Fatalf("io.Copy: %v", err)
 	}
 
-	expected := fmt.Sprintf("cd -- %q\n", path)
+	expected := "cd -- '" + path + "'\n"
 	if buf.String() != expected {
 		t.Errorf("expected stdout %q, got %q", expected, buf.String())
 	}
@@ -127,7 +126,7 @@ func TestOpenInApp_OpenHere_WithWrapper(t *testing.T) {
 	}
 
 	// stdout should have the cd command
-	expected := fmt.Sprintf("cd -- %q\n", path)
+	expected := "cd -- '" + path + "'\n"
 	if stdoutBuf.String() != expected {
 		t.Errorf("expected stdout %q, got %q", expected, stdoutBuf.String())
 	}
@@ -187,7 +186,7 @@ func TestOpenInApp_OpenHere_WithoutWrapper(t *testing.T) {
 	}
 
 	// stdout should still have the cd command
-	expected := fmt.Sprintf("cd -- %q\n", path)
+	expected := "cd -- '" + path + "'\n"
 	if stdoutBuf.String() != expected {
 		t.Errorf("expected stdout %q, got %q", expected, stdoutBuf.String())
 	}
@@ -202,5 +201,52 @@ func TestOpenInApp_OpenHere_WithoutWrapper(t *testing.T) {
 	}
 	if !strings.Contains(stderrStr, `Add it to your ~/.zshrc or ~/.bashrc`) {
 		t.Errorf("expected stderr to contain profile hint, got %q", stderrStr)
+	}
+}
+
+func TestOpenInApp_OpenHere_ShellSafeQuoting(t *testing.T) {
+	t.Setenv("WT_WRAPPER", "1")
+
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{"dollar sign", "/tmp/$(whoami)", "cd -- '/tmp/$(whoami)'\n"},
+		{"backticks", "/tmp/`id`", "cd -- '/tmp/`id`'\n"},
+		{"single quote", "/tmp/it's-here", "cd -- '/tmp/it'\\''s-here'\n"},
+		{"spaces", "/tmp/my worktree", "cd -- '/tmp/my worktree'\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			origStdout := os.Stdout
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("os.Pipe: %v", err)
+			}
+			t.Cleanup(func() {
+				os.Stdout = origStdout
+				_ = r.Close()
+				_ = w.Close()
+			})
+			os.Stdout = w
+
+			openErr := OpenInApp("open_here", tt.path, "repo", "wt")
+			w.Close()
+
+			if openErr != nil {
+				t.Fatalf("OpenInApp returned error: %v", openErr)
+			}
+
+			var buf bytes.Buffer
+			if _, err := io.Copy(&buf, r); err != nil {
+				t.Fatalf("io.Copy: %v", err)
+			}
+
+			if buf.String() != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, buf.String())
+			}
+		})
 	}
 }

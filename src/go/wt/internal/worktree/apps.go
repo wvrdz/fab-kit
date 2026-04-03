@@ -171,7 +171,7 @@ func OpenInApp(appCmd, path, repoName, wtName string) error {
 			fmt.Fprintln(os.Stderr, `hint: "Open here" requires the shell wrapper to cd. Run: eval "$(wt shell-setup)"`)
 			fmt.Fprintln(os.Stderr, `      Add it to your ~/.zshrc or ~/.bashrc to make it permanent.`)
 		}
-		fmt.Printf("cd -- %q\n", path)
+		fmt.Printf("cd -- '%s'\n", shellQuoteSingle(path))
 		return nil
 	case "code":
 		return runCommand("code", path)
@@ -279,6 +279,13 @@ func appAvailable(cli, bundleID, desktopFile, osType string) bool {
 	}
 
 	return false
+}
+
+// shellQuoteSingle escapes a string for use inside shell single quotes.
+// Single quotes prevent all shell expansion ($, `, \, etc.).
+// The only character that needs escaping is ' itself, replaced with '\''.
+func shellQuoteSingle(s string) string {
+	return strings.ReplaceAll(s, "'", `'\''`)
 }
 
 // runCommand runs a command and waits for completion.
