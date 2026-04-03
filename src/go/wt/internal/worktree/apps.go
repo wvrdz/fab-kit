@@ -96,6 +96,11 @@ func BuildAvailableApps() []AppInfo {
 		apps = append(apps, AppInfo{"tmux window", "tmux_window"})
 	}
 
+	// tmux session (only in plain tmux session)
+	if IsTmuxSession() {
+		apps = append(apps, AppInfo{"tmux session", "tmux_session"})
+	}
+
 	return apps
 }
 
@@ -239,6 +244,16 @@ func OpenInApp(appCmd, path, repoName, wtName string) error {
 		cmd := exec.Command("tmux", "new-window", "-n", tabName, "-c", path)
 		if out, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("tmux new-window failed: %s", strings.TrimSpace(string(out)))
+		}
+		return nil
+	case "tmux_session":
+		sessionName := repoName + "-" + wtName
+		if _, err := exec.LookPath("tmux"); err != nil {
+			return fmt.Errorf("tmux is not available on this system")
+		}
+		cmd := exec.Command("tmux", "new-session", "-d", "-s", sessionName, "-c", path)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("tmux new-session failed: %s", strings.TrimSpace(string(out)))
 		}
 		return nil
 	default:
