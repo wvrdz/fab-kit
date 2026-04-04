@@ -86,10 +86,11 @@ func execFabGo(args []string) {
 func printHelp() {
 	fmt.Printf("fab %s — workspace & workflow toolkit\n\n", version)
 	fmt.Println("Workspace commands:")
-	fmt.Println("  init       Initialize fab in the current repo")
-	fmt.Println("  upgrade-repo   Upgrade to a specific or latest version")
-	fmt.Println("  sync       Sync workspace (skills, directories, scaffold)")
-	fmt.Println("  update     Update fab-kit itself via Homebrew")
+	fmt.Println("  init          Initialize fab in the current repo")
+	fmt.Println("  upgrade-repo  Upgrade to a specific or latest version")
+	fmt.Println("  sync          Sync workspace (skills, directories, scaffold)")
+	fmt.Println("  update        Update fab-kit itself via Homebrew")
+	fmt.Println("  doctor        Validate fab-kit prerequisites")
 	fmt.Println()
 
 	// Show workflow commands only inside a fab-managed repo

@@ -30,7 +30,7 @@ fab <command> <subcommand> [args...]
 
 ### Routing
 
-- **Workspace commands** (`init`, `upgrade-repo`, `sync`, `--version`, `--help`, `help`): routed to `fab-kit`
+- **Workspace commands** (`init`, `upgrade-repo`, `sync`, `update`, `doctor`, `--version`, `--help`, `help`): routed to `fab-kit`
 - **Workflow commands** (everything else): routed to `fab-go` after version resolution
 
 ### Backend
