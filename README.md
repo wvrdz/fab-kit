@@ -6,7 +6,7 @@ AI agents write code fast. The bottleneck is now your clarity: did you define th
 
 > **[Try it now](#quick-start)** | **[Understand the concepts](#why-fab-kit)** | **[Glossary](docs/specs/glossary.md)** (new to Fab terminology?)
 
-**Contents:** [The 6 Stages](#the-6-stages) · [Prerequisites](#prerequisites) · [Quick Start](#quick-start) · [Why Fab Kit](#why-fab-kit) · [The 5 Cs](#the-5-cs-of-quality) · [Commands](#command-quick-reference) · [CLI Tools](#standalone-cli-tools) · [Stage Coverage](#stage-coverage-by-command) · [Learn More](#learn-more)
+**Contents:** [The 6 Stages](#the-6-stages) · [Prerequisites](#prerequisites) · [Quick Start](#quick-start) · [Why Fab Kit](#why-fab-kit) · [The 5 Cs](#the-5-cs-of-quality) · [Commands](#command-quick-reference) · [Stage Coverage](#stage-coverage-by-command) · [CLI Tools](#standalone-cli-tools) · [Learn More](#learn-more)
 
 ## The 6 Stages
 
@@ -390,15 +390,6 @@ The operator (`/fab-operator`) is a long-running coordination layer that sits in
 | `fab batch switch` | Open tmux tabs in worktrees for one or more changes |
 | `fab batch archive` | Archive multiple completed changes in one session |
 
-## Standalone CLI Tools
-
-Fab Kit includes standalone CLI tools that work with or without the pipeline. They're installed system-wide via `brew install fab-kit`. See [packages.md](docs/specs/packages.md) for details.
-
-| Tool | Purpose |
-|------|---------|
-| **wt** | Git worktree management - `wt create`, `wt open`, `wt list`, `wt delete`. Worktrees are the foundation of [parallel changes](#parallel-by-default). |
-| **idea** | Per-repo idea backlog in `fab/backlog.md` - `idea add`, `idea list`, `idea done`. Feeds directly into `/fab-new`. |
-
 ## Stage Coverage by Command
 
 Which pipeline stages each command covers. Taller bars = more automation. Read left-to-right from most manual to most automated. Arrows show the typical manual path from idea to PR.
@@ -515,6 +506,15 @@ block-beta
     style proceed_ship fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
     style proceed_prreview fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
 ```
+
+## Standalone CLI Tools
+
+Fab Kit includes standalone CLI tools that work with or without the pipeline. They're installed system-wide via `brew install fab-kit`. See [packages.md](docs/specs/packages.md) for details.
+
+| Tool | Purpose |
+|------|---------|
+| **wt** | Git worktree management - `wt create`, `wt open`, `wt list`, `wt delete`. Worktrees are the foundation of [parallel changes](#parallel-by-default). |
+| **idea** | Per-repo idea backlog in `fab/backlog.md` - `idea add`, `idea list`, `idea done`. Feeds directly into `/fab-new`. |
 
 ## Learn More
 
