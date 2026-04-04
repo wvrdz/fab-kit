@@ -34,9 +34,9 @@ flowchart TD
     T --> A
     V --> AR
 
-    style planning fill:#e8f4f8,stroke:#2196F3
-    style execution fill:#fff3e0,stroke:#FF9800
-    style completion fill:#e8f5e9,stroke:#4CAF50
+    style planning fill:#64b5f6,stroke:#1565C0,color:#1a1a1a
+    style execution fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style completion fill:#81c784,stroke:#2E7D32,color:#1a1a1a
 ```
 
 | # | Stage | Purpose | Artifact |
@@ -420,82 +420,82 @@ block-beta
     ff_hy --> gp_sh
 
     %% Header styles
-    style hdr_label fill:none,stroke:none
-    style header0 fill:#e0e0e0,stroke:#999
-    style header1 fill:#f3e5f5,stroke:#9C27B0
-    style header2 fill:#f3e5f5,stroke:#9C27B0
-    style header3 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
-    style header4 fill:#f3e5f5,stroke:#9C27B0
-    style header5 fill:#e8f4f8,stroke:#2196F3
-    style header6 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
-    style header8 fill:#e8f5e9,stroke:#4CAF50
-    style header9 fill:#fff3e0,stroke:#FF9800
+    style hdr_label fill:none,stroke:none,color:#999
+    style header0 fill:#4dd0e1,stroke:#00838f,color:#1a1a1a
+    style header1 fill:#ce93d8,stroke:#7B1FA2,color:#1a1a1a
+    style header2 fill:#ce93d8,stroke:#7B1FA2,color:#1a1a1a
+    style header3 fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
+    style header4 fill:#64b5f6,stroke:#1565C0,color:#1a1a1a
+    style header5 fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style header6 fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
+    style header8 fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style header9 fill:#ffb74d,stroke:#E65100,color:#1a1a1a
 
     %% Row labels
-    style s01 fill:#f5f5f5,stroke:#ccc
-    style s02 fill:#f5f5f5,stroke:#ccc
-    style s11 fill:#f5f5f5,stroke:#ccc
-    style s03 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
-    style s04 fill:#f5f5f5,stroke:#ccc
-    style s05 fill:#f5f5f5,stroke:#ccc
-    style s06 fill:#f5f5f5,stroke:#ccc
-    style s07 fill:#f5f5f5,stroke:#ccc
-    style s08 fill:#f5f5f5,stroke:#ccc
-    style s09 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
-    style s10 fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    style s01 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s02 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s11 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s03 fill:#bdbdbd,stroke:#757575,color:#1a1a1a,stroke-dasharray: 5 5
+    style s04 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s05 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s06 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s07 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s08 fill:#bdbdbd,stroke:#757575,color:#1a1a1a
+    style s09 fill:#bdbdbd,stroke:#757575,color:#1a1a1a,stroke-dasharray: 5 5
+    style s10 fill:#bdbdbd,stroke:#757575,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-discuss
-    style d_ctx fill:#e0e0e0,stroke:#999
+    %% fab-discuss (Explore — teal)
+    style d_ctx fill:#4dd0e1,stroke:#00838f,color:#1a1a1a
 
-    %% fab-new
-    style fn_in fill:#f3e5f5,stroke:#9C27B0
+    %% fab-new (Change lifecycle — purple)
+    style fn_in fill:#ce93d8,stroke:#7B1FA2,color:#1a1a1a
 
-    %% fab-switch
-    style sw_act fill:#f3e5f5,stroke:#9C27B0
+    %% fab-switch (Change lifecycle — purple)
+    style sw_act fill:#ce93d8,stroke:#7B1FA2,color:#1a1a1a
 
-    %% git-branch
-    style gb_br fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    %% git-branch (Git utilities — blue-grey)
+    style gb_br fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-continue
-    style c_stg fill:#f3e5f5,stroke:#9C27B0,stroke-dasharray: 5 5
-    style c_stg2 fill:#f3e5f5,stroke:#9C27B0,stroke-dasharray: 5 5
-    style c_stg3 fill:#f3e5f5,stroke:#9C27B0,stroke-dasharray: 5 5
-    style c_stg4 fill:#f3e5f5,stroke:#9C27B0,stroke-dasharray: 5 5
-    style c_stg5 fill:#f3e5f5,stroke:#9C27B0,stroke-dasharray: 5 5
+    %% fab-continue (Stage advance — blue)
+    style c_stg fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
+    style c_stg2 fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
+    style c_stg3 fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
+    style c_stg4 fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
+    style c_stg5 fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-ff
-    style ff_sp fill:#e8f4f8,stroke:#2196F3
-    style ff_ta fill:#e8f4f8,stroke:#2196F3
-    style ff_ap fill:#e8f4f8,stroke:#2196F3
-    style ff_rv fill:#e8f4f8,stroke:#2196F3
-    style ff_hy fill:#e8f4f8,stroke:#2196F3
+    %% fab-ff (Automation — green)
+    style ff_sp fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style ff_ta fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style ff_ap fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style ff_rv fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style ff_hy fill:#81c784,stroke:#2E7D32,color:#1a1a1a
 
-    %% git-pr
-    style gp_sh fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    %% git-pr (Git utilities — blue-grey)
+    style gp_sh fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% git-pr-review
-    style gp_rp fill:#f5f5f5,stroke:#ccc,stroke-dasharray: 5 5
+    %% git-pr-review (Git utilities — blue-grey)
+    style gp_rp fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-fff
-    style fff_sp fill:#e8f5e9,stroke:#4CAF50
-    style fff_ta fill:#e8f5e9,stroke:#4CAF50
-    style fff_ap fill:#e8f5e9,stroke:#4CAF50
-    style fff_rv fill:#e8f5e9,stroke:#4CAF50
-    style fff_hy fill:#e8f5e9,stroke:#4CAF50
-    style fff_pr fill:#e8f5e9,stroke:#4CAF50,stroke-dasharray: 5 5
-    style fff_rp fill:#e8f5e9,stroke:#4CAF50,stroke-dasharray: 5 5
+    %% fab-fff (Automation — green)
+    style fff_sp fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style fff_ta fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style fff_ap fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style fff_rv fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style fff_hy fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style fff_pr fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
+    style fff_rp fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-proceed
-    style p_sw fill:#fff3e0,stroke:#FF9800
-    style p_in fill:#fff3e0,stroke:#FF9800
-    style p_br fill:#fff3e0,stroke:#FF9800,stroke-dasharray: 5 5
-    style p_sp fill:#fff3e0,stroke:#FF9800
-    style p_ta fill:#fff3e0,stroke:#FF9800
-    style p_ap fill:#fff3e0,stroke:#FF9800
-    style p_rv fill:#fff3e0,stroke:#FF9800
-    style p_hy fill:#fff3e0,stroke:#FF9800
-    style p_pr fill:#fff3e0,stroke:#FF9800,stroke-dasharray: 5 5
-    style p_rp fill:#fff3e0,stroke:#FF9800,stroke-dasharray: 5 5
+    %% fab-proceed (Orchestrator — amber)
+    style p_sw fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_in fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_br fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    style p_sp fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_ta fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_ap fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_rv fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_hy fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style p_pr fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    style p_rp fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
 ```
 
 ## Packages
