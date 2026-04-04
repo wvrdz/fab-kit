@@ -2,10 +2,10 @@ id: rzvq
 name: 260404-rzvq-fab-draft-auto-activate
 created: 2026-04-04T18:13:31Z
 created_by: sahil-weaver
-change_type: refactor
+change_type: docs
 issues: []
 progress:
-    intake: active
+    intake: ready
     spec: pending
     tasks: pending
     apply: pending
@@ -34,4 +34,4 @@ confidence:
 stage_metrics:
     intake: {started_at: "2026-04-04T18:13:31Z", driver: fab-new, iterations: 1}
 prs: []
-last_updated: 2026-04-04T18:14:20Z
+last_updated: 2026-04-04T18:14:25Z

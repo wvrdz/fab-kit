@@ -2,3 +2,5 @@
 {"args":"Add /fab-draft command and make /fab-new auto-activate the change","cmd":"fab-new","event":"command","ts":"2026-04-04T18:13:31Z"}
 {"cmd":"fab-discuss","event":"command","ts":"2026-04-04T18:13:44Z"}
 {"delta":"+4.1","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-04T18:14:20Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-04T18:14:25Z"}
+{"cmd":"fab-switch","event":"command","ts":"2026-04-04T18:28:28Z"}
