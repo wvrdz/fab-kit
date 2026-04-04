@@ -18,7 +18,7 @@ Fab Kit's documentation is split into two categories:
 5. **[docs/specs/skills.md](docs/specs/skills.md)** — detailed behavior for each `/fab-*` skill
 6. **[docs/memory/fab-workflow/kit-architecture.md](docs/memory/fab-workflow/kit-architecture.md)** — `.kit/` internals, scripts, distribution
 7. **[docs/specs/templates.md](docs/specs/templates.md)** — artifact template system
-8. **[src/lib/stageman/README.md](src/lib/stageman/README.md)** — Stage Manager development guide and testing
+8. **[docs/memory/fab-workflow/schemas.md](docs/memory/fab-workflow/schemas.md)** — Stage Manager schemas and development guide
 
 #### Spec Reader — "I want to understand the design rationale"
 
@@ -38,7 +38,7 @@ Fab Kit's documentation is split into two categories:
 | [docs/specs/overview.md](docs/specs/overview.md) | The Fab workflow specification — design principles, 6 stages, quick command reference |
 | [docs/specs/user-flow.md](docs/specs/user-flow.md) | Visual diagrams showing how commands connect and how a typical development session flows |
 | [docs/specs/glossary.md](docs/specs/glossary.md) | All Fab terminology — core concepts, stages, skills, files, SRAD, conventions |
-| [docs/memory/fab-workflow/init.md](docs/memory/fab-workflow/init.md) | `/fab-init` — structural bootstrap: creates config.yaml, constitution.md, directories |
+| [docs/memory/fab-workflow/setup.md](docs/memory/fab-workflow/setup.md) | `/fab-setup` — structural bootstrap: creates config.yaml, constitution.md, directories |
 | [docs/memory/fab-workflow/configuration.md](docs/memory/fab-workflow/configuration.md) | `config.yaml` schema and `constitution.md` governance |
 
 #### Concepts
@@ -109,7 +109,7 @@ cat src/lib/stageman/README.md
 
 For complete documentation, see:
 - [docs/memory/fab-workflow/schemas.md](docs/memory/fab-workflow/schemas.md) - Schema overview
-- [src/lib/stageman/README.md](src/lib/stageman/README.md) - API reference and development guide
+- [docs/memory/fab-workflow/schemas.md](docs/memory/fab-workflow/schemas.md) - Stage Manager schemas and API reference
 
 ## Creating a Release
 
@@ -126,7 +126,6 @@ release.sh [patch|minor|major]
 The script will:
 1. Bump the version in `src/kit/VERSION`
 2. Commit the VERSION bump, tag, and push
-3. Commit the VERSION bump
-4. Create a GitHub Release with `kit.tar.gz` as an asset
+3. Create a GitHub Release with `kit.tar.gz` as an asset
 
 **Requires**: clean working tree, [gh CLI](https://cli.github.com/), and a configured `origin` remote.

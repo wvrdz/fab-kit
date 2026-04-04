@@ -2,26 +2,6 @@
 
 > **Fab** (fabricate) - A Specification-Driven Development workflow
 
-## Overview
-
-A hybrid SDD workflow that combines:
-- **SpecKit's** intuitive structure, folder customization, and pure-prompt approach
-- **OpenSpec's** fast-forward workflow and memory hydration
-
----
-
-## Background
-
-Fab combines ideas from two specification-driven workflows — SpecKit and OPSX — taking the best of each:
-
-**From SpecKit**: Intuitive commands, great file locations, obvious stages, easy customization, modifiable folder naming, and a pure-prompt approach with no system installation required.
-
-**From OPSX**: The `fast-forward` command, post-work archiving with centralized spec hydration, separate changes and specs, and skill-based (not command-based) interfaces for better agent interoperability.
-
-**Pain points addressed**: SpecKit lacked centralized specs. OPSX made it hard to see current status, had rigid commands, and offered less control over folder naming.
-
----
-
 ## Design Principles
 
 ### 1. Pure Prompt Play
@@ -85,7 +65,7 @@ flowchart TD
 
 | # | Stage | Purpose | Artifact | Includes |
 |---|-------|---------|----------|----------|
-| 1 | **Intake** | Intent, scope, approach | `intake.md` | Created by `/fab-new` with adaptive SRAD-driven questioning |
+| 1 | **Intake** | Intent, scope, approach | `intake.md` | Created by `/fab-new` (auto-activates) or `/fab-draft` (no activation) with adaptive SRAD-driven questioning |
 | 2 | **Spec** | What's changing | `spec.md` | Clarification of ambiguities, [NEEDS CLARIFICATION] markers |
 | 3 | **Tasks** | Implementation checklist | `tasks.md` | Auto-generated quality checklist (`checklist.md`) |
 | 4 | **Apply** | Execute tasks | code changes | Run tests per task, progress tracking |
@@ -104,7 +84,8 @@ For detailed visual maps of how commands connect — including shortcuts, rework
 |-------|---------|---------|
 | `/fab-setup` | Bootstrap fab/ structure | `config.yaml`, `constitution.md`, `memory/`, skill symlinks (idempotent) |
 | `/docs-hydrate-memory [sources...]` | Ingest external sources into docs/memory/ | Updated `docs/memory/` with indexes |
-| `/fab-new` | Start change (optionally with `--switch`) | `intake.md`, `.status.yaml` |
+| `/fab-new` | Start change (creates intake + activates) | `intake.md`, `.status.yaml` |
+| `/fab-draft` | Create change intake without activating | `intake.md`, `.status.yaml` |
 | `/fab-continue [<stage>]` | Next artifact (or reset to stage) | Next stage artifact |
 | `/fab-ff` | Fast-forward through hydrate (confidence-gated) | spec + tasks + checklist + apply + sub-agent review + hydrate |
 | `/fab-fff` | Fast-forward-further through review-pr (confidence-gated) | All artifacts through hydrate + ship + review-pr |
@@ -116,9 +97,9 @@ For detailed visual maps of how commands connect — including shortcuts, rework
 | `/fab-switch` | Change active change | Updated pointer file |
 | `/fab-status` | Check progress | Status display |
 | `/fab-discuss` | Prime agent with project context for discussion | — (read-only) |
-| `batch-fab-new-backlog.sh` | Create changes from backlog items | Worktree + tmux tab per item |
-| `batch-fab-switch-change.sh` | Switch to existing changes | Worktree + tmux tab per change |
-| `batch-fab-archive-change.sh` | Archive completed changes | Worktree + tmux tab per change |
+| `fab batch new` | Create changes from backlog items | Worktree + tmux tab per item |
+| `fab batch switch` | Switch to existing changes | Worktree + tmux tab per change |
+| `fab batch archive` | Archive completed changes | Worktree + tmux tab per change |
 
 ---
 
@@ -150,18 +131,20 @@ For detailed visual maps of how commands connect — including shortcuts, rework
 /fab-continue
 # → Validates implementation, checks checklist
 
-# 7. Archive
+# 7. Hydrate
 /fab-continue
-# → Hydrates memory/, moves to archive/
+# → Saves learnings into docs/memory/
+
+# 8. Archive
+/fab-archive
+# → Moves change folder to archive/
 ```
 
 ### Fast Track (small changes)
 ```bash
 /fab-new Add loading spinner to submit button
-/fab-ff
-/fab-continue
-/fab-continue
-/fab-continue
+/fab-fff
+# → Fast-forwards through spec, tasks, apply, review, hydrate, ship, and PR review
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 Fab Kit ships two standalone CLI tools alongside the skill-based pipeline. Unlike skills (which are Claude Code prompts invoked via `/`), these are compiled Go binaries that run directly in the terminal — no AI agent required.
 
-Both binaries live inside `src/go/ binary ` and are added to PATH via `.envrc` during workspace setup. They complement the fab pipeline: **wt** provides the worktree isolation that enables parallel changes, and **idea** provides the backlog that feeds `/fab-new`.
+Both binaries are compiled from `src/go/` and installed system-wide via Homebrew. They complement the fab pipeline: **wt** provides the worktree isolation that enables parallel changes, and **idea** provides the backlog that feeds `/fab-new`.
 
 ---
 
@@ -10,7 +10,7 @@ Both binaries live inside `src/go/ binary ` and are added to PATH via `.envrc` d
 
 Git worktrees let you have multiple checkouts of the same repository side by side. The wt binary wraps `git worktree` with opinionated defaults for the fab workflow: worktrees are created as siblings in `<repo>.worktrees/`, names are memorable random words, and each worktree can run its own fab change independently.
 
-**Binary**: `src/go/ binary wt` (Go binary, included in per-platform release archives)
+**Binary**: `src/go/wt/` (Go binary, included in per-platform release archives)
 
 ### Commands
 
@@ -49,9 +49,9 @@ The wt binary is the foundation of the [assembly-line pattern](assembly-line.md)
 
 The batch scripts orchestrate this at scale:
 
-- **`batch-fab-new-backlog`** — Creates a worktree per backlog item, opens tmux tabs, runs `/fab-new` in each
-- **`batch-fab-switch-change`** — Creates a worktree per existing change, opens tmux tabs with Claude sessions
-- **`batch-fab-archive-change`** — Archives completed changes across worktrees
+- **`fab batch new`** — Creates a worktree per backlog item, opens tmux tabs, runs `/fab-new` in each
+- **`fab batch switch`** — Creates a worktree per existing change, opens tmux tabs with Claude sessions
+- **`fab batch archive`** — Archives completed changes across worktrees
 
 ### Common Workflows
 
@@ -103,7 +103,7 @@ cd <paste>
 
 The idea command manages a per-repo backlog stored in `fab/backlog.md`. It's a lightweight CRUD tool for capturing, triaging, and tracking ideas before they become fab changes.
 
-**Binary**: `src/go/ binary idea` (Go binary, included in per-platform release archives; added to PATH as `idea` via `.envrc` during workspace setup).
+**Binary**: `src/go/idea/` (Go binary, included in per-platform release archives; installed as `idea` via Homebrew).
 
 **Worktree behavior**: By default, `idea` operates on the **current worktree's** `fab/backlog.md` (resolved via `git rev-parse --show-toplevel`). Pass `--main` to target the main worktree's backlog instead; internally, `idea` resolves the main worktree root by running `git rev-parse --path-format=absolute --git-common-dir` and taking its parent directory. In the main worktree, both behave identically. This ensures that users in a linked worktree get predictable local behavior unless they explicitly opt into the shared backlog.
 
@@ -131,7 +131,7 @@ The idea → fab pipeline:
 3. **Start work**: `/fab-new` can accept a backlog ID to create a change from an idea, pulling the description directly from the backlog
 4. **Close**: `idea done a7k2` — marks the idea as completed after the change ships
 
-The `batch-fab-new-backlog` script automates step 3 at scale — it reads all open backlog items and creates a worktree + Claude session per item.
+The `fab batch new` command automates step 3 at scale — it reads all open backlog items and creates a worktree + Claude session per item.
 
 ### Common Workflows
 
@@ -146,25 +146,24 @@ idea "update README with new setup instructions"
 ```bash
 idea list                     # Review what's pending
 # Pick the ones to work on next
-batch-fab-new-backlog --all   # Create changes from all open ideas
+fab batch new --all           # Create changes from all open ideas
 ```
 
 ---
 
 ## Package Architecture
 
-The `src/go/ binary ` directory contains the shell dispatcher and compiled Go binaries, all added to PATH via `.envrc`:
+The `src/go/` directory contains the Go source for all binaries:
 
 ```
-src/go/ binary 
-├── fab                 # Shell dispatcher (entry point for all fab CLI operations)
-├── fab-go              # Go binary backend (optional, platform-specific)
-├── wt                  # Go binary — worktree management
-├── idea                # Go binary — backlog management
-└── .gitkeep
+src/go/
+├── fab/                # fab CLI router
+├── fab-kit/            # fab-kit lifecycle (init, sync, upgrade, doctor)
+├── wt/                 # Worktree management
+└── idea/               # Backlog management
 ```
 
-**PATH setup**: `.envrc` uses `PATH_add src/kit/bin` (via direnv) to make the `fab` dispatcher, `wt`, and `idea` binaries available.
+All four binaries are installed system-wide via `brew install fab-kit`.
 
 **Distribution**: Go binaries are included in per-platform release archives (`kit-{os}-{arch}.tar.gz`). The generic `kit.tar.gz` is source-only: it contains skills, templates, and supporting scripts/configuration, but no compiled binaries. `fab-upgrade.sh` updates kit content atomically alongside skills and templates.
 
@@ -173,4 +172,4 @@ src/go/ binary
 | Change | Date | Summary |
 |--------|------|---------|
 | 260316-euw2-multi-worktree-delete | 2026-03-16 | `wt delete` now accepts positional arguments for multi-worktree deletion (`wt delete fox bear`). `--worktree-name` flag deprecated. Fail-fast validation, single confirmation prompt, sequential deletion with continue-on-error. |
-| 260312-96nf-remove-rust-implementation | 2026-03-12 | Removed `fab-rust` line from `src/go/ binary ` directory tree. |
+| 260312-96nf-remove-rust-implementation | 2026-03-12 | Removed `fab-rust` from directory tree. |

@@ -84,8 +84,8 @@ A real morning with 5 changes from your backlog:
 
 | Time | You | AI |
 |------|-----|----|
-| 9:00 | `batch-fab-new-backlog --all` — 5 tmux tabs open. Hop between them, answer clarifying questions, shape each intake. | — |
-| 9:25 | Intakes done. `batch-fab-switch-change --all` — 5 worktrees created, 5 Claude sessions open. Run `/fab-fff` in each tab. | Starts speccing, planning, implementing all 5 in parallel. |
+| 9:00 | `fab batch new --all` — 5 tmux tabs open. Hop between them, answer clarifying questions, shape each intake. | — |
+| 9:25 | Intakes done. `fab batch switch --all` — 5 worktrees created, 5 Claude sessions open. Run `/fab-fff` in each tab. | Starts speccing, planning, implementing all 5 in parallel. |
 | 9:30 | Start creating next batch of intakes from backlog. Or do deep work — design, architecture, code review. | Working. Each change progresses independently through spec → tasks → apply → review → hydrate. |
 | 10:15 | — | First 3 changes complete. Waiting for review. |
 | 10:15 | Review 3 completed changes. Merge, archive. | Still working on remaining 2. |
@@ -99,10 +99,10 @@ The rhythm: **create → hand off → create → review → hand off → create.
 
 ### 1. Create a batch of intakes
 
-Describe each change with `/fab-new` — just the intent, a few minutes each. Or point `batch-fab-new-backlog --all` at your backlog to open a tmux tab per item:
+Describe each change with `/fab-new` — just the intent, a few minutes each. Or point `fab batch new --all` at your backlog to open a tmux tab per item:
 
 ```bash
-batch-fab-new-backlog --all
+fab batch new --all
 # Opens N tmux tabs, each running Claude with /fab-new <description>
 # Hop between tabs, answer clarifying questions, done
 ```
@@ -112,7 +112,7 @@ batch-fab-new-backlog --all
 Once intakes are ready, send them all to AI in parallel:
 
 ```bash
-batch-fab-switch-change --all
+fab batch switch --all
 # Creates a git worktree per change
 # Opens a tmux tab per change with a Claude session
 # Run /fab-fff in each tab — AI takes over
@@ -125,7 +125,7 @@ Each change runs the full 6-stage pipeline (spec, tasks, apply, review, hydrate)
 Go back to step 1. When AI finishes, review the results, merge, and archive:
 
 ```bash
-batch-fab-archive-change --all
+fab batch archive --all
 # Archives all completed changes in one pass
 ```
 

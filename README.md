@@ -8,7 +8,7 @@ Fab Kit is a 6-stage pipeline defined entirely in markdown prompts - no SDK, no 
 
 The more capable AI agents become, the wider the gap between what they can build and what humans can clearly articulate. Fab Kit sits in that gap - and it grows with it.
 
-> **[Try it now](#quick-start)** | **[Understand the concepts](#why-fab-kit)**
+> **[Try it now](#quick-start)** | **[Understand the concepts](#why-fab-kit)** | **[Glossary](docs/specs/glossary.md)** (new to Fab terminology?)
 
 **Contents:** [The 6 Stages](#the-6-stages) · [Prerequisites](#prerequisites) · [Quick Start](#quick-start) · [Why Fab Kit](#why-fab-kit) · [Commands](#command-quick-reference) · [Stage Coverage](#stage-coverage-by-command) · [Learn More](#learn-more)
 
@@ -45,8 +45,8 @@ flowchart TD
 | 2 | **Spec** | Define requirements | `spec.md` |
 | 3 | **Tasks** | Break into implementation checklist | `tasks.md` + `checklist.md` |
 | 4 | **Apply** | Execute the tasks | Code changes |
-| 5 | **Review** | Sub-agent validates against spec and constitution | Prioritized findings report |
-| 6 | **Hydrate** | Save learnings into project memory | Memory updates |
+| 5 | **Review** | Sub-agent validates against spec and [constitution](#code-quality-as-a-guardrail) (your project's architectural rules) | Prioritized findings report |
+| 6 | **Hydrate** | Save learnings into project memory (`docs/memory/`) | Memory updates |
 
 Each stage produces a persistent artifact. Interrupt anything - `/fab-continue` picks up from the last checkpoint.
 
@@ -90,7 +90,7 @@ This installs the `fab` CLI (router), `fab-kit` (workspace lifecycle), and stand
 | [yq](https://github.com/mikefarah/yq) | YAML processing for status files and schemas |
 | [jq](https://jqlang.github.io/jq/) | JSON processing for settings merge during sync |
 | [gh](https://cli.github.com/) | GitHub CLI - used for releases and PR workflows |
-| [direnv](https://direnv.net/) | Auto-loads `.envrc` to put fab scripts on PATH |
+| [direnv](https://direnv.net/) | Auto-loads `.envrc` to set workspace environment variables |
 
 #### Developing Fab Kit
 
@@ -133,7 +133,7 @@ fab upgrade 0.44.0       # upgrades to a specific version
 
 If the upgrade reports a version mismatch, run `/fab-setup migrations` in your AI agent to apply migrations. Safe to re-run.
 
-To repair symlinks and scaffold structure without downloading a new release (useful when developing fab-kit itself):
+To re-deploy skills and scaffold structure without downloading a new release (useful when developing fab-kit itself):
 
 ```bash
 fab sync
@@ -141,14 +141,20 @@ fab sync
 
 ### 2. Your first change
 
+Fab Kit skills are slash commands you type into an AI agent's chat, not the terminal. Open a session in your project directory:
+
+- **Claude Code:** `claude` in terminal
+- **Codex:** `codex` in terminal
+- **Cursor / Windsurf:** open the project, use the chat panel
+
+Then type the commands below in the agent's prompt:
+
 ```bash
 # In your AI agent:
 
-# Creation - creates change folder, writes intake.md, asks clarifying questions
+# Creation - creates change folder, writes intake.md, activates the change
 /fab-new Add a loading spinner to the submit button
 
-# Switch to the change (make it active via .fab-status.yaml)
-/fab-switch
 # Planning - generates spec.md (structured requirements)
 /fab-continue
 # Planning - generates tasks.md (implementation checklist)
@@ -174,15 +180,15 @@ While AI works on one change, start another in a separate [git worktree](https:/
 
 ```
 /fab-new Add error toast for failed submissions
-/fab-switch add-error-toast
 ```
 
-Each change is a self-contained folder - multiple AI sessions run in parallel without conflicts. [How the assembly line works →](docs/specs/assembly-line.md)
+Each change is a self-contained folder - multiple AI sessions run in parallel without conflicts. `/fab-new` auto-activates, so you can start working immediately. Use `/fab-draft` to queue a change without switching to it. [How the assembly line works →](docs/specs/assembly-line.md)
 
 ### Troubleshooting
 
 - `direnv allow` doesn't work - reload your shell or run `eval "$(direnv export zsh)"`
-- `/fab-setup` not recognized - re-run `fab sync` to repair symlinks
+- `/fab-setup` not recognized - re-run `fab sync` to deploy skills
+- **After cloning a repo that uses Fab Kit** - run `fab sync` once. Agent skills and hooks live in `.claude/` which is gitignored by default, so each developer needs to deploy them locally.
 
 ## Why Fab Kit
 
@@ -190,7 +196,7 @@ AI coding tools give you speed but leave you to manage quality and knowledge you
 
 | [**Speed**](#parallel-by-default) | [**Knowledge**](#shared-memory-that-grows-with-your-project) | [**Quality**](#code-quality-as-a-guardrail) | [**Autonomy**](#structured-autonomy-not-guesswork) |
 |:---:|:---:|:---:|:---:|
-| Parallel changes - never idle | Compounds with every change | Constitution + self-correcting review | SRAD-driven - assumes or asks based on context |
+| Parallel changes - never idle | Compounds with every change | Constitution + self-correcting review | Confidence-scored - assumes or asks based on context |
 
 ### Parallel by Default
 
@@ -319,12 +325,14 @@ Grades aggregate into a **confidence score** that gates `/fab-ff`. If ambiguity 
 
 | Command | Purpose |
 |---------|---------|
-| `/fab-new <description>` | Start a new change from a description, Linear ticket, or backlog ID |
+| `/fab-new <description>` | Start a new change — creates the intake and activates it |
+| `/fab-draft <description>` | Create a change intake without activating it (queue for later) |
 | `/fab-continue` | Advance to the next stage (or reset to a specific stage) |
 | `/fab-ff` | Fast-forward through hydrate — confidence-gated, auto-rework loop |
 | `/fab-fff` | Fast-forward further through ship + PR review — same gates as ff |
 | `/fab-clarify` | Refine the current artifact — resolve gaps without advancing |
 | `/fab-archive` | Archive a completed change (or restore an archived one) |
+| `/fab-proceed` | Context-aware orchestrator — detects state, runs setup steps, then delegates to `/fab-fff` |
 
 ### Setup & Status
 
@@ -355,24 +363,13 @@ Grades aggregate into a **confidence score** that gates `/fab-ff`. If ambiguity 
 
 ### Multi-Agent Coordination
 
-The operator (`/fab-operator`) is a long-running coordination layer that sits in its own tmux pane, observing and directing agents across other panes.
+The operator (`/fab-operator`) is a long-running coordination layer that sits in its own tmux pane, observing and directing agents across other panes. It is optional and useful when running multiple agent sessions simultaneously.
 
 | Command | Purpose |
 |---------|---------|
 | `/fab-operator` | Multi-agent coordination — monitoring, auto-answering, autopilot queues, dependency-aware spawning |
 
-The current operator (v8) evolved through eight iterations:
-
-| Version | Key addition |
-|---------|-------------|
-| v1 | Observe and interact with agents across tmux panes |
-| v2 | Proactive monitoring after every action |
-| v3 | Auto-nudge for agents waiting on user input |
-| v4 | `/loop`-driven monitoring, auto-nudge answer model, playbook catalog |
-| v5 | Use case registry (Linear inbox, PR freshness), branch fallback, autopilot queues |
-| v6 | Clean rewrite — principles-driven inference, persistent state via `.fab-operator.yaml`, generic watches, framed status output |
-| v7 | Dependency-aware agent spawning (cherry-pick chains), branch map persistence, bounded retries, pre-send validation tiers |
-| v8 | Pipeline-first routing, unified tick status frame, stack-then-review autopilot (with ordered merge), `⚡<wt>` tab naming, mandatory auto-enroll, `/fab-proceed` integration |
+[Operator version history →](docs/specs/operator.md)
 
 ### CLI Subcommands
 
