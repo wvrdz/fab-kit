@@ -405,7 +405,16 @@ The operator (`/fab-operator`) is a long-running coordination layer that sits in
 
 ## Stage Coverage by Command
 
-Which pipeline stages each command covers. Taller bars = more automation. Read left-to-right from most manual to most automated. **▶** marks typical entry points — start with `/fab-discuss` (exploratory) or `/fab-new` (ready to build). Arrows show the typical path from idea to PR.
+Which pipeline stages each command covers. Taller bars = more automation. Read left-to-right from most manual to most automated. **▶** marks typical entry points — start with `/fab-discuss` (exploratory) or `/fab-new` (ready to build). Arrows show the typical path from idea to PR. Dashed borders indicate optional/utility stages.
+
+| Color | Category | Commands |
+|-------|----------|----------|
+| 🟦 Cyan | Explore (read-only) | `/fab-discuss` |
+| 🟪 Purple | Change lifecycle (single action) | `/fab-draft`, `/fab-switch` |
+| ⬜ Blue-grey (dashed) | Git utilities | `/git-branch`, `/git-pr`, `/git-pr-review` |
+| 🟧 Amber | Stage advance (one at a time) | `/fab-continue` |
+| 🟩 Green | Automated pipeline (multi-stage) | `/fab-new`, `/fab-ff`, `/fab-fff`, `/fab-proceed` |
+| ▶ | Typical entry point | `/fab-discuss`, `/fab-new` |
 
 ```mermaid
 block-beta
@@ -445,11 +454,11 @@ block-beta
     style hdr_switch fill:#ce93d8,stroke:#7B1FA2,color:#1a1a1a
     style hdr_new fill:#81c784,stroke:#2E7D32,color:#1a1a1a
     style hdr_branch fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
-    style hdr_continue fill:#64b5f6,stroke:#1565C0,color:#1a1a1a
+    style hdr_continue fill:#ffb74d,stroke:#E65100,color:#1a1a1a
     style hdr_ff fill:#81c784,stroke:#2E7D32,color:#1a1a1a
     style hdr_gitpr fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
     style hdr_fff fill:#81c784,stroke:#2E7D32,color:#1a1a1a
-    style hdr_proceed fill:#ffb74d,stroke:#E65100,color:#1a1a1a
+    style hdr_proceed fill:#81c784,stroke:#2E7D32,color:#1a1a1a
 
     %% Row labels
     style row_ctx fill:#bdbdbd,stroke:#757575,color:#1a1a1a
@@ -481,12 +490,12 @@ block-beta
     %% git-branch (Git utilities — blue-grey)
     style branch_branch fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-continue (Stage advance — blue)
-    style cont_spec fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
-    style cont_tasks fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
-    style cont_apply fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
-    style cont_review fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
-    style cont_hydrate fill:#64b5f6,stroke:#1565C0,color:#1a1a1a,stroke-dasharray: 5 5
+    %% fab-continue (Stage advance — amber)
+    style cont_spec fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    style cont_tasks fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    style cont_apply fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    style cont_review fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    style cont_hydrate fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
 
     %% fab-ff (Automation — green)
     style ff_spec fill:#81c784,stroke:#2E7D32,color:#1a1a1a
@@ -508,17 +517,17 @@ block-beta
     style fff_ship fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
     style fff_prreview fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
 
-    %% fab-proceed (Orchestrator — amber)
-    style proceed_active fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_intake fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_branch fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
-    style proceed_spec fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_tasks fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_apply fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_review fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_hydrate fill:#ffb74d,stroke:#E65100,color:#1a1a1a
-    style proceed_ship fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
-    style proceed_prreview fill:#ffb74d,stroke:#E65100,color:#1a1a1a,stroke-dasharray: 5 5
+    %% fab-proceed (Automation — green)
+    style proceed_active fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_intake fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_branch fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
+    style proceed_spec fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_tasks fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_apply fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_review fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_hydrate fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style proceed_ship fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
+    style proceed_prreview fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
 ```
 
 ## Standalone CLI Tools
