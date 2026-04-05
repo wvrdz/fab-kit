@@ -27,7 +27,7 @@ Each skill retains its own orchestration logic (stage guards, question handling,
 
 ### `/fab-new <description>`
 
-`/fab-new` starts a new change from a natural language description. It is adaptive: clear inputs get a quick intake, vague inputs trigger conversational exploration. It creates the change folder, initializes status tracking, and generates an intake (with Origin section). The change is NOT activated — no `.fab-status.yaml` symlink created, no branch integration. The user activates via `/fab-switch` after creation. Output is always a single artifact: `intake.md`.
+`/fab-new` starts a new change from a natural language description. It is adaptive: clear inputs get a quick intake, vague inputs trigger conversational exploration. It creates the change folder, initializes status tracking, generates an intake (with Origin section), advances intake to `ready`, activates the change, and creates the matching git branch. Output includes `intake.md` plus activation and branch creation output.
 
 #### Slug Generation and Change Creation
 
@@ -57,7 +57,7 @@ The skill SHALL:
 2. Call `lib/changeman.sh new` with `--slug`, optional `--change-id` (backlog ID), and `--log-args` (description). The script handles: directory creation, `created_by` detection (`gh api user` → `git config user.name` → `"unknown"`, silent fallback), `.status.yaml` initialization from template via `sed`, and statusman integration (`start intake fab-new`, `logman.sh command` via `--log-args`)
 3. Generate `intake.md` from the template (including Origin section), loading `fab/project/constitution.md` and `fab/project/config.yaml` as context
 
-`/fab-new` never activates changes — this reduces disruption when capturing change ideas. The user activates via `/fab-switch` after creation. Branch integration is delegated to `/fab-switch`, which provides consistent branch handling. After generating the intake, `/fab-new` advances intake to `ready` (not `active`) — signaling the artifact exists and is open for `/fab-clarify` refinement.
+After generating the intake, `/fab-new` advances intake to `ready` — signaling the artifact exists and is open for `/fab-clarify` refinement. It then auto-activates the change via `fab change switch` (Step 10) and creates the matching git branch inline (Step 11). Branch creation applies the same 5-case logic as the standalone `/git-branch` skill: already active (no-op), target exists (checkout), on main/master (create), on local-only branch (rename), on pushed branch (create leaving old intact). The git step is non-fatal — if not in a git repo, it warns and skips; if a git operation fails, it reports the error and the change remains activated. For create-without-activate behavior, use `/fab-draft` instead.
 
 #### Change Type Inference
 
@@ -67,9 +67,9 @@ After generating `intake.md`, `/fab-new` infers the `change_type` from the intak
 
 After generating `intake.md` and inferring the change type, `/fab-new` persists an indicative confidence score by calling `calc-score.sh --stage intake <change>` in normal mode (not `--check-gate`). This writes the score to `.status.yaml` with `confidence.indicative: true`, making it visible to all consumers (`/fab-switch`, `/fab-status`, `changeman.sh list`) without recomputation. The authoritative spec-stage score overwrites it (clearing `indicative: true`) when `calc-score.sh` runs at the spec stage. Output format: `Indicative confidence: {score} / 5.0 ({N} decisions)`.
 
-#### Intake-Only Output
+#### Output
 
-`/fab-new` produces a single artifact: `intake.md`. It does not generate `spec.md` or any other downstream artifacts. The intake includes an **Origin** section recording how the change was initiated (description text, conversational vs. one-shot mode, key decisions from the conversation).
+`/fab-new` produces `intake.md` as its primary artifact. It does not generate `spec.md` or any other downstream artifacts. The intake includes an **Origin** section recording how the change was initiated (description text, conversational vs. one-shot mode, key decisions from the conversation). After the intake, the output includes `Activated: {name}` (Step 10) and `Branch: {name} (created|created, leaving {old_branch} intact|checked out|renamed from {old_branch}|already active)` (Step 11).
 
 #### Context
 
@@ -321,6 +321,7 @@ Calling `/fab-clarify` multiple times is safe — it refines further each time. 
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260405-hgv7-fab-new-include-git-branch | 2026-04-05 | `/fab-new` now auto-activates changes (Step 10: `fab change switch`) and creates the matching git branch inline (Step 11). Branch creation uses 5-case logic (already active, target exists, on main/master, local-only branch rename, pushed branch). Git step is non-fatal. Updated Change Initialization and Output sections. Removed stale "never activates" text. |
 | 260402-gnx5-relocate-kit-to-system-cache | 2026-04-02 | Updated shared generation partial reference: `$(fab kit-path)/skills/_generation.md` now resolves from system cache. Template loading in spec/tasks/checklist generation procedures uses `$(fab kit-path)/templates/` instead of `fab/.kit/templates/`. Hook-backed bookkeeping references inline `fab hook <subcommand>` commands. |
 | 260314-q5p9-redesign-ff-fff-scopes | 2026-03-14 | Redesigned `/fab-ff` and `/fab-fff` scope differentiation. `/fab-ff` now runs intake → hydrate (was: spec → review-pr). `/fab-fff` now runs intake → review-pr with identical confidence gates (was: no gates, frontloaded questions). Both have identical behavior (gates, auto-clarify, autonomous rework). Both accept `--force` to bypass gates. Frontloaded questions removed from `/fab-fff`. Updated Overview, requirements, pipeline flows, design decisions. |
 | 260306-6bba-redesign-hooks-strategy | 2026-03-06 | Added hook-backed bookkeeping note: PostToolUse hook (`on-artifact-write.sh`) supplements skill-instructed bookkeeping as a reliability layer. Skills keep instructions unchanged for agent-agnostic portability; hooks catch what the agent forgets. All commands idempotent. |

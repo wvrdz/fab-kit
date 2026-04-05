@@ -30,6 +30,7 @@ Tests MUST conform to the implementation spec — never the other way around. Wh
 - All markdown MUST use standard CommonMark syntax for maximum compatibility
 - Changes to the `fab` CLI (Go binary) MUST include corresponding test updates and MUST update `src/kit/skills/_cli-fab.md` with any new or changed command signatures
 - Changes to skill files (`src/kit/skills/*.md`) MUST update the corresponding `docs/specs/skills/SPEC-*.md` file
+- `src/kit/` is the canonical source for all kit content (skills, templates, migrations). `.claude/skills/` contains deployed copies produced by `fab sync` and is gitignored — never edit files there directly
 
 ## Governance
 
