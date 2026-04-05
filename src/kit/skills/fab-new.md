@@ -1,6 +1,6 @@
 ---
 name: fab-new
-description: "Start a new change — creates the intake and activates it."
+description: "Start a new change — creates the intake, activates it, and creates the git branch."
 ---
 
 # /fab-new <description>
@@ -126,6 +126,57 @@ Display the switch confirmation from stdout. This makes the change immediately a
 
 > **Note**: For create-without-activate behavior (e.g., queuing a change for later), use `/fab-draft` instead.
 
+### Step 11: Create Git Branch
+
+After activating the change, create or check out the matching git branch inline.
+
+First, verify the working directory is inside a git repository:
+
+```bash
+git rev-parse --is-inside-work-tree
+```
+
+If this fails: warn `Not in a git repository — skipping branch creation` and continue. The change remains activated. This step is **non-fatal**.
+
+If inside a git repo, determine the current branch and apply the appropriate case:
+
+```bash
+git branch --show-current   # current branch name
+```
+
+**Case 1 — Already on target branch** (current branch equals `{name}`):
+- No git operation needed
+- Report: `Branch: {name} (already active)`
+
+**Case 2 — Target branch exists but is not current** (`git rev-parse --verify "{name}"` succeeds):
+```bash
+git checkout "{name}"
+```
+- Report: `Branch: {name} (checked out)`
+
+**Case 3 — On `main` or `master`**:
+```bash
+git checkout -b "{name}"
+```
+- Report: `Branch: {name} (created)`
+
+**Case 4 — On a local-only branch** (no upstream — `git config branch.{current}.remote` returns empty):
+```bash
+git branch -m "{name}"
+```
+- Report: `Branch: {name} (renamed from {old})`
+
+**Case 5 — On a pushed branch** (has upstream tracking ref):
+```bash
+git checkout -b "{name}"
+```
+- Report: `Branch: {name} (created, leaving {old} intact)`
+
+If any git operation fails (e.g., uncommitted conflicts blocking checkout):
+- Report the git error message
+- The change remains activated
+- Append: `Run /git-branch to create the branch manually`
+
 ---
 
 ## Output
@@ -146,6 +197,7 @@ Intake complete.
 Indicative confidence: {score} / 5.0 ({N} decisions, cover: {cover})
 
 Activated: {name}
+Branch: {name} (created|checked out|renamed from {old}|already active)
 
 Next: {per state table — intake state (no activation preamble)}
 ```
@@ -161,6 +213,8 @@ Next: {per state table — intake state (no activation preamble)}
 | Intake template missing | Abort: "Kit may be corrupted." |
 | `fab change new` failure | Surface stderr output to user and stop |
 | `fab change switch` failure (Step 10) | Surface stderr output to user; intake is already at `ready` — user can manually run `/fab-switch {name}` to activate |
+| Not in a git repo (Step 11) | Warn and skip branch creation — change is still activated |
+| `git checkout` / `git branch` failure (Step 11) | Report the git error; change remains activated — user can run `/git-branch` manually |
 | Linear ticket not found / API error | Warn, treat as natural language |
 | Backlog ID not found | Abort with guidance |
 | `fab/backlog.md` missing | Abort: "Use natural language or Linear ID instead." |

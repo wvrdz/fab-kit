@@ -2,7 +2,7 @@
 
 ## Summary
 
-Creates a new change from a natural language description, Linear ticket, or backlog ID. Generates the change folder, writes `intake.md`, infers change type, computes indicative confidence, and advances intake to `ready`.
+Creates a new change from a natural language description, Linear ticket, or backlog ID. Generates the change folder, writes `intake.md`, infers change type, computes indicative confidence, advances intake to `ready`, activates the change, and creates the matching git branch.
 
 ## Flow
 
@@ -43,8 +43,18 @@ User invokes /fab-new <description>
 ├─ Step 8: SRAD Questions
 │  └─ (agent reasoning, possible user interaction)
 │
-└─ Step 9: Advance Intake to Ready
-   └─ Bash: fab status advance <change> intake
+├─ Step 9: Advance Intake to Ready
+│  └─ Bash: fab status advance <change> intake
+│
+├─ Step 10: Activate Change
+│  └─ Bash: fab change switch "{name}"
+│
+└─ Step 11: Create Git Branch
+   ├─ Bash: git rev-parse --is-inside-work-tree   (repo check — skip if fails)
+   ├─ Bash: git branch --show-current
+   ├─ Bash: git rev-parse --verify "{name}"        (target exists check)
+   ├─ Bash: git config branch.{current}.remote     (upstream check)
+   └─ Bash: git checkout -b / git checkout / git branch -m   (per case)
 ```
 
 ### Tools used
@@ -53,7 +63,8 @@ User invokes /fab-new <description>
 |------|---------|
 | Read | Load preamble, templates, backlog, project files |
 | Write | Write `intake.md` |
-| Bash | `fab change new`, `fab status set-change-type`, `fab score`, `fab status advance`, `fab status add-issue` |
+| Bash | `fab change new`, `fab status set-change-type`, `fab score`, `fab status advance`, `fab status add-issue`, `fab change switch` |
+| Bash (git) | `git rev-parse --is-inside-work-tree`, `git branch --show-current`, `git rev-parse --verify`, `git config branch.{current}.remote`, `git checkout -b`, `git checkout`, `git branch -m` |
 | MCP (Linear) | Fetch issue details (optional path) |
 
 ### Sub-agents
@@ -67,3 +78,5 @@ None.
 | 6 | `fab status set-change-type` | After intake.md write |
 | 7 | `fab score --stage intake` | After intake.md write |
 | 9 | `fab status advance` | After all intake work complete |
+| 10 | `fab change switch` | After intake advanced to ready |
+| 11 | `git checkout -b` / `git checkout` / `git branch -m` | After change activated |
