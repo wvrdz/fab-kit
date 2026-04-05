@@ -405,7 +405,7 @@ The operator (`/fab-operator`) is a long-running coordination layer that sits in
 
 ## Stage Coverage by Command
 
-Which pipeline stages each command covers. Taller bars = more automation. Read left-to-right from most manual to most automated. Arrows show the typical manual path from idea to PR.
+Which pipeline stages each command covers. Taller bars = more automation. Read left-to-right from most manual to most automated. **▶** marks typical entry points — start with `/fab-discuss` (exploratory) or `/fab-new` (ready to build). Arrows show the typical path from idea to PR.
 
 ```mermaid
 block-beta
@@ -430,16 +430,12 @@ block-beta
     %% Arrows — multiple paths from top-left to bottom-right
     discuss_ctx --> draft_intake
     discuss_ctx --> new_intake
-    new_intake --> new_active
-    new_active --> new_branch
     discuss_ctx --> proceed_intake
     draft_intake --> switch_active
     switch_active --> branch_branch
     new_branch --> cont_spec
     new_branch --> ff_spec
     new_branch --> fff_spec
-    branch_branch --> ff_spec
-    branch_branch --> fff_spec
     ff_hydrate --> gitpr_ship
 
     %% Header styles
