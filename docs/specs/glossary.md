@@ -20,7 +20,8 @@
 | **Skill** | A markdown prompt file in `src/kit/skills/` that defines behavior for an AI agent. Skills are the primary interface to Fab — invoked as `/fab-*` commands. |
 | **Design specs** | Human-curated, pre-implementation design documents in `docs/specs/`. Capture architectural intent, design rationale, and the "why" behind the system. Not managed by Fab tooling — organized however makes sense for the project. Contrast with **memory files** (post-implementation, AI-maintained via hydration). |
 | **spec.md** | A change-level specification file inside a change folder. Describes requirements relevant to that specific change using RFC 2119 keywords and GIVEN/WHEN/THEN scenarios. Not to be confused with **design specs** (the project-wide design documents in `docs/specs/`). |
-| **Stage** | One of the 6 sequential phases a change passes through: intake, spec, tasks, apply, review, hydrate. Tracked in `.status.yaml` via the `progress` map (the entry marked `active` is the current stage). |
+| **Stage** | One of the 8 sequential phases a change passes through: intake, spec, tasks, apply, review, hydrate, ship, review-pr. Tracked in `.status.yaml` via the `progress` map (the entry marked `active` is the current stage). |
+| **Sub-agent** | A second AI agent context spawned by the primary agent to perform an isolated task — most commonly the review stage, which validates against the spec and constitution with a fresh context. Spawned via subagent dispatch in `_preamble.md`. Has no shared memory with the calling agent. |
 
 ---
 
@@ -34,6 +35,8 @@
 | **Apply** | Stage 4. Executes tasks from `tasks.md`, marking each complete. Runs tests after each task. |
 | **Review** | Stage 5. Validates implementation against spec, checklist, and constitution. Can loop back to earlier stages on failure. |
 | **Hydrate** | Stage 6. Validates review passed and hydrates change artifacts into memory files. The change folder remains in `fab/changes/` — archiving is a separate step via `/fab-archive`. |
+| **Ship** | Stage 7. Commits all local changes, pushes to the remote branch, and creates a GitHub PR in draft state. Handled by `/git-pr`. Idempotent — skips steps already done. |
+| **Review-PR** | Stage 8. Fetches PR review comments (from humans or automated reviewers — Copilot, Codex, or Claude), triages each as fix/defer/skip, applies fixes, and posts replies. Handled by `/git-pr-review`. |
 
 ---
 
@@ -93,6 +96,15 @@
 | **Assumptions summary** | A table appended to artifacts listing all Confident and Tentative decisions with rationale. Enables `/fab-clarify` to discover and resolve assumptions. |
 | `<!-- assumed: ... -->` | Inline HTML comment marker placed after tentatively assumed content. Scanned by `/fab-clarify` for resolution. |
 | `<!-- clarified: ... -->` | Inline HTML comment marker replacing an assumed marker after `/fab-clarify` resolves it. Informational only. |
+
+---
+
+## Tools and Environment
+
+| Term | Definition |
+|------|-----------|
+| **tmux** | A terminal multiplexer that lets you split one terminal window into multiple panes or tabs. Fab Kit uses it to run one AI agent session per change in parallel — each change gets its own tmux tab. Install with `brew install tmux`. |
+| **Git worktree** | An additional working directory linked to the same git repository, created with `git worktree add` (or `wt create`). Each worktree has its own branch and working files, so parallel AI sessions can modify different changes without conflicts. |
 
 ---
 

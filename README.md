@@ -1,16 +1,16 @@
 # Fab Kit
 
-A development toolkit for AI-assisted coding. It includes a 6-stage pipeline (describe → plan → implement → review → learn), standalone CLI tools for [git worktree management](#standalone-cli-tools) (`wt`) and [idea backlogs](#standalone-cli-tools) (`idea`), and batch orchestration for running multiple AI agents in parallel. Plain markdown prompts, no SDK, no vendor lock-in. Works with Claude Code, Codex, Cursor, and Windsurf.
+A development toolkit for AI-assisted coding. It includes an 8-stage pipeline (intake → spec → tasks → apply → review → hydrate → ship → review-PR), standalone CLI tools for [git worktree management](#standalone-cli-tools) (`wt`) and [idea backlogs](#standalone-cli-tools) (`idea`), and batch orchestration for running multiple AI agents in parallel. Plain markdown prompts, no SDK, no vendor lock-in. Works with Claude Code, Codex, Cursor, and Windsurf.
 
 AI agents write code fast. The bottleneck is now your clarity: did you define the problem well enough? Fab Kit sits at that bottleneck — it forces structured thinking before implementation, grounds every session in your project's actual context, and gets cheaper to run as agents improve.
 
 > **[Try it now](#quick-start)** | **[Understand the concepts](#why-fab-kit)** | **[Glossary](docs/specs/glossary.md)** (new to Fab terminology?)
 
-**Contents:** [The 6 Stages](#the-6-stages) · [Prerequisites](#prerequisites) · [Quick Start](#quick-start) · [Why Fab Kit](#why-fab-kit) · [The 5 Cs](#the-5-cs-of-quality) · [Commands](#command-quick-reference) · [Stage Coverage](#stage-coverage-by-command) · [CLI Tools](#standalone-cli-tools) · [Learn More](#learn-more)
+**Contents:** [The 8 Stages](#the-8-stages) · [Prerequisites](#prerequisites) · [Quick Start](#quick-start) · [Why Fab Kit](#why-fab-kit) · [The 5 Cs](#the-5-cs-of-quality) · [Commands](#command-quick-reference) · [Stage Coverage](#stage-coverage-by-command) · [CLI Tools](#standalone-cli-tools) · [Learn More](#learn-more)
 
-## The 6 Stages
+## The 8 Stages
 
-Every change (a self-contained feature or fix with its own folder) moves through six stages:
+Every change (a self-contained feature or fix with its own folder) moves through eight stages:
 
 ```mermaid
 flowchart TD
@@ -26,13 +26,19 @@ flowchart TD
         direction LR
         AR["6 HYDRATE"]
     end
+    subgraph shipping ["Shipping"]
+        direction LR
+        SH["7 SHIP"] --> RPR["8 REVIEW-PR"]
+    end
 
     T --> A
     V --> AR
+    AR --> SH
 
     style planning fill:#64b5f6,stroke:#1565C0,color:#1a1a1a
     style execution fill:#ffb74d,stroke:#E65100,color:#1a1a1a
     style completion fill:#81c784,stroke:#2E7D32,color:#1a1a1a
+    style shipping fill:#ce93d8,stroke:#7B1FA2,color:#1a1a1a
 ```
 
 | # | Stage | Purpose | Artifact |
@@ -43,8 +49,10 @@ flowchart TD
 | 4 | **Apply** | Execute the tasks | Code changes |
 | 5 | **Review** | Sub-agent validates against spec and [constitution](#code-quality-as-a-guardrail) (your project's architectural rules) | Prioritized findings report |
 | 6 | **Hydrate** | Save learnings into project memory (`docs/memory/`) | Memory updates |
+| 7 | **Ship** | Commit, push, and create a GitHub PR | Pull request |
+| 8 | **Review-PR** | Triage and fix PR review comments from humans or automated reviewers | Comments addressed |
 
-Each stage produces a persistent artifact. Interrupt anything - `/fab-continue` picks up from the last checkpoint.
+Each stage produces a persistent artifact or state update. Interrupt anything — re-run the same command to resume. All pipeline skills are idempotent.
 
 Review is performed by a **sub-agent** running in a separate context - a fresh perspective that validates against both your spec and [project constitution](#code-quality-as-a-guardrail). Findings are prioritized (must-fix, should-fix, nice-to-have) and the agent triages them, looping back for automatic rework on the issues that matter most.
 
@@ -56,14 +64,12 @@ fab/changes/260101-abcd-add-spinner/
 ├── spec.md          # Requirements (generated)
 ├── tasks.md         # Implementation plan (generated)
 ├── checklist.md     # Progress tracking
-└── .status.yaml     # Pipeline state (+ .fab-status.yaml at repo root tracks active change)
+└── .status.yaml     # Pipeline state (symlinked as .fab-status.yaml at repo root while this change is active)
 ```
 
-## Quick Start
+## Prerequisites
 
-### Prerequisites
-
-#### Using Fab Kit
+### Using Fab Kit
 
 Install with [Homebrew](https://brew.sh/) (macOS and Linux):
 
@@ -88,7 +94,7 @@ This installs the `fab` CLI (router), `fab-kit` (workspace lifecycle), and stand
 | [gh](https://cli.github.com/) | GitHub CLI - used for releases and PR workflows |
 | [direnv](https://direnv.net/) | Auto-loads `.envrc` to set workspace environment variables |
 
-#### Developing Fab Kit
+### Developing Fab Kit
 
 In addition to the above:
 
@@ -100,6 +106,8 @@ brew install go just
 |------|---------|
 | [Go](https://go.dev/) | Required for building binaries from source (`src/go/`) |
 | [just](https://just.systems/) | Task runner for build, test, and release recipes |
+
+## Quick Start
 
 ### 1. Install
 
@@ -145,7 +153,7 @@ Fab Kit skills are slash commands you type into an AI agent's chat, not the term
 - **Codex:** `codex` in terminal
 - **Cursor / Windsurf:** open the project, use the chat panel
 
-Then type the commands below in the agent's prompt:
+Then type the commands below in the agent's prompt. Each command runs one pipeline stage — the AI generates output in real time, so wait for it to finish before running the next.
 
 ```bash
 # In your AI agent:
@@ -164,7 +172,12 @@ Then type the commands below in the agent's prompt:
 # Completion - saves learnings into docs/memory/
 /fab-continue
 
-# Completion - archives the change folder
+# Ship - commit, push, and create a GitHub PR
+/git-pr
+# Review-PR - triage and fix PR review comments
+/git-pr-review
+
+# Archive - move the change folder out of active changes
 /fab-archive
 ```
 
