@@ -705,3 +705,72 @@ Next: Complete intake.md, then /fab-continue
 5. User confirmation — apply all, cherry-pick specific migrations, or skip
 
 **Key properties**: No active change required. No git operations. Idempotent. Spec files modified only with explicit confirmation.
+
+---
+
+## `/git-pr [type]`
+
+**Purpose**: Autonomously commit, push, and create a GitHub PR. No questions, no prompts. Covers stage 7 (Ship) of the pipeline.
+
+**Arguments**:
+- `[type]` *(optional)* — PR type prefix: `feat`, `fix`, `refactor`, `docs`, `test`, `ci`, `chore`. If omitted, type is inferred from `.status.yaml`, `intake.md`, or the diff (in that order).
+
+**Example**:
+```
+/git-pr
+→ "/git-pr — shipping to PR"
+→ "  ✓ commit — Add loading spinner to submit button"
+→ "  ✓ push   — origin/260101-abcd-add-spinner"
+→ "  ✓ pr     — https://github.com/org/repo/pull/42"
+→ "Shipped."
+```
+
+**Behavior**:
+1. Resolve PR type (argument → `.status.yaml` → `intake.md` → diff → `chore`)
+2. Check for uncommitted changes, unpushed commits, existing PR
+3. Stage and commit any uncommitted changes (message matches repo style)
+4. Push to remote (sets upstream if none)
+5. Create a draft PR via `gh pr create` with title derived from intake and body including Summary, Changes, pipeline stats, and stage progress
+6. Record PR URL in `.status.yaml`, mark ship stage done
+
+**Key properties**:
+- Requires `gh` CLI authenticated (`gh auth login`)
+- Stops immediately on `main`/`master` branch — run `/git-branch` first
+- Idempotent — skips steps already done (no PR created if one exists)
+- Marks the `ship` stage done, auto-activates `review-pr`
+
+**Context**: Does not require an active fab change — works as a standalone git tool. With an active change, reads `intake.md` for PR title/summary.
+
+---
+
+## `/git-pr-review [--tool <name>]`
+
+**Purpose**: Process GitHub PR review comments on the current branch's PR. Handles feedback from any reviewer — human or bot. Covers stage 8 (Review-PR) of the pipeline.
+
+**Arguments**:
+- `--tool <name>` *(optional)* — force a specific review tool: `copilot`, `codex`, or `claude`. Bypasses the default cascade.
+
+**Example**:
+```
+/git-pr-review
+→ "3 comments triaged: 2 fix, 1 defer, 0 skip, 0 informational (no reply)"
+→ "Fixed 2 comment(s) across 2 file(s)"
+→ "Replied to 3 comment(s): 2 fix, 1 defer, 0 skip"
+```
+
+**Behavior**:
+1. Resolve the PR for the current branch via `gh pr view`
+2. **If no reviews exist** — request an automated review via cascade: Copilot (remote) → Codex (local) → Claude (local). First available tool wins. Re-run after Copilot to process its comments.
+3. **If reviews with inline comments exist** — fetch all comments, triage each:
+   - **fix**: applies a targeted code change, then posts `Fixed — {description}. ({sha})` as a reply
+   - **defer**: posts `Deferred — {reason}.`
+   - **skip**: posts `Skipped — {reason}.`
+   - **informational**: no reply
+4. Commit and push any fixes, then post all replies
+5. Mark the `review-pr` stage done in `.status.yaml`
+
+**Key properties**:
+- Fully autonomous — never asks questions, never presents options
+- Targeted fixes only — does not modify code beyond what each comment addresses
+- Idempotent — re-running after fixes finds no new modifications; re-running after replies skips already-replied comments
+- Cascade is configurable via `review_tools` in `fab/project/config.yaml`

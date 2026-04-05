@@ -118,7 +118,7 @@ fab batch switch --all
 # Run /fab-fff in each tab — AI takes over
 ```
 
-Each change runs the full 6-stage pipeline (spec, tasks, apply, review, hydrate) independently. Worktree isolation means zero conflicts between parallel changes.
+Each change runs the full pipeline (spec, tasks, apply, review, hydrate, then ship and review-pr) independently. Worktree isolation means zero conflicts between parallel changes.
 
 ### 3. While AI works, create the next batch
 
