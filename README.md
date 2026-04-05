@@ -418,23 +418,23 @@ Which pipeline stages each command covers. Taller bars = more automation. Read l
 
 ```mermaid
 block-beta
-    columns 12
+    columns 13
 
-    hdr_label["wt create →"]:1 hdr_discuss["▶ /fab-discuss"] hdr_draft["/fab-draft"] hdr_switch["/fab-switch"] hdr_branch["/git-branch"] hdr_new["▶ /fab-new"] hdr_continue["/fab-continue"] hdr_ff["/fab-ff"] hdr_gitpr["/git-pr \n /git-pr-review"] hdr_fff["/fab-fff"] hdr_proceed["/fab-proceed"] space:1
+    hdr_label["wt create →"]:1 hdr_discuss["▶ /fab-discuss"] hdr_draft["/fab-draft"] hdr_switch["/fab-switch"] hdr_branch["/git-branch"] hdr_new["▶ /fab-new"] hdr_continue["/fab-continue"] hdr_ff["/fab-ff"] hdr_gitpr["/git-pr"] hdr_gitprreview["/git-pr-review"] hdr_fff["/fab-fff"] hdr_proceed["/fab-proceed"] space:1
 
-    space:12
+    space:13
 
-    row_ctx["context"]:1 discuss_ctx["project context"]:1 space:10
-    row_intake["intake"]:1 space:1 draft_intake["intake"]:1 space:2 new_intake["intake"]:1 space:4 proceed_intake["intake"]:1 space:1
-    row_active["change active"]:1 space:2 switch_active["change active"]:1 space:1 new_active["change active"]:1 space:4 proceed_active["change active"]:1 space:1
-    row_branch["branch name"]:1 space:3 branch_branch["branch name"]:1 new_branch["branch name"]:1 space:4 proceed_branch["branch name"]:1 space:1
-    row_spec["spec"]:1 space:5 cont_spec["one stage"]:1 ff_spec["spec"]:1 space:1 fff_spec["spec"]:1 proceed_spec["spec"]:1 space:1
-    row_tasks["tasks"]:1 space:5 cont_tasks["one stage"]:1 ff_tasks["tasks"]:1 space:1 fff_tasks["tasks"]:1 proceed_tasks["tasks"]:1 space:1
-    row_apply["apply"]:1 space:5 cont_apply["one stage"]:1 ff_apply["apply"]:1 space:1 fff_apply["apply"]:1 proceed_apply["apply"]:1 space:1
-    row_review["review"]:1 space:5 cont_review["one stage"]:1 ff_review["review"]:1 space:1 fff_review["review"]:1 proceed_review["review"]:1 space:1
-    row_hydrate["hydrate"]:1 space:5 cont_hydrate["one stage"]:1 ff_hydrate["hydrate"]:1 space:1 fff_hydrate["hydrate"]:1 proceed_hydrate["hydrate"]:1 space:1
-    row_ship["ship"]:1 space:5 space:1 space:1 gitpr_ship["PR raised"]:1 fff_ship["PR raised"]:1 proceed_ship["PR raised"]:1 space:1
-    row_prreview["review-pr"]:1 space:5 space:1 space:1 gitpr_prreview["PR reviewed"]:1 fff_prreview["PR reviewed"]:1 proceed_prreview["PR reviewed"]:1 space:1
+    row_ctx["context"]:1 discuss_ctx["project context"]:1 space:11
+    row_intake["intake"]:1 space:1 draft_intake["intake"]:1 space:2 new_intake["intake"]:1 space:5 proceed_intake["intake"]:1 space:1
+    row_active["change active"]:1 space:2 switch_active["change active"]:1 space:1 new_active["change active"]:1 space:5 proceed_active["change active"]:1 space:1
+    row_branch["branch name"]:1 space:3 branch_branch["branch name"]:1 new_branch["branch name"]:1 space:5 proceed_branch["branch name"]:1 space:1
+    row_spec["spec"]:1 space:5 cont_spec["one stage"]:1 ff_spec["spec"]:1 space:2 fff_spec["spec"]:1 proceed_spec["spec"]:1 space:1
+    row_tasks["tasks"]:1 space:5 cont_tasks["one stage"]:1 ff_tasks["tasks"]:1 space:2 fff_tasks["tasks"]:1 proceed_tasks["tasks"]:1 space:1
+    row_apply["apply"]:1 space:5 cont_apply["one stage"]:1 ff_apply["apply"]:1 space:2 fff_apply["apply"]:1 proceed_apply["apply"]:1 space:1
+    row_review["review"]:1 space:5 cont_review["one stage"]:1 ff_review["review"]:1 space:2 fff_review["review"]:1 proceed_review["review"]:1 space:1
+    row_hydrate["hydrate"]:1 space:5 cont_hydrate["one stage"]:1 ff_hydrate["hydrate"]:1 space:2 fff_hydrate["hydrate"]:1 proceed_hydrate["hydrate"]:1 space:1
+    row_ship["ship"]:1 space:5 space:1 space:1 gitpr_ship["PR raised"]:1 space:1 fff_ship["PR raised"]:1 proceed_ship["PR raised"]:1 space:1
+    row_prreview["review-pr"]:1 space:5 space:1 space:1 space:1 gitprreview_prreview["PR reviewed"]:1 fff_prreview["PR reviewed"]:1 proceed_prreview["PR reviewed"]:1 space:1
 
     %% Arrows — multiple paths from top-left to bottom-right
     discuss_ctx --> draft_intake
@@ -457,6 +457,7 @@ block-beta
     style hdr_continue fill:#ffb74d,stroke:#E65100,color:#1a1a1a
     style hdr_ff fill:#81c784,stroke:#2E7D32,color:#1a1a1a
     style hdr_gitpr fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
+    style hdr_gitprreview fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
     style hdr_fff fill:#81c784,stroke:#2E7D32,color:#1a1a1a
     style hdr_proceed fill:#81c784,stroke:#2E7D32,color:#1a1a1a
 
@@ -504,9 +505,11 @@ block-beta
     style ff_review fill:#81c784,stroke:#2E7D32,color:#1a1a1a
     style ff_hydrate fill:#81c784,stroke:#2E7D32,color:#1a1a1a
 
-    %% git-pr / git-pr-review (Git utilities — blue-grey)
+    %% git-pr (Git utilities — blue-grey)
     style gitpr_ship fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
-    style gitpr_prreview fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
+
+    %% git-pr-review (Git utilities — blue-grey)
+    style gitprreview_prreview fill:#b0bec5,stroke:#546e7a,color:#1a1a1a,stroke-dasharray: 5 5
 
     %% fab-fff (Automation — green)
     style fff_spec fill:#81c784,stroke:#2E7D32,color:#1a1a1a
@@ -529,6 +532,22 @@ block-beta
     style proceed_ship fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
     style proceed_prreview fill:#81c784,stroke:#2E7D32,color:#1a1a1a,stroke-dasharray: 5 5
 ```
+
+**Quick reference** — which stages does each command cover?
+
+| Stage | `/fab-discuss` | `/fab-draft` | `/fab-switch` | `/git-branch` | `/fab-new` | `/fab-continue` | `/fab-ff` | `/git-pr` | `/git-pr-review` | `/fab-fff` | `/fab-proceed` |
+|-------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| context | ✅ | | | | | | | | | | |
+| intake | | ✅ | | | ✅ | | | | | | ✅ |
+| change active | | | ✅ | | ✅ | | | | | | ✅ |
+| branch name | | | | ✅ | ✅ | | | | | | ✅ |
+| spec | | | | | | ✅ | ✅ | | | ✅ | ✅ |
+| tasks | | | | | | ✅ | ✅ | | | ✅ | ✅ |
+| apply | | | | | | ✅ | ✅ | | | ✅ | ✅ |
+| review | | | | | | ✅ | ✅ | | | ✅ | ✅ |
+| hydrate | | | | | | ✅ | ✅ | | | ✅ | ✅ |
+| ship | | | | | | | | ✅ | | ✅ | ✅ |
+| review-pr | | | | | | | | | ✅ | ✅ | ✅ |
 
 ## Standalone CLI Tools
 
