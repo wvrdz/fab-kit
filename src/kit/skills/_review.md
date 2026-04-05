@@ -70,8 +70,8 @@ The outward sub-agent performs a holistic diff review with full repository acces
 **Dispatch**: Via the Agent tool (`subagent_type: "general-purpose"`).
 
 **Context provided to the sub-agent**:
-- The diff of all changed files: `git diff HEAD~1 HEAD` (or `git diff <base>...HEAD` when base branch is available)
-- The list of changed file paths: `git diff --name-only HEAD~1 HEAD`
+- The diff of all changed files: compute the merge-base against the default branch (`git merge-base HEAD origin/main` or the resolved default), then use `git diff <base>...HEAD`
+- The list of changed file paths: use the same resolved base with `git diff --name-only <base>...HEAD`
 - Standard subagent context files (per `_preamble.md` § Standard Subagent Context)
 - Full tool access (Read, Bash, Agent) — the sub-agent MAY read any file in the repo
 

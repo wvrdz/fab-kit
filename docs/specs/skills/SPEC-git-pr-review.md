@@ -85,7 +85,7 @@ Phase 2 runs when Phase 1 finds no existing reviews with inline comments. It req
 |------|------|-----------|------------|------------|
 | Copilot | Remote | Attempt `gh pr edit --add-reviewer copilot` | Poll 30s/attempt up to 20× — proceed to Step 3 when review appears; clean finish on timeout | Clean finish: "No automated reviewer available..." |
 
-The `--tool copilot` flag forces the Copilot path regardless of config. If `review_tools.copilot: false`, Phase 2 skips without attempting the request.
+The `--tool copilot` flag forces the Copilot path regardless of config — the config check is skipped entirely when this flag is present. Without the flag, if `review_tools.copilot: false`, Phase 2 exits cleanly without attempting the request.
 
 ### Disposition taxonomy
 

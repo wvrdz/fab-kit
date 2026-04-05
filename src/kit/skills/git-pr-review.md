@@ -71,6 +71,8 @@ If no reviews at all → proceed to Phase 2.
 
 Request an automated Copilot review and wait for it to appear.
 
+**Forced tool override**: If `--tool copilot` was provided (Step 1.5), skip the config check below and proceed directly to the Copilot request.
+
 **Configuration**: Read `review_tools` from `fab/project/config.yaml`. Only the `copilot` key is honored. When the `review_tools` key is absent, Copilot defaults to enabled.
 
 ```yaml
@@ -78,9 +80,7 @@ review_tools:
   copilot: true
 ```
 
-If `review_tools.copilot` is `false`: print `No automated reviewer available. Run /git-pr-review when reviews are added.` and STOP (clean finish).
-
-**Forced tool override**: If `--tool copilot` was provided (Step 1.5), proceed regardless of config settings.
+If `review_tools.copilot` is `false` (and `--tool copilot` was **not** provided): print `No automated reviewer available. Run /git-pr-review when reviews are added.` and STOP (clean finish).
 
 **Copilot request and poll**:
 
@@ -89,10 +89,10 @@ If `review_tools.copilot` is `false`: print `No automated reviewer available. Ru
    - Print: `Copilot review requested. Waiting up to 10 minutes...`
    - Poll every 30 seconds, up to 20 attempts:
      ```bash
-     gh pr view --json reviews -q '.reviews | length'
+     gh pr view {number} --json reviews -q '.reviews | map(select(.author.login == "copilot")) | length'
      ```
-   - When count > 0: proceed to Step 3 (Fetch Comments)
-   - If 20 attempts exhausted without a review: print `Copilot review requested but not yet available. Re-run /git-pr-review to process when ready.` and STOP (clean finish — no error, no fail event)
+   - When Copilot review count > 0: proceed to Step 3 (Fetch Comments)
+   - If 20 attempts exhausted without a Copilot-authored review: print `Copilot review requested but not yet available. Re-run /git-pr-review to process when ready.` and STOP (clean finish — no error, no fail event)
 3. **On failure** (non-zero exit from `gh pr edit`):
    - Print: `No automated reviewer available. Run /git-pr-review when reviews are added.`
    - STOP (clean finish — no error, no fail event)
