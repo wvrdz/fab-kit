@@ -20,7 +20,7 @@ A Homebrew formula named `fab-kit` SHALL be published to the `wvrdz/homebrew-tap
 
 #### Router Architecture (System `fab` Binary)
 
-The system `fab` binary acts as a router using negative-match dispatch. It maintains a static allowlist of fab-kit commands (`init`, `upgrade-repo`, `sync`, `update`, `doctor`, `--version`, `-v`, `--help`, `-h`, `help`). Commands matching this list are dispatched to `fab-kit` via `syscall.Exec`. All other commands are dispatched to the version-resolved `fab-go`.
+The system `fab` binary acts as a router using negative-match dispatch. It maintains a static allowlist of fab-kit commands (`init`, `upgrade-repo`, `sync`, `update`, `doctor`) that are dispatched to `fab-kit` via `syscall.Exec`. A separate set of inline commands (`--version`, `-v`, `--help`, `-h`, `help`) are handled directly by the router without exec'ing any sub-binary. All other commands are dispatched to the version-resolved `fab-go`.
 
 For fab-go dispatch, the router SHALL:
 
@@ -38,7 +38,8 @@ For fab-go dispatch, the router SHALL:
 - Version not cached — router auto-fetches from GitHub releases, caches binary + `.kit/` content, then dispatches
 - No network during auto-fetch — exits non-zero with version and network hint
 - `config.yaml` found but `fab_version` absent — exits with: `"No fab_version in config.yaml. Run 'fab init' to set one."`
-- Not in a fab-managed repo, fab-kit command — `fab init`, `fab --version`, `fab --help` dispatched to `fab-kit` (works without config.yaml)
+- Not in a fab-managed repo, fab-kit command — `fab init`, `fab sync` dispatched to `fab-kit` (works without config.yaml)
+- Not in a fab-managed repo, inline command — `fab --version` and `fab --help` handled inline by the router (no config.yaml needed); `fab --version` prints only the system version line when no `fab/project/config.yaml` is found
 - Not in a fab-managed repo, workflow command — exits with: `"Not in a fab-managed repo. Run 'fab init' to set one up."`
 
 #### Cache Layout

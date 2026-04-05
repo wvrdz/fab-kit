@@ -30,7 +30,8 @@ fab <command> <subcommand> [args...]
 
 ### Routing
 
-- **Workspace commands** (`init`, `upgrade-repo`, `sync`, `update`, `doctor`, `--version`, `--help`, `help`): routed to `fab-kit`
+- **Workspace commands** (`init`, `upgrade-repo`, `sync`, `update`, `doctor`): routed to `fab-kit` via `syscall.Exec`
+- **Inline router commands** (`--version`, `-v`, `--help`, `-h`, `help`): handled directly by the router (no exec to fab-kit or fab-go)
 - **Workflow commands** (everything else): routed to `fab-go` after version resolution
 
 ### Backend
@@ -42,6 +43,8 @@ fab <command> <subcommand> [args...]
 ### Help
 
 `fab -h`, `fab --help`, and `fab help` show composed help from both fab-kit and fab-go. `fab-kit -h` and `fab-go -h` show their own help independently.
+
+`fab --version` and `fab -v` print the system-installed binary version on the first line (e.g., `fab 1.3.1`). When run inside a fab-managed repo, a second line shows the project-pinned version from `fab/project/config.yaml` (e.g., `project: 1.3.1`).
 
 ### Command Reference
 

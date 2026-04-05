@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,13 +32,22 @@ func main() {
 
 	switch {
 	case arg == "--version" || arg == "-v":
-		fmt.Printf("fab %s\n", version)
+		cfg, _ := internal.ResolveConfig()
+		printVersion(os.Stdout, version, cfg)
 	case arg == "--help" || arg == "-h" || arg == "help":
 		printHelp()
 	case fabKitArgs[arg]:
 		execFabKit(os.Args[1:])
 	default:
 		execFabGo(os.Args[1:])
+	}
+}
+
+// printVersion writes the system version and, when cfg is non-nil, the project-pinned version.
+func printVersion(w io.Writer, sysVersion string, cfg *internal.ConfigResult) {
+	fmt.Fprintf(w, "fab %s\n", sysVersion)
+	if cfg != nil {
+		fmt.Fprintf(w, "project: %s\n", cfg.FabVersion)
 	}
 }
 

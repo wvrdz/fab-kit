@@ -260,7 +260,7 @@ For fab-go dispatch, the router:
 
 When not in a fab-managed repo (no `config.yaml`) and a non-fab-kit command is issued, the router exits with: "Not in a fab-managed repo. Run 'fab init' to set one up."
 
-`fab help` composes help from both sub-binaries: workspace commands (from fab-kit) are always shown; workflow commands (from fab-go) are shown only when inside a fab-managed repo.
+`fab help` composes help from both sub-binaries: workspace commands (from fab-kit) are always shown; workflow commands (from fab-go) are shown only when inside a fab-managed repo. `fab --version` and `fab -v` always print the system-installed binary version (`fab {version}`); when run inside a fab-managed repo, a second line shows the project-pinned version from `fab/project/config.yaml` (`project: {fab_version}`). Config resolution errors are silently ignored — the command always exits 0.
 
 #### `fab-kit` (Workspace Lifecycle)
 
