@@ -1,0 +1,42 @@
+id: x33u
+name: 260406-x33u-pane-capture-tmux-flag
+created: 2026-04-06T07:32:07Z
+created_by: sahil-weaver
+change_type: fix
+issues: []
+progress:
+    intake: done
+    spec: done
+    tasks: done
+    apply: done
+    review: done
+    hydrate: done
+    ship: active
+    review-pr: pending
+checklist:
+    generated: true
+    path: checklist.md
+    completed: 0
+    total: 0
+confidence:
+    certain: 4
+    confident: 2
+    tentative: 0
+    unresolved: 0
+    score: 4.4
+    fuzzy: true
+    dimensions:
+        signal: 84.2
+        reversibility: 86.7
+        competence: 85.8
+        disambiguation: 85.0
+stage_metrics:
+    intake: {started_at: "2026-04-06T07:32:07Z", driver: fab-new, iterations: 1, completed_at: "2026-04-06T07:35:26Z"}
+    spec: {started_at: "2026-04-06T07:35:26Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-06T07:38:37Z"}
+    tasks: {started_at: "2026-04-06T07:38:37Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-06T07:38:37Z"}
+    apply: {started_at: "2026-04-06T07:38:37Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-06T07:39:57Z"}
+    review: {started_at: "2026-04-06T07:39:57Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-06T07:40:58Z"}
+    hydrate: {started_at: "2026-04-06T07:40:58Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-06T07:41:53Z"}
+    ship: {started_at: "2026-04-06T07:41:53Z", driver: fab-fff, iterations: 1}
+prs: []
+last_updated: 2026-04-06T07:41:53Z

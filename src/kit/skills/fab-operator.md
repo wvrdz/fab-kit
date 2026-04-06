@@ -241,7 +241,7 @@ The operator auto-answers routine prompts from monitored agents. Each idle agent
 
 ### Question Detection
 
-1. **Capture**: `tmux capture-pane -t <pane> -p -l 20`
+1. **Capture**: `tmux capture-pane -t <pane> -p -S -20`
 2. **Claude turn boundary guard**: `^\s*>\s*$` in last 2 lines → skip (normal human-turn boundary)
 3. **Blank capture guard**: all blank → skip (treat as "cannot determine")
 4. **Scan for indicators** (bottom-most match wins):

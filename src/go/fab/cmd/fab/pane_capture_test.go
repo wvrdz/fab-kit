@@ -165,6 +165,34 @@ func TestPrintCaptureHeader(t *testing.T) {
 	})
 }
 
+func TestCapturePaneArgs(t *testing.T) {
+	t.Run("default 50 lines uses -S -50", func(t *testing.T) {
+		args := capturePaneArgs("%5", 50)
+		expected := []string{"capture-pane", "-t", "%5", "-p", "-S", "-50"}
+		if len(args) != len(expected) {
+			t.Fatalf("args length = %d, want %d: got %v", len(args), len(expected), args)
+		}
+		for i, v := range expected {
+			if args[i] != v {
+				t.Errorf("args[%d] = %q, want %q", i, args[i], v)
+			}
+		}
+	})
+
+	t.Run("custom 20 lines uses -S -20", func(t *testing.T) {
+		args := capturePaneArgs("%5", 20)
+		expected := []string{"capture-pane", "-t", "%5", "-p", "-S", "-20"}
+		if len(args) != len(expected) {
+			t.Fatalf("args length = %d, want %d: got %v", len(args), len(expected), args)
+		}
+		for i, v := range expected {
+			if args[i] != v {
+				t.Errorf("args[%d] = %q, want %q", i, args[i], v)
+			}
+		}
+	})
+}
+
 // Verify the capture command uses the correct line count flag name
 func TestCaptureLineFlagShorthand(t *testing.T) {
 	cmd := paneCaptureCmd()

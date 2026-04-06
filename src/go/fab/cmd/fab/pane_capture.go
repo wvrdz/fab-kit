@@ -89,9 +89,15 @@ func runPaneCapture(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// capturePaneArgs returns the tmux capture-pane argument list for the given pane and line count.
+// It uses -S -N to capture the last N lines from the pane's scrollback buffer.
+func capturePaneArgs(paneID string, lines int) []string {
+	return []string{"capture-pane", "-t", paneID, "-p", "-S", fmt.Sprintf("-%d", lines)}
+}
+
 // capturePaneContent runs tmux capture-pane and returns the captured text.
 func capturePaneContent(paneID string, lines int) (string, error) {
-	out, err := exec.Command("tmux", "capture-pane", "-t", paneID, "-p", "-l", fmt.Sprintf("%d", lines)).Output()
+	out, err := exec.Command("tmux", capturePaneArgs(paneID, lines)...).Output()
 	if err != nil {
 		return "", err
 	}
