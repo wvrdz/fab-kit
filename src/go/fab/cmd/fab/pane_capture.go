@@ -43,6 +43,12 @@ func runPaneCapture(cmd *cobra.Command, args []string) error {
 	jsonFlag, _ := cmd.Flags().GetBool("json")
 	rawFlag, _ := cmd.Flags().GetBool("raw")
 
+	// Validate line count
+	if lines < 1 {
+		fmt.Fprintf(cmd.ErrOrStderr(), "Error: --lines must be >= 1\n")
+		os.Exit(1)
+	}
+
 	// Validate pane exists
 	if err := pane.ValidatePane(paneID); err != nil {
 		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)

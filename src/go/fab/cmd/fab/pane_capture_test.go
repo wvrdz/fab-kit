@@ -191,6 +191,16 @@ func TestCapturePaneArgs(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("lines=1 is the minimum valid value", func(t *testing.T) {
+		args := capturePaneArgs("%5", 1)
+		expected := []string{"capture-pane", "-t", "%5", "-p", "-S", "-1"}
+		for i, v := range expected {
+			if args[i] != v {
+				t.Errorf("args[%d] = %q, want %q", i, args[i], v)
+			}
+		}
+	})
 }
 
 // Verify the capture command uses the correct line count flag name
