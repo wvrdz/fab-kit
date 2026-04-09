@@ -266,17 +266,19 @@ func TestFormatArchiveYAML(t *testing.T) {
 	r := &ArchiveResult{
 		Action:  "archive",
 		Name:    "260310-abcd-my-change",
-		Clean:   "not_present",
 		Move:    "moved",
 		Index:   "created",
 		Pointer: "cleared",
 	}
 	output := FormatArchiveYAML(r)
 
-	for _, want := range []string{"action: archive", "name: 260310-abcd-my-change", "move: moved", "pointer: cleared"} {
+	for _, want := range []string{"action: archive", "name: 260310-abcd-my-change", "move: moved", "index: created", "pointer: cleared"} {
 		if !strings.Contains(output, want) {
 			t.Errorf("FormatArchiveYAML missing %q", want)
 		}
+	}
+	if strings.Contains(output, "clean:") {
+		t.Error("FormatArchiveYAML should not contain clean: field")
 	}
 }
 

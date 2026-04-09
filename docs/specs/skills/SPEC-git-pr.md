@@ -49,13 +49,10 @@ Autonomously commits, pushes, and creates a GitHub PR. No prompts, no questions.
 ├─ Step 4b: Finish Ship Stage
 │  └─ Bash: fab status finish <change> ship git-pr
 │
-├─ Step 4c: Commit Status Update
-│  ├─ Bash: git add fab/changes/{name}/.status.yaml fab/changes/{name}/.history.jsonl
-│  ├─ Bash: git commit
-│  └─ Bash: git push
-│
-└─ Step 4d: Write PR Sentinel
-   └─ Bash: echo "$PR_URL" > fab/changes/{name}/.pr-done
+└─ Step 4c: Commit Status Update
+   ├─ Bash: git add fab/changes/{name}/.status.yaml fab/changes/{name}/.history.jsonl
+   ├─ Bash: git commit
+   └─ Bash: git push
 ```
 
 ### Tools used

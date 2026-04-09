@@ -122,7 +122,7 @@ Run each step in order, skipping steps that aren't needed.
 
 Nothing to do.
 ```
-Before stopping, attempt to record the existing PR URL per Steps 4a–4d (silently, no errors). Then STOP.
+Before stopping, attempt to record the existing PR URL per Steps 4a–4c (silently, no errors). Then STOP.
 
 **Otherwise**, print the header and execute:
 
@@ -269,16 +269,6 @@ If Step 4a successfully recorded a PR URL (changeman resolved and statusman add-
 Print (if committed): `  ✓ status — committed and pushed status updates (.status.yaml, .history.jsonl)`
 
 If Step 4a was skipped (no active change, changeman not found), skip this step silently.
-
-### Step 4d: Write PR Sentinel
-
-If Step 4a successfully resolved the change directory:
-
-1. Write the sentinel: `echo "$PR_URL" > "$change_dir/.pr-done"`
-
-This file is gitignored and never committed. It provides a race-free filesystem signal that all git operations are complete. Write is unconditional — happens in both orchestrated and manual flows.
-
-If Step 4a was skipped, skip this step silently.
 
 ### Step 5: Report
 

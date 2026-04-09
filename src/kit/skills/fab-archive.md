@@ -11,7 +11,7 @@ description: "Archive a completed change or restore an archived change — move 
 
 ## Purpose
 
-Archive a completed change after hydrate, or restore an archived change back to active. Archive mode delegates mechanical operations (clean, move, index, pointer) to `fab change archive` and handles only backlog matching in the skill. Restore mode delegates entirely to `fab change restore`. Both modes are safe to re-run after interruption.
+Archive a completed change after hydrate, or restore an archived change back to active. Archive mode delegates mechanical operations (move, index, pointer) to `fab change archive` and handles only backlog matching in the skill. Restore mode delegates entirely to `fab change restore`. Both modes are safe to re-run after interruption.
 
 ---
 
@@ -61,7 +61,6 @@ fab change archive <change> --description "<extracted description>"
 Where `<change>` is the change ID or name from preflight. Parse the structured YAML output for the report.
 
 The command handles:
-- **Clean**: Delete `.pr-done` if present
 - **Move**: `fab/changes/{name}/` → `fab/changes/archive/yyyy/mm/{name}/` (date-bucketed)
 - **Index**: Create/update `fab/changes/archive/index.md` with entry + backfill
 - **Pointer**: Remove `.fab-status.yaml` symlink if this was the active change
@@ -90,8 +89,6 @@ Construct the user-facing report from the script's YAML output fields:
 
 | YAML field | Report line |
 |------------|-------------|
-| `clean: removed` | `Cleaned:  ✓ .pr-done removed` |
-| `clean: not_present` | `Cleaned:  — not present` |
 | `move: moved` | `Moved:    ✓ fab/changes/archive/yyyy/mm/{name}/` |
 | `index: created` | `Index:    ✓ fab/changes/archive/index.md created` |
 | `index: updated` | `Index:    ✓ fab/changes/archive/index.md updated` |
@@ -107,7 +104,6 @@ Backlog and Scan lines come from Step 3 (agent-driven), not from the script.
 ```
 Archive: {change name}
 
-Cleaned:  ✓ .pr-done removed                    (or: — not present)
 Moved:    ✓ fab/changes/archive/yyyy/mm/{name}/
 Index:    ✓ fab/changes/archive/index.md updated (or: created)
 Backlog:  ✓ [ID] marked done                   (or: — no backlog file)

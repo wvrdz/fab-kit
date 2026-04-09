@@ -20,7 +20,7 @@ User invokes /fab-archive [change-name]
 │  │
 │  ├─ Step 2: Run archive
 │  │  └─ Bash: fab change archive <change> --description "..."
-│  │     └─ (clean .pr-done, move, update index, clear pointer)
+│  │     └─ (move, update index, clear pointer)
 │  │
 │  ├─ Step 3: Backlog matching
 │  │  ├─ Read: fab/backlog.md
