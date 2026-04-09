@@ -80,13 +80,26 @@ When called without arguments from the main repo, shows a selection menu.`,
 			// Open with specified app or show menu
 			if appFlag != "" {
 				apps := wt.BuildAvailableApps()
-				resolved, err := wt.ResolveApp(appFlag, apps)
-				if err != nil {
-					wt.ExitWithError(wt.ExitGeneralError,
-						fmt.Sprintf("Unknown app: %s", appFlag),
-						fmt.Sprintf("App '%s' is not available on this system", appFlag),
-						"Available apps can be seen with: wt open (then check the menu)")
+				var resolved *wt.AppInfo
+				var err error
+				if appFlag == "default" {
+					resolved, err = wt.ResolveDefaultApp(apps)
+					if err != nil {
+						wt.ExitWithError(wt.ExitGeneralError,
+							"No default app detected",
+							"Could not determine a default application for the current environment",
+							"Use 'wt open' without --app to see the menu")
+					}
+				} else {
+					resolved, err = wt.ResolveApp(appFlag, apps)
+					if err != nil {
+						wt.ExitWithError(wt.ExitGeneralError,
+							fmt.Sprintf("Unknown app: %s", appFlag),
+							fmt.Sprintf("App '%s' is not available on this system", appFlag),
+							"Available apps can be seen with: wt open (then check the menu)")
+					}
 				}
+				wt.SaveLastApp(resolved.Cmd)
 				if openErr := wt.OpenInApp(resolved.Cmd, wtPath, ctx.RepoName, wtName); openErr != nil {
 					exitCode := wt.ExitGeneralError
 					if strings.Contains(resolved.Cmd, "byobu") {

@@ -1,0 +1,15 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-04-09T17:37:39Z"}
+{"args":"Investigate how wt open chooses its default option — default should be the current medium","cmd":"fab-new","event":"command","ts":"2026-04-09T17:37:39Z"}
+{"delta":"+4.1","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-09T17:38:34Z"}
+{"delta":"+0.0","event":"confidence","score":4.1,"trigger":"calc-score","ts":"2026-04-09T17:38:39Z"}
+{"delta":"+0.3","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-04-09T17:43:55Z"}
+{"delta":"+0.0","event":"confidence","score":4.4,"trigger":"calc-score","ts":"2026-04-09T17:43:59Z"}
+{"cmd":"fab-fff","event":"command","ts":"2026-04-09T17:44:41Z"}
+{"delta":"+0.6","event":"confidence","score":5,"trigger":"calc-score","ts":"2026-04-09T17:45:39Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"spec","ts":"2026-04-09T17:45:43Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"tasks","ts":"2026-04-09T17:46:17Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"apply","ts":"2026-04-09T17:46:21Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"review","ts":"2026-04-09T17:48:21Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"hydrate","ts":"2026-04-09T17:51:58Z"}
+{"event":"review","result":"passed","ts":"2026-04-09T17:51:58Z"}
+{"action":"enter","driver":"fab-fff","event":"stage-transition","stage":"ship","ts":"2026-04-09T17:52:43Z"}

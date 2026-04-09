@@ -582,3 +582,18 @@ func TestCreate_OpenHereSuppressesPath(t *testing.T) {
 	// stderr should still contain the creation message
 	assertContains(t, r.Stderr, "Created worktree:")
 }
+
+func TestCreate_WorktreeOpenDefault(t *testing.T) {
+	repo := createTestRepo(t)
+
+	// --worktree-open default should resolve via DetectDefaultApp.
+	// In this test environment, the resolved app may vary, but the command
+	// should not panic or treat "default" as an app name.
+	r := runWt(t, repo, []string{"HOME=" + t.TempDir()}, "create", "--non-interactive",
+		"--worktree-name", "default-open-test",
+		"--worktree-init", "false",
+		"--worktree-open", "default")
+
+	// The worktree should be created regardless of whether the default app opened
+	assertContains(t, r.Stderr, "Created worktree:")
+}

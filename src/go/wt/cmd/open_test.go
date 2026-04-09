@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -42,6 +43,35 @@ func TestOpen_ErrorUnknownApp(t *testing.T) {
 		t.Error("expected failure for unknown app")
 	}
 	assertContains(t, r.Stderr, "Unknown app")
+}
+
+func TestOpen_AppDefault_NoDefaultDetected(t *testing.T) {
+	repo := createTestRepo(t)
+	wtPath := createWorktreeViaWt(t, repo, "default-err")
+
+	// Clear environment so no default can be detected, and only open_here is available
+	env := []string{
+		"TERM_PROGRAM=",
+		"TMUX=",
+		"BYOBU_BACKEND=",
+		"BYOBU_TTY=",
+		"BYOBU_SESSION=",
+		"BYOBU_CONFIG_DIR=",
+		"HOME=" + t.TempDir(),
+	}
+
+	r := runWt(t, repo, env, "open", "--app", "default", wtPath)
+	// DetectDefaultApp falls through to the first non-open_here app.
+	// Can't control installed apps, so accept either:
+	// - exit 0 (some app resolved and opened)
+	// - non-zero (no default detected — expected error message)
+	if r.ExitCode != 0 {
+		assertContains(t, r.Stderr, "No default app detected")
+	}
+	// Must never panic
+	if strings.Contains(r.Stderr, "panic") {
+		t.Errorf("command panicked: %s", r.Stderr)
+	}
 }
 
 // NOTE: Testing actual app opening (code, cursor, etc.) requires mock binaries

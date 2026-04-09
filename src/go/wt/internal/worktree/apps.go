@@ -168,6 +168,16 @@ func DetectDefaultApp(apps []AppInfo) int {
 	return -1
 }
 
+// ResolveDefaultApp resolves the "default" keyword to an app using DetectDefaultApp.
+// Returns the resolved AppInfo or an error if no default can be determined.
+func ResolveDefaultApp(apps []AppInfo) (*AppInfo, error) {
+	idx := DetectDefaultApp(apps)
+	if idx < 1 || idx > len(apps) {
+		return nil, fmt.Errorf("no default app detected")
+	}
+	return &apps[idx-1], nil
+}
+
 // OpenInApp opens the given path in the specified application.
 func OpenInApp(appCmd, path, repoName, wtName string) error {
 	switch appCmd {

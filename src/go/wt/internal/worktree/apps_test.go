@@ -367,6 +367,72 @@ func TestOpenInApp_OpenHere_WithoutWrapper(t *testing.T) {
 	}
 }
 
+func TestResolveDefaultApp_Success(t *testing.T) {
+	// Simulate a plain tmux session
+	t.Setenv("TERM_PROGRAM", "")
+	t.Setenv("TMUX", "/tmp/tmux-1000/default,12345,0")
+	t.Setenv("BYOBU_TTY", "")
+	t.Setenv("BYOBU_BACKEND", "")
+	t.Setenv("BYOBU_SESSION", "")
+	t.Setenv("BYOBU_CONFIG_DIR", "")
+	t.Setenv("HOME", t.TempDir())
+
+	apps := []AppInfo{
+		{"Open here", "open_here"},
+		{"VSCode", "code"},
+		{"tmux window", "tmux_window"},
+	}
+
+	resolved, err := ResolveDefaultApp(apps)
+	if err != nil {
+		t.Fatalf("ResolveDefaultApp returned error: %v", err)
+	}
+	if resolved.Cmd != "tmux_window" {
+		t.Errorf("expected Cmd %q, got %q", "tmux_window", resolved.Cmd)
+	}
+}
+
+func TestResolveDefaultApp_VSCode(t *testing.T) {
+	t.Setenv("TERM_PROGRAM", "vscode")
+	t.Setenv("TMUX", "")
+	t.Setenv("BYOBU_BACKEND", "")
+	t.Setenv("HOME", t.TempDir())
+
+	apps := []AppInfo{
+		{"Open here", "open_here"},
+		{"VSCode", "code"},
+		{"tmux window", "tmux_window"},
+	}
+
+	resolved, err := ResolveDefaultApp(apps)
+	if err != nil {
+		t.Fatalf("ResolveDefaultApp returned error: %v", err)
+	}
+	if resolved.Cmd != "code" {
+		t.Errorf("expected Cmd %q, got %q", "code", resolved.Cmd)
+	}
+}
+
+func TestResolveDefaultApp_NoDefault(t *testing.T) {
+	t.Setenv("TERM_PROGRAM", "")
+	t.Setenv("TMUX", "")
+	t.Setenv("BYOBU_BACKEND", "")
+	t.Setenv("HOME", t.TempDir())
+
+	// Only open_here available — DetectDefaultApp skips it, returns -1
+	apps := []AppInfo{
+		{"Open here", "open_here"},
+	}
+
+	_, err := ResolveDefaultApp(apps)
+	if err == nil {
+		t.Fatal("expected error from ResolveDefaultApp with only open_here, got nil")
+	}
+	if !strings.Contains(err.Error(), "no default app detected") {
+		t.Errorf("expected 'no default app detected' error, got %q", err.Error())
+	}
+}
+
 func TestOpenInApp_OpenHere_ShellSafeQuoting(t *testing.T) {
 	t.Setenv("WT_WRAPPER", "1")
 	t.Setenv("WT_CD_FILE", "")

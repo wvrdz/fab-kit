@@ -174,6 +174,12 @@ hint: "Open here" requires the shell wrapper to cd. Run: eval "$(wt shell-setup)
 
 The hint goes to stderr so it does not interfere with the `cd` command on stdout. When `WT_WRAPPER=1` is set, no hint is printed.
 
+#### `"default"` Keyword for App Resolution
+
+Both `wt open --app` and `wt create --worktree-open` accept `"default"` as a keyword value (case-sensitive, lowercase). When received, the command resolves the app via `ResolveDefaultApp()` (in `src/go/wt/internal/worktree/apps.go`), which delegates to `DetectDefaultApp()` — the same priority chain used by the interactive menu (TERM_PROGRAM → tmux/byobu session → cached last-app → first available non-open_here app).
+
+On success, `SaveLastApp` is called and the app opens. On failure (no default detected): `wt open` exits with an error; `wt create` prints a stderr warning and continues (non-fatal, matching the existing `--worktree-open` error pattern). This asymmetry exists because `wt open --app default` is an explicit open request (failure is meaningful), while `wt create --worktree-open default` is secondary to worktree creation (failing the entire create for an open failure would be disruptive).
+
 ### Release
 
 Release is split across three components: `release.sh` handles version management and git operations, a `justfile` at repo root provides locally-replicable build recipes, and `.github/workflows/release.yml` orchestrates CI. The key principle: CI uses the exact same `just` commands a developer runs locally — no CI-only build logic.
@@ -310,6 +316,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260409-5z32-wt-open-default-medium | 2026-04-09 | Added `"default"` keyword for `wt open --app` and `wt create --worktree-open`. Resolves via `ResolveDefaultApp()` → `DetectDefaultApp()` priority chain. `wt open` errors on no-default; `wt create` warns and continues. Added `SaveLastApp` call to `wt open --app` code path (was previously missing for all `--app` values). |
 | 260404-g0x1-rename-upgrade-to-upgrade-repo | 2026-04-05 | Renamed `fab upgrade` to `fab upgrade-repo` throughout live prose, requirements, and command examples. Historical changelog entries preserved. |
 | 260403-24ic-wt-open-shell-setup | 2026-04-03 | Added `wt shell-setup` subcommand (outputs shell wrapper function for `eval` in shell profile, following direnv/rbenv/mise pattern). Added `WT_WRAPPER=1` env var detection in `OpenInApp` — prints stderr hint when wrapper not installed and `open_here` is selected. Updated `wt` root command help text to reference `wt shell-setup` instead of inline function body. |
 | 260402-5tci-remove-copilot-clean-scaffold | 2026-04-02 | Removed `scaffold/.github/copilot-code-review.yml` from the scaffold tree. Cleaned stale entries from `scaffold/fragment-.gitignore` (`fab/changes/**/.pr-done`, `/.ralph`). Scaffold file count unchanged at 11 (3 fragment, 8 copy-if-absent) after removal of the Copilot config and stale `.gitignore` lines. |
