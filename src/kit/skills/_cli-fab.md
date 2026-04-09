@@ -97,7 +97,7 @@ fab change <subcommand> [flags...]
 | `resolve` | `resolve [<override>]` | Passthrough to resolve --folder |
 | `switch` | `switch <name> \| --none` | Switch active change |
 | `list` | `list [--archive]` | List changes with stage info |
-| `archive` | `archive <change> --description "..."` | Clean .pr-done, move to archive/, update index, clear pointer |
+| `archive` | `archive <change> --description "..."` | Move to archive/, update index, clear pointer |
 | `restore` | `restore <change> [--switch]` | Move from archive/, remove index entry, optionally activate |
 | `archive-list` | `archive-list` | List archived folder names (one per line) |
 

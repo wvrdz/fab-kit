@@ -15,7 +15,6 @@ import (
 type ArchiveResult struct {
 	Action  string
 	Name    string
-	Clean   string
 	Move    string
 	Index   string
 	Pointer string
@@ -63,15 +62,7 @@ func Archive(fabRoot, changeArg, description string) (*ArchiveResult, error) {
 	archiveDir := filepath.Join(changesDir, "archive")
 	changeDir := filepath.Join(changesDir, folder)
 
-	// 1. Clean: delete .pr-done if present
-	cleanStatus := "not_present"
-	prDonePath := filepath.Join(changeDir, ".pr-done")
-	if _, err := os.Stat(prDonePath); err == nil {
-		os.Remove(prDonePath)
-		cleanStatus = "removed"
-	}
-
-	// 2. Move to archive/yyyy/mm/
+	// 1. Move to archive/yyyy/mm/
 	bucketYear, bucketMonth, err := parseDateBucket(folder)
 	if err != nil {
 		return nil, err
@@ -86,14 +77,14 @@ func Archive(fabRoot, changeArg, description string) (*ArchiveResult, error) {
 		return nil, fmt.Errorf("move to archive: %w", err)
 	}
 
-	// 3. Update index
+	// 2. Update index
 	indexFile := filepath.Join(archiveDir, "index.md")
 	indexStatus := updateIndex(indexFile, folder, description)
 
 	// Backfill unindexed
 	backfillIndex(archiveDir, indexFile)
 
-	// 4. Clear pointer if active
+	// 3. Clear pointer if active
 	pointerStatus := "skipped"
 	activeFolder, err := resolve.ToFolder(fabRoot, "")
 	if err == nil && activeFolder == folder {
@@ -104,7 +95,6 @@ func Archive(fabRoot, changeArg, description string) (*ArchiveResult, error) {
 	return &ArchiveResult{
 		Action:  "archive",
 		Name:    folder,
-		Clean:   cleanStatus,
 		Move:    "moved",
 		Index:   indexStatus,
 		Pointer: pointerStatus,
@@ -205,8 +195,8 @@ func List(fabRoot string) ([]string, error) {
 
 // FormatArchiveYAML formats an ArchiveResult.
 func FormatArchiveYAML(r *ArchiveResult) string {
-	return fmt.Sprintf("action: %s\nname: %s\nclean: %s\nmove: %s\nindex: %s\npointer: %s",
-		r.Action, r.Name, r.Clean, r.Move, r.Index, r.Pointer)
+	return fmt.Sprintf("action: %s\nname: %s\nmove: %s\nindex: %s\npointer: %s",
+		r.Action, r.Name, r.Move, r.Index, r.Pointer)
 }
 
 // FormatRestoreYAML formats a RestoreResult.
