@@ -270,6 +270,20 @@ or creates a new branch.`,
 						}
 					}
 				}
+			} else if worktreeOpen == "default" {
+				apps := wt.BuildAvailableApps()
+				resolved, err := wt.ResolveDefaultApp(apps)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: %s\n", err)
+				} else {
+					wt.SaveLastApp(resolved.Cmd)
+					if openErr := wt.OpenInApp(resolved.Cmd, wtPath, ctx.RepoName, finalName); openErr != nil {
+						fmt.Fprintf(os.Stderr, "Warning: could not open in %s: %s\n", resolved.Name, openErr)
+					}
+					if resolved.Cmd == "open_here" {
+						suppressPath = true
+					}
+				}
 			} else if worktreeOpen != "skip" {
 				apps := wt.BuildAvailableApps()
 				resolved, err := wt.ResolveApp(worktreeOpen, apps)
