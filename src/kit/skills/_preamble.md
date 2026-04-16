@@ -49,6 +49,8 @@ Also read the **`_cli-fab`** skill (deployed to `.claude/skills/`) — script in
 
 Also read the **`_naming`** skill (deployed to `.claude/skills/`) — naming conventions for change folders, git branches, worktree directories, and operator spawning rules.
 
+Also read the **`_cli-rk`** skill (deployed to `.claude/skills/`) — run-kit iframe windows, proxy, and visual display recipe. *(optional — skip gracefully if the file is missing or `rk` is not available on the system)*
+
 ### 2. Change Context (when operating on an active change)
 
 Resolve the active change and load its state by running the preflight script:
