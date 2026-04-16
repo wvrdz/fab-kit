@@ -22,6 +22,13 @@ Every skill (except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-m
 
 This gives the agent awareness of project settings, constraints, project context, coding standards, review policy, the documentation landscape, and the specifications landscape before generating any artifact.
 
+In addition to the 7 project files, the always-load layer includes three internal skill references:
+- `_cli-fab` — script invocation conventions for the fab CLI
+- `_naming` — naming conventions for change folders, branches, worktrees
+- `_cli-rk` — run-kit (rk) capabilities: iframe windows, proxy URL pattern, visual display recipe *(optional — skip gracefully if the file is missing or rk is not available)*
+
+The `_cli-rk` skill enables any fab session to show HTML content to the user via rk iframe windows. It documents a centralized 4-step visual display recipe (generate HTML, serve, open iframe, fail silently) that any skill can follow. Detection is via `command -v rk` — all rk usage fails silently when rk is not installed, ensuring no impact on projects that don't use run-kit.
+
 ### Preflight Script for Change Context
 
 Skills that operate on an active change resolve the change context by running `src/kit/scripts/lib/preflight.sh [change-name]` via Bash. The script accepts an optional first positional argument as a change name override. When provided, the script resolves the change using case-insensitive substring matching against folder names in `fab/changes/` (excluding `archive/`) instead of reading `.fab-status.yaml`. The override is transient — `.fab-status.yaml` is never modified. When no argument is provided, the script falls back to reading `.fab-status.yaml` (backward compatible).
@@ -124,6 +131,12 @@ The following skills skip the standard context loading layers:
 **Rejected**: Loading only when needed — would require each skill to independently decide, leading to inconsistency.
 *Introduced by*: 260207-q7m3-separate-hydrate-smart-context
 
+### Always-Load `_cli-rk` Skill for rk Capabilities
+**Decision**: Added `_cli-rk.md` as an optional always-load skill in `_preamble.md`, separate from `_cli-external.md`.
+**Why**: rk iframe+proxy capabilities benefit every fab session (visual display of diagrams, plans, slide decks), not just operator sessions. Centralizing the visual display recipe in `_cli-rk.md` (rather than baking it into visual-explainer) gives any skill the superpower via separation of concerns.
+**Rejected**: Adding rk to `_cli-external.md` and promoting to always-load — would bloat every session with operator-specific content (wt, idea, /loop). Also rejected decentralized approach (iframe logic in visual-explainer only) — forces other skills to duplicate logic or use visual-explainer as a middleman.
+*Introduced by*: 260416-mgsm-add-cli-rk-skill
+
 ### Standard Subagent Context as Centralized Template
 **Decision**: Added a Standard Subagent Context subsection to `_preamble.md` § Subagent Dispatch, listing the 5 `fab/project/**` files that every subagent must read. Skills reference this template instead of maintaining ad-hoc file lists.
 **Why**: Each skill that dispatched subagents maintained its own context list, creating silent quality gaps (forgotten files) and drift risk (new files not propagated). Centralizing in `_preamble.md` ensures all subagents — at any nesting depth — inherit project principles automatically.
@@ -134,6 +147,7 @@ The following skills skip the standard context loading layers:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260416-mgsm-add-cli-rk-skill | 2026-04-16 | Added `_cli-rk.md` as optional always-load skill — run-kit iframe windows, proxy, visual display recipe. Separate from `_cli-external.md` (which remains operator-only). Silent fail when rk unavailable. Added design decision for centralized recipe approach. |
 | 260402-gnx5-relocate-kit-to-system-cache | 2026-04-02 | Updated kit path references: `_preamble.md` is now at `$(fab kit-path)/skills/_preamble.md` (resolved from system cache). Template access via `$(fab kit-path)/templates/` instead of `fab/.kit/templates/`. Test-build guard removed from preamble (`kit.conf` eliminated). Skills deployed to `.claude/skills/` unchanged. |
 | 260318-dzze-standard-subagent-context | 2026-03-18 | Added Standard Subagent Context section — defines the 5 `fab/project/**` files that every subagent prompt must include, distinct from the Always Load layer. Added design decision for centralized template approach. |
 | 260303-6b7c-update-underscore-skill-references | 2026-03-04 | Standardized all skill top-of-file `_preamble.md` references to use `$(fab kit-path)/skills/_preamble.md` (no `./` prefix). No content changes to context-loading requirements — all references already used correct form. |
