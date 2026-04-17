@@ -1,0 +1,44 @@
+id: y0sw
+name: 260417-y0sw-pane-skip-config-check
+created: 2026-04-17T11:51:43Z
+created_by: sahil-weaver
+change_type: fix
+issues: []
+progress:
+    intake: done
+    spec: done
+    tasks: done
+    apply: done
+    review: done
+    hydrate: done
+    ship: done
+    review-pr: active
+checklist:
+    generated: true
+    path: checklist.md
+    completed: 24
+    total: 24
+confidence:
+    certain: 15
+    confident: 0
+    tentative: 0
+    unresolved: 0
+    score: 5.0
+    fuzzy: true
+    dimensions:
+        signal: 92.3
+        reversibility: 89.7
+        competence: 92.0
+        disambiguation: 92.0
+stage_metrics:
+    intake: {started_at: "2026-04-17T11:51:43Z", driver: fab-new, iterations: 1, completed_at: "2026-04-17T11:57:55Z"}
+    spec: {started_at: "2026-04-17T11:57:55Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-17T11:59:12Z"}
+    tasks: {started_at: "2026-04-17T11:59:12Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-17T12:01:23Z"}
+    apply: {started_at: "2026-04-17T12:01:23Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-17T12:03:36Z"}
+    review: {started_at: "2026-04-17T12:03:36Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-17T12:06:37Z"}
+    hydrate: {started_at: "2026-04-17T12:06:37Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-17T12:09:06Z"}
+    ship: {started_at: "2026-04-17T12:09:06Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-17T12:10:42Z"}
+    review-pr: {started_at: "2026-04-17T12:10:42Z", driver: fab-fff, iterations: 1}
+prs:
+    - https://github.com/sahil87/fab-kit/pull/336
+last_updated: 2026-04-17T12:10:42Z

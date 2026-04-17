@@ -30,7 +30,9 @@ For fab-go dispatch, the router SHALL:
 4. If not cached, download the release from GitHub (`wvrdz/fab-kit` releases) and cache it
 5. Exec the cached `fab-go` with full argument passthrough
 
-`fab help` composes help from both sub-binaries: workspace commands (from fab-kit) are always shown; workflow commands (from fab-go) are shown only inside a fab-managed repo.
+A sibling `fabGoNoConfigArgs` allowlist exempts specific fab-go subcommands from the `config.yaml` requirement — currently `pane` only, because pane subcommands resolve state from target pane IDs rather than from the invoker's CWD. When the router is outside a fab repo and the invoked subcommand is in this allowlist, it dispatches to the `fab-go` matching the router's own build-time `version` constant (bundled fab-go) instead of exiting. Inside a fab repo, exempt commands continue to use the project-pinned `fab_version`.
+
+`fab help` composes help from both sub-binaries: workspace commands (from fab-kit) are always shown; workflow commands (from fab-go) are also always shown — using the project-pinned `fab_version` inside a fab-managed repo and the router's build-time `version` (bundled fab-go) outside, so all workflow commands (including `pane`) remain discoverable from scratch tabs. Help-block errors are silently swallowed (best-effort).
 
 **Scenarios**:
 - fab-kit command dispatch — `fab init`, `fab sync`, `fab upgrade-repo` are routed to `fab-kit` with all args passed through
@@ -40,7 +42,7 @@ For fab-go dispatch, the router SHALL:
 - `config.yaml` found but `fab_version` absent — exits with: `"No fab_version in config.yaml. Run 'fab init' to set one."`
 - Not in a fab-managed repo, fab-kit command — `fab init`, `fab sync` dispatched to `fab-kit` (works without config.yaml)
 - Not in a fab-managed repo, inline command — `fab --version` and `fab --help` handled inline by the router (no config.yaml needed); `fab --version` prints only the system version line when no `fab/project/config.yaml` is found
-- Not in a fab-managed repo, workflow command — exits with: `"Not in a fab-managed repo. Run 'fab init' to set one up."`
+- Not in a fab-managed repo, workflow command — exits with: `"Not in a fab-managed repo. Run 'fab init' to set one up."` — exception: subcommands in the `fabGoNoConfigArgs` allowlist (currently `pane`) dispatch to the bundled fab-go instead of exiting
 
 #### Cache Layout
 
@@ -316,6 +318,7 @@ The repository SHALL be renamed from `docs-sddr` to `fab-kit` to reflect its rol
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260417-y0sw-pane-skip-config-check | 2026-04-17 | Router adds `fabGoNoConfigArgs` allowlist (currently `pane` only) exempting listed fab-go subcommands from the `config.yaml` requirement. Outside a fab repo, exempt commands dispatch to the bundled fab-go via the router's build-time `version`; inside a fab repo, the project-pinned `fab_version` is used unchanged. Updated "Not in a fab-managed repo, workflow command" scenario to note the `pane` exception. |
 | 260409-5z32-wt-open-default-medium | 2026-04-09 | Added `"default"` keyword for `wt open --app` and `wt create --worktree-open`. Resolves via `ResolveDefaultApp()` → `DetectDefaultApp()` priority chain. `wt open` errors on no-default; `wt create` warns and continues. Added `SaveLastApp` call to `wt open --app` code path (was previously missing for all `--app` values). |
 | 260404-g0x1-rename-upgrade-to-upgrade-repo | 2026-04-05 | Renamed `fab upgrade` to `fab upgrade-repo` throughout live prose, requirements, and command examples. Historical changelog entries preserved. |
 | 260403-24ic-wt-open-shell-setup | 2026-04-03 | Added `wt shell-setup` subcommand (outputs shell wrapper function for `eval` in shell profile, following direnv/rbenv/mise pattern). Added `WT_WRAPPER=1` env var detection in `OpenInApp` — prints stderr hint when wrapper not installed and `open_here` is selected. Updated `wt` root command help text to reference `wt shell-setup` instead of inline function body. |
