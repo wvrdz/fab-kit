@@ -22,6 +22,13 @@ var fabKitArgs = map[string]bool{
 	"doctor":       true,
 }
 
+// fabGoNoConfigArgs is the static allowlist of fab-go subcommands that may
+// execute without fab/project/config.yaml present. These commands resolve
+// state from their arguments (e.g., tmux pane IDs), not from the invoker's CWD.
+var fabGoNoConfigArgs = map[string]bool{
+	"pane": true,
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		printHelp()
@@ -66,7 +73,26 @@ func execFabKit(args []string) {
 	}
 }
 
-// execFabGo resolves the fab version from config.yaml, ensures the binary is
+// resolveFabVersion picks which fab-go version to use based on whether we're
+// inside a fab repo and whether the invoked subcommand is exempt from the
+// config requirement. Pure: no I/O, no os.Exit, no syscall.Exec.
+//
+// Rules:
+//   - cfg != nil                                    → (cfg.FabVersion, false)
+//   - cfg == nil && fabGoNoConfigArgs[arg0] == true → (routerVersion, false)
+//   - cfg == nil && not exempt (incl. empty arg0)   → ("", true)
+func resolveFabVersion(cfg *internal.ConfigResult, arg0 string, routerVersion string) (fabVersion string, shouldExit bool) {
+	if cfg != nil {
+		return cfg.FabVersion, false
+	}
+	if fabGoNoConfigArgs[arg0] {
+		return routerVersion, false
+	}
+	return "", true
+}
+
+// execFabGo resolves the fab version from config.yaml (or falls back to the
+// router's bundled version for exempt subcommands), ensures the binary is
 // cached, and replaces the current process with fab-go.
 func execFabGo(args []string) {
 	cfg, err := internal.ResolveConfig()
@@ -74,12 +100,18 @@ func execFabGo(args []string) {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
 	}
-	if cfg == nil {
+
+	var arg0 string
+	if len(args) > 0 {
+		arg0 = args[0]
+	}
+	fabVersion, shouldExit := resolveFabVersion(cfg, arg0, version)
+	if shouldExit {
 		fmt.Fprintln(os.Stderr, "Not in a fab-managed repo. Run 'fab init' to set one up.")
 		os.Exit(1)
 	}
 
-	bin, err := internal.EnsureCached(cfg.FabVersion)
+	bin, err := internal.EnsureCached(fabVersion)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
@@ -103,17 +135,22 @@ func printHelp() {
 	fmt.Println("  doctor        Validate fab-kit prerequisites")
 	fmt.Println()
 
-	// Show workflow commands only inside a fab-managed repo
+	// Show workflow commands. Inside a fab repo, use the project-pinned version.
+	// Outside a fab repo, fall back to the router's bundled version so exempt
+	// commands (e.g., pane) remain discoverable from scratch tabs. Errors are
+	// silently swallowed — the help section is best-effort.
 	cfg, _ := internal.ResolveConfig()
+	var fabVersion string
 	if cfg != nil {
-		bin, err := internal.EnsureCached(cfg.FabVersion)
-		if err == nil {
-			out, err := exec.Command(bin, "--help").Output()
-			if err == nil {
-				fmt.Println("Workflow commands (fab-go):")
-				fmt.Print(string(out))
-				fmt.Println()
-			}
+		fabVersion = cfg.FabVersion
+	} else {
+		fabVersion = version
+	}
+	if bin, err := internal.EnsureCached(fabVersion); err == nil {
+		if out, err := exec.Command(bin, "--help").Output(); err == nil {
+			fmt.Println("Workflow commands (fab-go):")
+			fmt.Print(string(out))
+			fmt.Println()
 		}
 	}
 
