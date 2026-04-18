@@ -1,6 +1,7 @@
 ---
 name: fab-operator
 description: "Use when coordinating multiple fab agents across tmux panes — multi-agent monitoring, auto-answering prompts, routing commands, driving autopilot queues, and dependency-aware agent spawning."
+helpers: [_cli-fab, _cli-external]
 ---
 
 # /fab-operator
@@ -37,10 +38,7 @@ Start via `fab operator` (singleton tmux tab named `operator`).
 
 Load the **always-load layer** from `_preamble.md` §1 (config, constitution, context, code-quality, code-review, memory index, specs index). Do not run preflight. Do not load change artifacts.
 
-Also read:
-- `.claude/skills/_cli-fab.md` — fab command reference
-- `.claude/skills/_cli-external.md` — wt, idea, tmux, /loop reference
-- `.claude/skills/_naming.md` — naming conventions
+Helpers declared in frontmatter: `_cli-fab` (fab command reference) and `_cli-external` (wt, idea, tmux, /loop reference). Naming conventions are inlined in `_preamble.md` § Naming Conventions — already loaded.
 
 The operator needs full command vocabulary to make routing decisions (e.g., knowing a change needs `/fab-new` → `/git-branch` → `/fab-fff`).
 

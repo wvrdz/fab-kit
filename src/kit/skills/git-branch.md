@@ -6,7 +6,7 @@ allowed-tools: Bash(git:*)
 
 # /git-branch [change-name]
 
-> Branch naming conventions are defined in `_naming.md`.
+> Branch naming conventions are defined in `_preamble.md` § Naming Conventions.
 
 Create or check out a git branch named `{change-name}` for the active or specified change. When an explicit argument doesn't match any change, falls back to creating a standalone branch with the literal name. Does not modify fab state.
 

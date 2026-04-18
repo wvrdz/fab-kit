@@ -4,6 +4,8 @@
 
 Creates a new change intake without activating the change. Identical to `/fab-new` through Step 9, but stops there — no activation, no git branch. Used to queue changes for later without switching the active context. After creation, run `/fab-switch {name}` to activate.
 
+**Helpers**: Declares `helpers: [_generation]` in frontmatter per `docs/specs/skills.md § Skill Helpers`.
+
 ## Flow
 
 ```

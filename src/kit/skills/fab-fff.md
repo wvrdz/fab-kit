@@ -1,6 +1,7 @@
 ---
 name: fab-fff
 description: "Full pipeline — planning, implementation, sub-agent review, hydrate, ship, and PR review — confidence-gated, with auto-clarify and autonomous rework with bounded retry."
+helpers: [_generation, _review]
 ---
 
 # /fab-fff [<change-name>] [--force]

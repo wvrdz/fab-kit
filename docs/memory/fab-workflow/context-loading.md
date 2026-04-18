@@ -22,12 +22,22 @@ Every skill (except `/fab-setup`, `/fab-switch`, `/fab-status`, `/docs-hydrate-m
 
 This gives the agent awareness of project settings, constraints, project context, coding standards, review policy, the documentation landscape, and the specifications landscape before generating any artifact.
 
-In addition to the 7 project files, the always-load layer includes three internal skill references:
-- `_cli-fab` — script invocation conventions for the fab CLI
-- `_naming` — naming conventions for change folders, branches, worktrees
-- `_cli-rk` — run-kit (rk) capabilities: iframe windows, proxy URL pattern, visual display recipe *(optional — skip gracefully if the file is missing or rk is not available)*
+The only universal helper beyond the 7 project files is `_preamble.md`. Additional helpers are declared per-skill via the `helpers:` frontmatter field — see **Skill Helper Declaration (Opt-In)** below. Naming conventions and run-kit (rk) recipes that were previously separate helpers are now inlined into `_preamble.md` (§ Naming Conventions, § Run-Kit (rk) Reference). Common `fab` commands are inlined into `_preamble.md` § Common fab Commands so most skills do not need `_cli-fab`.
 
-The `_cli-rk` skill enables any fab session to show HTML content to the user via rk iframe windows. It documents a centralized 4-step visual display recipe (generate HTML, serve, open iframe, fail silently) that any skill can follow. Detection is via `command -v rk` — all rk usage fails silently when rk is not installed, ensuring no impact on projects that don't use run-kit.
+### Skill Helper Declaration (Opt-In)
+
+Skills declare additional helper files via the `helpers:` frontmatter list. Allowed values: `_generation`, `_review`, `_cli-fab`, `_cli-external`. The agent MUST read `.claude/skills/{helper}/SKILL.md` for each declared helper after reading `_preamble` and before executing the skill body.
+
+Current mapping (post-2026-04-18):
+
+| Skill(s) | `helpers:` |
+|----------|------------|
+| `fab-new`, `fab-draft` | `[_generation]` |
+| `fab-continue`, `fab-ff`, `fab-fff` | `[_generation, _review]` |
+| `fab-operator` | `[_cli-fab, _cli-external]` |
+| All others (19 skills) | omitted / `[]` (load only `_preamble`) |
+
+`_naming` and `_cli-rk` are NOT allowed values — their content is inlined into `_preamble`. `_preamble` itself is implicit and never listed.
 
 ### Preflight Script for Change Context
 
@@ -131,11 +141,18 @@ The following skills skip the standard context loading layers:
 **Rejected**: Loading only when needed — would require each skill to independently decide, leading to inconsistency.
 *Introduced by*: 260207-q7m3-separate-hydrate-smart-context
 
-### Always-Load `_cli-rk` Skill for rk Capabilities
+### Always-Load `_cli-rk` Skill for rk Capabilities *(Superseded)*
 **Decision**: Added `_cli-rk.md` as an optional always-load skill in `_preamble.md`, separate from `_cli-external.md`.
 **Why**: rk iframe+proxy capabilities benefit every fab session (visual display of diagrams, plans, slide decks), not just operator sessions. Centralizing the visual display recipe in `_cli-rk.md` (rather than baking it into visual-explainer) gives any skill the superpower via separation of concerns.
 **Rejected**: Adding rk to `_cli-external.md` and promoting to always-load — would bloat every session with operator-specific content (wt, idea, /loop). Also rejected decentralized approach (iframe logic in visual-explainer only) — forces other skills to duplicate logic or use visual-explainer as a middleman.
 *Introduced by*: 260416-mgsm-add-cli-rk-skill
+*Superseded by*: 260418-or0o-flatten-skill-helpers — `_cli-rk.md` content inlined into `_preamble.md` § Run-Kit (rk) Reference; the separate helper file is deleted. The silent-fail-when-rk-missing design is preserved verbatim in the inlined subsection.
+
+### Flatten Helper Include Tree
+**Decision**: Collapse the helper always-load set from `{_preamble, _cli-fab, _naming, _cli-rk}` to `{_preamble}` only. Inline `_naming` and `_cli-rk` into `_preamble`. Add a new per-skill `helpers:` frontmatter field listing the additional helpers each skill needs (`_generation`, `_review`, `_cli-fab`, `_cli-external`). Inline the 6 most-used `fab` commands into `_preamble` § Common fab Commands. Compress `_cli-fab` from 773 lines to ≤300.
+**Why**: Two root causes. (1) Universal "also read" fanout from `_preamble` shipped ~1324 lines of helper content that 15 of 24 skills didn't use. (2) Agents silently skipped 2nd-layer "also read" directives — pointer-based loading was non-deterministic. Replacing the fanout with explicit, frontmatter-declared helpers is auditable, grep-able, and reliable (agents read frontmatter before body). Inlining the smallest helpers and the commonest commands eliminates the 2nd layer for most skills entirely.
+**Rejected**: (a) Splitting `_preamble` further — deepens the tree, worsens skip-rate. (b) Relying on prompt caching — doesn't fix correctness when pointers are silently skipped. (c) Full inline of `_cli-fab` — adds ~500 lines to universal load. (d) Renaming `_`-prefix to visible names (backlog `[84bh]`) — addresses visibility but not fanout; structural fix supersedes it.
+*Introduced by*: 260418-or0o-flatten-skill-helpers
 
 ### Standard Subagent Context as Centralized Template
 **Decision**: Added a Standard Subagent Context subsection to `_preamble.md` § Subagent Dispatch, listing the 5 `fab/project/**` files that every subagent must read. Skills reference this template instead of maintaining ad-hoc file lists.
@@ -147,6 +164,7 @@ The following skills skip the standard context loading layers:
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260418-or0o-flatten-skill-helpers | 2026-04-18 | Flattened helper include tree. Removed three "Also read" fanout directives from `_preamble.md`. Inlined `_naming.md` (76 lines) and `_cli-rk.md` (91 lines) into `_preamble` as `## Naming Conventions` and `## Run-Kit (rk) Reference` subsections; deleted source files and SPEC-_cli-rk.md. Added `## Skill Helper Declaration` subsection defining the per-skill `helpers:` frontmatter (values: `_generation`, `_review`, `_cli-fab`, `_cli-external`). Added `## Common fab Commands` subsection with headline table for the 6 most-used command families (`preflight`, `score`, `log command`, `change`, `resolve`, `status`). Compressed `_cli-fab.md` from 773 to ≤300 lines via condensed flag/syntax tables while preserving all canonical flag behavior. Set `helpers:` on 6 skills: `fab-new`/`fab-draft` → `[_generation]`, `fab-continue`/`fab-ff`/`fab-fff` → `[_generation, _review]`, `fab-operator` → `[_cli-fab, _cli-external]`. Other 19 skills load only `_preamble`. Superseded "Always-Load `_cli-rk`" design decision. Closed backlog item `[84bh]`. |
 | 260416-mgsm-add-cli-rk-skill | 2026-04-16 | Added `_cli-rk.md` as optional always-load skill — run-kit iframe windows, proxy, visual display recipe. Separate from `_cli-external.md` (which remains operator-only). Silent fail when rk unavailable. Added design decision for centralized recipe approach. |
 | 260402-gnx5-relocate-kit-to-system-cache | 2026-04-02 | Updated kit path references: `_preamble.md` is now at `$(fab kit-path)/skills/_preamble.md` (resolved from system cache). Template access via `$(fab kit-path)/templates/` instead of `fab/.kit/templates/`. Test-build guard removed from preamble (`kit.conf` eliminated). Skills deployed to `.claude/skills/` unchanged. |
 | 260318-dzze-standard-subagent-context | 2026-03-18 | Added Standard Subagent Context section — defines the 5 `fab/project/**` files that every subagent prompt must include, distinct from the Always Load layer. Added design decision for centralized template approach. |

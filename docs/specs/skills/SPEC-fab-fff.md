@@ -4,6 +4,8 @@
 
 Full pipeline with confidence gates (identical to fab-ff). Extends through ship and review-pr (fab-ff stops at hydrate). No frontloaded questions — proceeds directly to spec generation. Interleaves auto-clarify between planning stages. Max 3 rework cycles on review failure with escalation rule. Accepts `--force` to bypass confidence gates.
 
+**Helpers**: Declares `helpers: [_generation, _review]` in frontmatter per `docs/specs/skills.md § Skill Helpers`.
+
 ## Flow
 
 ```

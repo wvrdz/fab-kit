@@ -4,6 +4,8 @@
 
 Fast-forward through hydrate: intake through hydrate in one invocation. Three gates: (1) intake indicative confidence >= 3.0, (2) spec confidence >= per-type threshold, (3) review rework capped at 3 cycles. Resumable — re-running picks up from first incomplete stage. All sub-skill invocations dispatched as sub-agents. Accepts `--force` to bypass confidence gates (intake + spec).
 
+**Helpers**: Declares `helpers: [_generation, _review]` in frontmatter per `docs/specs/skills.md § Skill Helpers`.
+
 ## Flow
 
 ```

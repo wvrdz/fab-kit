@@ -8,6 +8,8 @@ Self-contained — does not inherit from any other operator skill. All behavior 
 
 Not a lifecycle enforcer — the operator coordinates across agents and proxies routine user input, not advancing stages or making pipeline decisions.
 
+**Helpers**: Declares `helpers: [_cli-fab, _cli-external]` in frontmatter per `docs/specs/skills.md § Skill Helpers`.
+
 ---
 
 ## Section Structure
@@ -34,7 +36,7 @@ All tool references are in shared `_` files — operator4 does not duplicate too
 |-----------|-----------|
 | `fab pane-map`, `fab resolve`, `fab change list`, `fab status`, `fab score` | `_cli-fab.md` |
 | `wt list`, `wt create`, `wt delete`, `tmux` commands, `/loop` | `_cli-external.md` |
-| Change folder, branch, worktree naming | `_naming.md` |
+| Change folder, branch, worktree naming | `_preamble.md` § Naming Conventions |
 
 ---
 
@@ -116,4 +118,4 @@ Simplified decision list (all auto-answer except undeterminable):
 
 4. **`/fab-fff` for autopilot.** The more autonomous pipeline variant, fitting for operator-driven autopilot where human interaction is minimized.
 
-5. **`/git-branch` after new change.** The operator sends `/git-branch` to the agent after detecting intake stage advancement for backlog-spawned changes, aligning branch names with change folders per `_naming.md` conventions.
+5. **`/git-branch` after new change.** The operator sends `/git-branch` to the agent after detecting intake stage advancement for backlog-spawned changes, aligning branch names with change folders per `_preamble.md` § Naming Conventions.

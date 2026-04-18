@@ -6,7 +6,7 @@
 
 `src/kit/` is the portable engine directory that contains all workflow logic: skill definitions, artifact templates, utility shell scripts, and version tracking. It is content-only — no binaries. The system provides three binaries: `fab` (router), `fab-kit` (workspace lifecycle), and `fab-go` (workflow engine), all installed via `brew install fab-kit`. The `fab` router dispatches to either `fab-kit` or the version-resolved `fab-go`. `src/kit/` provides content (skills, templates, configuration). This doc covers the `.kit/` directory structure, the three-binary architecture, agent integration, distribution, updating, and monorepo guidance.
 
-> **CLI Command Reference**: For calling conventions and full command signatures, see `$(fab kit-path)/skills/_cli-fab.md` (the canonical CLI reference, loaded by every skill via `_preamble.md`).
+> **CLI Command Reference**: For calling conventions and full command signatures, see `$(fab kit-path)/skills/_cli-fab.md` (the canonical CLI reference — loaded selectively via a skill's `helpers: [_cli-fab]` frontmatter; the most-used command families are inlined into `_preamble.md § Common fab Commands`).
 
 ## Requirements
 
@@ -21,10 +21,10 @@ src/kit/
 │   └── .gitkeep            # Ensures directory exists
 ├── skills/                 # Skill definitions (markdown prompts)
 │   ├── _preamble.md         # Shared context loading convention
-│   ├── _cli-fab.md          # Fab CLI command reference (always-load, renamed from _scripts.md)
-│   ├── _cli-external.md     # External CLI tools: wt, tmux, /loop (operator-only load)
-│   ├── _generation.md       # Spec/tasks generation procedures
-│   ├── _naming.md           # Naming conventions: change folders, branches, worktrees (always-load)
+│   ├── _cli-fab.md          # Fab CLI command reference (selective via helpers: [_cli-fab])
+│   ├── _cli-external.md     # External CLI tools: wt, tmux, /loop (selective via `helpers:`)
+│   ├── _generation.md       # Spec/tasks generation procedures (selective via `helpers:`)
+│   ├── _review.md           # Review procedures (selective via `helpers:`)
 │   ├── fab-setup.md
 │   ├── docs-hydrate-memory.md
 │   ├── docs-hydrate-specs.md
@@ -151,7 +151,7 @@ Subcommands:
 
 `fab-kit sync` deploys skills to each agent. Deployment is **conditional** — by default, each agent's CLI command is checked via PATH lookup before syncing. If an agent's CLI is not found in PATH, its sync is skipped with a message, and existing dot folders are preserved. When no agents are detected, a warning is printed but sync continues. The `FAB_AGENTS` environment variable (space-separated list of CLI command names, e.g., `claude opencode gemini`) can override PATH detection for testing and CI — when set, only the listed agents are synced.
 
-All `*.md` files in `$(fab kit-path)/skills/` are deployed, including underscore partials (`_preamble.md`, `_generation.md`, `_cli-fab.md`, `_cli-external.md`, `_naming.md`) which have `user-invocable: false` frontmatter to prevent direct invocation. The skill prompt files are agent-agnostic markdown; only the deployment locations and formats differ per agent:
+All `*.md` files in `$(fab kit-path)/skills/` are deployed, including underscore partials (`_preamble.md`, `_generation.md`, `_review.md`, `_cli-fab.md`, `_cli-external.md`) which have `user-invocable: false` frontmatter to prevent direct invocation. The skill prompt files are agent-agnostic markdown; only the deployment locations and formats differ per agent:
 
 **Claude Code** (`claude`) — directory-based copies:
 ```
@@ -357,7 +357,7 @@ A separate Go binary for git worktree management, built from `src/go/fab/cmd/wt/
 
 #### Skill Invocation Convention (`_cli-fab.md`)
 
-The `_cli-fab.md` partial (renamed from `_scripts.md`, loaded by every skill via `_preamble.md`) defines the calling convention for all kit operations. Skills invoke operations via `fab <command> <subcommand> [args...]` — this calls the system shim, which resolves the version and dispatches to the cached `fab-go`. The `_cli-fab.md` partial includes the full command mapping table, argument formats, stage transition sequences, and error patterns.
+The `_cli-fab.md` partial (renamed from `_scripts.md`) defines the calling convention for all kit operations. Skills invoke operations via `fab <command> <subcommand> [args...]` — this calls the system shim, which resolves the version and dispatches to the cached `fab-go`. Since 260418-or0o-flatten-skill-helpers, `_cli-fab` is loaded **selectively** via a skill's `helpers: [_cli-fab]` frontmatter rather than universally via `_preamble`. The 6 most-used command families (`preflight`, `score`, `log command`, `change`, `resolve`, `status`) are inlined into `_preamble.md` § Common fab Commands so most skills never need `_cli-fab`. The partial includes the full command mapping table, argument formats, stage transition sequences, and error patterns in ≤300 lines.
 
 #### Underscore File Ecosystem
 
@@ -365,13 +365,19 @@ The `_` (underscore) prefix denotes internal partial files that are loaded by sk
 
 | File | Load strategy | Purpose |
 |------|--------------|---------|
-| `_preamble.md` | Always-load (every skill) | Context loading convention, SRAD, confidence scoring, Next Steps |
-| `_cli-fab.md` | Always-load (via preamble) | Fab CLI command reference (renamed from `_scripts.md`) |
-| `_naming.md` | Always-load (via preamble) | Naming conventions for change folders, branches, worktrees, operator spawning rules |
-| `_generation.md` | Selective (planning skills) | Spec/tasks generation procedures |
-| `_cli-external.md` | Operator-only (loaded by `fab-operator.md` startup) | External CLI tools: `wt` (worktree manager), `tmux` (reduced — `capture-pane` and `send-keys` internalized as `fab pane capture` and `fab pane send`; only `new-window` remains), `/loop` |
+| `_preamble.md` | Always-load (every skill) | Context loading, SRAD, confidence scoring, Next Steps, Skill Helper Declaration, inlined Naming Conventions, inlined Run-Kit (rk) Reference, Common fab Commands |
+| `_cli-fab.md` | Selective (via `helpers: [_cli-fab]`) | Fab CLI command reference — commands and flags beyond the Common fab Commands headline in `_preamble`. Used only by `fab-operator` currently |
+| `_generation.md` | Selective (via `helpers: [_generation]`) | Spec/tasks/intake generation procedures. Used by `fab-new`, `fab-draft`, `fab-continue`, `fab-ff`, `fab-fff` |
+| `_review.md` | Selective (via `helpers: [_review]`) | Review procedures. Used by `fab-continue`, `fab-ff`, `fab-fff` |
+| `_cli-external.md` | Selective (via `helpers: [_cli-external]`) | External CLI tools: `wt` (worktree manager), `tmux` (reduced — `capture-pane`/`send-keys` internalized as `fab pane capture`/`fab pane send`; only `new-window` remains), `/loop`. Used only by `fab-operator` |
 
-The always-load files are referenced in `_preamble.md` §1. `_cli-external.md` is explicitly NOT in the always-load list — `wt`, `tmux`, and `/loop` are operator-specific tools that pipeline skills do not need.
+Only `_preamble.md` is always-loaded. All other helpers are opt-in via the `helpers:` frontmatter field on each skill. `_naming.md` and `_cli-rk.md` no longer exist as separate files — their content is inlined into `_preamble.md` (`## Naming Conventions`, `## Run-Kit (rk) Reference`).
+
+Skill → helper mapping:
+- `fab-new`, `fab-draft` → `[_generation]`
+- `fab-continue`, `fab-ff`, `fab-fff` → `[_generation, _review]`
+- `fab-operator` → `[_cli-fab, _cli-external]`
+- All other 19 skills → no `helpers:` (load only `_preamble`)
 
 #### `fab resolve --pane` Flag
 
@@ -515,6 +521,7 @@ Full benchmark suite with harness and all 4 implementations: `src/benchmark/`
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260418-or0o-flatten-skill-helpers | 2026-04-18 | Flattened skill helper include tree. Removed `_naming.md` and `_cli-rk.md` from the `src/kit/skills/` directory tree; their content is inlined into `_preamble.md` (`## Naming Conventions`, `## Run-Kit (rk) Reference`). Added `_review.md` to the directory listing. Updated the Underscore File Ecosystem table — `_preamble.md` remains the sole always-load helper; `_cli-fab`, `_generation`, `_review`, `_cli-external` are now selective via the per-skill `helpers:` frontmatter field. Compressed `_cli-fab.md` from 773 to ≤300 lines; canonical command/flag documentation preserved. Inlined the 6 most-used fab command families into `_preamble.md § Common fab Commands`. |
 | 260417-2fbb-pane-server-flag | 2026-04-17 | Trimmed the per-subcommand detail for `fab pane {map,capture,send,process}` (previously at this section) to a high-level pointer; full subcommand reference and the new persistent `--server`/`-L` flag now live in `pane-commands.md`. The `fabGoNoConfigArgs` allowlist note is retained here. |
 | 260417-y0sw-pane-skip-config-check | 2026-04-17 | Added `fabGoNoConfigArgs` allowlist to the `fab` router (`src/go/fab-kit/cmd/fab/main.go`) exempting `pane` from the `config.yaml` requirement so `fab pane ...` works from any directory (including scratch tmux tabs outside a fab repo). Outside a fab repo, exempt commands dispatch to the bundled fab-go via the router's build-time `version` constant; inside a fab repo, the project-pinned `fab_version` is used unchanged. `printHelp` now runs the fab-go `--help` block even without a config so `pane` remains discoverable from scratch tabs. Safe default preserved — all other fab-go commands continue to exit with "Not in a fab-managed repo". |
 | 260405-xh08-operator-spawn-add-fab-sync | 2026-04-06 | Fixed two bugs in `src/go/wt/`: (1) `InitScriptPath()` default changed from `"fab-kit sync"` to `"fab sync"` — canonical routing command since three-binary consolidation. (2) `wt create --reuse` now runs `RunWorktreeSetup` (force mode, non-fatal) on the existing worktree before returning, gated by `worktreeInit == "true"`. Fixes "Unknown skill" errors on operator autopilot respawns caused by stale `.claude/skills/` in reused worktrees. Updated `context_test.go` assertion and added `TestCreate_ReuseRunsInitScript`. |
