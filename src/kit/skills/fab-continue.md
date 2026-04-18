@@ -1,6 +1,7 @@
 ---
 name: fab-continue
 description: "Advance to the next pipeline stage — planning, implementation, review, or hydrate — or reset to a given stage."
+helpers: [_generation, _review]
 ---
 
 # /fab-continue [<change-name>] [<stage>]

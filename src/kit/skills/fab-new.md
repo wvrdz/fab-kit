@@ -1,6 +1,7 @@
 ---
 name: fab-new
 description: "Start a new change — creates the intake, activates it, and creates the git branch."
+helpers: [_generation]
 ---
 
 # /fab-new <description>

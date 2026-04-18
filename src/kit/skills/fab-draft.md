@@ -1,6 +1,7 @@
 ---
 name: fab-draft
 description: "Create a change intake without activating it."
+helpers: [_generation]
 ---
 
 # /fab-draft <description>

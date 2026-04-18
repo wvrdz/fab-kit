@@ -4,6 +4,8 @@
 
 Creates a new change from a natural language description, Linear ticket, or backlog ID. Generates the change folder, writes `intake.md`, infers change type, computes indicative confidence, advances intake to `ready`, activates the change, and creates the matching git branch.
 
+**Helpers**: Declares `helpers: [_generation]` in frontmatter per `docs/specs/skills.md § Skill Helpers`.
+
 ## Flow
 
 ```

@@ -17,6 +17,41 @@ The stage named "spec" refers to the *activity* of writing the specification —
 
 ---
 
+## Skill Helpers (`helpers:` Frontmatter)
+
+Every skill MAY declare additional helper files it needs to load via a `helpers:` frontmatter list. The agent reads each declared helper's `.claude/skills/{helper}/SKILL.md` after reading `_preamble` and before executing the skill body.
+
+**Allowed values** (4): `_generation`, `_review`, `_cli-fab`, `_cli-external`.
+
+**Default**: omitted (or `[]`) — the skill loads only `_preamble`.
+
+**Example**:
+
+```yaml
+---
+name: fab-continue
+description: ...
+helpers: [_generation, _review]
+---
+```
+
+**Not allowed**: `_naming` and `_cli-rk` — their content is inlined into `_preamble.md` (§ Naming Conventions and § Run-Kit (rk) Reference respectively).
+
+**Implicit**: `_preamble` itself is loaded universally — never list it.
+
+**Current mapping** (post-2026-04-18):
+
+| Skill | `helpers:` |
+|-------|------------|
+| `fab-new`, `fab-draft` | `[_generation]` |
+| `fab-continue`, `fab-ff`, `fab-fff` | `[_generation, _review]` |
+| `fab-operator` | `[_cli-fab, _cli-external]` |
+| All other 19 skills | omitted (load only `_preamble`) |
+
+Validation is **convention-only** — `fab sync` does not reject skills with unknown helper values. Drift surfaces as runtime behavior (agent loads an unexpected file or fails to find a needed one).
+
+---
+
 ## Context Loading Convention
 
 Every skill that generates or validates artifacts MUST load relevant context before proceeding. This ensures agents produce accurate, grounded output rather than hallucinating requirements or ignoring existing patterns.

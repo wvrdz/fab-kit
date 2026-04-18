@@ -4,6 +4,8 @@
 
 Advances through the 8-stage pipeline one step at a time. Each invocation handles the current stage's work and transitions to the next. Supports reset to a given stage. Handles planning (spec, tasks), execution (apply), review (sub-agent), and hydrate.
 
+**Helpers**: Declares `helpers: [_generation, _review]` in frontmatter per `docs/specs/skills.md § Skill Helpers`.
+
 ## Flow
 
 ```
