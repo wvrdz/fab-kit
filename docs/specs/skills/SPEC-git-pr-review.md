@@ -43,7 +43,7 @@ Setting `copilot` to `false` skips Phase 2 entirely. When the `review_tools` key
 │  └─ Phase 2: Copilot Review Request (no reviews found)
 │     ├─ Read config: review_tools.copilot from fab/project/config.yaml
 │     ├─ [copilot: false] "No automated reviewer available" → STOP (clean finish)
-│     ├─ Bash: gh pr edit {n} --add-reviewer copilot
+│     ├─ Bash: gh pr edit {n} --add-reviewer copilot-pull-request-reviewer
 │     │  ├─ [success] Print "Copilot review requested. Waiting up to 10 minutes..."
 │     │  │  └─ Poll: gh pr view --json reviews every 30s, up to 20 attempts
 │     │  │     ├─ [review appears] → Step 3
@@ -83,7 +83,7 @@ Phase 2 runs when Phase 1 finds no existing reviews with inline comments. It req
 
 | Tool | Type | Detection | On Success | On Failure |
 |------|------|-----------|------------|------------|
-| Copilot | Remote | Attempt `gh pr edit --add-reviewer copilot` | Poll 30s/attempt up to 20× — proceed to Step 3 when review appears; clean finish on timeout | Clean finish: "No automated reviewer available..." |
+| Copilot | Remote | Attempt `gh pr edit --add-reviewer copilot-pull-request-reviewer` | Poll 30s/attempt up to 20× — proceed to Step 3 when review appears; clean finish on timeout | Clean finish: "No automated reviewer available..." |
 
 The `--tool copilot` flag forces the Copilot path regardless of config — the config check is skipped entirely when this flag is present. Without the flag, if `review_tools.copilot: false`, Phase 2 exits cleanly without attempting the request.
 

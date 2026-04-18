@@ -58,7 +58,7 @@ review_tools:
   copilot: true   # or false to disable
 ```
 
-- `copilot` — when `true` (default when absent), `/git-pr-review` Phase 2 attempts `gh pr edit --add-reviewer copilot` and polls for the review. When `false`, Phase 2 skips immediately with "No automated reviewer available."
+- `copilot` — when `true` (default when absent), `/git-pr-review` Phase 2 attempts `gh pr edit --add-reviewer copilot-pull-request-reviewer` and polls for the review. When `false`, Phase 2 skips immediately with "No automated reviewer available."
 - `codex` and `claude` keys were removed in the `1.3.0-to-1.4.0` migration. If still present in a config, they are silently ignored by Phase 2.
 
 **The outward sub-agent** in `_review.md` (which runs pre-ship during the `review` stage) uses a Codex→Claude cascade unconditionally — this is not configurable via `review_tools`. The cascade gracefully no-ops when neither tool is available.
@@ -245,6 +245,7 @@ See [setup](setup.md) for the complete command suite.
 
 | Change | Date | Summary |
 |--------|------|---------|
+| 260418-u1m1-copilot-reviewer-login | 2026-04-18 | Documentation of the `review_tools.copilot` key now shows the corrected `gh pr edit --add-reviewer copilot-pull-request-reviewer` command. The fab-kit-local config key name `copilot` is unchanged — only the inline example of the GitHub login used by `/git-pr-review` Phase 2 was corrected. |
 | 260405-iqju-consolidate-review-types | 2026-04-05 | `review_tools` schema simplified: `copilot` key only. `codex` and `claude` keys removed — they controlled Codex/Claude in `/git-pr-review` Phase 2, which is now Copilot-only. Migration `1.3.0-to-1.4.0.md` strips `review_tools.codex` and `review_tools.claude` via `yq del`. The outward sub-agent Codex→Claude cascade in `_review.md` is not configurable (always-on, graceful no-op). |
 | 260404-g0x1-rename-upgrade-to-upgrade-repo | 2026-04-05 | Renamed `fab upgrade` to `fab upgrade-repo` throughout live prose, requirements, and command examples. Historical changelog entries preserved. |
 | 260402-gnx5-relocate-kit-to-system-cache | 2026-04-02 | Removed `kit.conf` references — `build-type` feature eliminated, `repo` hardcoded in Go binary. Stage graph schema reference updated to `$(fab kit-path)/schemas/workflow.yaml`. Scaffold references updated to `$(fab kit-path)/scaffold/`. No changes to `config.yaml` schema itself. |
