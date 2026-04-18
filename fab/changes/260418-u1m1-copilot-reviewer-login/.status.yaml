@@ -1,0 +1,44 @@
+id: u1m1
+name: 260418-u1m1-copilot-reviewer-login
+created: 2026-04-18T08:38:16Z
+created_by: sahil-weaver
+change_type: fix
+issues: []
+progress:
+    intake: done
+    spec: done
+    tasks: done
+    apply: done
+    review: done
+    hydrate: done
+    ship: done
+    review-pr: active
+checklist:
+    generated: true
+    path: checklist.md
+    completed: 23
+    total: 23
+confidence:
+    certain: 6
+    confident: 4
+    tentative: 0
+    unresolved: 0
+    score: 3.8
+    fuzzy: true
+    dimensions:
+        signal: 91.5
+        reversibility: 88.0
+        competence: 91.5
+        disambiguation: 91.5
+stage_metrics:
+    intake: {started_at: "2026-04-18T08:38:16Z", driver: fab-new, iterations: 1, completed_at: "2026-04-18T08:41:47Z"}
+    spec: {started_at: "2026-04-18T08:41:47Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-18T08:43:58Z"}
+    tasks: {started_at: "2026-04-18T08:43:58Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-18T08:43:58Z"}
+    apply: {started_at: "2026-04-18T08:43:58Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-18T08:46:29Z"}
+    review: {started_at: "2026-04-18T08:46:29Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-18T08:49:11Z"}
+    hydrate: {started_at: "2026-04-18T08:49:11Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-18T08:50:07Z"}
+    ship: {started_at: "2026-04-18T08:50:07Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-18T08:51:54Z"}
+    review-pr: {started_at: "2026-04-18T08:51:54Z", driver: git-pr, iterations: 1}
+prs:
+    - https://github.com/sahil87/fab-kit/pull/340
+last_updated: 2026-04-18T08:51:54Z

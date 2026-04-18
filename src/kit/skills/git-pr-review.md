@@ -84,12 +84,12 @@ If `review_tools.copilot` is `false` (and `--tool copilot` was **not** provided)
 
 **Copilot request and poll**:
 
-1. Attempt: `gh pr edit {number} --add-reviewer copilot`
+1. Attempt: `gh pr edit {number} --add-reviewer copilot-pull-request-reviewer`
 2. **On success** (exit 0):
    - Print: `Copilot review requested. Waiting up to 10 minutes...`
    - Poll every 30 seconds, up to 20 attempts:
      ```bash
-     gh pr view {number} --json reviews -q '.reviews | map(select(.author.login == "copilot")) | length'
+     gh pr view {number} --json reviews -q '.reviews | map(select(.author.login == "copilot-pull-request-reviewer")) | length'
      ```
    - When Copilot review count > 0: proceed to Step 3 (Fetch Comments)
    - If 20 attempts exhausted without a Copilot-authored review: print `Copilot review requested but not yet available. Re-run /git-pr-review to process when ready.` and STOP (clean finish — no error, no fail event)
