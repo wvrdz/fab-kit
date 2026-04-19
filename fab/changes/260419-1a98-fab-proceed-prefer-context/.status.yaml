@@ -1,0 +1,42 @@
+id: 1a98
+name: 260419-1a98-fab-proceed-prefer-context
+created: 2026-04-19T08:49:19Z
+created_by: sahil-weaver
+change_type: fix
+issues: []
+progress:
+    intake: done
+    spec: done
+    tasks: done
+    apply: done
+    review: done
+    hydrate: done
+    ship: active
+    review-pr: pending
+checklist:
+    generated: true
+    path: checklist.md
+    completed: 25
+    total: 25
+confidence:
+    certain: 13
+    confident: 3
+    tentative: 0
+    unresolved: 0
+    score: 4.1
+    fuzzy: true
+    dimensions:
+        signal: 92.2
+        reversibility: 85.6
+        competence: 89.4
+        disambiguation: 91.6
+stage_metrics:
+    intake: {started_at: "2026-04-19T08:49:19Z", driver: fab-new, iterations: 1, completed_at: "2026-04-19T09:17:09Z"}
+    spec: {started_at: "2026-04-19T09:17:09Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-19T09:19:39Z"}
+    tasks: {started_at: "2026-04-19T09:19:39Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-19T09:20:40Z"}
+    apply: {started_at: "2026-04-19T09:20:40Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-19T09:25:45Z"}
+    review: {started_at: "2026-04-19T09:25:45Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-19T09:28:49Z"}
+    hydrate: {started_at: "2026-04-19T09:28:49Z", driver: fab-fff, iterations: 1, completed_at: "2026-04-19T09:29:22Z"}
+    ship: {started_at: "2026-04-19T09:29:22Z", driver: fab-fff, iterations: 1}
+prs: []
+last_updated: 2026-04-19T09:29:22Z
