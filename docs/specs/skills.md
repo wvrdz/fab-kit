@@ -392,7 +392,7 @@ When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fa
 
 ## `/fab-proceed`
 
-**Purpose**: Context-aware orchestrator — detects the current pipeline state (active change, branch, unactivated intake, conversation context) and automatically runs whatever prefix steps are needed (fab-new, git-branch) before delegating to `/fab-fff` for the full pipeline. `/fab-new` auto-activates, so `/fab-switch` is only needed for unactivated intakes created by `/fab-draft`.
+**Purpose**: Context-aware orchestrator — detects the current pipeline state (active change, branch, conversation context, unactivated intakes) and automatically runs whatever prefix steps are needed (fab-new, fab-switch, git-branch) before delegating to `/fab-fff` for the full pipeline. Conversation context is the interpretive lens for any unactivated intakes: an unrelated draft never hijacks the pipeline when the current conversation is about a different topic.
 
 **Prerequisite**: None — can bootstrap from conversation context alone.
 
@@ -409,15 +409,18 @@ When called without arguments, `/fab-setup` runs the full bootstrap: invokes `fa
 ```
 
 **Behavior**:
-1. **State detection** — 4-step pipeline: active change check (`fab resolve --folder`), branch check (`git branch --show-current`), unactivated intake scan (`fab/changes/`), conversation context evaluation
-2. **Prefix dispatch** — subagent dispatch for prefix steps (fab-new, fab-switch for `/fab-draft` intakes, git-branch) per `_preamble.md` § Subagent Dispatch
-3. **Terminal delegation** — invoke `/fab-fff` via the Skill tool (not subagent) for full user visibility
+1. **State detection** — 5-step pipeline: (1) active change check (`fab resolve --folder`), (2) branch check (`git branch --show-current`, runs only if active change found), (3) conversation classification as substantive/empty-thin, (4) unactivated intake scan (`fab/changes/`, retain full candidate list), (5) dispatch decision combining Steps 1–4 via the 7-row dispatch table. Steps 3 and 4 are order-independent and both run whenever no active change was found.
+2. **Relevance assessment** — when substantive conversation AND ≥1 unactivated intake exist, score each candidate by reading its title + Origin + Why + What Changes sections; clearly relevant requires shared topic + overlapping terminology + consistent scope (no partial/vague overlap); asymmetric-bias rule: ambiguous → not clearly relevant → fall through to `/fab-new`; date-descending tiebreak used only among equally-relevant candidates.
+3. **Prefix dispatch** — subagent dispatch for prefix steps (fab-new, fab-switch, git-branch) per `_preamble.md` § Subagent Dispatch
+4. **Terminal delegation** — invoke `/fab-fff` via the Skill tool (not subagent) for full user visibility
+5. **Bypass notes** — when `/fab-new` runs despite ≥1 unactivated intake being present, emit `Note: unactivated draft {name} exists — not relevant to current conversation, left untouched.` for each scanned draft (date-descending order, before any step reports)
 
 **Key properties**:
 - No arguments, no flags — infers everything from context
+- Zero-prompt — ambiguous relevance resolved by asymmetric-bias rule, never by asking
 - Idempotent — re-running detects completed steps and skips them
 - Does not run preflight or load `_preamble.md` context — delegates to `/fab-fff`
-- Errors on empty context: "Nothing to proceed with — start a discussion or run /fab-new (or /fab-draft) first."
+- Errors on empty context + no intake: "Nothing to proceed with — start a discussion or run /fab-new (or /fab-draft) first."
 
 ---
 
