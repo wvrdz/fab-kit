@@ -2,7 +2,7 @@
 // state file that tracks Claude Code agents and drives fab pane map / fab
 // pane send behavior.
 //
-// Schema (see spec.md for agents-runtime-unified change):
+// Schema (see docs/memory/fab-workflow/runtime-agents.md for the canonical reference):
 //
 //	_agents:
 //	  "<session_id>":
@@ -345,9 +345,10 @@ func GCIfDue(fabRoot string, interval time.Duration) error {
 }
 
 // pidAlive returns true when kill(pid, 0) succeeds or returns EPERM (the
-// process exists but we lack permission to signal it). It returns false only
-// when the kernel reports ESRCH — the definitive "no such process" signal.
-// This is the POSIX-standard liveness probe and performs no subprocess work.
+// process exists but we lack permission to signal it). It returns false for
+// any other error, treating ESRCH ("no such process") and any unexpected
+// errno conservatively as "not alive". This is the POSIX-standard liveness
+// probe and performs no subprocess work.
 func pidAlive(pid int) bool {
 	if pid <= 0 {
 		return false

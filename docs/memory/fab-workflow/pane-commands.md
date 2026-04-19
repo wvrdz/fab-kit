@@ -45,10 +45,11 @@ This doc covers the four subcommands, the `--server` / `-L` persistent flag, and
 |----------|--------|-------|-------|
 | Change active, agent idle | `260417-...` | `spec` | `idle (2m)` |
 | Change active, agent active | `260417-...` | `spec` | `active` |
-| Discussion mode, agent idle | `—` | `—` | `idle (2m)` |
-| Discussion mode, agent active | `—` | `—` | `active` |
+| Discussion mode (fab worktree), agent idle | `(no change)` | `—` | `idle (2m)` |
+| Discussion mode (fab worktree), agent active | `(no change)` | `—` | `active` |
 | Change active, no agent matched | `260417-...` | `spec` | `—` |
-| No change, no agent | `—` | `—` | `—` |
+| Fab worktree, no change, no agent | `(no change)` | `—` | `—` |
+| Non-fab pane (no `fab/` dir) | `—` | `—` | `—` |
 
 **Error behavior**: Unset `$TMUX` with neither session flag → `Error: not inside a tmux session` (exit 1). No panes found → `No tmux panes found.` (exit 0).
 
