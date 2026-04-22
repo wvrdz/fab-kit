@@ -18,7 +18,7 @@
 
 - [x] T003 Update `src/kit/skills/fab-operator.md` §6 Spawning an Agent, step 4 (enrollment), to cross-reference the new §4 rename behavior. Add a short parenthetical: "(enrollment applies the §4 window-rename rule; the `»<wt>` name produced in step 3 already satisfies the idempotent prefix guard, so no duplicate rename occurs)". Do not restructure step 3 or the surrounding list. (Spec: fab-operator → Spawn path compatibility)
 
-- [x] T004 [P] Update `docs/specs/skills/SPEC-fab-operator.md` with one additive bullet under the **Monitoring System** section (item 4 of the "Section Structure" list). Wording: `- Window-name rename on enrollment: prefix `»` to the tmux window name (idempotent — skipped if already prefixed). Removal does not restore the original name.` Do not rewrite, reorder, or delete any existing content — including the stale `fab-operator4` references. (Spec: Documentation → Spec file gets an additive bullet)
+- [x] T004 [P] Update `docs/specs/skills/SPEC-fab-operator.md` with one additive bullet under the **Monitoring System** section (item 4 of the "Section Structure" list). Wording: ``- Window-name rename on enrollment: prefix `»` to the tmux window name (idempotent — skipped if already prefixed). Removal does not restore the original name.`` Do not rewrite, reorder, or delete any existing content — including the stale `fab-operator4` references. (Spec: Documentation → Spec file gets an additive bullet)
 
 ## Phase 3: Integration & Edge Cases
 

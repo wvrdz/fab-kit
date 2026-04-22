@@ -257,7 +257,7 @@ On invocation, runs `fab pane-map` and displays the output, then signals readine
 
 #### Monitoring System
 
-The operator maintains a monitored set in conversation context (not a persistent file). Each entry tracks: change ID, pane, last-known stage, last-known agent state, enrolled-at timestamp, last-transition-at timestamp.
+The operator maintains a monitored set persisted to `.fab-operator.yaml` at the repo root (and mirrored in conversation context for the active tick). Each entry tracks: change ID, pane, last-known stage, last-known agent state, enrolled-at timestamp, last-transition-at timestamp.
 
 **Enrollment triggers**: operator sends a command to it, user requests monitoring, operator triggers an automatic action toward it (including autopilot and watch spawns). Read-only actions do not enroll. **Spawned agents are always auto-enrolled** — the operator MUST NOT ask the user whether to monitor a spawned agent. This constraint is reinforced in both the §1 principles and the "Spawning an Agent" procedural subsection of each operator skill (operator6, operator7) to ensure proximity-based LLM adherence.
 
