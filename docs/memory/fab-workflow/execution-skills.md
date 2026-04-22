@@ -309,7 +309,7 @@ No cooldown or retry limit — each question is evaluated independently. Worktre
 
 **Re-capture before send**: Before sending an auto-answer via `tmux send-keys`, MUST re-capture the terminal. If output changed since initial capture, abort — the agent is no longer waiting. Eliminates the race condition between detection and send.
 
-**Logging**: Every auto-answer: `"{change}: auto-answered '{summary}' -> {answer}"`. Escalated (rule 6 or rule 4 Strategic): `"{change}: can't determine answer for '{summary}'. Please respond."`. Auto-default after 30m idle on a Strategic escalation (distinct from `auto-answered` for grep-based after-action review): `"{change}: auto-defaulted after 30m idle: '{summary}' → {answer}"`.
+**Logging**: Every auto-answer: `"{change}: auto-answered '{summary}' → {answer}"`. Escalated (rule 6 or rule 4 Strategic): `"{change}: can't determine answer for '{summary}'. Please respond."`. Auto-default after 30m idle on a Strategic escalation (distinct from `auto-answered` for grep-based after-action review): `"{change}: auto-defaulted after 30m idle: '{summary}' → {answer}"`.
 
 #### Modes of Operation
 
