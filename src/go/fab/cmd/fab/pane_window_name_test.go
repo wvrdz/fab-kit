@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -210,6 +211,51 @@ func TestEmitResult(t *testing.T) {
 		s := buf.String()
 		if len(s) == 0 || s[len(s)-1] != '\n' {
 			t.Errorf("expected trailing newline in JSON output, got %q", s)
+		}
+	})
+}
+
+func TestTmuxExitCode(t *testing.T) {
+	cases := []struct {
+		name   string
+		stderr string
+		want   int
+	}{
+		{"empty stderr maps to 3", "", 3},
+		{"can't find pane maps to 2", "can't find pane: %99", 2},
+		{"Can't find pane mixed case maps to 2", "Can't find pane: %99\n", 2},
+		{"pane not found maps to 2", "pane %99 not found", 2},
+		{"no such pane maps to 2", "no such pane: %99", 2},
+		{"no server running maps to 3", "no server running on /tmp/tmux-1000/runKit", 3},
+		{"permission denied maps to 3", "permission denied", 3},
+		{"unrelated error maps to 3", "bad flag", 3},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tmuxExitCode([]byte(tc.stderr))
+			if got != tc.want {
+				t.Errorf("tmuxExitCode(%q) = %d, want %d", tc.stderr, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPrintTmuxErr(t *testing.T) {
+	t.Run("stderr present is preferred over exec err", func(t *testing.T) {
+		var buf bytes.Buffer
+		printTmuxErr(&buf, []byte("can't find pane: %99\n"), fmt.Errorf("exit status 1"))
+		want := "can't find pane: %99\n"
+		if buf.String() != want {
+			t.Errorf("printTmuxErr = %q, want %q", buf.String(), want)
+		}
+	})
+
+	t.Run("empty stderr falls back to exec err", func(t *testing.T) {
+		var buf bytes.Buffer
+		printTmuxErr(&buf, []byte(""), fmt.Errorf("exec: \"tmux\": executable file not found"))
+		want := "Error: exec: \"tmux\": executable file not found\n"
+		if buf.String() != want {
+			t.Errorf("printTmuxErr = %q, want %q", buf.String(), want)
 		}
 	})
 }

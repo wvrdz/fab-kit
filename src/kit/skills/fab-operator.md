@@ -164,7 +164,7 @@ After writing the monitored entry to `.fab-operator.yaml`, the operator MUST pre
 fab pane window-name ensure-prefix <pane> »
 ```
 
-Windows that already carry `»` (operator-spawned windows from §6, `/clear`-restored entries, re-enrolled changes) no-op through the primitive's guard. A non-zero exit — pane vanished between refresh and rename (exit 2), other tmux error (exit 3), or tmux not running (exit 1) — causes the operator to log one line and continue. Enrollment itself is already durable from the preceding `.fab-operator.yaml` write:
+Windows that already carry `»` (operator-spawned windows from §6, `/clear`-restored entries, re-enrolled changes) no-op through the primitive's guard. A non-zero exit — pane vanished between refresh and rename (exit 2) or any other tmux error (exit 3, including tmux not running / socket unreachable) — causes the operator to log one line and continue. Enrollment itself is already durable from the preceding `.fab-operator.yaml` write:
 
 ```
 {change}: window rename skipped ({error}).

@@ -9,7 +9,7 @@
 - [ ] CHK-001 Parent-Group Wiring: `fab pane --help` lists `window-name` alongside the existing four subcommands. `fab pane window-name --help` lists exactly `ensure-prefix` and `replace-prefix`.
 - [ ] CHK-002 ensure-prefix Behavior: `ensure-prefix <pane> <char>` prepends `<char>` when absent, no-ops when already present (literal prefix check), uses `tmux display-message` + `tmux rename-window` via the `WithServer` argv builder.
 - [ ] CHK-003 replace-prefix Behavior: `replace-prefix <pane> <from> <to>` renames when `<from>` is a literal prefix, no-ops (exit 0) when `<from>` is absent, accepts empty `<to>` for prefix removal, rejects empty `<from>` with exit 3.
-- [ ] CHK-004 Exit-Code Scheme: both subcommands exit 1 on unset `$TMUX` (stderr `tmux not running`), exit 2 on pane missing (tmux's stderr or fallback), exit 3 on other tmux / argument errors (tmux's stderr propagated).
+- [ ] CHK-004 Exit-Code Scheme: both subcommands exit 0 on success/no-op, 2 on pane missing (tmux stderr "can't find pane" / "no such pane" / "pane not found"), 3 on any other tmux error (tmux not running, socket unreachable, rename failed) or usage error (empty `<char>` or `<from>`). No `$TMUX` gating — tmux's exec failure surfaces as exit 3.
 - [ ] CHK-005 Output Modes: plain output is `renamed: <old> -> <new>` on rename and empty on no-op. `--json` flag emits `{"pane","old","new","action"}` where `action` is `"renamed"` or `"noop"`.
 - [ ] CHK-006 Inherited `--server` Flag: both subcommands honor the persistent `--server` / `-L` flag; every internal `tmux` call runs with `-L <server>` when non-empty. Verified via argv-builder tests.
 - [ ] CHK-007 Source Layout: implementation lives in `src/go/fab/cmd/fab/pane_window_name.go`; shared read helper lives in `internal/pane/pane.go`; tests in `pane_window_name_test.go` follow the argv-capture pattern.
@@ -38,7 +38,7 @@
 - [ ] CHK-021 Scenario — No-op (user-rename guard) when `<from>` absent: covered by test exercising the guard branch.
 - [ ] CHK-022 Scenario — Empty `<to>` removes prefix: covered by test with empty `<to>`.
 - [ ] CHK-023 Scenario — Empty `<from>` rejected (exit 3): covered by test asserting the usage-error path.
-- [ ] CHK-024 Scenario — Unset `$TMUX` exits 1: covered by test setting `$TMUX` to empty and asserting exit 1 + stderr.
+- [ ] CHK-024 Scenario — Empty `<char>` / `<from>` rejected with exit 3: covered by the early usage-error check in both RunE implementations; `$TMUX` is intentionally NOT gated (Copilot PR feedback — lets the primitives work from non-tmux contexts via `--server`). Tmux-not-running surfaces as exit 3 via tmux's own exec failure.
 - [ ] CHK-025 Scenario — Non-existent pane exits 2: covered by test on the `ValidatePane` error path (mockable via argv capture or error-injection).
 - [ ] CHK-026 Scenario — `--server` scopes tmux calls: covered by argv-builder test asserting `-L <server>` is prepended.
 

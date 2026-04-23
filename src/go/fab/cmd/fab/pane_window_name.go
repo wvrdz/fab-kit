@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -54,20 +55,15 @@ func runEnsurePrefix(cmd *cobra.Command, args []string) error {
 	server, _ := cmd.Flags().GetString("server")
 	asJSON, _ := cmd.Flags().GetBool("json")
 
-	if os.Getenv("TMUX") == "" {
-		fmt.Fprintln(cmd.ErrOrStderr(), "tmux not running")
-		os.Exit(1)
-	}
-
-	if err := pane.ValidatePane(paneID, server); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)
-		os.Exit(2)
-	}
-
-	name, err := pane.ReadWindowName(paneID, server)
-	if err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)
+	if char == "" {
+		fmt.Fprintln(cmd.ErrOrStderr(), "Error: <char> must be non-empty")
 		os.Exit(3)
+	}
+
+	name, stderr, err := pane.ReadWindowName(paneID, server)
+	if err != nil {
+		printTmuxErr(cmd.ErrOrStderr(), stderr, err)
+		os.Exit(tmuxExitCode(stderr))
 	}
 
 	if strings.HasPrefix(name, char) {
@@ -76,9 +72,9 @@ func runEnsurePrefix(cmd *cobra.Command, args []string) error {
 	}
 
 	newName := char + name
-	if err := exec.Command("tmux", renameArgs(server, paneID, newName)...).Run(); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)
-		os.Exit(3)
+	if stderr, err := renameWindow(server, paneID, newName); err != nil {
+		printTmuxErr(cmd.ErrOrStderr(), stderr, err)
+		os.Exit(tmuxExitCode(stderr))
 	}
 	emitResult(cmd.OutOrStdout(), paneID, name, newName, "renamed", asJSON)
 	return nil
@@ -96,20 +92,10 @@ func runReplacePrefix(cmd *cobra.Command, args []string) error {
 		os.Exit(3)
 	}
 
-	if os.Getenv("TMUX") == "" {
-		fmt.Fprintln(cmd.ErrOrStderr(), "tmux not running")
-		os.Exit(1)
-	}
-
-	if err := pane.ValidatePane(paneID, server); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)
-		os.Exit(2)
-	}
-
-	name, err := pane.ReadWindowName(paneID, server)
+	name, stderr, err := pane.ReadWindowName(paneID, server)
 	if err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)
-		os.Exit(3)
+		printTmuxErr(cmd.ErrOrStderr(), stderr, err)
+		os.Exit(tmuxExitCode(stderr))
 	}
 
 	if !strings.HasPrefix(name, from) {
@@ -118,18 +104,55 @@ func runReplacePrefix(cmd *cobra.Command, args []string) error {
 	}
 
 	newName := to + strings.TrimPrefix(name, from)
-	if err := exec.Command("tmux", renameArgs(server, paneID, newName)...).Run(); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %s\n", err)
-		os.Exit(3)
+	if stderr, err := renameWindow(server, paneID, newName); err != nil {
+		printTmuxErr(cmd.ErrOrStderr(), stderr, err)
+		os.Exit(tmuxExitCode(stderr))
 	}
 	emitResult(cmd.OutOrStdout(), paneID, name, newName, "renamed", asJSON)
 	return nil
+}
+
+// renameWindow runs `tmux rename-window -t <pane> <newName>` with captured
+// stderr. Returns stderr bytes and any exec error. Callers map the error to an
+// exit code via tmuxExitCode.
+func renameWindow(server, paneID, newName string) ([]byte, error) {
+	cmd := exec.Command("tmux", renameArgs(server, paneID, newName)...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return stderr.Bytes(), err
 }
 
 // renameArgs is the testable argv builder for `tmux rename-window`.
 // When server is non-empty, the argv is prepended with `-L <server>`.
 func renameArgs(server, paneID, newName string) []string {
 	return pane.WithServer(server, "rename-window", "-t", paneID, newName)
+}
+
+// tmuxExitCode maps tmux stderr content to the documented exit-code scheme.
+// Pane-missing messages (from display-message or rename-window on a vanished
+// pane) → 2; everything else — including tmux-not-running / socket errors /
+// permission denied / other tmux failures — → 3.
+func tmuxExitCode(stderr []byte) int {
+	s := strings.ToLower(string(stderr))
+	if strings.Contains(s, "can't find pane") ||
+		strings.Contains(s, "no such pane") ||
+		(strings.Contains(s, "pane") && strings.Contains(s, "not found")) {
+		return 2
+	}
+	return 3
+}
+
+// printTmuxErr emits a useful error line — prefers the tmux-supplied stderr
+// when present (so users see tmux's actual message), falls back to the Go exec
+// error otherwise.
+func printTmuxErr(w io.Writer, stderr []byte, err error) {
+	msg := strings.TrimSpace(string(stderr))
+	if msg != "" {
+		fmt.Fprintln(w, msg)
+		return
+	}
+	fmt.Fprintf(w, "Error: %s\n", err)
 }
 
 type windowNameResult struct {
@@ -141,12 +164,14 @@ type windowNameResult struct {
 
 // emitResult writes the operation result to w in either plain or JSON form.
 // Plain form: `renamed: <old> -> <new>\n` on a rename, empty on a no-op.
-// JSON form: a single `{"pane","old","new","action"}` object per call.
+// JSON form: a single `{"pane","old","new","action"}` object per call, with
+// the trailing newline added by json.Encoder.
 func emitResult(w io.Writer, paneID, oldName, newName, action string, asJSON bool) {
 	if asJSON {
 		result := windowNameResult{Pane: paneID, Old: oldName, New: newName, Action: action}
-		b, _ := json.Marshal(result)
-		fmt.Fprintln(w, string(b))
+		if err := json.NewEncoder(w).Encode(result); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to encode JSON output: %s\n", err)
+		}
 		return
 	}
 	if action == "renamed" {

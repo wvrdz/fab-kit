@@ -8,7 +8,7 @@
 
 The command group is special in the router: `pane` is the sole entry in the `fab` router's `fabGoNoConfigArgs` allowlist, meaning it runs from any directory — including outside a fab-managed repo (scratch tmux tabs, cross-repo orchestration, non-fab daemons). See `kit-architecture.md` for the router-level exemption.
 
-This doc covers the four subcommands, the `--server` / `-L` persistent flag, and the semantic invariants that govern how pane IDs and server selection interact with tmux's own socket model.
+This doc covers the five subcommands, the `--server` / `-L` persistent flag, and the semantic invariants that govern how pane IDs and server selection interact with tmux's own socket model.
 
 ## Requirements
 
@@ -118,11 +118,10 @@ Atomic guarded swap. Reads the current name; if it begins with the literal strin
 | Exit | Meaning |
 |------|---------|
 | 0 | Rename succeeded OR operation was a no-op |
-| 1 | `$TMUX` unset (tmux not running) — stderr `tmux not running` |
-| 2 | Pane does not exist (`tmux list-panes -a` scan misses the pane) — stderr carries tmux's message |
-| 3 | Any other tmux error (rename failure, permission denied, malformed arguments) — stderr carries tmux's message |
+| 2 | Pane does not exist — tmux stderr contains `can't find pane` (or `no such pane`). Stderr is propagated to the caller. |
+| 3 | Any other tmux error: tmux not running / socket unreachable / rename failed / argument usage error (e.g., empty `<char>` or `<from>`). Stderr is propagated when tmux supplied it. |
 
-The distinct codes let `/fab-operator`'s removal path discriminate "pane gone" (exit 2 → treat as successful removal, window is gone anyway) from "pane alive but rename failed" (exit 3 → log warning and continue).
+The primitives do not gate on `$TMUX`; they rely on tmux's own exec failure to surface "tmux not running" as exit 3, which lets callers run them via `--server` targeting outside a tmux client. The distinct 2 vs. 3 split lets `/fab-operator`'s removal path discriminate "pane gone" (exit 2 → treat as successful removal, window is gone anyway) from "pane alive but rename failed" (exit 3 → log warning and continue). Stderr mapping uses case-insensitive substring matching.
 
 #### Output modes
 
@@ -134,7 +133,7 @@ Plain text is the default: `renamed: <old> -> <new>\n` on a rename, empty stdout
 
 ### `--server` / `-L` Flag
 
-**Registration**: `paneCmd` registers a persistent string flag `--server` (short `-L`) with default `""`. Because it is a persistent flag on the parent, it is automatically visible on all four subcommands' `--help`. Source: `src/go/fab/cmd/fab/pane.go:14`.
+**Registration**: `paneCmd` registers a persistent string flag `--server` (short `-L`) with default `""`. Because it is a persistent flag on the parent, it is automatically visible on all five subcommands' `--help`. Source: `src/go/fab/cmd/fab/pane.go:14`.
 
 **Help text**: `Target tmux socket label (passed as 'tmux -L <name>'). Defaults to $TMUX / tmux default socket.`
 
@@ -163,7 +162,7 @@ Shared pane-resolution logic lives in `src/go/fab/internal/pane/pane.go`:
 
 - `ValidatePane(paneID, server string) error` — runs `tmux list-panes -a` and checks for the pane ID
 - `GetPanePID(paneID, server string) (int, error)` — resolves shell PID via `tmux display-message`
-- `ReadWindowName(paneID, server string) (string, error)` — reads the tmux window name via `tmux display-message -p -t <pane> '#W'`, trimmed. Used by the `window-name` subcommand group.
+- `ReadWindowName(paneID, server string) (string, []byte, error)` — reads the tmux window name via `tmux display-message -p -t <pane> '#W'`, trimmed. Returns (name, tmux stderr bytes, exec error) — callers use the stderr bytes to map tmux's "can't find pane" message to exit 2 vs. other tmux failures to exit 3. Used by the `window-name` subcommand group.
 - `ResolvePaneContext(paneID, mainRoot, server string) (*PaneContext, error)` — resolves worktree, change, stage, and agent state from the pane's CWD
 - `FindMainWorktreeRoot(cwds []string) string` — derives the main worktree root from pane CWDs via `git worktree list --porcelain`
 - `WithServer(server string, args ...string) []string` — the canonical argv-building helper (see Design Decisions)
@@ -173,9 +172,9 @@ All tmux-invoking functions accept a trailing `server string` parameter and buil
 ## Design Decisions
 
 ### Persistent Flag on the Parent, Not Per-Subcommand
-**Decision**: `--server` is registered as a persistent flag on `paneCmd` via `cmd.PersistentFlags().StringP("server", "L", "", "...")`, visible on all four subcommands. Each subcommand reads the value via `cmd.Flags().GetString("server")`.
+**Decision**: `--server` is registered as a persistent flag on `paneCmd` via `cmd.PersistentFlags().StringP("server", "L", "", "...")`, visible on all five subcommands. Each subcommand reads the value via `cmd.Flags().GetString("server")`.
 **Why**: Cobra idiom for a flag that applies uniformly across a command group. Single registration point, single help-text location, zero chance of per-subcommand drift.
-**Rejected**: Per-subcommand registration — four copies of the same flag, four places to update if the description changes.
+**Rejected**: Per-subcommand registration — one copy of the same flag per subcommand, as many places to update if the description changes.
 *Source*: 260417-2fbb-pane-server-flag
 
 ### `WithServer` Helper in `internal/pane/pane.go`

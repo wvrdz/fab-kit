@@ -54,6 +54,12 @@ The `<pane>` argument SHALL accept any tmux pane ID (`%3`, `%abc`) in the same f
 - **THEN** tmux is asked to rename window `%3` to `** work`
 - **AND** the command exits 0 (no width validation)
 
+#### Scenario: Empty `<char>` is rejected
+- **GIVEN** a running tmux session
+- **WHEN** the user runs `fab pane window-name ensure-prefix %3 ''`
+- **THEN** the command exits 3 with `Error: <char> must be non-empty` on stderr
+- **AND** no `tmux` subprocess is invoked
+
 ### Requirement: `replace-prefix` Behavior
 
 `fab pane window-name replace-prefix <pane> <from> <to>` SHALL perform an atomic guarded prefix swap. The command SHALL read the current window name; if it begins with the literal string `<from>`, it SHALL run `tmux rename-window -t <pane> "<to><name-without-from-prefix>"`. If the current name does NOT begin with `<from>`, the command SHALL be a no-op and SHALL exit 0 without error. The `<to>` argument MAY be empty — an empty `<to>` performs a prefix removal.
@@ -86,22 +92,15 @@ The `<from>` argument SHALL be non-empty; supplying an empty `<from>` SHALL be t
 
 ### Requirement: Exit-Code Scheme
 
-Both subcommands SHALL use a distinct three-code error scheme:
+Both subcommands SHALL use a two-code tmux-error scheme (plus 0 for success):
 
 | Exit | Meaning |
 |------|---------|
 | 0 | Rename succeeded OR operation was a no-op |
-| 1 | `$TMUX` is unset (tmux not running) |
-| 2 | Pane does not exist (`tmux list-panes -a` does not contain `<pane>`, or tmux reports "can't find pane") |
-| 3 | Any other tmux error (rename fails, permission denied, malformed arguments, etc.) |
+| 2 | Pane does not exist — tmux stderr contains `can't find pane` / `no such pane` / `pane ... not found` (case-insensitive) |
+| 3 | Any other tmux error: tmux not running / socket unreachable / rename failed / permission denied / argument usage error (e.g., empty `<char>` or `<from>`) |
 
-Exit 1 SHALL emit `tmux not running` on stderr. Exit 2 SHALL emit tmux's own stderr message (or `pane <id> not found` if the pane was only absent from `list-panes`). Exit 3 SHALL emit tmux's own stderr message (or a usage-error string for argument-level failures).
-
-#### Scenario: Unset `$TMUX` exits 1
-- **GIVEN** `$TMUX` is unset (no tmux session)
-- **WHEN** the user runs `fab pane window-name ensure-prefix %3 »`
-- **THEN** the command exits 1 with stderr `tmux not running`
-- **AND** no `tmux` subprocess is invoked
+The primitives SHALL NOT gate on `$TMUX` — tmux's own exec failure surfaces as exit 3 when tmux is not running or the socket is unreachable, which lets callers invoke the primitives via `--server` targeting from non-tmux processes (e.g., daemons). Exit 2 SHALL propagate tmux's stderr verbatim. Exit 3 SHALL propagate tmux's stderr when tmux supplied it; for argument usage errors (empty `<char>` / `<from>`), stderr is a fab-generated usage message.
 
 #### Scenario: Non-existent pane exits 2
 - **GIVEN** a tmux session with no pane `%99`
