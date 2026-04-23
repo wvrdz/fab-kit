@@ -1,0 +1,3 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-04-23T05:02:28Z"}
+{"args":"Skip tasks.md generation for simple change types (fix/docs/chore/test/ci) — apply reads spec directly","cmd":"fab-new","event":"command","ts":"2026-04-23T05:02:28Z"}
+{"delta":"+0.0","event":"confidence","score":0,"trigger":"calc-score","ts":"2026-04-23T05:05:24Z"}
