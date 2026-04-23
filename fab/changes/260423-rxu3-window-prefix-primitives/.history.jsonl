@@ -1,0 +1,4 @@
+{"action":"enter","driver":"fab-new","event":"stage-transition","stage":"intake","ts":"2026-04-23T02:31:17Z"}
+{"args":"Add 'fab pane window-name' subcommand group with two verbs (ensure-prefix, replace-prefix) as mechanical primitives for tmux window-name prefix operations. Use them in /fab-operator to (a) replace inline tmux shell in §4 Enrollment, (b) swap '»' for a done-marker (e.g., '›' or '✓') on removal instead of leaving the prefix — only transforming if the current name still starts with '»', so user renames mid-monitoring are preserved. Follow-up to 260422-jyyg-operator-prefix-enrolled-windows.","cmd":"fab-new","event":"command","ts":"2026-04-23T02:31:17Z"}
+{"delta":"+0.0","event":"confidence","score":0,"trigger":"calc-score","ts":"2026-04-23T02:33:12Z"}
+{"delta":"+0.0","event":"confidence","score":0,"trigger":"calc-score","ts":"2026-04-23T02:33:17Z"}
