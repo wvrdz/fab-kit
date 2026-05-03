@@ -347,6 +347,79 @@ func TestRequiredToolsUpdated(t *testing.T) {
 	}
 }
 
+// scaffoldKitDir builds a minimal cached-kit layout under tmp with the given VERSION.
+func scaffoldKitDir(t *testing.T, version string) string {
+	t.Helper()
+	kitDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(kitDir, "VERSION"), []byte(version+"\n"), 0644); err != nil {
+		t.Fatalf("cannot write kit VERSION: %v", err)
+	}
+	return kitDir
+}
+
+func TestScaffoldDirectories_FreshProject(t *testing.T) {
+	repoRoot := t.TempDir()
+	fabDir := filepath.Join(repoRoot, "fab")
+	kitDir := scaffoldKitDir(t, "1.6.1")
+
+	scaffoldDirectories(repoRoot, fabDir, kitDir, "1.6.1")
+
+	got, err := os.ReadFile(filepath.Join(fabDir, ".kit-migration-version"))
+	if err != nil {
+		t.Fatalf("expected .kit-migration-version to be created: %v", err)
+	}
+	if want := "1.6.1\n"; string(got) != want {
+		t.Errorf("fresh project: got %q, want %q", string(got), want)
+	}
+}
+
+func TestScaffoldDirectories_PreExistingMigrationVersion(t *testing.T) {
+	repoRoot := t.TempDir()
+	fabDir := filepath.Join(repoRoot, "fab")
+	kitDir := scaffoldKitDir(t, "1.6.1")
+
+	// Simulate Init() having already stamped both config.yaml and .kit-migration-version.
+	if err := os.MkdirAll(filepath.Join(fabDir, "project"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(fabDir, "project", "config.yaml"), []byte("fab_version: 1.6.1\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(fabDir, ".kit-migration-version"), []byte("1.6.1\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	scaffoldDirectories(repoRoot, fabDir, kitDir, "1.6.1")
+
+	// Pre-existing .kit-migration-version must be preserved, not overwritten with 0.1.0.
+	got, _ := os.ReadFile(filepath.Join(fabDir, ".kit-migration-version"))
+	if want := "1.6.1\n"; string(got) != want {
+		t.Errorf("post-init: got %q, want %q (must preserve, not write 0.1.0)", string(got), want)
+	}
+}
+
+func TestScaffoldDirectories_ExistingProjectWithoutMigrationVersion(t *testing.T) {
+	repoRoot := t.TempDir()
+	fabDir := filepath.Join(repoRoot, "fab")
+	kitDir := scaffoldKitDir(t, "1.6.1")
+
+	// Pre-migration-version-era project: config.yaml exists, no .kit-migration-version.
+	// This is the legitimate "existing project" branch (e.g., manual `fab sync` on an old project).
+	if err := os.MkdirAll(filepath.Join(fabDir, "project"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(fabDir, "project", "config.yaml"), []byte("fab_version: 0.43.0\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	scaffoldDirectories(repoRoot, fabDir, kitDir, "1.6.1")
+
+	got, _ := os.ReadFile(filepath.Join(fabDir, ".kit-migration-version"))
+	if want := "0.1.0\n"; string(got) != want {
+		t.Errorf("legacy project: got %q, want %q", string(got), want)
+	}
+}
+
 func TestCleanStaleSkills_Flat(t *testing.T) {
 	baseDir := t.TempDir()
 	repoRoot := filepath.Dir(baseDir)
