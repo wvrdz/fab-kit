@@ -62,6 +62,42 @@ func TestSetFabVersion_ExistingFile(t *testing.T) {
 	}
 }
 
+func TestStampMigrationVersion_FreshDir(t *testing.T) {
+	repoRoot := t.TempDir()
+
+	if err := stampMigrationVersion(repoRoot, "1.6.1"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got, err := os.ReadFile(filepath.Join(repoRoot, "fab", ".kit-migration-version"))
+	if err != nil {
+		t.Fatalf("expected file to be created: %v", err)
+	}
+	if want := "1.6.1\n"; string(got) != want {
+		t.Errorf("got %q, want %q", string(got), want)
+	}
+}
+
+func TestStampMigrationVersion_OverwritesExisting(t *testing.T) {
+	repoRoot := t.TempDir()
+	path := filepath.Join(repoRoot, "fab", ".kit-migration-version")
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("0.1.0\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := stampMigrationVersion(repoRoot, "1.6.1"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got, _ := os.ReadFile(path)
+	if want := "1.6.1\n"; string(got) != want {
+		t.Errorf("got %q, want %q (expected overwrite)", string(got), want)
+	}
+}
+
 func TestCopyDir(t *testing.T) {
 	// Create source structure
 	src := t.TempDir()

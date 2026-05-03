@@ -38,13 +38,36 @@ func Init() error {
 	}
 	fmt.Printf("Set fab_version: %s in config.yaml\n", latest)
 
-	// 5. Run sync
+	// 5. Stamp .kit-migration-version to the engine version. This must happen
+	// before Sync — otherwise scaffoldDirectories sees the just-written
+	// config.yaml and classifies the project as "existing", writing 0.1.0
+	// and triggering a spurious migration prompt on every fresh init.
+	if err := stampMigrationVersion(cwd, latest); err != nil {
+		return err
+	}
+
+	// 6. Run sync
 	fmt.Println("Setting up project...")
 	if err := Sync(latest, false, false); err != nil {
 		return fmt.Errorf("sync failed: %w", err)
 	}
 
 	fmt.Printf("\nfab initialized (v%s). Run /fab-setup in your AI agent to configure.\n", latest)
+	return nil
+}
+
+// stampMigrationVersion writes fab/.kit-migration-version to the given version,
+// creating fab/ if needed. Used by Init to mark a freshly-created project as
+// already at the engine version, so scaffoldDirectories doesn't classify it as
+// a legacy project and write 0.1.0.
+func stampMigrationVersion(repoRoot, version string) error {
+	path := filepath.Join(repoRoot, "fab", ".kit-migration-version")
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("cannot create fab/ directory: %w", err)
+	}
+	if err := os.WriteFile(path, []byte(version+"\n"), 0644); err != nil {
+		return fmt.Errorf("cannot write .kit-migration-version: %w", err)
+	}
 	return nil
 }
 
