@@ -1,5 +1,7 @@
 # Fab Kit
 
+> Part of [@sahil87's open source toolkit](https://ai.shll.in) — see all projects there.
+
 A development toolkit for AI-assisted coding. It includes an 8-stage pipeline (intake → spec → tasks → apply → review → hydrate → ship → review-PR), standalone CLI tools for [git worktree management](#standalone-cli-tools) (`wt`) and [idea backlogs](#standalone-cli-tools) (`idea`), and batch orchestration for running multiple AI agents in parallel. Plain markdown prompts, no SDK, no vendor lock-in. Works with Claude Code, Codex, Cursor, and Windsurf.
 
 AI agents write code fast. The bottleneck is now your clarity: did you define the problem well enough? Fab Kit sits at that bottleneck — it forces structured thinking before implementation, grounds every session in your project's actual context, and gets cheaper to run as agents improve.
